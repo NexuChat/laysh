@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ليش. — اسأل ليش، والعب الجواب</title>
+  <style>
+    :root { font-family: "Noto Sans Arabic", system-ui, sans-serif; color: #18221d; background: #f5f1e8; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; }
+    button, textarea { font: inherit; }
+    button:focus-visible, textarea:focus-visible { outline: 3px solid #f29f05; outline-offset: 3px; }
+    .page { width: min(100% - 1.5rem, 1100px); margin-inline: auto; padding-block: 1rem 3rem; }
+    nav { display: flex; align-items: center; justify-content: space-between; min-height: 54px; }
+    .logo { font-size: 1.45rem; font-weight: 800; }
+    .hero { display: grid; gap: 1rem; padding-block: clamp(2rem, 10vw, 6rem) 2rem; }
+    .kicker { color: #176b52; font-weight: 700; margin: 0; }
+    h1 { font-size: clamp(2.2rem, 8vw, 5.8rem); line-height: 1.02; max-width: 12ch; margin: 0; }
+    .promise { font-size: 1.15rem; line-height: 1.8; max-width: 60ch; }
+    .ask-card, .panel { background: #fffdf8; border: 1px solid #d7d1c4; border-radius: 1.4rem; padding: clamp(1rem, 4vw, 2rem); box-shadow: 0 16px 45px rgb(39 48 43 / 9%); }
+    textarea { width: 100%; min-height: 120px; resize: vertical; border: 2px solid #8c978f; border-radius: 1rem; padding: 1rem; font-size: 1.08rem; }
+    .submit-row { display: flex; gap: .7rem; justify-content: flex-end; margin-top: .8rem; }
+    button, .download { min-height: 44px; border-radius: .85rem; border: 2px solid #176b52; padding: .65rem 1.1rem; cursor: pointer; text-decoration: none; }
+    button.primary { background: #176b52; color: white; }
+    button.quiet { background: transparent; color: #176b52; }
+    #build, #result, #fallback { margin-top: 1rem; }
+    .answer { border-inline-start: 5px solid #f29f05; padding-inline-start: 1rem; font-size: 1.08rem; line-height: 1.8; }
+    .timeline { list-style: none; padding: 0; display: grid; gap: .5rem; }
+    .timeline li { color: #405047; }
+    iframe { display: block; width: 100%; min-height: min(72vh, 720px); border: 0; border-radius: 1rem; background: white; }
+    [hidden] { display: none !important; }
+    .privacy { color: #536159; font-size: .88rem; }
+    @media (max-width: 500px) { .submit-row { position: sticky; bottom: .75rem; } .submit-row button { flex: 1; } iframe { min-height: 650px; } }
+    @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <nav aria-label="الرئيسية"><span class="logo">ليش.</span><span>نسخة اختبار دون اتصال</span></nav>
+    <main>
+      <section class="hero" id="ask-view">
+        <p class="kicker">اسأل ليش، والعب الجواب.</p>
+        <h1>حوّل سؤال العلوم إلى جواب يمكنك تجربته.</h1>
+        <p class="promise">نجيب أولًا، ثم نبني درسًا تفاعليًا إذا أمكن تمثيل الفكرة بصدق وفحصها آليًا.</p>
+        <form class="ask-card" id="ask-form">
+          <label for="question"><strong>ما السؤال الذي يدور في بالك؟</strong></label>
+          <textarea id="question" name="question" maxlength="600" dir="auto" required>لماذا يتغير شكل القمر؟</textarea>
+          <p class="privacy">لا تكتب اسمًا أو بيانات شخصية أو حساسة. النسخة الحالية تستخدم محركًا تجريبيًا محليًا.</p>
+          <div class="submit-row"><button class="primary" type="submit">ابنِ الجواب</button></div>
+        </form>
+      </section>
+
+      <section class="panel" id="build" aria-live="polite" hidden>
+        <p class="kicker">الوكيل يعمل بخطوات حقيقية</p>
+        <div class="answer" id="answer-card" hidden></div>
+        <ol class="timeline" id="timeline"></ol>
+        <button class="quiet" id="cancel" type="button">إلغاء بهدوء</button>
+      </section>
+
+      <section class="panel" id="fallback" aria-live="polite" hidden>
+        <h2>الجواب باقٍ، والمحاكاة لم تُبنَ</h2>
+        <p id="fallback-copy"></p>
+        <button class="primary" type="button" onclick="location.reload()">اسأل سؤالًا آخر</button>
+      </section>
+
+      <section class="panel" id="result" hidden>
+        <h2 id="result-title"></h2>
+        <iframe id="simulation-frame" title="محاكاة Laysh" sandbox="allow-scripts"></iframe>
+        <p id="receipt"></p>
+        <a class="download" id="download" href="#">تنزيل HTML يعمل دون اتصال</a>
+      </section>
+    </main>
+  </div>
+  <script>
+    (() => {
+      "use strict";
+      const form = document.getElementById("ask-form");
+      const build = document.getElementById("build");
+      const timeline = document.getElementById("timeline");
+      const answerCard = document.getElementById("answer-card");
+      const simulationFrame = document.getElementById("simulation-frame");
+      let currentJob = null;
+      let source = null;
+
+      function showFallback(payload) {
+        document.getElementById("fallback").hidden = false;
+        document.getElementById("fallback-copy").textContent = `السبب: ${payload.reason_code}`;
+      }
+
+      async function showResult(resultUrl) {
+        const result = await fetch(resultUrl).then((response) => response.json());
+        if (result.status !== "complete") return;
+        const simulation = result.simulation;
+        document.getElementById("result").hidden = false;
+        document.getElementById("result-title").textContent = simulation.title;
+        document.getElementById("simulation-frame").src = `${simulation.artifact_url}?inline=1`;
+        document.getElementById("download").href = simulation.artifact_url;
+        document.getElementById("receipt").textContent = `اجتازت ${simulation.check_count} فحوصات آلية · إصلاحات: ${simulation.heal_count} · ${simulation.effective_model}`;
+        document.getElementById("result").scrollIntoView({ block: "start" });
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        build.hidden = false;
+        timeline.replaceChildren();
+        const response = await fetch("/api/ask", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ question: form.question.value, locale: "ar" }),
+        });
+        const accepted = await response.json();
+        currentJob = accepted.job_id;
+        source = new EventSource(accepted.stream_url);
+        source.addEventListener("answer", (message) => {
+          const eventData = JSON.parse(message.data);
+          answerCard.textContent = eventData.payload.tldr;
+          answerCard.hidden = false;
+        });
+        source.addEventListener("stage", (message) => {
+          const eventData = JSON.parse(message.data);
+          const item = document.createElement("li");
+          item.textContent = `${eventData.payload.detail} · ${eventData.payload.elapsed_ms}ms`;
+          timeline.append(item);
+        });
+        source.addEventListener("fallback", (message) => {
+          showFallback(JSON.parse(message.data).payload);
+        });
+        source.addEventListener("result", async () => {
+          source.close();
+          await showResult(accepted.result_url);
+        });
+      });
+
+      document.getElementById("cancel").addEventListener("click", async () => {
+        if (!currentJob) return;
+        await fetch(`/api/jobs/${currentJob}/cancel`, { method: "POST" });
+        if (source) source.close();
+        showFallback({ reason_code: "cancelled" });
+      });
+
+      window.addEventListener("message", (event) => {
+        if (event.source !== simulationFrame.contentWindow || event.origin !== "null") return;
+        const payload = event.data;
+        if (!payload || payload.source !== "laysh-artifact") return;
+        if (payload.type !== "runtime-error" || payload.code !== "SIM_RUNTIME_ERROR") return;
+        simulationFrame.hidden = true;
+        showFallback({ reason_code: "simulation_runtime_error" });
+      });
+    })();
+  </script>
+</body>
+</html>
