@@ -112,6 +112,16 @@ try {
     expression: `(() => {
       const control = document.querySelector('#primary-control');
       const root = document.documentElement;
+      const canvas = document.querySelector('#simulation');
+      const signature = () => {
+        const data = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+        const stride = Math.max(4, Math.floor(data.length / 4096 / 4) * 4);
+        let hash = 2166136261;
+        for (let index = 0; index < data.length; index += stride) {
+          hash = Math.imul(hash ^ data[index], 16777619) >>> 0;
+        }
+        return hash;
+      };
       const initialValue = control.value;
       const values = [control.min, initialValue, control.max];
       const cases = [];
@@ -119,7 +129,11 @@ try {
         const before = Number(root.dataset.frameCount || 0);
         control.value = value;
         control.dispatchEvent(new Event('input', { bubbles: true }));
-        cases.push({ value: Number(value), frameChanged: Number(root.dataset.frameCount || 0) > before });
+        cases.push({
+          value: Number(value),
+          frameChanged: Number(root.dataset.frameCount || 0) > before,
+          visualSignature: signature(),
+        });
       }
       control.value = initialValue;
       control.dispatchEvent(new Event('input', { bubbles: true }));
@@ -131,6 +145,29 @@ try {
         runtimeError: Boolean(root.dataset.runtimeError),
         alternative: document.querySelector('#state-description').textContent.trim(),
       };
+    })()`,
+    returnByValue: true,
+  });
+  const idleBefore = await command("Runtime.evaluate", {
+    expression: `(() => {
+      const canvas = document.querySelector('#simulation');
+      const data = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+      const stride = Math.max(4, Math.floor(data.length / 4096 / 4) * 4);
+      let hash = 2166136261;
+      for (let index = 0; index < data.length; index += stride) hash = Math.imul(hash ^ data[index], 16777619) >>> 0;
+      return hash;
+    })()`,
+    returnByValue: true,
+  });
+  await delay(900);
+  const idleAfter = await command("Runtime.evaluate", {
+    expression: `(() => {
+      const canvas = document.querySelector('#simulation');
+      const data = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+      const stride = Math.max(4, Math.floor(data.length / 4096 / 4) * 4);
+      let hash = 2166136261;
+      for (let index = 0; index < data.length; index += stride) hash = Math.imul(hash ^ data[index], 16777619) >>> 0;
+      return hash;
     })()`,
     returnByValue: true,
   });
@@ -154,6 +191,10 @@ try {
   socket.close();
   const evidence = {
     ...interaction.result.value,
+    idleFrameChanged: idleBefore.result.value !== idleAfter.result.value,
+    reactiveFrameVariants: new Set(
+      interaction.result.value.cases.map((item) => item.visualSignature),
+    ).size,
     externalRequests,
     consoleErrors,
     screenshots,

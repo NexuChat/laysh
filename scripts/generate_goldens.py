@@ -195,7 +195,7 @@ def build_manifest() -> dict[str, Any]:
     return {"schema_version": "1.0", "contract_version": "1.0", "lessons": lessons}
 
 
-def promote_candidate(fixture_id: str) -> int:
+def promote_candidate(fixture_id: str, revision: str | None = None) -> int:
     settings = Settings.from_env()
     if not settings.cache_key_secret:
         raise RuntimeError("LAYSH_CACHE_KEY_SECRET is required to pin a golden")
@@ -219,11 +219,16 @@ def promote_candidate(fixture_id: str) -> int:
         raise ValueError("candidate has not passed the complete builder review checklist")
     if not _qa_visual_richness_passed(outputs.get("qa")):
         raise ValueError("candidate has not passed the structured visual_richness review")
-    screenshot_root = ROOT / "out" / "evidence" / "screens" / "goldens"
+    screenshot_root = (
+        ROOT / "out" / "evidence" / "screens" / "v1.1"
+        if revision == "v1.1"
+        else ROOT / "out" / "evidence" / "screens" / "goldens"
+    )
     browser_report_path = EVIDENCE_ROOT / f"{golden_id}-browser.json"
+    screenshot_stem = f"{golden_id}{'-after' if revision == 'v1.1' else ''}"
     screenshots = [
-        screenshot_root / f"{golden_id}-mobile-390x844.png",
-        screenshot_root / f"{golden_id}-desktop-1440x900.png",
+        screenshot_root / f"{screenshot_stem}-mobile-390x844.png",
+        screenshot_root / f"{screenshot_stem}-desktop-1440x900.png",
     ]
     if any(not path.exists() or path.stat().st_size < 10_000 for path in screenshots):
         raise ValueError("accepted mobile and desktop screenshots are required")
@@ -235,6 +240,8 @@ def promote_candidate(fixture_id: str) -> int:
         and browser_report.get("consoleErrors") == []
         and len(browser_report.get("cases", [])) == 3
         and all(case.get("frameChanged") is True for case in browser_report["cases"])
+        and browser_report.get("idleFrameChanged") is True
+        and browser_report.get("reactiveFrameVariants", 0) >= 2
     ):
         raise ValueError("golden browser evidence did not pass")
     understanding = outputs["understanding"]
@@ -245,6 +252,12 @@ def promote_candidate(fixture_id: str) -> int:
         secret=settings.cache_key_secret.encode(),
         contract_version="1.0",
     )
+    existing_path = GOLDEN_ROOT / f"{golden_id}.json"
+    previous_sha256 = None
+    if revision:
+        previous_sha256 = json.loads(existing_path.read_text(encoding="utf-8"))[
+            "artifact_sha256"
+        ]
     entry = cache.pin_golden(
         golden_id=golden_id,
         question=fixture["question"],
@@ -277,6 +290,8 @@ def promote_candidate(fixture_id: str) -> int:
             "browser": browser_report,
             "screenshots": [str(path.relative_to(ROOT)) for path in screenshots],
         },
+        release_revision=revision,
+        expected_previous_sha256=previous_sha256,
     )
     manifest = build_manifest()
     atomic_write(
@@ -295,6 +310,7 @@ def parse_args() -> argparse.Namespace:
     generate.add_argument("--attempt", type=int, choices=(1, 2, 3), required=True)
     promote = subparsers.add_parser("promote")
     promote.add_argument("--fixture", required=True, choices=GOLDEN_FIXTURE_IDS)
+    promote.add_argument("--revision", choices=("v1.1",))
     return parser.parse_args()
 
 
@@ -302,7 +318,7 @@ def main() -> int:
     arguments = parse_args()
     if arguments.command == "generate":
         return asyncio.run(generate_candidate(arguments.fixture, arguments.attempt))
-    return promote_candidate(arguments.fixture)
+    return promote_candidate(arguments.fixture, arguments.revision)
 
 
 if __name__ == "__main__":

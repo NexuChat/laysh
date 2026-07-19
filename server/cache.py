@@ -205,18 +205,30 @@ class VerifiedCache:
         metadata: dict[str, Any],
         review: dict[str, Any],
         evidence: dict[str, Any],
+        release_revision: str | None = None,
+        expected_previous_sha256: str | None = None,
     ) -> CacheEntry:
         if not re.fullmatch(r"[a-z0-9_]+", golden_id):
             raise ValueError("golden_id must be a lowercase repository identifier")
         if receipt is None or not receipt.verified:
             raise ValueError("only verified artifacts may be pinned")
         destination = self.golden_root / f"{golden_id}.json"
+        replacing_cache_id: str | None = None
         if destination.exists():
-            raise ValueError("pinned golden cache entries are immutable")
+            existing = self._load(destination)
+            if (
+                existing is None
+                or not release_revision
+                or not re.fullmatch(r"v[0-9]+\.[0-9]+(?:\.[0-9]+)?", release_revision)
+                or expected_previous_sha256 != existing.artifact_sha256
+            ):
+                raise ValueError("pinned golden cache entries are immutable")
+            replacing_cache_id = existing.cache_id
         exact_key = self.exact_key(question, locale)
         semantic_key = self.semantic_key(locale, domain, canonical_intent)
         if any(
             entry.pinned
+            and entry.cache_id != replacing_cache_id
             and (entry.exact_key == exact_key or entry.semantic_key == semantic_key)
             for entry in self._entries()
         ):
@@ -245,6 +257,7 @@ class VerifiedCache:
             "metadata": metadata,
             "review": review,
             "evidence": evidence,
+            "release_revision": release_revision or "initial",
         }
         descriptor, temporary_name = tempfile.mkstemp(
             dir=self.golden_root,
