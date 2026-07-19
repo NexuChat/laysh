@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "gate": "G5",
+  "verdict": "pass",
+  "golden_count": 6,
+  "golden_live_call_count": 33,
+  "unseen_smoke_live_call_count": 8,
+  "total_live_call_count": 41,
+  "total_golden_elapsed_ms": 1588297,
+  "goldens": [
+    {"id": "moon_phases", "accepted_attempt": 3, "regens": 2, "heals": 1, "total_elapsed_ms": 206178, "stages_ms": {"understand": 33584, "generate": 98268, "heal_1": 64639, "qa": 7161}, "review": "pass"},
+    {"id": "buoyancy", "accepted_attempt": 1, "regens": 0, "heals": 1, "total_elapsed_ms": 176832, "stages_ms": {"understand": 41318, "generate": 69039, "heal_1": 59166, "qa": 4806}, "review": "pass"},
+    {"id": "pendulum", "accepted_attempt": 1, "regens": 0, "heals": 1, "total_elapsed_ms": 196045, "stages_ms": {"understand": 32469, "generate": 83612, "heal_1": 71774, "qa": 5683}, "review": "pass"},
+    {"id": "simple_circuit", "accepted_attempt": 1, "regens": 0, "heals": 1, "total_elapsed_ms": 168942, "stages_ms": {"understand": 30299, "generate": 67547, "heal_1": 64224, "qa": 4351}, "review": "pass"},
+    {"id": "sound_pitch", "accepted_attempt": 1, "regens": 0, "heals": 2, "total_elapsed_ms": 214671, "stages_ms": {"understand": 42091, "generate": 59482, "heal_1": 53508, "heal_2": 52443, "qa": 4604}, "review": "pass"},
+    {"id": "day_night", "accepted_attempt": 1, "regens": 0, "heals": 1, "total_elapsed_ms": 185294, "stages_ms": {"understand": 25972, "generate": 96176, "heal_1": 56001, "qa": 4657}, "review": "pass"}
+  ],
+  "checks": {
+    "six_pinned_tier_a": true,
+    "bilingual_metadata": true,
+    "three_builder_reference_fixtures_each": true,
+    "min_default_max_browser_pass": true,
+    "mobile_desktop_screenshots_each": true,
+    "instant_gallery_browser_journeys": true,
+    "unseen_arabic_smoke": true,
+    "unseen_english_smoke": true,
+    "gpt_5_6_family_only": true
+  },
+  "benchmark_release_targets_passed": false,
+  "benchmark_note": "Cache and hard-terminal targets passed. First-answer and new-module latency release targets remain above objective and are reported honestly in out/benchmark.json."
+}
