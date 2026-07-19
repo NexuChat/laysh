@@ -157,6 +157,7 @@
     const detail = document.createElement("span");
     const time = document.createElement("span");
     item.dataset.stage = payload.stage;
+    item.dataset.elapsedMs = String(payload.elapsed_ms);
     name.className = "stage-name";
     name.textContent = stageLabels[payload.stage] || "خطوة بناء";
     detail.textContent = payload.detail;

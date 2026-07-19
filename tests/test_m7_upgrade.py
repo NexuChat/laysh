@@ -38,6 +38,7 @@ def test_build_view_has_truthful_agent_theatre_hooks(client):
         assert f'id="{element_id}"' in html
     assert "payload.detail" in script
     assert "payload.elapsed_ms" in script
+    assert "item.dataset.elapsedMs" in script
     assert "payload.evidence" in script
     assert 'payload.stage === "healing"' in script
     assert "state.answer" in script and "domain-fact" in script

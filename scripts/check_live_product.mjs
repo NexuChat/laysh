@@ -188,6 +188,10 @@ try {
       effectiveModel: document.querySelector('#effective-model').textContent,
       elapsedText: document.querySelector('#result-elapsed').textContent,
       healText: document.querySelector('#heal-count').textContent,
+      stageTimeline: [...document.querySelectorAll('#stage-list [data-stage]')].map((item) => ({
+        stage: item.dataset.stage,
+        elapsedMs: Number(item.dataset.elapsedMs),
+      })),
     };
   })()`);
   await capture(`${evidencePrefix}-result-mobile-390x844.png`);
