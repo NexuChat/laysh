@@ -243,6 +243,7 @@ class CodexExecutor:
         effort: str,
         public: bool = True,
         evidence_fixture_id: str | None = None,
+        timeout_seconds: float | None = None,
     ) -> StageExecution:
         try:
             output_schema = json.loads(schema_path.read_text(encoding="utf-8"))
@@ -298,7 +299,7 @@ class CodexExecutor:
             except (OSError, ValueError) as error:
                 raise CodexRuntimeError("spawn_failed") from error
             try:
-                stage_timeout = (
+                stage_timeout = timeout_seconds or (
                     self.stage_timeout_seconds if public else self.evidence_stage_timeout_seconds
                 )
                 stdout, stderr = await asyncio.wait_for(

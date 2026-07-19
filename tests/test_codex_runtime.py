@@ -445,6 +445,27 @@ async def test_curated_stage_uses_scaled_timeout_profile():
 
 
 @pytest.mark.asyncio
+async def test_call_specific_timeout_overrides_the_stage_profile(monkeypatch):
+    from server.codex_runtime import CodexRuntimeError
+
+    process = FakeProcess(success_jsonl(VALID_MODULE_OUTPUT), delay=0.03)
+    signals = []
+    monkeypatch.setattr(os, "killpg", lambda pid, sig: signals.append((pid, sig)))
+    executor = executor_with_process(process, {}, stage_timeout_seconds=0.1)
+
+    with pytest.raises(CodexRuntimeError, match="stage_timeout"):
+        await executor.execute_stage(
+            prompt="bounded QA",
+            schema_path=Path("server/schemas/module.schema.json").resolve(),
+            model="gpt-5.6-sol",
+            effort="medium",
+            timeout_seconds=0.01,
+        )
+
+    assert signals[0] == (process.pid, signal.SIGTERM)
+
+
+@pytest.mark.asyncio
 async def test_cancellation_terminates_process_group_and_propagates(monkeypatch):
     process = FakeProcess(delay=5)
     signals = []
