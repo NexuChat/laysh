@@ -112,3 +112,34 @@ def test_portable_artifact_plays_from_file_without_network(tmp_path):
         "runtimeError": False,
         "externalRequests": 0,
     }
+
+
+@pytest.mark.browser
+def test_browser_control_gate_accepts_range_value_sanitized_to_step_grid(tmp_path):
+    from server.assemble import assemble_artifact
+
+    understanding = deepcopy(VALID_UNDERSTANDING)
+    understanding["primary_parameter"] = {
+        **understanding["primary_parameter"],
+        "min": 0,
+        "max": 29.53,
+        "default": 0,
+        "step": 0.25,
+    }
+    artifact_path = tmp_path / "unaligned-range.html"
+    artifact_path.write_text(
+        assemble_artifact(understanding, module_output()),
+        encoding="utf-8",
+    )
+
+    completed = subprocess.run(
+        ["node", str(ROOT / "scripts" / "check_artifact.mjs"), str(artifact_path)],
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    evidence = json.loads(completed.stdout)
+    assert evidence["controlChanged"] is True

@@ -113,10 +113,15 @@ try {
       const choice = document.querySelector('#prediction-choices button');
       choice.click();
       const control = document.querySelector('#primary-control');
-      control.value = control.max;
+      const beforeControlValue = Number(control.value);
+      const target = Math.abs(beforeControlValue - Number(control.min))
+        <= Math.abs(beforeControlValue - Number(control.max))
+        ? control.max
+        : control.min;
+      control.value = target;
       control.dispatchEvent(new Event('input', { bubbles: true }));
       return {
-        controlChanged: !control.disabled && control.value === control.max,
+        controlChanged: !control.disabled && Number(control.value) !== beforeControlValue,
         frameChanged: Number(root.dataset.frameCount || 0) > before,
         runtimeError: Boolean(root.dataset.runtimeError),
       };
