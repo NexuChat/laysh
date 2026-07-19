@@ -54,10 +54,11 @@ async def test_understand_is_one_luna_call_with_closed_schema_and_zero_echo_prom
 
 
 @pytest.mark.asyncio
-async def test_generate_heal_and_qa_route_only_to_sol_with_bounded_effort():
+async def test_generate_heal_and_qa_route_only_to_sol_with_bounded_effort(monkeypatch):
     from server.codex_backend import CodexBackend, RuntimeContext
     from server.settings import Settings
 
+    monkeypatch.setenv("CODEX_MODEL_REASONING_EFFORT", "high")
     executor = RecordingExecutor()
     backend = CodexBackend(executor=executor, settings=Settings())
     context = RuntimeContext(public=False, evidence_fixture_id="moon_phases_ar")
@@ -91,6 +92,16 @@ async def test_generate_heal_and_qa_route_only_to_sol_with_bounded_effort():
     assert all(call["evidence_fixture_id"] == "moon_phases_ar" for call in executor.calls)
     assert "full HTML" in executor.calls[0]["prompt"]
     assert "exact gate failures" in executor.calls[1]["prompt"]
+
+
+def test_generate_prompt_states_the_exact_runtime_interface_contract():
+    from server.codex_backend import CodexBackend
+
+    prompt = CodexBackend._render_prompt("generate_module.md", VALID_UNDERSTANDING)
+
+    assert "`version` must be the number `1`" in prompt
+    assert "`init(options)` receives `canvas`, `context`" in prompt
+    assert "Do not rename `context` to `ctx`" in prompt
 
 
 def test_twenty_dialect_arabizi_and_code_switch_fixtures_share_stable_intent(backend):
