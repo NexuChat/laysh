@@ -1,0 +1,27 @@
+{
+  "cases": [
+    {
+      "value": 0,
+      "frameChanged": true
+    },
+    {
+      "value": 90,
+      "frameChanged": true
+    },
+    {
+      "value": 360,
+      "frameChanged": true
+    }
+  ],
+  "lang": "ar",
+  "dir": "rtl",
+  "ready": true,
+  "runtimeError": false,
+  "alternative": "زاوية الطور: 90 ° — النتيجة المحسوبة: 0.50",
+  "externalRequests": 0,
+  "consoleErrors": [],
+  "screenshots": [
+    "moon_phases-mobile-390x844.png",
+    "moon_phases-desktop-1440x900.png"
+  ]
+}

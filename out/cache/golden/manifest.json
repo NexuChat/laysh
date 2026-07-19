@@ -1,0 +1,144 @@
+{
+  "schema_version": "1.0",
+  "contract_version": "1.0",
+  "lessons": [
+    {
+      "id": "buoyancy",
+      "aliases": [
+        "buoyancy",
+        "buoyancy_ar",
+        "Why do some objects float?"
+      ],
+      "instant": true,
+      "tier": "A",
+      "artifact_sha256": "3fb522aa05d6f461c0064cbf0b5cf496742edf31d630f4a3beb7d98579f4e69f",
+      "metadata": {
+        "ar": {
+          "title": "لماذا تطفو بعض الأجسام؟",
+          "domain": "الطفو والكثافة",
+          "summary": "غيّر كثافة الجسم ولاحظ مقدار غمره أو غوصه في ماء ساكن."
+        },
+        "en": {
+          "title": "Why do some objects float?",
+          "domain": "Buoyancy and density",
+          "summary": "Change an object's density and observe how much submerges or whether it sinks in still water."
+        }
+      }
+    },
+    {
+      "id": "day_night",
+      "aliases": [
+        "day_night",
+        "day_night_ar",
+        "Earth's rotation and day/night"
+      ],
+      "instant": true,
+      "tier": "A",
+      "artifact_sha256": "64ae7cbbd1539119a3b67583753756f77f0891b06c2dbde3b8373dc3b067013a",
+      "metadata": {
+        "ar": {
+          "title": "دوران الأرض والنهار والليل",
+          "domain": "الأرض والفضاء",
+          "summary": "دوّر الأرض ولاحظ اتجاه موضع ثابت بالنسبة إلى ضوء الشمس."
+        },
+        "en": {
+          "title": "Earth's rotation and day/night",
+          "domain": "Earth and space",
+          "summary": "Rotate Earth and observe a fixed location's direction relative to sunlight."
+        }
+      }
+    },
+    {
+      "id": "moon_phases",
+      "aliases": [
+        "moon_phases",
+        "moon_phases_ar",
+        "Moon phases"
+      ],
+      "instant": true,
+      "tier": "A",
+      "artifact_sha256": "a15b24cac1608e6131f51d4cf1709971a0565a66a21a70666e1ba6faada53811",
+      "metadata": {
+        "ar": {
+          "title": "أطوار القمر",
+          "domain": "الأرض والفضاء",
+          "summary": "حرّك القمر في مداره وقارن الجزء المضاء بما نراه من الأرض."
+        },
+        "en": {
+          "title": "Moon phases",
+          "domain": "Earth and space",
+          "summary": "Move the Moon around its orbit and compare its lit half with the view from Earth."
+        }
+      }
+    },
+    {
+      "id": "pendulum",
+      "aliases": [
+        "pendulum",
+        "pendulum_ar",
+        "Pendulum length and period"
+      ],
+      "instant": true,
+      "tier": "A",
+      "artifact_sha256": "2aec0f068a996676d0e69f6b38304626cb0f1cdf1f0553569bfce68b7da75916",
+      "metadata": {
+        "ar": {
+          "title": "طول البندول وزمنه",
+          "domain": "الحركة الدورية",
+          "summary": "غيّر طول بندول صغير الزاوية وقارن زمن دورته."
+        },
+        "en": {
+          "title": "Pendulum length and period",
+          "domain": "Periodic motion",
+          "summary": "Change the length of a small-angle pendulum and compare its period."
+        }
+      }
+    },
+    {
+      "id": "simple_circuit",
+      "aliases": [
+        "simple_circuit",
+        "simple_circuit_ar",
+        "Resistance and bulb brightness"
+      ],
+      "instant": true,
+      "tier": "A",
+      "artifact_sha256": "b61de6c3feb4ab347bea81a2abdfe22ff84b60efe990ec10ea387a750beaad5d",
+      "metadata": {
+        "ar": {
+          "title": "المقاومة وسطوع المصباح",
+          "domain": "الكهرباء",
+          "summary": "غيّر المقاومة في دارة مبسطة ذات جهد ثابت ولاحظ التيار والقدرة."
+        },
+        "en": {
+          "title": "Resistance and bulb brightness",
+          "domain": "Electric circuits",
+          "summary": "Change resistance in a simplified constant-voltage circuit and observe current and power."
+        }
+      }
+    },
+    {
+      "id": "sound_pitch",
+      "aliases": [
+        "sound_pitch",
+        "sound_pitch_ar",
+        "Frequency and sound pitch"
+      ],
+      "instant": true,
+      "tier": "A",
+      "artifact_sha256": "aa3990d922a113954953ea0efbc7695a12622c3d818668f9ecbbd156288f2e3c",
+      "metadata": {
+        "ar": {
+          "title": "التردد وحدّة الصوت",
+          "domain": "الصوت والموجات",
+          "summary": "غيّر التردد وقارن عدد دورات الموجة وطولها الموجي دون تشغيل صوت."
+        },
+        "en": {
+          "title": "Frequency and sound pitch",
+          "domain": "Sound and waves",
+          "summary": "Change frequency and compare wave cycles and wavelength without playing audio."
+        }
+      }
+    }
+  ]
+}

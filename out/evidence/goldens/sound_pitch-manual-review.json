@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "fixture_id": "sound_pitch_ar",
+  "attempt": 1,
+  "verdict": "pass",
+  "answer_correct": true,
+  "assumptions_honest": true,
+  "formula_display_grade": true,
+  "units_correct": true,
+  "fixtures_correct": true,
+  "misconception_addressed": true,
+  "teaching_flow_clear": true,
+  "visual_model_unambiguous": true,
+  "light_occlusion_consistent": true,
+  "labels_precise": true,
+  "smooth_shading": true,
+  "min_default_max_tested": true,
+  "arabic_metadata_reviewed": true,
+  "english_metadata_reviewed": true,
+  "notes": [
+    "The lesson separates pitch from loudness and holds visual amplitude constant.",
+    "The reviewed formula includes both wavelength and period because both outputs are independently tested.",
+    "The waveform remains smooth and legible at 110 Hz, 440 Hz, and 880 Hz; no audio capability is requested."
+  ]
+}

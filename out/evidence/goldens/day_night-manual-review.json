@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "fixture_id": "day_night_ar",
+  "attempt": 1,
+  "verdict": "pass",
+  "answer_correct": true,
+  "assumptions_honest": true,
+  "formula_display_grade": true,
+  "units_correct": true,
+  "fixtures_correct": true,
+  "misconception_addressed": true,
+  "teaching_flow_clear": true,
+  "visual_model_unambiguous": true,
+  "light_occlusion_consistent": true,
+  "labels_precise": true,
+  "smooth_shading": true,
+  "min_default_max_tested": true,
+  "arabic_metadata_reviewed": true,
+  "english_metadata_reviewed": true,
+  "notes": [
+    "Parallel sunlight lines terminate at Earth's illuminated limb and never render through the opaque globe.",
+    "The anti-solar hemisphere is a clean dark shadow region with a precise terminator; no dotted-sphere texture is used.",
+    "The fixed surface marker, c value, and day/night label agree at 0°, 60°, 90°, 180°, and 360°."
+  ]
+}

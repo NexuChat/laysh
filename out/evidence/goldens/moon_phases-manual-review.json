@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "fixture_id": "moon_phases_ar",
+  "attempt": 3,
+  "verdict": "pass",
+  "answer_correct": true,
+  "assumptions_honest": true,
+  "formula_display_grade": true,
+  "units_correct": true,
+  "fixtures_correct": true,
+  "misconception_addressed": true,
+  "teaching_flow_clear": true,
+  "visual_model_unambiguous": true,
+  "light_occlusion_consistent": true,
+  "labels_precise": true,
+  "smooth_shading": true,
+  "min_default_max_tested": true,
+  "arabic_metadata_reviewed": true,
+  "english_metadata_reviewed": true,
+  "notes": [
+    "The top and Earth-observer views are explicitly labeled and agree at 0, 90, 180, and 360 degrees.",
+    "The directional sunlight indicator does not cross an opaque body; the model teaches phases as viewing geometry rather than Earth's shadow.",
+    "The Moon and Earth use smooth radial shading with no dotted-sphere texture."
+  ]
+}

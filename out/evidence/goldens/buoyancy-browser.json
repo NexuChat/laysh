@@ -1,0 +1,27 @@
+{
+  "cases": [
+    {
+      "value": 200,
+      "frameChanged": true
+    },
+    {
+      "value": 750,
+      "frameChanged": true
+    },
+    {
+      "value": 1400,
+      "frameChanged": true
+    }
+  ],
+  "lang": "ar",
+  "dir": "rtl",
+  "ready": true,
+  "runtimeError": false,
+  "alternative": "كثافة الجسم: 750 kg/m³ — النتيجة المحسوبة: 0.75",
+  "externalRequests": 0,
+  "consoleErrors": [],
+  "screenshots": [
+    "buoyancy-mobile-390x844.png",
+    "buoyancy-desktop-1440x900.png"
+  ]
+}

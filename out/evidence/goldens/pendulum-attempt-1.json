@@ -1,0 +1,103 @@
+{
+  "schema_version": "1.0",
+  "fixture_id": "pendulum_ar",
+  "attempt": 1,
+  "job_id": "job_9673445982ae5ce7",
+  "status": "complete",
+  "total_elapsed_ms": 196045,
+  "live_call_count": 4,
+  "stages": [
+    {
+      "stage": "understand",
+      "model": "gpt-5.6-sol",
+      "elapsed_ms": 32469,
+      "thread_id_captured": true
+    },
+    {
+      "stage": "generate",
+      "model": "gpt-5.6-sol",
+      "elapsed_ms": 83612,
+      "thread_id_captured": true
+    },
+    {
+      "stage": "heal_1",
+      "model": "gpt-5.6-sol",
+      "elapsed_ms": 71774,
+      "thread_id_captured": true
+    },
+    {
+      "stage": "qa",
+      "model": "gpt-5.6-sol",
+      "elapsed_ms": 5683,
+      "thread_id_captured": true
+    }
+  ],
+  "heal_count": 1,
+  "qa": {
+    "approved": true,
+    "issues": [],
+    "replacement_module_js": null
+  },
+  "artifact_sha256": "2aec0f068a996676d0e69f6b38304626cb0f1cdf1f0553569bfce68b7da75916",
+  "automated_review": {
+    "passed": true,
+    "checks": {
+      "formula_matches_reference": true,
+      "learner_copy_has_no_hash_placeholders": true,
+      "learner_copy_localized": true,
+      "primary_parameter_matches_reference": true,
+      "model_fixtures_match_reference": true,
+      "bilingual_metadata": true,
+      "reference_fixture_count": 3,
+      "reference_fixtures_passed": true,
+      "misconception_present": true,
+      "teaching_flow_complete": true,
+      "assumptions_present": true,
+      "units_present": true
+    },
+    "failure_codes": [],
+    "reference_report": {
+      "passed": true,
+      "check_count": 8,
+      "fixture_count": 3,
+      "failures": []
+    }
+  },
+  "diagnostics": [
+    {
+      "type": "verification_failure",
+      "attempt": 0,
+      "check_count": 12,
+      "failures": [
+        {
+          "gate": "runtime_init",
+          "code": "init_failed",
+          "expected": {
+            "accepts_trusted_options": [
+              "canvas",
+              "context",
+              "width",
+              "height",
+              "locale",
+              "reducedMotion",
+              "emitFrame"
+            ]
+          },
+          "actual": {
+            "error_type": "TypeError"
+          }
+        },
+        {
+          "gate": "runtime_init",
+          "code": "first_frame_missing",
+          "expected": {
+            "minimum_emit_frame_calls": 1
+          },
+          "actual": {
+            "emit_frame_calls": 0
+          }
+        }
+      ]
+    }
+  ]
+}

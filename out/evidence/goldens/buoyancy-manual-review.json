@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "fixture_id": "buoyancy_ar",
+  "attempt": 1,
+  "verdict": "pass",
+  "answer_correct": true,
+  "assumptions_honest": true,
+  "formula_display_grade": true,
+  "units_correct": true,
+  "fixtures_correct": true,
+  "misconception_addressed": true,
+  "teaching_flow_clear": true,
+  "visual_model_unambiguous": true,
+  "light_occlusion_consistent": true,
+  "labels_precise": true,
+  "smooth_shading": true,
+  "min_default_max_tested": true,
+  "arabic_metadata_reviewed": true,
+  "english_metadata_reviewed": true,
+  "notes": [
+    "The model explicitly fixes water density at 1000 kg/m³ and distinguishes floating equilibrium from sinking.",
+    "Independent references cover low density, floating equilibrium, and density above water.",
+    "Lighting/occlusion is not part of this causal model; the canvas uses a clean waterline, body, and force representation."
+  ]
+}
