@@ -17,9 +17,15 @@
   "min_default_max_tested": true,
   "arabic_metadata_reviewed": true,
   "english_metadata_reviewed": true,
+  "scene_depth_present": true,
+  "physical_light_beautiful": true,
+  "idle_motion_present": true,
+  "reactive_feedback_present": true,
+  "readout_overlay_clear": true,
   "notes": [
     "The lesson separates pitch from loudness and holds visual amplitude constant.",
     "The reviewed formula includes both wavelength and period because both outputs are independently tested.",
-    "The waveform remains smooth and legible at 110 Hz, 440 Hz, and 880 Hz; no audio capability is requested."
+    "The luminous waveform remains smooth and legible at 110 Hz, 440 Hz, and 880 Hz; no audio capability is requested.",
+    "Traveling phase, speaker depth, ambient particles, and frequency/wavelength/period chips satisfy the v1.1 motion and overlay review."
   ]
 }

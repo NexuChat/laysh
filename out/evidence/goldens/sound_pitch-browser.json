@@ -2,15 +2,18 @@
   "cases": [
     {
       "value": 110,
-      "frameChanged": true
+      "frameChanged": true,
+      "visualSignature": 3466224217
     },
     {
       "value": 440,
-      "frameChanged": true
+      "frameChanged": true,
+      "visualSignature": 2642402979
     },
     {
       "value": 880,
-      "frameChanged": true
+      "frameChanged": true,
+      "visualSignature": 2500664136
     }
   ],
   "lang": "ar",
@@ -18,10 +21,12 @@
   "ready": true,
   "runtimeError": false,
   "alternative": "تردد الموجة الصوتية: 440 Hz — النتيجة المحسوبة: 0.78",
+  "idleFrameChanged": true,
+  "reactiveFrameVariants": 3,
   "externalRequests": 0,
   "consoleErrors": [],
   "screenshots": [
-    "sound_pitch-mobile-390x844.png",
-    "sound_pitch-desktop-1440x900.png"
+    "sound_pitch-after-mobile-390x844.png",
+    "sound_pitch-after-desktop-1440x900.png"
   ]
 }

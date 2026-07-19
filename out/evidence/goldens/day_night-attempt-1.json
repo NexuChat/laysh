@@ -2,33 +2,33 @@
   "schema_version": "1.0",
   "fixture_id": "day_night_ar",
   "attempt": 1,
-  "job_id": "job_2c6dce940f43b6d9",
+  "job_id": "job_9128ea98c301bfbf",
   "status": "complete",
-  "total_elapsed_ms": 185294,
+  "total_elapsed_ms": 230963,
   "live_call_count": 4,
   "stages": [
     {
       "stage": "understand",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 25972,
+      "elapsed_ms": 29042,
       "thread_id_captured": true
     },
     {
       "stage": "generate",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 96176,
+      "elapsed_ms": 103804,
       "thread_id_captured": true
     },
     {
       "stage": "heal_1",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 56001,
+      "elapsed_ms": 89176,
       "thread_id_captured": true
     },
     {
       "stage": "qa",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 4657,
+      "elapsed_ms": 6383,
       "thread_id_captured": true
     }
   ],
@@ -36,9 +36,16 @@
   "qa": {
     "approved": true,
     "issues": [],
-    "replacement_module_js": null
+    "replacement_module_js": null,
+    "visual_richness": {
+      "scene_depth": true,
+      "physical_light": true,
+      "idle_motion": true,
+      "reactive_feedback": true,
+      "readable_overlays": true
+    }
   },
-  "artifact_sha256": "64ae7cbbd1539119a3b67583753756f77f0891b06c2dbde3b8373dc3b067013a",
+  "artifact_sha256": "277baa31a6b383cfce0c6a15e1ca021f0d0d0697ce9984d507949c66b44b67dd",
   "automated_review": {
     "passed": true,
     "checks": {

@@ -17,9 +17,15 @@
   "min_default_max_tested": true,
   "arabic_metadata_reviewed": true,
   "english_metadata_reviewed": true,
+  "scene_depth_present": true,
+  "physical_light_beautiful": true,
+  "idle_motion_present": true,
+  "reactive_feedback_present": true,
+  "readout_overlay_clear": true,
   "notes": [
     "Parallel sunlight lines terminate at Earth's illuminated limb and never render through the opaque globe.",
     "The anti-solar hemisphere is a clean dark shadow region with a precise terminator; no dotted-sphere texture is used.",
-    "The fixed surface marker, c value, and day/night label agree at 0°, 60°, 90°, 180°, and 360°."
+    "The fixed surface marker, c value, and day/night label agree at 0°, 60°, 90°, 180°, and 360°.",
+    "Solar corona, layered star field, atmospheric rim, shadow cone, idle drift, and location-state chip pass the v1.1 review."
   ]
 }

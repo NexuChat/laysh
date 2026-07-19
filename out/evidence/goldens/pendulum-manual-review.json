@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "fixture_id": "pendulum_ar",
-  "attempt": 1,
+  "attempt": 2,
   "verdict": "pass",
   "answer_correct": true,
   "assumptions_honest": true,
@@ -17,9 +17,15 @@
   "min_default_max_tested": true,
   "arabic_metadata_reviewed": true,
   "english_metadata_reviewed": true,
+  "scene_depth_present": true,
+  "physical_light_beautiful": true,
+  "idle_motion_present": true,
+  "reactive_feedback_present": true,
+  "readout_overlay_clear": true,
   "notes": [
     "The answer and graph consistently use the small-angle model and state g = 9.81 m/s².",
     "The length drawing and square-root curve agree with all three independent period references.",
-    "Lighting/occlusion is not part of this model; the static rendering is clear and reduced-motion safe."
+    "Attempt 1 passed automation but was rejected by the builder because its trail was only a static dashed guide.",
+    "Attempt 2 adds a real fading bob trail, idle swing, layered workshop depth, soft contact shadow, and clear length/period chips while remaining reduced-motion safe."
   ]
 }

@@ -2,15 +2,18 @@
   "cases": [
     {
       "value": 200,
-      "frameChanged": true
+      "frameChanged": true,
+      "visualSignature": 956361717
     },
     {
       "value": 750,
-      "frameChanged": true
+      "frameChanged": true,
+      "visualSignature": 1700343923
     },
     {
       "value": 1400,
-      "frameChanged": true
+      "frameChanged": true,
+      "visualSignature": 331549714
     }
   ],
   "lang": "ar",
@@ -18,10 +21,12 @@
   "ready": true,
   "runtimeError": false,
   "alternative": "كثافة الجسم: 750 kg/m³ — النتيجة المحسوبة: 0.75",
+  "idleFrameChanged": true,
+  "reactiveFrameVariants": 3,
   "externalRequests": 0,
   "consoleErrors": [],
   "screenshots": [
-    "buoyancy-mobile-390x844.png",
-    "buoyancy-desktop-1440x900.png"
+    "buoyancy-after-mobile-390x844.png",
+    "buoyancy-after-desktop-1440x900.png"
   ]
 }

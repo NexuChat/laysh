@@ -2,62 +2,45 @@
   "schema_version": "1.0",
   "fixture_id": "moon_phases_ar",
   "attempt": 1,
-  "job_id": "job_9e53e67478ba5805",
-  "status": "complete",
-  "total_elapsed_ms": 224952,
+  "job_id": "job_9817171ede81610e",
+  "status": "answer_only",
+  "total_elapsed_ms": 218485,
   "live_call_count": 4,
   "stages": [
     {
       "stage": "understand",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 24225,
+      "elapsed_ms": 27767,
       "thread_id_captured": true
     },
     {
       "stage": "generate",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 102771,
+      "elapsed_ms": 117437,
       "thread_id_captured": true
     },
     {
       "stage": "heal_1",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 90872,
+      "elapsed_ms": 56363,
       "thread_id_captured": true
     },
     {
       "stage": "qa",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 4562,
+      "elapsed_ms": 14328,
       "thread_id_captured": true
     }
   ],
-  "heal_count": 1,
-  "qa": {
-    "approved": true,
-    "issues": [],
-    "replacement_module_js": null
-  },
-  "artifact_sha256": "9e8dedc4d136e2b0cd4ce53d9a1b4a641964fa17185468532529e3671d605147",
+  "heal_count": null,
+  "qa": null,
+  "artifact_sha256": null,
   "automated_review": {
-    "passed": true,
-    "checks": {
-      "formula_matches_reference": true,
-      "bilingual_metadata": true,
-      "reference_fixture_count": 3,
-      "reference_fixtures_passed": true,
-      "misconception_present": true,
-      "teaching_flow_complete": true,
-      "assumptions_present": true,
-      "units_present": true
-    },
-    "failure_codes": [],
-    "reference_report": {
-      "passed": true,
-      "check_count": 8,
-      "fixture_count": 3,
-      "failures": []
-    }
+    "passed": false,
+    "failure_codes": [
+      "pipeline_incomplete"
+    ],
+    "checks": {}
   },
   "diagnostics": [
     {

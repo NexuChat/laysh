@@ -2,15 +2,18 @@
   "cases": [
     {
       "value": 0.25,
-      "frameChanged": true
+      "frameChanged": true,
+      "visualSignature": 3520044511
     },
     {
       "value": 1,
-      "frameChanged": true
+      "frameChanged": true,
+      "visualSignature": 2411309599
     },
     {
       "value": 2,
-      "frameChanged": true
+      "frameChanged": true,
+      "visualSignature": 3182585687
     }
   ],
   "lang": "ar",
@@ -18,10 +21,12 @@
   "ready": true,
   "runtimeError": false,
   "alternative": "طول البندول: 1 m — النتيجة المحسوبة: 2.01",
+  "idleFrameChanged": true,
+  "reactiveFrameVariants": 3,
   "externalRequests": 0,
   "consoleErrors": [],
   "screenshots": [
-    "pendulum-mobile-390x844.png",
-    "pendulum-desktop-1440x900.png"
+    "pendulum-after-mobile-390x844.png",
+    "pendulum-after-desktop-1440x900.png"
   ]
 }

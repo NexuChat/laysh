@@ -17,9 +17,14 @@
   "min_default_max_tested": true,
   "arabic_metadata_reviewed": true,
   "english_metadata_reviewed": true,
+  "scene_depth_present": true,
+  "physical_light_beautiful": true,
+  "idle_motion_present": true,
+  "reactive_feedback_present": true,
+  "readout_overlay_clear": true,
   "notes": [
     "The model explicitly fixes water density at 1000 kg/m³ and distinguishes floating equilibrium from sinking.",
     "Independent references cover low density, floating equilibrium, and density above water.",
-    "Lighting/occlusion is not part of this causal model; the canvas uses a clean waterline, body, and force representation."
+    "Layered water light-play, ripples, suspended particles, bobbing motion, physically plausible body occlusion, and density/state chips pass the v1.1 visual review."
   ]
 }

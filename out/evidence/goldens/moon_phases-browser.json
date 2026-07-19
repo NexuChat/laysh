@@ -2,15 +2,18 @@
   "cases": [
     {
       "value": 0,
-      "frameChanged": true
+      "frameChanged": true,
+      "visualSignature": 2507369338
     },
     {
       "value": 90,
-      "frameChanged": true
+      "frameChanged": true,
+      "visualSignature": 3069519251
     },
     {
       "value": 360,
-      "frameChanged": true
+      "frameChanged": true,
+      "visualSignature": 4016568162
     }
   ],
   "lang": "ar",
@@ -18,10 +21,12 @@
   "ready": true,
   "runtimeError": false,
   "alternative": "زاوية الطور: 90 ° — النتيجة المحسوبة: 0.50",
+  "idleFrameChanged": true,
+  "reactiveFrameVariants": 3,
   "externalRequests": 0,
   "consoleErrors": [],
   "screenshots": [
-    "moon_phases-mobile-390x844.png",
-    "moon_phases-desktop-1440x900.png"
+    "moon_phases-after-mobile-390x844.png",
+    "moon_phases-after-desktop-1440x900.png"
   ]
 }
