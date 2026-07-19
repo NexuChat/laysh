@@ -264,3 +264,59 @@ def test_valid_candidate_returns_artifact_and_no_failures():
     assert result.failures == []
     assert result.artifact
     assert result.check_count >= len(VALID_UNDERSTANDING["checks"])
+
+
+@pytest.mark.parametrize(
+    ("formula", "identifiers", "uses_ascii_hyphen_minus"),
+    [
+        (
+            "illuminated_fraction = (1 - cos(2π * lunar_day / 29.53)) / 2",
+            ["illuminated_fraction", "lunar_day"],
+            True,
+        ),
+        (
+            "period_seconds = 2π * sqrt(length_m / gravity_m_s2)",
+            ["gravity_m_s2", "length_m", "period_seconds"],
+            False,
+        ),
+    ],
+)
+def test_formula_presentation_gate_rejects_code_identifiers_with_exact_diagnostics(
+    formula,
+    identifiers,
+    uses_ascii_hyphen_minus,
+):
+    from server.verify import verify_candidate
+
+    understanding = deepcopy(VALID_UNDERSTANDING)
+    understanding["key_formula"] = formula
+    result = verify_candidate(GOOD_MODULE_OUTPUT, understanding)
+    failure = next(item for item in result.failures if item["gate"] == "formula_presentation")
+
+    assert failure["code"] == "code_identifier_in_key_formula"
+    assert failure["expected"] == {
+        "display_math": True,
+        "code_identifiers": [],
+        "minus_sign": "−",
+    }
+    assert failure["actual"]["code_identifiers"] == identifiers
+    assert failure["actual"]["uses_ascii_hyphen_minus"] is uses_ascii_hyphen_minus
+
+
+@pytest.mark.parametrize(
+    "formula",
+    [
+        "f = (1 − cos θ) / 2",
+        "T = 2π√(L/g)",
+        "I = V/R",
+        "Fᵦ = ρVg",
+    ],
+)
+def test_formula_presentation_gate_accepts_short_display_math(formula):
+    from server.verify import verify_candidate
+
+    understanding = deepcopy(VALID_UNDERSTANDING)
+    understanding["key_formula"] = formula
+    result = verify_candidate(GOOD_MODULE_OUTPUT, understanding)
+
+    assert not any(failure["gate"] == "formula_presentation" for failure in result.failures)

@@ -14,6 +14,12 @@ Rules:
 - Use natural Modern Standard Arabic for Arabic input and concise English for English input.
 - A simulatable result has one primary parameter, no more than one secondary parameter, and at least
   two independent numeric or relational fixtures.
+- Write `key_formula` as short, student-facing display-grade math, never as source code. Use concise
+  symbols such as `f`, `θ`, `T`, `L`, `I`, and `R`; use the Unicode minus sign `−`; and never emit
+  snake_case, camelCase, implementation field names, or programming syntax. For example, emit
+  `f = (1 − cos θ) / 2`, not `illuminated_fraction = (1 - cos(2π * lunar_day / 29.53)) / 2`.
+- Keep implementation identifiers in `module_spec` and fixture inputs only. Define any display symbol
+  needed for comprehension in `tldr` using natural language.
 - Fixtures are the fixed scientific contract for module verification. Use finite values and honest
   tolerances.
 - Privately derive every fixture from `key_formula` before emitting it. Check the arithmetic internally

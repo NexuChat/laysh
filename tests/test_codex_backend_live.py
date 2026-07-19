@@ -182,6 +182,20 @@ def test_understand_prompt_requires_formula_derived_consistent_fixtures():
     assert "relation fixture must agree with every numeric fixture" in prompt
 
 
+def test_understand_prompt_requires_student_facing_display_math():
+    from server.codex_backend import CodexBackend
+
+    prompt = CodexBackend._render_prompt(
+        "understand.md",
+        {"question": "ليش القمر يتغير شكله؟", "locale": "ar"},
+    )
+
+    assert "display-grade math" in prompt
+    assert "snake_case" in prompt
+    assert "Unicode minus sign `−`" in prompt
+    assert "f = (1 − cos θ) / 2" in prompt
+
+
 @pytest.mark.asyncio
 async def test_heal_prompt_contains_the_structured_gate_report_verbatim():
     from server.codex_backend import CodexBackend, RuntimeContext

@@ -39,6 +39,7 @@ FORBIDDEN_CAPABILITIES = (
     ("external_url", r"(?:https?|wss?):\/\/"),
 )
 FORBIDDEN_PATTERNS = [pattern for _, pattern in FORBIDDEN_CAPABILITIES]
+CODE_IDENTIFIER_PATTERN = re.compile(r"\b[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)+\b")
 
 
 @dataclass(frozen=True, slots=True)
@@ -91,6 +92,36 @@ def _source_report(source: str) -> tuple[list[dict[str, Any]], int]:
             }
         )
     return failures, 3
+
+
+def formula_presentation_report(understanding: dict[str, Any]) -> tuple[list[dict[str, Any]], int]:
+    formula = understanding.get("key_formula")
+    if not formula:
+        return [], 1
+    identifiers = sorted(set(CODE_IDENTIFIER_PATTERN.findall(formula)))
+    uses_ascii_hyphen_minus = "-" in formula
+    if not identifiers and not uses_ascii_hyphen_minus:
+        return [], 1
+    code = (
+        "code_identifier_in_key_formula"
+        if identifiers
+        else "ascii_minus_in_key_formula"
+    )
+    return [
+        {
+            "gate": "formula_presentation",
+            "code": code,
+            "expected": {
+                "display_math": True,
+                "code_identifiers": [],
+                "minus_sign": "−",
+            },
+            "actual": {
+                "code_identifiers": identifiers,
+                "uses_ascii_hyphen_minus": uses_ascii_hyphen_minus,
+            },
+        }
+    ], 1
 
 
 def verify_module_source(source: str) -> dict[str, Any]:
@@ -294,7 +325,10 @@ def verify_candidate(
     from server.assemble import assemble_artifact
 
     source = module_output["module_js"]
-    failures, check_count = _source_report(source)
+    failures, check_count = formula_presentation_report(understanding)
+    source_failures, source_checks = _source_report(source)
+    failures.extend(source_failures)
+    check_count += source_checks
     node_report: dict[str, Any] = {
         "passed": False,
         "check_count": 0,

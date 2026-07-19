@@ -164,7 +164,7 @@ def _success_understanding(locale: str) -> dict[str, Any]:
             if arabic
             else "The lit part we see changes as the Moon moves relative to Earth and the Sun."
         ),
-        "key_formula": "f = (1 - cos θ) / 2",
+        "key_formula": "f = (1 − cos θ) / 2",
         "learning_objective": (
             "ربط زاوية المدار بالجزء المضيء المرئي"
             if arabic
