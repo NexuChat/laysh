@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://laysh.local/schemas/module-fixture-1.0.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "fixture_id", "kind", "inputs", "output", "expected", "tolerance", "unit"],
+  "properties": {
+    "contract_version": {"const": "1.0"},
+    "fixture_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+    "kind": {"const": "numeric"},
+    "inputs": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "number"}},
+    "output": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+    "expected": {"type": "number"},
+    "tolerance": {"type": "number", "minimum": 0},
+    "unit": {"type": "string", "maxLength": 24}
+  }
+}
+
