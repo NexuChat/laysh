@@ -1,0 +1,7 @@
+[Unit]
+Description=Check the local Laysh service health
+After=laysh.service
+
+[Service]
+Type=oneshot
+ExecStart=%h/laysh/.venv/bin/python %h/laysh/scripts/healthcheck.py --url http://127.0.0.1:8765/healthz --state-file %t/laysh-healthcheck.failures --restart-after 3

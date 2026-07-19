@@ -1,0 +1,8 @@
+# Optional named-tunnel template. Quick tunnels do not need this file.
+tunnel: <CLOUDFLARE-TUNNEL-UUID>
+credentials-file: /home/<OWNER-USER>/.cloudflared/<CLOUDFLARE-TUNNEL-UUID>.json
+
+ingress:
+  - hostname: <FINAL-DEMO-HOSTNAME>
+    service: http://127.0.0.1:8765
+  - service: http_status:404
