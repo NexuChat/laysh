@@ -17,10 +17,10 @@ def free_port() -> int:
 
 
 @pytest.mark.browser
-def test_g4_mock_journeys_accessibility_and_accepted_screenshots():
+def test_g4_mock_journeys_accessibility_and_accepted_screenshots(tmp_path):
     port = free_port()
     base_url = f"http://127.0.0.1:{port}"
-    screenshots = ROOT / "out" / "evidence" / "screens"
+    screenshots = tmp_path / "screens"
     server = subprocess.Popen(  # noqa: S603 - fixed local application command
         [
             str(ROOT / ".venv" / "bin" / "uvicorn"),
@@ -114,4 +114,7 @@ def test_g4_mock_journeys_accessibility_and_accepted_screenshots():
     assert evidence["consoleErrors"] == []
     assert evidence["networkFailures"] == []
     assert (screenshots / "g4-mobile-390x844.png").stat().st_size > 20_000
+    accepted = ROOT / "out" / "evidence" / "screens"
+    assert (accepted / "g4-mobile-390x844.png").stat().st_size > 20_000
+    assert (accepted / "g4-desktop-1440x900.png").stat().st_size > 20_000
     assert (screenshots / "g4-desktop-1440x900.png").stat().st_size > 20_000
