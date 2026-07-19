@@ -1,0 +1,27 @@
+{
+  "cases": [
+    {
+      "value": 2,
+      "frameChanged": true
+    },
+    {
+      "value": 6,
+      "frameChanged": true
+    },
+    {
+      "value": 20,
+      "frameChanged": true
+    }
+  ],
+  "lang": "ar",
+  "dir": "rtl",
+  "ready": true,
+  "runtimeError": false,
+  "alternative": "المقاومة: 6 Ω — النتيجة المحسوبة: 1.00",
+  "externalRequests": 0,
+  "consoleErrors": [],
+  "screenshots": [
+    "simple_circuit-mobile-390x844.png",
+    "simple_circuit-desktop-1440x900.png"
+  ]
+}

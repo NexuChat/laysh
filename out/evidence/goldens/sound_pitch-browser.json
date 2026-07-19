@@ -1,0 +1,27 @@
+{
+  "cases": [
+    {
+      "value": 110,
+      "frameChanged": true
+    },
+    {
+      "value": 440,
+      "frameChanged": true
+    },
+    {
+      "value": 880,
+      "frameChanged": true
+    }
+  ],
+  "lang": "ar",
+  "dir": "rtl",
+  "ready": true,
+  "runtimeError": false,
+  "alternative": "تردد الموجة الصوتية: 440 Hz — النتيجة المحسوبة: 0.78",
+  "externalRequests": 0,
+  "consoleErrors": [],
+  "screenshots": [
+    "sound_pitch-mobile-390x844.png",
+    "sound_pitch-desktop-1440x900.png"
+  ]
+}

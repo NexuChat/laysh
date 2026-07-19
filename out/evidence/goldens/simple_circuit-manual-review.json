@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "fixture_id": "simple_circuit_ar",
+  "attempt": 1,
+  "verdict": "pass",
+  "answer_correct": true,
+  "assumptions_honest": true,
+  "formula_display_grade": true,
+  "units_correct": true,
+  "fixtures_correct": true,
+  "misconception_addressed": true,
+  "teaching_flow_clear": true,
+  "visual_model_unambiguous": true,
+  "light_occlusion_consistent": true,
+  "labels_precise": true,
+  "smooth_shading": true,
+  "min_default_max_tested": true,
+  "arabic_metadata_reviewed": true,
+  "english_metadata_reviewed": true,
+  "notes": [
+    "The circuit uses a fixed ideal 6 V source and clearly states that bulb brightness is represented by dissipated power.",
+    "The Arabic semicolon and formula spacing are presentation-equivalent to the builder reference and contain no code identifiers.",
+    "The schematic, resistor value, current, power, and bulb brightness remain consistent at 2 Ω, 6 Ω, and 20 Ω."
+  ]
+}

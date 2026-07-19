@@ -1,0 +1,27 @@
+{
+  "cases": [
+    {
+      "value": 0,
+      "frameChanged": true
+    },
+    {
+      "value": 60,
+      "frameChanged": true
+    },
+    {
+      "value": 360,
+      "frameChanged": true
+    }
+  ],
+  "lang": "ar",
+  "dir": "rtl",
+  "ready": true,
+  "runtimeError": false,
+  "alternative": "زاوية دوران الأرض: 60 ° — النتيجة المحسوبة: 0.50",
+  "externalRequests": 0,
+  "consoleErrors": [],
+  "screenshots": [
+    "day_night-mobile-390x844.png",
+    "day_night-desktop-1440x900.png"
+  ]
+}

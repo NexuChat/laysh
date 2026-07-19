@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "fixture_id": "moon_phases_ar",
+  "rejected_attempts": [
+    {
+      "attempt": 1,
+      "job_id": "job_9e53e67478ba5805",
+      "reason_codes": ["primary_parameter_reference_mismatch", "model_fixture_contract_mismatch"],
+      "review_notes": "The model used default 0° and tolerance 1.0 for a 0–1 fraction. Runtime gates passed, but the scientific fixture contract was too loose for promotion."
+    },
+    {
+      "attempt": 2,
+      "job_id": "job_35274843b9cd6a02",
+      "reason_codes": ["learner_copy_placeholder", "learner_copy_not_localized"],
+      "review_notes": "The scientific contract passed, but learner-facing Arabic fields were opaque hexadecimal placeholders. The artifact was withheld."
+    }
+  ],
+  "accepted_attempt": 3
+}
