@@ -1,0 +1,101 @@
+{
+  "schema_version": "1.0",
+  "fixture_id": "broken_first_draft_offline",
+  "status": "complete",
+  "state_history": [
+    "queued",
+    "filtering",
+    "understanding",
+    "answered",
+    "cache_lookup",
+    "generating",
+    "verifying",
+    "healing",
+    "verifying",
+    "browser_check",
+    "complete"
+  ],
+  "heal_count": 1,
+  "verify_heal_reverify": true,
+  "heal_received_failures": [
+    {
+      "gate": "security",
+      "code": "forbidden_capability",
+      "expected": {
+        "forbidden_capabilities": []
+      },
+      "actual": {
+        "capabilities": [
+          "network_fetch"
+        ]
+      }
+    },
+    {
+      "gate": "syntax_runtime",
+      "code": "module_evaluation_failed",
+      "expected": {
+        "evaluates_in_disposable_vm": true
+      },
+      "actual": {
+        "error_type": "ReferenceError"
+      }
+    },
+    {
+      "gate": "interface",
+      "code": "exported_keys_mismatch",
+      "expected": {
+        "permitted_abi": [
+          "destroy",
+          "init",
+          "resize",
+          "setParameter",
+          "test",
+          "version"
+        ]
+      },
+      "actual": {
+        "exported_keys": [],
+        "unexpected_keys": [],
+        "missing_keys": [
+          "destroy",
+          "init",
+          "resize",
+          "setParameter",
+          "test",
+          "version"
+        ]
+      }
+    },
+    {
+      "gate": "interface",
+      "code": "version_mismatch",
+      "expected": {
+        "version": 1,
+        "type": "number"
+      },
+      "actual": {
+        "type": "undefined"
+      }
+    }
+  ],
+  "browser": {
+    "ready": true,
+    "controlChanged": true,
+    "frameChanged": true,
+    "runtimeError": false,
+    "externalRequests": 0
+  },
+  "artifact_sha256": "460373e13bae6d6e3e6a80a6903cfc874c8896b849bae3a6bba2dd04921c1815",
+  "cache": {
+    "entry_count": 1,
+    "cache_id": "5aaceb862e195ba648a5aba7",
+    "artifact_sha256": "460373e13bae6d6e3e6a80a6903cfc874c8896b849bae3a6bba2dd04921c1815",
+    "receipt": {
+      "deterministic_passed": true,
+      "browser_passed": true,
+      "failed_gate_count": 0,
+      "check_count": 26
+    }
+  },
+  "gate_g3_passed": true
+}
