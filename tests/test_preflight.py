@@ -1,8 +1,13 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
+from pathlib import Path
 
 from scripts.preflight import update_preflight
+
+ROOT = Path(__file__).parents[1]
 
 
 def test_preflight_recheck_preserves_model_smokes_and_records_primary_session(tmp_path):
@@ -74,3 +79,14 @@ def test_preflight_refuses_non_gpt56_runtime_routing(tmp_path):
         assert "GPT-5.6" in str(error)
     else:
         raise AssertionError("non-GPT-5.6 routing must fail preflight")
+
+
+def test_preflight_is_directly_executable_from_the_repository_root():
+    completed = subprocess.run(  # noqa: S603
+        [sys.executable, str(ROOT / "scripts" / "preflight.py"), "--help"],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.returncode == 0, completed.stderr

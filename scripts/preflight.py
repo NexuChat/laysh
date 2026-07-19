@@ -9,9 +9,12 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 
-from server.settings import ALLOWED_RUNTIME_MODELS
-
 ROOT = Path(__file__).parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from server.settings import ALLOWED_RUNTIME_MODELS  # noqa: E402
+
 DEFAULT_REPORT = ROOT / "out" / "preflight.json"
 
 
