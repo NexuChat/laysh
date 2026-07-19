@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import json
+import secrets
 import unicodedata
 from collections.abc import Callable
 from pathlib import Path
 
-from fastapi import FastAPI, Header, HTTPException, Query, Response, status
+from fastapi import FastAPI, Header, HTTPException, Query, Request, Response, status
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -16,6 +17,7 @@ from server.codex_backend import CodexBackend, MockCodexBackend
 from server.codex_runtime import CodexExecutor
 from server.goldens import GOLDEN_FIXTURE_IDS, GOLDEN_ROOT, list_pinned_goldens, load_pinned_golden
 from server.jobs import TERMINAL_STATES, JobManager
+from server.ratelimit import GenerationLimiter
 from server.schemas import AskAccepted, AskRequest, PublicResult
 from server.settings import Settings
 
@@ -63,6 +65,18 @@ def create_app(
         evidence_job_timeout_seconds=settings.evidence_job_timeout_seconds,
         browser_verifier=browser_verifier,
         cache=verified_cache,
+        max_concurrent_jobs=settings.max_concurrent_jobs,
+        max_queued_jobs=settings.max_queued_jobs,
+    )
+    limiter_secret = (
+        settings.rate_limit_key_secret.encode()
+        if settings.rate_limit_key_secret
+        else secrets.token_bytes(32)
+    )
+    app.state.generation_limiter = GenerationLimiter(
+        secret=limiter_secret,
+        per_ip_per_hour=settings.ip_generations_per_hour,
+        global_per_day=settings.global_generations_per_day,
     )
 
     @app.get("/", response_class=HTMLResponse)
@@ -77,11 +91,20 @@ def create_app(
         )
 
     @app.post("/api/ask", response_model=AskAccepted, status_code=status.HTTP_202_ACCEPTED)
-    async def ask(request: AskRequest) -> AskAccepted:
-        question = unicodedata.normalize("NFKC", request.question).strip()
+    async def ask(payload: AskRequest, request: Request) -> AskAccepted:
+        question = unicodedata.normalize("NFKC", payload.question).strip()
         if not question:
             raise HTTPException(status_code=422, detail="question must not be blank")
-        record = app.state.jobs.start(question, request.locale)
+        if not app.state.jobs.has_capacity():
+            record = app.state.jobs.start_capacity_fallback(payload.locale, "queue_full")
+        else:
+            client_ip = request.client.host if request.client else "unknown"
+            limit_reason = app.state.generation_limiter.acquire(client_ip)
+            record = (
+                app.state.jobs.start_capacity_fallback(payload.locale, limit_reason)
+                if limit_reason
+                else app.state.jobs.start(question, payload.locale)
+            )
         return AskAccepted(
             job_id=record.job_id,
             stream_url=f"/api/jobs/{record.job_id}/events",
