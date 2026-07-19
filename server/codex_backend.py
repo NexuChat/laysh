@@ -14,6 +14,13 @@ from server.settings import Settings
 ROOT = Path(__file__).parents[1]
 PROMPT_DIR = Path(__file__).parent / "prompts"
 SCHEMA_DIR = Path(__file__).parent / "schemas"
+CODEX_OUTPUT_SCHEMA_BY_STAGE = {
+    "understand": SCHEMA_DIR / "understand.schema.json",
+    "generate": SCHEMA_DIR / "module.schema.json",
+    "heal": SCHEMA_DIR / "module.schema.json",
+    "qa": SCHEMA_DIR / "qa.schema.json",
+}
+CODEX_OUTPUT_SCHEMAS = tuple(sorted(set(CODEX_OUTPUT_SCHEMA_BY_STAGE.values())))
 
 
 @dataclass(frozen=True, slots=True)
@@ -57,7 +64,7 @@ class CodexBackend:
                 "understand.md",
                 {"question": question, "locale": locale},
             ),
-            schema_path=SCHEMA_DIR / "understand.schema.json",
+            schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["understand"],
             model=self.settings.understand_model,
             effort="low",
             **self._execution_policy(runtime_context),
@@ -73,7 +80,7 @@ class CodexBackend:
         del scenario
         return await self.executor.execute_stage(
             prompt=self._render_prompt("generate_module.md", understanding),
-            schema_path=SCHEMA_DIR / "module.schema.json",
+            schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["generate"],
             model=self.settings.generate_model,
             effort="medium",
             **self._execution_policy(runtime_context),
@@ -98,7 +105,7 @@ class CodexBackend:
                     "attempt": attempt,
                 },
             ),
-            schema_path=SCHEMA_DIR / "module.schema.json",
+            schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["heal"],
             model=self.settings.heal_model,
             effort="high" if attempt == 2 else "medium",
             **self._execution_policy(runtime_context),
@@ -116,7 +123,7 @@ class CodexBackend:
                 "qa.md",
                 {"module_output": module_output, "understanding": understanding},
             ),
-            schema_path=SCHEMA_DIR / "qa.schema.json",
+            schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["qa"],
             model=self.settings.qa_model,
             effort="medium",
             **self._execution_policy(runtime_context),
