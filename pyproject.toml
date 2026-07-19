@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "laysh"
-version = "0.1.0"
+version = "1.0.0"
 description = "Ask why. Play the answer."
 requires-python = ">=3.12,<3.13"
 dependencies = [
@@ -54,4 +54,3 @@ ignore = ["S101"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["S101", "S603", "S607"]
-
