@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "captured_at_utc": "2026-07-19T11:22:10Z",
+  "gate": "G4",
+  "passed": true,
+  "mock": {
+    "success": true,
+    "answer_only": true,
+    "unsafe_redirect": true,
+    "generation_failed": true,
+    "runtime_error": true,
+    "backend_down": true,
+    "cancelled": true,
+    "queued": true,
+    "reconnecting": true,
+    "still_testing": true
+  },
+  "live": {
+    "job_count": 1,
+    "public_ephemeral": true,
+    "answer_before_result": true,
+    "status": "complete",
+    "effective_model": "gpt-5.6-sol",
+    "check_count": 27,
+    "pipeline_elapsed_seconds": 89,
+    "heal_count": 0
+  },
+  "viewports": [
+    "390x844",
+    "1440x900"
+  ],
+  "accessibility": {
+    "automated_passed": true,
+    "manual_limits_recorded": true,
+    "conformance_claimed": false
+  }
+}
