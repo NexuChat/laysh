@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://laysh.local/schemas/understand-1.0.json",
+  "title": "Laysh understanding output v1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "safe", "unsafe_category", "simulatable", "reason_code", "lang",
+    "canonical_intent", "domain", "title", "tldr", "key_formula",
+    "learning_objective", "primary_parameter", "secondary_parameter",
+    "prediction", "misconception", "explanation_prompt", "transfer_prompt",
+    "module_spec", "checks", "suggestions"
+  ],
+  "properties": {
+    "safe": {"type": "boolean"},
+    "unsafe_category": {
+      "type": ["string", "null"],
+      "enum": [null, "sexual_minors", "self_harm", "graphic_violence", "hate_harassment", "wrongdoing", "personal_data", "medical"]
+    },
+    "simulatable": {"type": "boolean"},
+    "reason_code": {"type": "string", "pattern": "^[a-z0-9_]+$", "maxLength": 64},
+    "lang": {"type": "string", "enum": ["ar", "en"]},
+    "canonical_intent": {"type": "string", "pattern": "^[a-z0-9_]+$", "maxLength": 100},
+    "domain": {"type": "string", "pattern": "^[a-z0-9_]+$", "maxLength": 64},
+    "title": {"type": "string", "maxLength": 120},
+    "tldr": {"type": "string", "maxLength": 420},
+    "key_formula": {"type": ["string", "null"], "maxLength": 120},
+    "learning_objective": {"type": "string", "maxLength": 220},
+    "primary_parameter": {"$ref": "#/$defs/nullableParameter"},
+    "secondary_parameter": {"$ref": "#/$defs/nullableParameter"},
+    "prediction": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["prompt", "choices"],
+          "properties": {
+            "prompt": {"type": "string", "maxLength": 180},
+            "choices": {"type": "array", "minItems": 2, "maxItems": 3, "uniqueItems": true, "items": {"type": "string", "maxLength": 80}}
+          }
+        }
+      ]
+    },
+    "misconception": {"type": ["string", "null"], "maxLength": 180},
+    "explanation_prompt": {"type": ["string", "null"], "maxLength": 180},
+    "transfer_prompt": {"type": ["string", "null"], "maxLength": 180},
+    "module_spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outputs"],
+      "properties": {
+        "outputs": {"type": "array", "maxItems": 8, "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}}
+      }
+    },
+    "checks": {"type": "array", "maxItems": 12, "items": {"oneOf": [{"$ref": "#/$defs/numericCheck"}, {"$ref": "#/$defs/relationCheck"}]}},
+    "suggestions": {"type": "array", "maxItems": 3, "items": {"type": "string", "maxLength": 160}}
+  },
+  "$defs": {
+    "parameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "unit", "min", "max", "default", "step"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+        "label": {"type": "string", "maxLength": 80},
+        "unit": {"type": "string", "maxLength": 24},
+        "min": {"type": "number"},
+        "max": {"type": "number"},
+        "default": {"type": "number"},
+        "step": {"type": "number", "exclusiveMinimum": 0}
+      }
+    },
+    "nullableParameter": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/parameter"}]},
+    "numericCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "inputs", "output", "expected", "tolerance", "unit"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+        "kind": {"const": "numeric"},
+        "inputs": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "number"}},
+        "output": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+        "expected": {"type": "number"},
+        "tolerance": {"type": "number", "minimum": 0},
+        "unit": {"type": "string", "maxLength": 24}
+      }
+    },
+    "relationCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "left_inputs", "right_inputs", "output", "relation", "minimum_ratio"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+        "kind": {"const": "relation"},
+        "left_inputs": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "number"}},
+        "right_inputs": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "number"}},
+        "output": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+        "relation": {"enum": ["right_gt_left", "right_lt_left", "right_eq_left"]},
+        "minimum_ratio": {"type": "number", "exclusiveMinimum": 0}
+      }
+    }
+  }
+}
+
