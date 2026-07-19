@@ -15,7 +15,15 @@ from server.schemas import (
 )
 
 TERMINAL_STATES = frozenset(
-    {"complete", "answer_only", "rejected", "failed", "cancelled", "timed_out"}
+    {
+        "complete",
+        "answer_only",
+        "rejected",
+        "failed",
+        "cancelled",
+        "timed_out",
+        "qa_inconclusive",
+    }
 )
 
 ALLOWED_TRANSITIONS = {
@@ -25,7 +33,15 @@ ALLOWED_TRANSITIONS = {
     "answered": {"cache_lookup", "answer_only", "cancelled", "timed_out", "failed"},
     "cache_lookup": {"generating", "cancelled", "timed_out", "failed"},
     "generating": {"verifying", "cancelled", "timed_out", "failed"},
-    "verifying": {"healing", "browser_check", "answer_only", "cancelled", "timed_out", "failed"},
+    "verifying": {
+        "healing",
+        "browser_check",
+        "answer_only",
+        "qa_inconclusive",
+        "cancelled",
+        "timed_out",
+        "failed",
+    },
     "healing": {"verifying", "cancelled", "timed_out", "failed"},
     "browser_check": {"complete", "answer_only", "cancelled", "timed_out", "failed"},
 }
@@ -181,7 +197,7 @@ class JobManager:
         if record.status in TERMINAL_STATES:
             return
         self.transition(record, status, reason_code)
-        if status in {"cancelled", "failed", "timed_out", "rejected"}:
+        if status in {"cancelled", "failed", "timed_out", "rejected", "qa_inconclusive"}:
             self.emit(record, "terminal", {"status": status, "reason_code": reason_code})
 
     async def cancel(self, record: JobRecord) -> PublicResult:

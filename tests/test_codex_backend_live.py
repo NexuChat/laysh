@@ -97,7 +97,16 @@ async def test_generate_heal_and_qa_route_only_to_sol_with_bounded_effort(monkey
         2,
         runtime_context=context,
     )
-    await backend.qa(VALID_MODULE_OUTPUT, VALID_UNDERSTANDING, runtime_context=context)
+    await backend.qa(
+        VALID_MODULE_OUTPUT,
+        VALID_UNDERSTANDING,
+        {
+            "passed": True,
+            "check_count": 12,
+            "gate_names": ["interface", "runtime_init", "security"],
+        },
+        runtime_context=context,
+    )
 
     assert [call["model"] for call in executor.calls] == ["gpt-5.6-sol"] * 4
     assert [call["effort"] for call in executor.calls] == ["medium", "medium", "high", "medium"]
@@ -109,8 +118,45 @@ async def test_generate_heal_and_qa_route_only_to_sol_with_bounded_effort(monkey
     ]
     assert all(call["public"] is False for call in executor.calls)
     assert all(call["evidence_fixture_id"] == "moon_phases_ar" for call in executor.calls)
+    assert executor.calls[-1]["timeout_seconds"] == 120
     assert "full HTML" in executor.calls[0]["prompt"]
     assert "exact gate failures" in executor.calls[1]["prompt"]
+
+
+@pytest.mark.asyncio
+async def test_qa_input_is_slim_bounded_and_review_only():
+    from server.codex_backend import CodexBackend, RuntimeContext
+    from server.settings import Settings
+
+    executor = RecordingExecutor()
+    backend = CodexBackend(executor=executor, settings=Settings())
+    gate_outcome = {
+        "passed": True,
+        "check_count": 12,
+        "gate_names": ["interface", "runtime_init", "security"],
+    }
+
+    await backend.qa(
+        VALID_MODULE_OUTPUT,
+        VALID_UNDERSTANDING,
+        gate_outcome,
+        runtime_context=RuntimeContext(public=True),
+    )
+
+    call = executor.calls[0]
+    serialized = call["prompt"].split("QA_INPUT_JSON:\n", 1)[1].strip()
+    payload = json.loads(serialized)
+    assert set(payload) == {"module_source", "module_spec", "fixtures", "gate_outcome"}
+    assert payload["module_source"] == VALID_MODULE_OUTPUT["module_js"]
+    assert payload["module_spec"] == VALID_UNDERSTANDING["module_spec"]
+    assert payload["fixtures"] == VALID_UNDERSTANDING["checks"]
+    assert payload["gate_outcome"] == gate_outcome
+    assert VALID_UNDERSTANDING["title"] not in call["prompt"]
+    assert "full assembled HTML" not in call["prompt"]
+    assert "immediate" in call["prompt"]
+    assert "at most 3" in call["prompt"]
+    assert "Do not rewrite" in call["prompt"]
+    assert call["timeout_seconds"] == 45
 
 
 def test_generate_prompt_states_the_exact_runtime_interface_contract():

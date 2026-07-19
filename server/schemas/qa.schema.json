@@ -9,15 +9,9 @@
     "approved": {"type": "boolean"},
     "issues": {
       "type": "array",
-      "maxItems": 8,
+      "maxItems": 3,
       "items": {"type": "string", "maxLength": 180}
     },
-    "replacement_module_js": {
-      "type": ["string", "null"],
-      "anyOf": [
-        {"type": "string", "maxLength": 40960},
-        {"type": "null"}
-      ]
-    }
+    "replacement_module_js": {"type": "null"}
   }
 }
