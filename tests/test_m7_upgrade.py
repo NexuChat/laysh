@@ -51,8 +51,11 @@ def test_result_and_portable_shell_offer_projector_mode(client):
 
     assert 'id="projector-result"' in html
     assert 'id="projector"' in shell_html
+    assert 'id="answer-detail"' in shell_html
     assert "requestFullscreen" in shell_js
     assert "projector" in shell_js
+    assert 'matchMedia("(max-width: 480px)")' in shell_js
+    assert 'addEventListener("change", syncCompactAnswer)' in shell_js
     shell_css = (ROOT / "sim_shell" / "shell.css").read_text(encoding="utf-8")
     assert "grid-template-areas" in shell_css
     assert '"intro observe"' in shell_css

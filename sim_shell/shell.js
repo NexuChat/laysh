@@ -13,6 +13,7 @@
         replay: "إعادة العرض",
         projector: "وضع العرض",
         exitProjector: "إنهاء العرض",
+        answerDetails: "اقرأ الجواب الكامل",
         runtimeTitle: "تعذّر تشغيل المحاكاة",
         runtimeCopy: "يمكنك الاحتفاظ بالجواب والمحاولة مرة أخرى من Laysh.",
       }
@@ -25,6 +26,7 @@
         replay: "Replay",
         projector: "Projector mode",
         exitProjector: "Exit projector",
+        answerDetails: "Read the full answer",
         runtimeTitle: "The simulation could not run",
         runtimeCopy: "Keep the answer and try again from Laysh.",
       };
@@ -35,6 +37,7 @@
   const output = byId("primary-output");
   const description = byId("state-description");
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const compactLayout = matchMedia("(max-width: 480px)");
   let simulation;
   let frameCount = 0;
   let idleFrameId = 0;
@@ -44,6 +47,7 @@
   byId("lesson-label").textContent = labels.lesson;
   byId("lesson-title").textContent = lesson.title;
   byId("answer").textContent = lesson.tldr;
+  byId("answer-summary").textContent = labels.answerDetails;
   byId("formula").textContent = lesson.key_formula || "";
   byId("prediction-title").textContent = labels.predict;
   byId("prediction-prompt").textContent = lesson.prediction.prompt;
@@ -57,6 +61,11 @@
   byId("projector").textContent = labels.projector;
   byId("runtime-error-title").textContent = labels.runtimeTitle;
   byId("runtime-error-copy").textContent = labels.runtimeCopy;
+  function syncCompactAnswer() {
+    if (compactLayout.matches) byId("answer-detail").open = false;
+  }
+  syncCompactAnswer();
+  compactLayout.addEventListener("change", syncCompactAnswer);
 
   const parameter = lesson.primary_parameter;
   byId("primary-label").textContent = parameter.label;
