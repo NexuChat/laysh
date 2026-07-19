@@ -1,30 +1,45 @@
 {
   "schema_version": "1.0",
-  "captured_at_utc": "2026-07-19T09:35:24.389432+00:00",
+  "captured_at_utc": "2026-07-19T09:52:55.702137+00:00",
   "fixture_id": "moon_phases_ar",
   "runtime_family": "GPT-5.6",
-  "job_id": "job_78cf1a71a3dba3c6",
-  "status": "failed",
-  "total_elapsed_ms": 2166,
-  "failure": {
-    "stage": "understand",
-    "model": "gpt-5.6-luna",
-    "validated_stage_output": false,
-    "local_evidence_thread_id": "019f79ba-f197-7f20-a063-abbd6b395345",
-    "local_task_duration_ms": 1244,
-    "assistant_message_observed": false,
-    "model_token_usage_observed": false,
-    "builder_diagnostic_detail_captured": false,
-    "diagnosis": "retry ended before validated stage output; Codex error event text was emitted on JSONL stdout rather than stderr and was not retained"
-  },
-  "stages": [],
+  "job_id": "job_9cbd43a699d96ca5",
+  "status": "timed_out",
+  "total_elapsed_ms": 180095,
+  "stages": [
+    {
+      "stage": "understand",
+      "model": "gpt-5.6-luna",
+      "elapsed_ms": 20805,
+      "thread_id": "019f79c8-4561-7c62-9883-75a23e4062e8",
+      "evidence_mode": true
+    },
+    {
+      "stage": "generate",
+      "model": "gpt-5.6-sol",
+      "elapsed_ms": 83525,
+      "thread_id": "019f79c8-96a6-7650-a7ae-5b7e4dc97d6a",
+      "evidence_mode": true
+    }
+  ],
   "state_history": [
     "queued",
     "filtering",
     "understanding",
-    "failed"
+    "answered",
+    "cache_lookup",
+    "generating",
+    "verifying",
+    "healing",
+    "timed_out"
   ],
   "public_event_types": [
+    "answer",
+    "stage",
+    "stage",
+    "stage",
+    "stage",
+    "stage",
     "terminal"
   ],
   "simulation": null,
