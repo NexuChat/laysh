@@ -112,9 +112,16 @@ def validate_strict_output_schema(schema: Any) -> list[str]:
 class CodexRuntimeError(RuntimeError):
     """A sanitized runtime failure safe to use in internal stage control flow."""
 
-    def __init__(self, code: str, *, builder_detail: str | None = None):
+    def __init__(
+        self,
+        code: str,
+        *,
+        builder_detail: str | None = None,
+        safe_detail: dict[str, str | int | None] | None = None,
+    ):
         self.code = code
         self.builder_detail = builder_detail
+        self.safe_detail = safe_detail or {"kind": "runtime_error"}
         super().__init__(code)
 
 
@@ -128,6 +135,8 @@ class StageExecution:
     thread_id: str | None
     model: str
     elapsed_ms: int
+    attempted_models: tuple[str, ...] = ()
+    prior_failure_codes: tuple[str, ...] = ()
 
 
 class CodexExecutor:
@@ -199,6 +208,40 @@ class CodexExecutor:
         if stdout_text and stderr_text:
             return f"[stdout]\n{stdout_text}\n[stderr]\n{stderr_text}"[:20_000]
         return (stdout_text or stderr_text)[:20_000] or None
+
+    @staticmethod
+    def _safe_upstream_detail(stdout: bytes, returncode: int | None) -> dict[str, str | int | None]:
+        """Extract only non-content upstream classification from Codex JSONL."""
+
+        def decoded(value: Any) -> Any:
+            if not isinstance(value, str):
+                return value
+            try:
+                return json.loads(value)
+            except json.JSONDecodeError:
+                return None
+
+        for raw_line in stdout.decode("utf-8", errors="replace").splitlines():
+            try:
+                event = json.loads(raw_line)
+            except json.JSONDecodeError:
+                continue
+            for candidate in (decoded(event.get("message")), event.get("error")):
+                if not isinstance(candidate, dict):
+                    continue
+                nested = candidate.get("error")
+                error = nested if isinstance(nested, dict) else candidate
+                error_type = error.get("type")
+                error_code = error.get("code")
+                status = candidate.get("status", error.get("status"))
+                if any(value is not None for value in (error_type, error_code, status)):
+                    return {
+                        "kind": "upstream_error",
+                        "type": error_type if isinstance(error_type, str) else None,
+                        "code": error_code if isinstance(error_code, str) else None,
+                        "status": status if isinstance(status, int) else None,
+                    }
+        return {"kind": "process_exit", "returncode": returncode}
 
     @staticmethod
     def _parse_output(stdout: bytes, schema_path: Path) -> tuple[dict[str, Any], str | None]:
@@ -314,10 +357,16 @@ class CodexExecutor:
                 raise
             if process.returncode != 0:
                 detail = self._builder_stream_detail(stdout, stderr) if not public else None
-                raise CodexRuntimeError("nonzero_exit", builder_detail=detail)
+                raise CodexRuntimeError(
+                    "nonzero_exit",
+                    builder_detail=detail,
+                    safe_detail=self._safe_upstream_detail(stdout, process.returncode),
+                )
         try:
             data, thread_id = self._parse_output(stdout, schema_path)
         except CodexRuntimeError as error:
+            if error.safe_detail == {"kind": "runtime_error"}:
+                error.safe_detail = self._safe_upstream_detail(stdout, process.returncode)
             if not public:
                 error.builder_detail = self._builder_stream_detail(stdout, stderr)
             else:

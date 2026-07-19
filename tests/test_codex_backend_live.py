@@ -39,6 +39,24 @@ class RecordingExecutor:
         )
 
 
+class FailingLunaExecutor(RecordingExecutor):
+    async def execute_stage(self, **kwargs):
+        from server.codex_runtime import CodexRuntimeError
+
+        self.calls.append(kwargs)
+        if kwargs["model"] == "gpt-5.6-luna":
+            raise CodexRuntimeError(
+                "nonzero_exit",
+                safe_detail={"kind": "upstream_error", "code": "service_unavailable"},
+            )
+        return StageExecution(
+            data=VALID_UNDERSTANDING,
+            thread_id="fallback-thread-456",
+            model=kwargs["model"],
+            elapsed_ms=23,
+        )
+
+
 @pytest.mark.asyncio
 async def test_understand_is_one_luna_call_with_closed_schema_and_zero_echo_prompt():
     from server.codex_backend import CodexBackend, RuntimeContext
@@ -62,6 +80,34 @@ async def test_understand_is_one_luna_call_with_closed_schema_and_zero_echo_prom
     assert "Never echo unsafe input" in call["prompt"]
     assert "ليش القمر يتغير شكله؟" in call["prompt"]
     assert call["public"] is True
+
+
+@pytest.mark.asyncio
+async def test_public_understand_retries_configured_sol_fallback_after_luna_nonzero(caplog):
+    from server.codex_backend import CodexBackend, RuntimeContext
+    from server.settings import Settings
+
+    executor = FailingLunaExecutor()
+    backend = CodexBackend(executor=executor, settings=Settings())
+    result = await backend.understand(
+        "ليش تزيد السرعة مسافة التوقف؟",
+        "ar",
+        runtime_context=RuntimeContext(public=True),
+    )
+
+    assert [call["model"] for call in executor.calls] == [
+        "gpt-5.6-luna",
+        "gpt-5.6-sol",
+    ]
+    assert all(call["public"] is True for call in executor.calls)
+    assert all(call["effort"] == "low" for call in executor.calls)
+    assert executor.calls[0]["prompt"] == executor.calls[1]["prompt"]
+    assert result.model == "gpt-5.6-sol"
+    assert result.attempted_models == ("gpt-5.6-luna", "gpt-5.6-sol")
+    assert result.prior_failure_codes == ("nonzero_exit",)
+    assert "ليش تزيد" not in caplog.text
+    assert "gpt-5.6-luna" in caplog.text
+    assert "nonzero_exit" in caplog.text
 
 
 @pytest.mark.asyncio
@@ -198,6 +244,24 @@ def test_generate_prompt_states_the_exact_runtime_interface_contract():
     assert "`version` must be the number `1`" in prompt
     assert "`init(options)` receives `canvas`, `context`" in prompt
     assert "Do not rename `context` to `ctx`" in prompt
+
+
+def test_generate_prompt_is_bounded_without_reducing_the_visual_contract():
+    from server.codex_backend import CodexBackend
+
+    prompt = CodexBackend._render_prompt("generate_module.md", VALID_UNDERSTANDING)
+
+    assert len(prompt) <= 4_800
+    for requirement in (
+        "three visible depth layers",
+        "physical light",
+        "idle motion",
+        "reactive feedback",
+        "readout chip",
+        "same-value redraw",
+        "curved terminator",
+    ):
+        assert requirement in prompt
 
 
 def test_understand_prompt_requires_formula_derived_consistent_fixtures():

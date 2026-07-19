@@ -330,6 +330,46 @@ async def test_protocol_failures_are_sanitized(stdout, returncode, code):
 
 
 @pytest.mark.asyncio
+async def test_public_nonzero_extracts_only_allowlisted_upstream_classification():
+    from server.codex_runtime import CodexRuntimeError
+
+    stdout = json.dumps(
+        {
+            "type": "error",
+            "message": json.dumps(
+                {
+                    "type": "error",
+                    "error": {
+                        "type": "server_error",
+                        "code": "service_unavailable",
+                        "message": "PRIVATE-UPSTREAM-MESSAGE",
+                    },
+                    "status": 503,
+                }
+            ),
+        }
+    )
+    process = FakeProcess(stdout=stdout, stderr="PRIVATE-STDERR", returncode=1)
+    executor = executor_with_process(process, {})
+
+    with pytest.raises(CodexRuntimeError, match="nonzero_exit") as captured:
+        await executor.execute_stage(
+            prompt="PRIVATE-PROMPT",
+            schema_path=Path("server/schemas/module.schema.json").resolve(),
+            model="gpt-5.6-sol",
+            effort="medium",
+        )
+
+    assert captured.value.safe_detail == {
+        "kind": "upstream_error",
+        "type": "server_error",
+        "code": "service_unavailable",
+        "status": 503,
+    }
+    assert "PRIVATE" not in json.dumps(captured.value.safe_detail)
+
+
+@pytest.mark.asyncio
 async def test_curated_evidence_failure_retains_builder_detail_outside_public_message():
     from server.codex_runtime import CodexRuntimeError
 

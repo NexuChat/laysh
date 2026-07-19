@@ -154,6 +154,7 @@ textarea[aria-invalid="true"] { border-color: var(--danger); }
 .formula { display: inline-block; padding: .45rem .7rem; border: 1px solid rgb(88 183 255 / 22%); border-radius: .65rem; background: rgb(2 9 15 / 70%); color: #c9e8ff; unicode-bidi: isolate; font-family: serif; }
 .agent-heading { display: flex; align-items: start; justify-content: space-between; gap: 1rem; }
 .agent-heading h2 { margin-block-end: .5rem; font-size: clamp(1.8rem, 3vw, 2.8rem); line-height: 1.25; }
+.build-expectation { margin: .35rem 0 .2rem; color: var(--slate); line-height: 1.8; }
 .elapsed { direction: ltr; unicode-bidi: isolate; font-variant-numeric: tabular-nums; padding: .45rem .65rem; border: 1px solid rgb(88 183 255 / 28%); border-radius: .7rem; background: rgb(2 9 15 / 70%); color: #bfe4ff; }
 .connection-state { display: flex; align-items: center; gap: .55rem; min-height: 44px; margin-block: 1rem; padding: .7rem .85rem; border: 1px solid rgb(88 183 255 / 18%); border-radius: .8rem; background: rgb(88 183 255 / 7%); color: #c1d5e3; }
 .connection-state[data-mode="reconnecting"], .connection-state[data-mode="still-testing"] { border-color: rgb(246 169 74 / 40%); background: rgb(246 169 74 / 8%); color: #ffd59c; }
