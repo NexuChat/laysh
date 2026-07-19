@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0",
+  "captured_at_utc": "2026-07-19T09:28:15.635313+00:00",
+  "fixture_id": "moon_phases_ar",
+  "runtime_family": "GPT-5.6",
+  "job_id": "job_a7b63f964888c61e",
+  "status": "failed",
+  "total_elapsed_ms": 2440,
+  "failure": {
+    "stage": "understand",
+    "model": "gpt-5.6-luna",
+    "validated_stage_output": false,
+    "local_evidence_thread_id": "019f79b4-65b8-7981-b05e-5fa28d11d02a",
+    "assistant_message_observed": false,
+    "model_token_usage_observed": false,
+    "upstream_detail_retained": false,
+    "diagnosis": "subprocess ended before a validated stage result; likely structured-output contract rejection, exact upstream detail unavailable by sanitization policy"
+  },
+  "stages": [],
+  "state_history": [
+    "queued",
+    "filtering",
+    "understanding",
+    "failed"
+  ],
+  "public_event_types": [
+    "terminal"
+  ],
+  "simulation": null,
+  "fallback_reason_code": null,
+  "artifact_sha256": null,
+  "browser": {
+    "ready": false,
+    "externalRequests": null,
+    "error_code": "artifact_unavailable"
+  },
+  "gate_g2_passed": false
+}
