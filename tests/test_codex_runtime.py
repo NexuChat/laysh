@@ -67,15 +67,92 @@ def executor_with_process(process, captured, **overrides):
     )
 
 
-def test_every_codex_output_schema_avoids_upstream_forbidden_keywords():
+def test_every_codex_output_schema_matches_strict_structured_output_subset():
     from server.codex_backend import CODEX_OUTPUT_SCHEMAS
-    from server.codex_runtime import find_forbidden_schema_keywords
+    from server.codex_runtime import validate_strict_output_schema
 
     violations = {
-        path.name: find_forbidden_schema_keywords(json.loads(path.read_text(encoding="utf-8")))
+        path.name: validate_strict_output_schema(json.loads(path.read_text(encoding="utf-8")))
         for path in CODEX_OUTPUT_SCHEMAS
     }
     assert violations == {path.name: [] for path in CODEX_OUTPUT_SCHEMAS}
+
+
+@pytest.mark.parametrize(
+    ("schema", "violation"),
+    [
+        (
+            {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {"value": {"enum": ["x"]}},
+                "required": ["value"],
+            },
+            "$.properties.value:missing_type",
+        ),
+        (
+            {
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+            "$:object_must_set_additionalProperties_false",
+        ),
+        (
+            {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {"value": {"type": "string"}},
+                "required": [],
+            },
+            "$:required_must_list_every_property",
+        ),
+        (
+            {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {"value": {"type": "string", "format": "uri"}},
+                "required": ["value"],
+            },
+            "$.properties.value:forbidden_keyword:format",
+        ),
+        (
+            {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "value": {
+                        "type": ["string", "null"],
+                        "anyOf": [{"type": "string"}, {"enum": [None]}],
+                    }
+                },
+                "required": ["value"],
+            },
+            "$.properties.value.anyOf[1]:missing_type",
+        ),
+        (
+            {
+                "type": "array",
+                "items": {"enum": ["x", "y"]},
+            },
+            "$.items:missing_type",
+        ),
+        (
+            {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {},
+                "required": [],
+                "$defs": {"choice": {"enum": ["x"]}},
+            },
+            "$.$defs.choice:missing_type",
+        ),
+    ],
+)
+def test_strict_output_schema_guard_reports_every_restricted_shape(schema, violation):
+    from server.codex_runtime import validate_strict_output_schema
+
+    assert violation in validate_strict_output_schema(schema)
 
 
 @pytest.mark.asyncio
@@ -246,6 +323,59 @@ async def test_curated_evidence_failure_retains_builder_detail_outside_public_me
         )
     assert str(captured.value) == "nonzero_exit"
     assert captured.value.builder_detail == "CURATED-UPSTREAM-DETAIL"
+
+
+@pytest.mark.asyncio
+async def test_curated_nonzero_failure_captures_stdout_error_items_and_stderr():
+    from server.codex_runtime import CodexRuntimeError
+
+    stdout = "\n".join(
+        [
+            json.dumps({"type": "error", "message": "UPSTREAM-SCHEMA-ERROR"}),
+            json.dumps(
+                {
+                    "type": "turn.failed",
+                    "error": {"message": "TURN-FAILED-DETAIL"},
+                }
+            ),
+        ]
+    )
+    process = FakeProcess(stdout=stdout, stderr="STDERR-DETAIL", returncode=1)
+    executor = executor_with_process(process, {}, record_runtime=True)
+
+    with pytest.raises(CodexRuntimeError, match="nonzero_exit") as captured:
+        await executor.execute_stage(
+            prompt="repository-owned fixture",
+            schema_path=Path("server/schemas/module.schema.json").resolve(),
+            model="gpt-5.6-sol",
+            effort="medium",
+            public=False,
+            evidence_fixture_id="moon_phases_ar",
+        )
+
+    assert "UPSTREAM-SCHEMA-ERROR" in captured.value.builder_detail
+    assert "TURN-FAILED-DETAIL" in captured.value.builder_detail
+    assert "STDERR-DETAIL" in captured.value.builder_detail
+
+
+@pytest.mark.asyncio
+async def test_zero_exit_stdout_error_item_is_recognized_and_publicly_sanitized():
+    from server.codex_runtime import CodexRuntimeError
+
+    stdout = json.dumps({"type": "error", "message": "PRIVATE-UPSTREAM-DETAIL"})
+    process = FakeProcess(stdout=stdout)
+    executor = executor_with_process(process, {})
+
+    with pytest.raises(CodexRuntimeError, match="upstream_error") as captured:
+        await executor.execute_stage(
+            prompt="public question",
+            schema_path=Path("server/schemas/module.schema.json").resolve(),
+            model="gpt-5.6-sol",
+            effort="medium",
+        )
+
+    assert str(captured.value) == "upstream_error"
+    assert captured.value.builder_detail is None
 
 
 @pytest.mark.asyncio

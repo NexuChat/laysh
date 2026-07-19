@@ -24,6 +24,11 @@ const canvas = { width: 720, height: 400 };
 const sandbox = { window: {}, Math, Number, Object, Array, JSON };
 vm.createContext(sandbox, { codeGeneration: { strings: false, wasm: false } });
 
+function namedInputs(entries) {
+  if (!Array.isArray(entries)) return entries;
+  return Object.fromEntries(entries.map(({ name, value }) => [name, value]));
+}
+
 try {
   new vm.Script(source, { filename: "candidate.js" }).runInContext(sandbox, { timeout: 500 });
   const simulation = sandbox.window.LayshSimulation;
@@ -46,7 +51,9 @@ try {
 
   let fixtureCount = 0;
   for (const fixture of understanding.checks) {
-    sandbox.inputs = fixture.kind === "numeric" ? fixture.inputs : fixture.left_inputs;
+    sandbox.inputs = namedInputs(
+      fixture.kind === "numeric" ? fixture.inputs : fixture.left_inputs,
+    );
     const left = new vm.Script("window.LayshSimulation.test(inputs)")
       .runInContext(sandbox, { timeout: 250 });
     const leftValue = left[fixture.output];
@@ -54,7 +61,7 @@ try {
     if (fixture.kind === "numeric") {
       if (Math.abs(leftValue - fixture.expected) > fixture.tolerance) throw new Error("numeric fixture");
     } else {
-      sandbox.inputs = fixture.right_inputs;
+      sandbox.inputs = namedInputs(fixture.right_inputs);
       const right = new vm.Script("window.LayshSimulation.test(inputs)")
         .runInContext(sandbox, { timeout: 250 });
       const rightValue = right[fixture.output];
@@ -71,4 +78,3 @@ try {
   process.stderr.write(`verification failed: ${error.message}\n`);
   process.exitCode = 1;
 }
-

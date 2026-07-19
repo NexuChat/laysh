@@ -29,7 +29,7 @@ ENV_ALLOWLIST = (
     "NO_PROXY",
 )
 FORBIDDEN_OUTPUT_SCHEMA_KEYWORDS = frozenset(
-    {"oneOf", "if", "then", "patternProperties", "unevaluatedProperties"}
+    {"oneOf", "if", "then", "patternProperties", "unevaluatedProperties", "format"}
 )
 
 
@@ -47,6 +47,56 @@ def find_forbidden_schema_keywords(value: Any) -> list[str]:
 
     walk(value)
     return sorted(found)
+
+
+def validate_strict_output_schema(schema: Any) -> list[str]:
+    """Validate the restricted JSON Schema subset accepted by Codex structured output."""
+
+    violations: list[str] = []
+
+    def walk(node: Any, path: str) -> None:
+        if not isinstance(node, dict):
+            violations.append(f"{path}:subschema_must_be_object")
+            return
+
+        for keyword in sorted(FORBIDDEN_OUTPUT_SCHEMA_KEYWORDS.intersection(node)):
+            violations.append(f"{path}:forbidden_keyword:{keyword}")
+        if "type" not in node:
+            violations.append(f"{path}:missing_type")
+
+        declared_type = node.get("type")
+        declared_types = (
+            set(declared_type) if isinstance(declared_type, list) else {declared_type}
+        )
+        properties = node.get("properties")
+        if "object" in declared_types and isinstance(properties, dict):
+            if node.get("additionalProperties") is not False:
+                violations.append(f"{path}:object_must_set_additionalProperties_false")
+            required = node.get("required")
+            if not isinstance(required, list) or set(required) != set(properties):
+                violations.append(f"{path}:required_must_list_every_property")
+        enum = node.get("enum")
+        if isinstance(enum, list) and any(isinstance(value, str) for value in enum):
+            if "string" not in declared_types:
+                violations.append(f"{path}:string_enum_must_have_string_type")
+
+        if isinstance(properties, dict):
+            for name, child in properties.items():
+                walk(child, f"{path}.properties.{name}")
+        definitions = node.get("$defs")
+        if isinstance(definitions, dict):
+            for name, child in definitions.items():
+                walk(child, f"{path}.$defs.{name}")
+        for keyword in ("anyOf", "allOf"):
+            branches = node.get(keyword)
+            if isinstance(branches, list):
+                for index, child in enumerate(branches):
+                    walk(child, f"{path}.{keyword}[{index}]")
+        if "items" in node:
+            walk(node["items"], f"{path}.items")
+
+    walk(schema, "$")
+    return violations
 
 
 class CodexRuntimeError(RuntimeError):
@@ -127,6 +177,14 @@ class CodexExecutor:
             await process.wait()
 
     @staticmethod
+    def _builder_stream_detail(stdout: bytes, stderr: bytes) -> str | None:
+        stdout_text = stdout.decode("utf-8", errors="replace").strip()
+        stderr_text = stderr.decode("utf-8", errors="replace").strip()
+        if stdout_text and stderr_text:
+            return f"[stdout]\n{stdout_text}\n[stderr]\n{stderr_text}"[:20_000]
+        return (stdout_text or stderr_text)[:20_000] or None
+
+    @staticmethod
     def _parse_output(stdout: bytes, schema_path: Path) -> tuple[dict[str, Any], str | None]:
         thread_id = None
         final_text = None
@@ -137,6 +195,8 @@ class CodexExecutor:
                 event = json.loads(raw_line)
             except json.JSONDecodeError as error:
                 raise CodexRuntimeError("malformed_jsonl") from error
+            if event.get("type") in {"error", "turn.failed"}:
+                raise CodexRuntimeError("upstream_error", builder_detail=raw_line[:20_000])
             if event.get("type") == "thread.started":
                 candidate = event.get("thread_id")
                 thread_id = candidate if isinstance(candidate, str) else None
@@ -177,6 +237,9 @@ class CodexExecutor:
             raise CodexPolicyError(
                 f"unsupported_output_schema_keyword:{forbidden_keywords[0]}"
             )
+        strict_violations = validate_strict_output_schema(output_schema)
+        if strict_violations:
+            raise CodexPolicyError(f"incompatible_output_schema:{strict_violations[0]}")
         self._enforce_policy(
             model=model,
             effort=effort,
@@ -230,13 +293,15 @@ class CodexExecutor:
                 await self._terminate_process_group(process)
                 raise
             if process.returncode != 0:
-                detail = stderr.decode("utf-8", errors="replace")[:20_000] if not public else None
+                detail = self._builder_stream_detail(stdout, stderr) if not public else None
                 raise CodexRuntimeError("nonzero_exit", builder_detail=detail)
         try:
             data, thread_id = self._parse_output(stdout, schema_path)
         except CodexRuntimeError as error:
             if not public:
-                error.builder_detail = stderr.decode("utf-8", errors="replace")[:20_000]
+                error.builder_detail = self._builder_stream_detail(stdout, stderr)
+            else:
+                error.builder_detail = None
             raise
         return StageExecution(
             data=data,
