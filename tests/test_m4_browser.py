@@ -113,8 +113,8 @@ def test_g4_mock_journeys_accessibility_and_accepted_screenshots(tmp_path):
     assert evidence["responsive"]["reducedMotion"] is True
     assert evidence["consoleErrors"] == []
     assert evidence["networkFailures"] == []
-    assert (screenshots / "g4-mobile-390x844.png").stat().st_size > 20_000
+    assert (screenshots / "g4-result-mobile-390x844.png").stat().st_size > 20_000
     accepted = ROOT / "out" / "evidence" / "screens"
     assert (accepted / "g4-mobile-390x844.png").stat().st_size > 20_000
     assert (accepted / "g4-desktop-1440x900.png").stat().st_size > 20_000
-    assert (screenshots / "g4-desktop-1440x900.png").stat().st_size > 20_000
+    assert (screenshots / "g4-result-desktop-1440x900.png").stat().st_size > 20_000

@@ -6,6 +6,7 @@ import path from "node:path";
 
 const baseUrl = process.argv[2];
 const screenshotDirectory = path.resolve(process.argv[3]);
+const evidencePrefix = process.argv[4] || "g4";
 const chromePath = process.env.CHROME_BIN || "/usr/bin/google-chrome";
 const profilePath = fs.mkdtempSync(path.join(os.tmpdir(), "laysh-product-chrome-"));
 fs.mkdirSync(screenshotDirectory, { recursive: true });
@@ -174,7 +175,18 @@ try {
 
   await setViewport(390, 844, true);
   await navigate();
+  await capture(`${evidencePrefix}-landing-mobile-390x844.png`);
+  await waitFor("!document.querySelector('[data-golden-id=\"moon_phases\"] .golden-launch').disabled", 5000);
+  await evaluate("document.querySelector('[data-golden-id=\"moon_phases\"] .golden-launch').click()");
+  await waitFor("!document.querySelector('#result-view').hidden", 5000);
+  await waitFor("document.querySelector('#simulation-frame').src.includes('/api/sims/')", 5000);
+  await delay(300);
+  await capture(`${evidencePrefix}-golden-mobile-390x844.png`);
+  await navigate();
   const initialSubmit = await submit("success");
+  await waitFor("!document.querySelector('#build-view').hidden", 3000);
+  await delay(120);
+  await capture(`${evidencePrefix}-build-mobile-390x844.png`);
   await waitFor("!document.querySelector('#result-view').hidden", 20000);
   await waitFor("document.querySelector('#simulation-frame').src.includes('/api/sims/')", 5000);
   await delay(500);
@@ -191,10 +203,25 @@ try {
       receiptChecks: toNumber(document.querySelector('#check-count').textContent),
     };
   })()`);
-  await capture("g4-mobile-390x844.png");
+  await capture(`${evidencePrefix}-result-mobile-390x844.png`);
   await setViewport(1440, 900, false);
   await delay(300);
-  await capture("g4-desktop-1440x900.png");
+  await capture(`${evidencePrefix}-result-desktop-1440x900.png`);
+
+  await navigate();
+  await capture(`${evidencePrefix}-landing-desktop-1440x900.png`);
+  await waitFor("!document.querySelector('[data-golden-id=\"moon_phases\"] .golden-launch').disabled", 5000);
+  await evaluate("document.querySelector('[data-golden-id=\"moon_phases\"] .golden-launch').click()");
+  await waitFor("!document.querySelector('#result-view').hidden", 5000);
+  await waitFor("document.querySelector('#simulation-frame').src.includes('/api/sims/')", 5000);
+  await delay(300);
+  await capture(`${evidencePrefix}-golden-desktop-1440x900.png`);
+  await navigate();
+  await submit("success");
+  await waitFor("!document.querySelector('#build-view').hidden", 3000);
+  await delay(120);
+  await capture(`${evidencePrefix}-build-desktop-1440x900.png`);
+  await waitFor("!document.querySelector('#result-view').hidden", 20000);
 
   await evaluate("history.back()");
   await waitFor("!document.querySelector('#build-view').hidden", 3000);
@@ -363,10 +390,19 @@ try {
     },
     consoleErrors,
     networkFailures,
-    screenshots: ["g4-mobile-390x844.png", "g4-desktop-1440x900.png"],
+    screenshots: [
+      `${evidencePrefix}-landing-mobile-390x844.png`,
+      `${evidencePrefix}-golden-mobile-390x844.png`,
+      `${evidencePrefix}-build-mobile-390x844.png`,
+      `${evidencePrefix}-result-mobile-390x844.png`,
+      `${evidencePrefix}-landing-desktop-1440x900.png`,
+      `${evidencePrefix}-golden-desktop-1440x900.png`,
+      `${evidencePrefix}-build-desktop-1440x900.png`,
+      `${evidencePrefix}-result-desktop-1440x900.png`,
+    ],
   };
   fs.writeFileSync(
-    path.join(screenshotDirectory, "..", "g4-browser.json"),
+    path.join(screenshotDirectory, "..", `${evidencePrefix}-browser.json`),
     `${JSON.stringify(evidence, null, 2)}\n`,
   );
   process.stdout.write(JSON.stringify(evidence));
