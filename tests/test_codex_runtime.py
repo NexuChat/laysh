@@ -230,6 +230,25 @@ async def test_protocol_failures_are_sanitized(stdout, returncode, code):
 
 
 @pytest.mark.asyncio
+async def test_curated_evidence_failure_retains_builder_detail_outside_public_message():
+    from server.codex_runtime import CodexRuntimeError
+
+    process = FakeProcess(stderr="CURATED-UPSTREAM-DETAIL", returncode=7)
+    executor = executor_with_process(process, {}, record_runtime=True)
+    with pytest.raises(CodexRuntimeError, match="nonzero_exit") as captured:
+        await executor.execute_stage(
+            prompt="repository-owned fixture",
+            schema_path=Path("server/schemas/module.schema.json").resolve(),
+            model="gpt-5.6-sol",
+            effort="medium",
+            public=False,
+            evidence_fixture_id="moon_phases_ar",
+        )
+    assert str(captured.value) == "nonzero_exit"
+    assert captured.value.builder_detail == "CURATED-UPSTREAM-DETAIL"
+
+
+@pytest.mark.asyncio
 async def test_timeout_terminates_the_process_group(monkeypatch):
     from server.codex_runtime import CodexRuntimeError
 
