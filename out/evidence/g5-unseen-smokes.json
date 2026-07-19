@@ -1,0 +1,86 @@
+{
+  "schema_version": "1.0",
+  "gate": "G5_unseen_smokes",
+  "passed": true,
+  "public_profile": {
+    "job_timeout_seconds": 180.0,
+    "stage_timeout_seconds": 90.0
+  },
+  "results": [
+    {
+      "id": "unseen_ar_force_mass",
+      "locale": "ar",
+      "status": "complete",
+      "elapsed_ms": 137978,
+      "live_call_count": 4,
+      "stages": [
+        {
+          "stage": "understand",
+          "model": "gpt-5.6-luna",
+          "elapsed_ms": 18034,
+          "ephemeral_thread_observed_transiently": true
+        },
+        {
+          "stage": "generate",
+          "model": "gpt-5.6-sol",
+          "elapsed_ms": 57952,
+          "ephemeral_thread_observed_transiently": true
+        },
+        {
+          "stage": "heal_1",
+          "model": "gpt-5.6-sol",
+          "elapsed_ms": 54261,
+          "ephemeral_thread_observed_transiently": true
+        },
+        {
+          "stage": "qa",
+          "model": "gpt-5.6-sol",
+          "elapsed_ms": 5166,
+          "ephemeral_thread_observed_transiently": true
+        }
+      ],
+      "answer_first": true,
+      "verification_passed": true,
+      "playable_artifact": true,
+      "fallback_reason": null
+    },
+    {
+      "id": "unseen_en_spring_force",
+      "locale": "en",
+      "status": "complete",
+      "elapsed_ms": 178283,
+      "live_call_count": 4,
+      "stages": [
+        {
+          "stage": "understand",
+          "model": "gpt-5.6-luna",
+          "elapsed_ms": 25295,
+          "ephemeral_thread_observed_transiently": true
+        },
+        {
+          "stage": "generate",
+          "model": "gpt-5.6-sol",
+          "elapsed_ms": 64316,
+          "ephemeral_thread_observed_transiently": true
+        },
+        {
+          "stage": "heal_1",
+          "model": "gpt-5.6-sol",
+          "elapsed_ms": 74979,
+          "ephemeral_thread_observed_transiently": true
+        },
+        {
+          "stage": "qa",
+          "model": "gpt-5.6-sol",
+          "elapsed_ms": 11225,
+          "ephemeral_thread_observed_transiently": true
+        }
+      ],
+      "answer_first": true,
+      "verification_passed": true,
+      "playable_artifact": true,
+      "fallback_reason": null
+    }
+  ],
+  "total_live_call_count": 8
+}
