@@ -10,6 +10,7 @@ ALLOWED_RUNTIME_MODELS = frozenset({"gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-lun
 class Settings:
     understand_model: str = "gpt-5.6-luna"
     understand_fallback_model: str = "gpt-5.6-sol"
+    evidence_understand_model: str = "gpt-5.6-sol"
     generate_model: str = "gpt-5.6-sol"
     heal_model: str = "gpt-5.6-sol"
     qa_model: str = "gpt-5.6-sol"
@@ -24,6 +25,7 @@ class Settings:
         configured = {
             self.understand_model,
             self.understand_fallback_model,
+            self.evidence_understand_model,
             self.generate_model,
             self.heal_model,
             self.qa_model,
@@ -46,6 +48,9 @@ class Settings:
             understand_model=os.getenv("LAYSH_UNDERSTAND_MODEL", defaults.understand_model),
             understand_fallback_model=os.getenv(
                 "LAYSH_UNDERSTAND_FALLBACK_MODEL", defaults.understand_fallback_model
+            ),
+            evidence_understand_model=os.getenv(
+                "LAYSH_EVIDENCE_UNDERSTAND_MODEL", defaults.evidence_understand_model
             ),
             generate_model=os.getenv("LAYSH_GENERATE_MODEL", defaults.generate_model),
             heal_model=os.getenv("LAYSH_HEAL_MODEL", defaults.heal_model),

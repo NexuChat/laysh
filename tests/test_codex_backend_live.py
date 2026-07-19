@@ -54,6 +54,25 @@ async def test_understand_is_one_luna_call_with_closed_schema_and_zero_echo_prom
 
 
 @pytest.mark.asyncio
+async def test_curated_understand_routes_to_sol_for_build_time_fixture_quality():
+    from server.codex_backend import CodexBackend, RuntimeContext
+    from server.settings import Settings
+
+    executor = RecordingExecutor()
+    backend = CodexBackend(executor=executor, settings=Settings())
+
+    await backend.understand(
+        "ليش القمر يتغير شكله؟",
+        "ar",
+        runtime_context=RuntimeContext(public=False, evidence_fixture_id="moon_phases_ar"),
+    )
+
+    assert executor.calls[0]["model"] == "gpt-5.6-sol"
+    assert executor.calls[0]["effort"] == "low"
+    assert executor.calls[0]["public"] is False
+
+
+@pytest.mark.asyncio
 async def test_generate_heal_and_qa_route_only_to_sol_with_bounded_effort(monkeypatch):
     from server.codex_backend import CodexBackend, RuntimeContext
     from server.settings import Settings
@@ -102,6 +121,19 @@ def test_generate_prompt_states_the_exact_runtime_interface_contract():
     assert "`version` must be the number `1`" in prompt
     assert "`init(options)` receives `canvas`, `context`" in prompt
     assert "Do not rename `context` to `ctx`" in prompt
+
+
+def test_understand_prompt_requires_formula_derived_consistent_fixtures():
+    from server.codex_backend import CodexBackend
+
+    prompt = CodexBackend._render_prompt(
+        "understand.md",
+        {"question": "ليش القمر يتغير شكله؟", "locale": "ar"},
+    )
+
+    assert "derive every fixture from `key_formula`" in prompt
+    assert "Check the arithmetic internally" in prompt
+    assert "relation fixture must agree with every numeric fixture" in prompt
 
 
 @pytest.mark.asyncio

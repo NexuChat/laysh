@@ -123,6 +123,45 @@ async def test_curated_builder_evidence_retains_the_exact_report_sent_to_heal(ba
     )
 
 
+@pytest.mark.asyncio
+async def test_curated_suspect_fixture_refreshes_understand_once_without_heal():
+    from copy import deepcopy
+
+    from server.codex_backend import MockCodexBackend
+    from server.jobs import JobManager
+    from server.schemas import validate_understanding
+
+    class RefreshingFixtureBackend(MockCodexBackend):
+        async def understand(self, *args, **kwargs):
+            understanding = await super().understand(*args, **kwargs)
+            if self.understand_calls == 1:
+                understanding = deepcopy(understanding)
+                understanding["checks"].append(
+                    {
+                        "id": "contradictory_relation",
+                        "kind": "relation",
+                        "left_inputs": [{"name": "angle_deg", "value": 90}],
+                        "right_inputs": [{"name": "angle_deg", "value": 45}],
+                        "output": "lit_fraction",
+                        "relation": "right_gt_left",
+                        "minimum_ratio": 1.5,
+                    }
+                )
+                return validate_understanding(understanding)
+            return understanding
+
+    backend = RefreshingFixtureBackend()
+    manager = JobManager(backend, public_job_timeout_seconds=2, evidence_job_timeout_seconds=2)
+    record = manager.start_evidence("success", "ar", "moon_phases_ar")
+    await record.task
+
+    assert record.status == "complete"
+    assert backend.understand_calls == 2
+    assert backend.generate_calls == 1
+    assert backend.heal_calls == 0
+    assert any(item.get("type") == "fixture_refresh" for item in record.builder_diagnostics)
+
+
 def test_exhausted_heal_preserves_answer_and_never_exposes_artifact(client, backend):
     job_id = ask(client, "exhausted heal")
     result = wait_for_terminal(client, job_id)
