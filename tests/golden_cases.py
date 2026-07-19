@@ -30,12 +30,21 @@ VALID_UNDERSTANDING = {
     "module_spec": {"outputs": ["lit_fraction"]},
     "checks": [
         {
+            "id": "new_phase",
+            "kind": "numeric",
+            "inputs": [{"name": "angle_deg", "value": 0}],
+            "output": "lit_fraction",
+            "expected": 0.0,
+            "tolerance": 0.01,
+            "unit": "ratio",
+        },
+        {
             "id": "quarter_phase",
             "kind": "numeric",
             "inputs": [{"name": "angle_deg", "value": 90}],
             "output": "lit_fraction",
             "expected": 0.5,
-            "tolerance": 0.02,
+            "tolerance": 0.01,
             "unit": "ratio",
         },
         {
@@ -44,7 +53,7 @@ VALID_UNDERSTANDING = {
             "inputs": [{"name": "angle_deg", "value": 180}],
             "output": "lit_fraction",
             "expected": 1.0,
-            "tolerance": 0.02,
+            "tolerance": 0.01,
             "unit": "ratio",
         },
     ],

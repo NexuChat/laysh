@@ -30,6 +30,8 @@ def test_p0_fixture_registry_is_allowlisted_bilingual_and_builder_reviewable():
             assert fixture["metadata"][locale]["summary"]
         review = fixture["review_contract"]
         assert len(review["reference_fixtures"]) >= 3
+        assert review["primary_parameter"]["min"] < review["primary_parameter"]["default"]
+        assert review["primary_parameter"]["default"] < review["primary_parameter"]["max"]
         assert review["formula"]
         assert review["units"]
         assert review["assumptions"]
@@ -105,6 +107,45 @@ def test_builder_reference_review_rejects_wrong_formula_and_reference_outputs():
     assert review["checks"]["reference_fixtures_passed"] is False
     assert "formula_reference_mismatch" in review["failure_codes"]
     assert "builder_reference_fixture_failed" in review["failure_codes"]
+
+
+def test_builder_review_rejects_loose_model_fixture_tolerances():
+    from copy import deepcopy
+
+    from server.goldens import load_golden_fixtures, review_golden_candidate
+    from tests.golden_cases import VALID_MODULE_OUTPUT, VALID_UNDERSTANDING
+
+    fixture = load_golden_fixtures()["moon_phases_ar"]
+    understanding = deepcopy(VALID_UNDERSTANDING)
+    for check in understanding["checks"]:
+        check["tolerance"] = 1.0
+    module_output = {
+        **VALID_MODULE_OUTPUT,
+        "module_js": (Path(__file__).parent / "fixtures" / "moon_phase_module.js").read_text(
+            encoding="utf-8"
+        ),
+    }
+
+    review = review_golden_candidate(
+        fixture=fixture,
+        understanding=understanding,
+        module_output=module_output,
+    )
+
+    assert review["checks"]["model_fixtures_match_reference"] is False
+    assert "model_fixture_contract_mismatch" in review["failure_codes"]
+
+
+def test_portable_shell_keeps_arabic_kicker_clear_and_text_alternative_localized():
+    root = Path(__file__).parents[1]
+    css = (root / "sim_shell" / "shell.css").read_text(encoding="utf-8")
+    script = (root / "sim_shell" / "shell.js").read_text(encoding="utf-8")
+
+    assert ".eyebrow" in css and "line-height: 1.8" in css
+    assert "margin-block-end: .8rem" in css
+    assert "line-height: 1.3" in css
+    assert "firstName" not in script
+    assert "النتيجة المحسوبة" in script
 
 
 def test_verified_golden_pin_is_tier_a_alias_aware_and_immutable(tmp_path):

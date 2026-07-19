@@ -111,7 +111,8 @@ try {
     expression: `(() => {
       const control = document.querySelector('#primary-control');
       const root = document.documentElement;
-      const values = [control.min, control.defaultValue || control.value, control.max];
+      const initialValue = control.value;
+      const values = [control.min, initialValue, control.max];
       const cases = [];
       for (const value of values) {
         const before = Number(root.dataset.frameCount || 0);

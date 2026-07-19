@@ -21,9 +21,10 @@ Rules:
 - Keep implementation identifiers in `module_spec` and fixture inputs only. Define any display symbol
   needed for comprehension in `tldr` using natural language.
 - When `builder_reference_contract` is present, it is a builder-reviewed curated constraint: preserve
-  its scientific formula, units, assumptions, misconception target, output names, and all reference
-  input/output values. Convert every reference value into a closed schema check with an honest
-  numerical tolerance. Do not reinterpret or omit those references.
+  its scientific formula, primary parameter ID/range/default/step/unit, units, assumptions,
+  misconception target, output names, and all reference input/output values. Convert every reference
+  value into a closed schema numeric check. Copy its named tolerance exactly; never widen a reference
+  tolerance. Do not reinterpret or omit those references.
 - Fixtures are the fixed scientific contract for module verification. Use finite values and honest
   tolerances.
 - Privately derive every fixture from `key_formula` before emitting it. Check the arithmetic internally

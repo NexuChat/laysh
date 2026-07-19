@@ -51,7 +51,7 @@ def _reference_understanding(
         ]
         for output, expected in fixture["expected"].items():
             outputs.add(output)
-            tolerance = max(0.001, abs(float(expected)) * 0.01)
+            tolerance = fixture["tolerance"][output]
             checks.append(
                 {
                     "id": f"builder_{fixture_index}_{output}",
@@ -87,8 +87,37 @@ def review_golden_candidate(
         "explanation_prompt",
         "transfer_prompt",
     )
+    parameter_contract = contract["primary_parameter"]
+    parameter = understanding.get("primary_parameter") or {}
+    parameter_matches = all(
+        parameter.get(field) == parameter_contract[field]
+        for field in ("id", "min", "max", "default", "step", "unit")
+    )
+    model_fixture_matches = True
+    for reference_fixture in contract["reference_fixtures"]:
+        reference_inputs = sorted(reference_fixture["inputs"].items())
+        for output, expected in reference_fixture["expected"].items():
+            matching = [
+                check
+                for check in understanding.get("checks", [])
+                if check.get("kind") == "numeric"
+                and check.get("output") == output
+                and sorted(
+                    (item["name"], item["value"])
+                    for item in check.get("inputs", [])
+                )
+                == reference_inputs
+                and abs(float(check.get("expected", float("inf"))) - float(expected))
+                <= 1e-9
+                and float(check.get("tolerance", float("inf")))
+                <= float(reference_fixture["tolerance"][output])
+            ]
+            if not matching:
+                model_fixture_matches = False
     checks: dict[str, Any] = {
         "formula_matches_reference": understanding.get("key_formula") == contract["formula"],
+        "primary_parameter_matches_reference": parameter_matches,
+        "model_fixtures_match_reference": model_fixture_matches,
         "bilingual_metadata": all(
             metadata.get(locale, {}).get(field)
             for locale in ("ar", "en")
@@ -104,6 +133,10 @@ def review_golden_candidate(
     failure_codes: list[str] = []
     if not checks["formula_matches_reference"]:
         failure_codes.append("formula_reference_mismatch")
+    if not checks["primary_parameter_matches_reference"]:
+        failure_codes.append("primary_parameter_reference_mismatch")
+    if not checks["model_fixtures_match_reference"]:
+        failure_codes.append("model_fixture_contract_mismatch")
     if not checks["bilingual_metadata"]:
         failure_codes.append("bilingual_metadata_incomplete")
     if checks["reference_fixture_count"] < 3:
