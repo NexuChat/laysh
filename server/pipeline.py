@@ -58,10 +58,14 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         evidence_fixture_id=record.evidence_fixture_id,
     )
 
-    def stage_data(result: dict[str, Any] | StageExecution) -> dict[str, Any]:
+    def stage_data(
+        result: dict[str, Any] | StageExecution,
+        stage: str,
+    ) -> dict[str, Any]:
         if isinstance(result, StageExecution):
             record.stage_executions.append(
                 {
+                    "stage": stage,
                     "model": result.model,
                     "elapsed_ms": result.elapsed_ms,
                     "thread_id": result.thread_id,
@@ -84,7 +88,8 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 question,
                 record.locale,
                 runtime_context=runtime_context,
-            )
+            ),
+            "understand",
         )
     )
 
@@ -128,7 +133,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         scenario,
         runtime_context=runtime_context,
     )
-    module_output = validate_module_output(stage_data(generated))
+    module_output = validate_module_output(stage_data(generated, "generate"))
     if scenario == "exhausted_heal":
         module_output = manager.backend.mark_exhausted(module_output)
 
@@ -161,7 +166,8 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                         ["deterministic_verification_failed"],
                         heal_count,
                         runtime_context=runtime_context,
-                    )
+                    ),
+                    f"heal_{heal_count}",
                 )
             )
 
@@ -180,7 +186,8 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 module_output,
                 understanding,
                 runtime_context=runtime_context,
-            )
+            ),
+            "qa",
         )
         if not qa_result["approved"]:
             replacement = qa_result["replacement_module_js"]
