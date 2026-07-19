@@ -1,0 +1,57 @@
+[build-system]
+requires = ["hatchling==1.28.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "laysh"
+version = "0.1.0"
+description = "Ask why. Play the answer."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "fastapi==0.116.1",
+  "jsonschema==4.26.0",
+  "pydantic==2.12.5",
+  "uvicorn==0.40.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "httpx==0.27.2",
+  "pytest==8.4.2",
+  "pytest-asyncio==1.2.0",
+  "pytest-cov==7.0.0",
+  "ruff==0.14.11",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["server"]
+
+[tool.pytest.ini_options]
+addopts = "--strict-markers --strict-config"
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = [
+  "browser: requires the locally installed Chrome binary",
+  "live: spends model quota and is opt-in",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["server"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+exclude = ["out"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "ASYNC", "S"]
+ignore = ["S101"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101", "S603", "S607"]
+

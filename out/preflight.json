@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0",
+  "captured_at_utc": "2026-07-19T09:00:37Z",
+  "sanitized": true,
+  "competition": {
+    "track": "Education",
+    "registration": "declared_by_builder_not_cli_verified",
+    "deadline_pdt": "2026-07-21T17:00:00-07:00",
+    "deadline_utc": "2026-07-22T00:00:00Z",
+    "primary_build_thread": "this_session_feedback_id_pending",
+    "feedback_capture": "run /feedback in this primary build thread before submission"
+  },
+  "environment": {
+    "codex_path": "/home/dev/bin/codex",
+    "codex_version": "codex-cli 0.144.6",
+    "login": "ChatGPT",
+    "python": "3.12.3",
+    "node": "24.15.0",
+    "npm": "11.12.1",
+    "browser_path": "/usr/bin/google-chrome",
+    "browser": "Google Chrome 148.0.7778.96",
+    "cloudflared": "2026.1.2",
+    "systemd": "255",
+    "disk_available_gib": 36,
+    "disk_use_percent": 84
+  },
+  "model_smokes": [
+    {
+      "role": "understand",
+      "model": "gpt-5.3-codex-spark",
+      "available": true,
+      "closed_schema_valid": true,
+      "elapsed_seconds": 3.91,
+      "thread_id": "019f799a-01b5-7570-8f5a-46cc7bf52ff3",
+      "ephemeral": true,
+      "quota_outcome": "success"
+    },
+    {
+      "role": "generate",
+      "model": "gpt-5.6-sol",
+      "available": true,
+      "closed_schema_valid": true,
+      "elapsed_seconds": 4.20,
+      "thread_id": "019f799a-1ed5-78d1-961e-e17479af3e69",
+      "ephemeral": true,
+      "quota_outcome": "success"
+    }
+  ],
+  "routing": {
+    "understand_model": "gpt-5.3-codex-spark",
+    "understand_fallback_model": "gpt-5.6-sol",
+    "generate_model": "gpt-5.6-sol"
+  },
+  "release_confirmations": {
+    "account_workspace_type": "ChatGPT login; workspace tier not exposed by CLI",
+    "remote_training_and_data_controls": "pending builder verification in account controls",
+    "repository_visibility_for_judging": "pending release decision",
+    "asset_licenses": "no third-party assets added in M0/M1"
+  }
+}
