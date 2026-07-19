@@ -85,6 +85,42 @@ def test_broken_first_draft_is_healed_once_and_reverified(client, backend):
     assert "healing" in stages
     assert backend.heal_calls == 1
     assert backend.qa_calls == 1
+    assert backend.last_heal_failures
+    assert {failure["gate"] for failure in backend.last_heal_failures[0]} >= {
+        "interface",
+        "security",
+    }
+
+    failed_verification = next(
+        event for event in client.app.state.jobs.get(job_id).events
+        if event.type == "verification" and event.payload.passed is False
+    )
+    public_payload = failed_verification.payload.model_dump(mode="json")
+    assert set(public_payload) == {"passed", "check_count", "heal_count", "evidence"}
+    assert set(public_payload["evidence"]) >= {"interface", "security"}
+    assert "expected" not in str(public_payload)
+    assert "actual" not in str(public_payload)
+
+
+@pytest.mark.asyncio
+async def test_curated_builder_evidence_retains_the_exact_report_sent_to_heal(backend):
+    from server.jobs import JobManager
+
+    manager = JobManager(backend, public_job_timeout_seconds=2, evidence_job_timeout_seconds=2)
+    record = manager.start_evidence("broken first draft", "ar", "moon_phases_ar")
+    await record.task
+
+    diagnostic = next(
+        item for item in record.builder_diagnostics
+        if item.get("type") == "verification_failure"
+    )
+    assert diagnostic["failures"] == backend.last_heal_failures[0]
+    assert any(
+        failure["gate"] == "interface"
+        and failure["expected"]["permitted_abi"]
+        and failure["actual"]["missing_keys"]
+        for failure in diagnostic["failures"]
+    )
 
 
 def test_exhausted_heal_preserves_answer_and_never_exposes_artifact(client, backend):

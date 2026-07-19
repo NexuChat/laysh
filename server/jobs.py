@@ -48,7 +48,7 @@ class JobRecord:
     public: bool = True
     evidence_fixture_id: str | None = None
     stage_executions: list[dict[str, Any]] = field(default_factory=list)
-    builder_diagnostics: list[dict[str, str]] = field(default_factory=list)
+    builder_diagnostics: list[dict[str, Any]] = field(default_factory=list)
 
     def public_result(self) -> PublicResult:
         return PublicResult(

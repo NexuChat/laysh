@@ -104,6 +104,54 @@ def test_generate_prompt_states_the_exact_runtime_interface_contract():
     assert "Do not rename `context` to `ctx`" in prompt
 
 
+@pytest.mark.asyncio
+async def test_heal_prompt_contains_the_structured_gate_report_verbatim():
+    from server.codex_backend import CodexBackend, RuntimeContext
+    from server.settings import Settings
+
+    report = [
+        {
+            "gate": "interface",
+            "code": "exported_keys_mismatch",
+            "expected": {
+                "permitted_abi": [
+                    "destroy",
+                    "init",
+                    "resize",
+                    "setParameter",
+                    "test",
+                    "version",
+                ]
+            },
+            "actual": {"unexpected_keys": ["draw"], "missing_keys": []},
+        }
+    ]
+    executor = RecordingExecutor()
+    backend = CodexBackend(executor=executor, settings=Settings())
+
+    await backend.heal(
+        VALID_MODULE_OUTPUT,
+        VALID_UNDERSTANDING,
+        report,
+        1,
+        runtime_context=RuntimeContext(public=False, evidence_fixture_id="moon_phases_ar"),
+    )
+
+    prompt = executor.calls[0]["prompt"]
+    serialized = json.dumps(report, ensure_ascii=False, separators=(",", ":"))
+    assert serialized in prompt
+    assert json.dumps(
+        VALID_MODULE_OUTPUT,
+        ensure_ascii=False,
+        separators=(",", ":"),
+    ) in prompt
+    assert json.dumps(
+        VALID_UNDERSTANDING,
+        ensure_ascii=False,
+        separators=(",", ":"),
+    ) in prompt
+
+
 def test_twenty_dialect_arabizi_and_code_switch_fixtures_share_stable_intent(backend):
     cases = json.loads(
         (Path(__file__).parent / "fixtures" / "normalization_cases.json").read_text(
