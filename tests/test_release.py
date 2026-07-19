@@ -18,6 +18,8 @@ def test_deployment_units_are_secret_free_persistent_and_health_checked():
 
     assert "WantedBy=default.target" in service
     assert "Restart=always" in service
+    assert "ProtectHome=read-only" in service
+    assert "ReadWritePaths=%h/.codex" in service
     assert "EnvironmentFile=-%h/.config/laysh/service.env" in service
     assert "LAYSH_CODEX_BACKEND=codex" in service
     assert "gpt-5.6-luna" in service and service.count("gpt-5.6-sol") >= 4

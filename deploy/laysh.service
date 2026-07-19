@@ -30,6 +30,7 @@ PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=read-only
 ReadWritePaths=%h/laysh/out
+ReadWritePaths=%h/.codex
 
 [Install]
 WantedBy=default.target
