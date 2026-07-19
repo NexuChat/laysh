@@ -1,0 +1,20 @@
+{
+  "fixture_id": "day_night_ar",
+  "locale": "ar",
+  "question": "كيف يسبب دوران الأرض تعاقب النهار والليل عند مكان ثابت على سطحها؟",
+  "metadata": {
+    "ar": {"title": "دوران الأرض والنهار والليل", "domain": "الأرض والفضاء", "summary": "دوّر الأرض ولاحظ اتجاه موضع ثابت بالنسبة إلى ضوء الشمس."},
+    "en": {"title": "Earth's rotation and day/night", "domain": "Earth and space", "summary": "Rotate Earth and observe a fixed location's direction relative to sunlight."}
+  },
+  "review_contract": {
+    "formula": "c = cos θ",
+    "units": ["°", "ratio"],
+    "assumptions": ["أشعة شمس متوازية", "محور مبسط دون فصول", "نهار عندما c > 0"],
+    "misconception": "الليل يحدث لأن الشمس تنطفئ أو تختفي خلف القمر",
+    "reference_fixtures": [
+      {"inputs": {"rotation_deg": 0}, "expected": {"light_alignment": 1.0, "daylight": 1}},
+      {"inputs": {"rotation_deg": 90}, "expected": {"light_alignment": 0.0, "daylight": 0}},
+      {"inputs": {"rotation_deg": 180}, "expected": {"light_alignment": -1.0, "daylight": 0}}
+    ]
+  }
+}

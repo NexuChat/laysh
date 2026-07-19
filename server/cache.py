@@ -4,6 +4,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import tempfile
 import unicodedata
 from dataclasses import asdict, dataclass
@@ -104,7 +105,7 @@ class VerifiedCache:
 
     def _entries(self) -> list[CacheEntry]:
         entries = []
-        for directory in (self.root, self.golden_root):
+        for directory in (self.golden_root, self.root):
             for path in sorted(directory.glob("*.json")):
                 entry = self._load(path)
                 if entry is not None and entry.contract_version == self.contract_version:
@@ -143,6 +144,13 @@ class VerifiedCache:
         if receipt is None or not receipt.verified or tier not in {"A", "B"}:
             raise ValueError("only verified Tier A or Tier B artifacts may be cached")
         exact_key = self.exact_key(question, locale)
+        semantic_key = self.semantic_key(locale, domain, canonical_intent)
+        if any(
+            entry.pinned
+            and (entry.exact_key == exact_key or entry.semantic_key == semantic_key)
+            for entry in self._entries()
+        ):
+            raise ValueError("pinned golden cache entries are immutable")
         cache_id = exact_key[:24]
         if (self.golden_root / f"{cache_id}.json").exists():
             raise ValueError("pinned golden cache entries are immutable")
@@ -151,7 +159,7 @@ class VerifiedCache:
             cache_id=cache_id,
             contract_version=self.contract_version,
             exact_key=exact_key,
-            semantic_key=self.semantic_key(locale, domain, canonical_intent),
+            semantic_key=semantic_key,
             artifact=artifact,
             artifact_sha256=artifact_sha256,
             title=title,
@@ -166,6 +174,81 @@ class VerifiedCache:
         descriptor, temporary_name = tempfile.mkstemp(
             dir=self.root,
             prefix=f".{cache_id}.",
+            suffix=".tmp",
+        )
+        try:
+            with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+                json.dump(document, handle, ensure_ascii=False, separators=(",", ":"))
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temporary_name, destination)
+        finally:
+            temporary = Path(temporary_name)
+            if temporary.exists():
+                temporary.unlink()
+        return entry
+
+    def pin_golden(
+        self,
+        *,
+        golden_id: str,
+        question: str,
+        locale: str,
+        domain: str,
+        canonical_intent: str,
+        artifact: str,
+        title: str,
+        direction: Literal["rtl", "ltr"],
+        receipt: VerificationReceipt | None,
+        aliases: list[str],
+        answer: dict[str, Any],
+        metadata: dict[str, Any],
+        review: dict[str, Any],
+        evidence: dict[str, Any],
+    ) -> CacheEntry:
+        if not re.fullmatch(r"[a-z0-9_]+", golden_id):
+            raise ValueError("golden_id must be a lowercase repository identifier")
+        if receipt is None or not receipt.verified:
+            raise ValueError("only verified artifacts may be pinned")
+        destination = self.golden_root / f"{golden_id}.json"
+        if destination.exists():
+            raise ValueError("pinned golden cache entries are immutable")
+        exact_key = self.exact_key(question, locale)
+        semantic_key = self.semantic_key(locale, domain, canonical_intent)
+        if any(
+            entry.pinned
+            and (entry.exact_key == exact_key or entry.semantic_key == semantic_key)
+            for entry in self._entries()
+        ):
+            raise ValueError("pinned golden cache entries are immutable")
+        artifact_sha256 = hashlib.sha256(artifact.encode()).hexdigest()
+        entry = CacheEntry(
+            cache_id=f"golden_{golden_id}",
+            contract_version=self.contract_version,
+            exact_key=exact_key,
+            semantic_key=semantic_key,
+            artifact=artifact,
+            artifact_sha256=artifact_sha256,
+            title=title,
+            locale=locale,
+            direction=direction,
+            tier="A",
+            receipt=receipt,
+            pinned=True,
+        )
+        document: dict[str, Any] = {
+            **asdict(entry),
+            "schema_version": "1.0",
+            "golden_id": golden_id,
+            "aliases": aliases,
+            "answer": answer,
+            "metadata": metadata,
+            "review": review,
+            "evidence": evidence,
+        }
+        descriptor, temporary_name = tempfile.mkstemp(
+            dir=self.golden_root,
+            prefix=f".{golden_id}.",
             suffix=".tmp",
         )
         try:

@@ -2,10 +2,10 @@
   "algorithm": "sha256",
   "contract_version": "1.0",
   "files": {
-    "server/prompts/generate_module.md": "988e6aaefc23dbbad3df6287d3556733c5922b84cecc9b3247adb58579cd8f32",
+    "server/prompts/generate_module.md": "cdb700b292575506a6584f4781cda7bee4bf8eaf2c044d6a20836e115642f0ec",
     "server/prompts/heal_module.md": "c90068fbeb06f974b0d0d932cf9725f390caea13c942c7af1f2692a66bf4d1b0",
     "server/prompts/qa.md": "421882f60f69b56983471133059f2dbab7aeb995f3ec18be9f15647ae00fae1d",
-    "server/prompts/understand.md": "36d2ca3df2c54651bf40f9737419b1d1e36e4504b268f44cd2bae92a5ebbb725",
+    "server/prompts/understand.md": "09a623dc9ecf72e7b544adbabee8f2568540ff01e429cfb47b84ac6a0b17ff18",
     "server/schemas.py": "f99ae2e7319c01914811667d8a8a3c9adc84748ea4d2d7a67e968ca0622c2303",
     "server/schemas/module.schema.json": "eaa9c90e2d5a8303ae599519e5ce769fa63473341157322aba3920ca533e769e",
     "server/schemas/module_fixture.schema.json": "1191f30e60aee78ae02f92440421a3175c63af080ce9d14d3453a8f3f27d447e",

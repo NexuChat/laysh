@@ -1,0 +1,20 @@
+{
+  "fixture_id": "sound_pitch_ar",
+  "locale": "ar",
+  "question": "لماذا تبدو النغمة أحدّ عندما يزداد تردد الموجة الصوتية؟",
+  "metadata": {
+    "ar": {"title": "التردد وحدّة الصوت", "domain": "الصوت والموجات", "summary": "غيّر التردد وقارن عدد دورات الموجة وطولها الموجي دون تشغيل صوت."},
+    "en": {"title": "Frequency and sound pitch", "domain": "Sound and waves", "summary": "Change frequency and compare wave cycles and wavelength without playing audio."}
+  },
+  "review_contract": {
+    "formula": "λ = v/f",
+    "units": ["Hz", "m", "ms"],
+    "assumptions": ["سرعة الصوت 343 m/s", "وسط هوائي ثابت", "الحدّة لا تعني شدة الصوت"],
+    "misconception": "الصوت الأعلى ترددًا هو بالضرورة أعلى شدة",
+    "reference_fixtures": [
+      {"inputs": {"frequency_hz": 110}, "expected": {"wavelength_m": 3.118, "period_ms": 9.091}},
+      {"inputs": {"frequency_hz": 440}, "expected": {"wavelength_m": 0.78, "period_ms": 2.273}},
+      {"inputs": {"frequency_hz": 880}, "expected": {"wavelength_m": 0.39, "period_ms": 1.136}}
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "fixture_id": "pendulum_ar",
+  "locale": "ar",
+  "question": "كيف يؤثر طول البندول في زمن الذبذبة عندما تكون زاوية التأرجح صغيرة؟",
+  "metadata": {
+    "ar": {"title": "طول البندول وزمنه", "domain": "الحركة الدورية", "summary": "غيّر طول بندول صغير الزاوية وقارن زمن دورته."},
+    "en": {"title": "Pendulum length and period", "domain": "Periodic motion", "summary": "Change the length of a small-angle pendulum and compare its period."}
+  },
+  "review_contract": {
+    "formula": "T = 2π√(L/g)",
+    "units": ["m", "s"],
+    "assumptions": ["زاوية صغيرة", "خيط عديم الكتلة", "g = 9.81 m/s²", "إهمال مقاومة الهواء"],
+    "misconception": "زيادة طول البندول تجعله أسرع",
+    "reference_fixtures": [
+      {"inputs": {"length_m": 0.25}, "expected": {"period_s": 1.003}},
+      {"inputs": {"length_m": 1.0}, "expected": {"period_s": 2.006}},
+      {"inputs": {"length_m": 2.0}, "expected": {"period_s": 2.837}}
+    ]
+  }
+}

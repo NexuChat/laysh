@@ -1,6 +1,20 @@
 {
   "fixture_id": "moon_phases_ar",
   "locale": "ar",
-  "question": "لماذا يتغير شكل القمر الذي نراه خلال الشهر؟"
+  "question": "لماذا يتغير شكل القمر الذي نراه خلال الشهر؟",
+  "metadata": {
+    "ar": {"title": "أطوار القمر", "domain": "الأرض والفضاء", "summary": "حرّك القمر في مداره وقارن الجزء المضاء بما نراه من الأرض."},
+    "en": {"title": "Moon phases", "domain": "Earth and space", "summary": "Move the Moon around its orbit and compare its lit half with the view from Earth."}
+  },
+  "review_contract": {
+    "formula": "f = (1 − cos θ) / 2",
+    "units": ["°", "ratio"],
+    "assumptions": ["مدار دائري مبسط", "أشعة شمس متوازية", "إهمال ميل المدار والكسوف"],
+    "misconception": "أطوار القمر سببها ظل الأرض",
+    "reference_fixtures": [
+      {"inputs": {"angle_deg": 0}, "expected": {"lit_fraction": 0.0}},
+      {"inputs": {"angle_deg": 90}, "expected": {"lit_fraction": 0.5}},
+      {"inputs": {"angle_deg": 180}, "expected": {"lit_fraction": 1.0}}
+    ]
+  }
 }
-

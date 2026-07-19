@@ -65,10 +65,17 @@ class CodexBackend:
             if selected_context.public
             else self.settings.evidence_understand_model
         )
+        input_payload: dict[str, Any] = {"question": question, "locale": locale}
+        if not selected_context.public and selected_context.evidence_fixture_id:
+            from server.goldens import load_golden_fixtures
+
+            fixture = load_golden_fixtures().get(selected_context.evidence_fixture_id)
+            if fixture is not None:
+                input_payload["builder_reference_contract"] = fixture["review_contract"]
         return await self.executor.execute_stage(
             prompt=self._render_prompt(
                 "understand.md",
-                {"question": question, "locale": locale},
+                input_payload,
             ),
             schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["understand"],
             model=model,
