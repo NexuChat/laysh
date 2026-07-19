@@ -16,6 +16,10 @@ Rules:
   two independent numeric or relational fixtures.
 - Fixtures are the fixed scientific contract for module verification. Use finite values and honest
   tolerances.
+- Privately derive every fixture from `key_formula` before emitting it. Check the arithmetic internally
+  for every numeric input and expected output; do not expose scratch work or reasoning.
+- A relation fixture must agree with every numeric fixture for the same output and with the direction
+  implied by `key_formula`. Recalculate both sides before choosing the relation and minimum ratio.
 - Fixture inputs are closed arrays of `{ "name": string, "value": number }` entries, never
   dynamic-key objects. Example: `[{ "name": "angle_deg", "value": 90 }]`.
 - Non-simulatable output preserves a useful answer, contains no checks, and offers three simulatable

@@ -59,15 +59,21 @@ class CodexBackend:
         *,
         runtime_context: RuntimeContext | None = None,
     ) -> StageExecution:
+        selected_context = runtime_context or RuntimeContext()
+        model = (
+            self.settings.understand_model
+            if selected_context.public
+            else self.settings.evidence_understand_model
+        )
         return await self.executor.execute_stage(
             prompt=self._render_prompt(
                 "understand.md",
                 {"question": question, "locale": locale},
             ),
             schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["understand"],
-            model=self.settings.understand_model,
+            model=model,
             effort="low",
-            **self._execution_policy(runtime_context),
+            **self._execution_policy(selected_context),
         )
 
     async def generate(

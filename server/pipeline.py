@@ -163,12 +163,64 @@ async def run_pipeline(manager: Any, record: Any) -> None:
 
     verification = None
     heal_count = 0
+    fixture_refresh_count = 0
     while True:
-        manager.transition(record, "verifying", "فحص العقد والنتائج الحتمية")
+        if record.status != "verifying":
+            manager.transition(record, "verifying", "فحص العقد والنتائج الحتمية")
         verification = verify_candidate(module_output, understanding)
         if verification.passed:
             break
         record_verification_failure(verification, heal_count)
+        suspect_fixtures = [
+            failure
+            for failure in verification.failures
+            if failure["gate"] == "fixture_integrity"
+        ]
+        if suspect_fixtures and not record.public:
+            if fixture_refresh_count >= 1:
+                _fallback(
+                    manager,
+                    record,
+                    "fixture_integrity_unresolved",
+                    ["لماذا يتغير شكل القمر؟", "لماذا تطفو بعض الأجسام؟"],
+                )
+                return
+            fixture_refresh_count += 1
+            record.builder_diagnostics.append(
+                {
+                    "type": "fixture_refresh",
+                    "attempt": fixture_refresh_count,
+                    "trigger_failures": suspect_fixtures,
+                }
+            )
+            manager.emit(
+                record,
+                "stage",
+                {
+                    "stage": "fixture_refresh",
+                    "detail": "إعادة تدقيق عقد القياس المرجعي",
+                    "elapsed_ms": manager.elapsed_ms(record),
+                },
+            )
+            understanding = validate_understanding(
+                stage_data(
+                    await manager.backend.understand(
+                        question,
+                        record.locale,
+                        runtime_context=runtime_context,
+                    ),
+                    "understand_retry",
+                )
+            )
+            if not understanding["safe"] or not understanding["simulatable"]:
+                _fallback(
+                    manager,
+                    record,
+                    "fixture_refresh_invalid",
+                    understanding["suggestions"],
+                )
+                return
+            continue
         if heal_count >= 2:
             _fallback(
                 manager,

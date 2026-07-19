@@ -6,9 +6,11 @@ def test_runtime_defaults_are_gpt_5_6_family_only():
 
     settings = Settings()
     assert settings.understand_model == "gpt-5.6-luna"
+    assert settings.evidence_understand_model == "gpt-5.6-sol"
     assert {
         settings.understand_model,
         settings.understand_fallback_model,
+        settings.evidence_understand_model,
         settings.generate_model,
         settings.heal_model,
         settings.qa_model,
