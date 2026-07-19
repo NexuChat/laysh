@@ -7,22 +7,22 @@
     "registration": "declared_by_builder_not_cli_verified",
     "deadline_pdt": "2026-07-21T17:00:00-07:00",
     "deadline_utc": "2026-07-22T00:00:00Z",
-    "primary_build_thread": "this_session_feedback_id_pending",
+    "primary_build_thread": "019f7998-9378-72b2-b590-ee10e632ce81",
     "feedback_capture": "run /feedback in this primary build thread before submission"
   },
   "environment": {
     "codex_path": "/home/dev/bin/codex",
     "codex_version": "codex-cli 0.144.6",
-    "login": "ChatGPT",
+    "codex_authenticated": true,
     "python": "3.12.3",
     "node": "24.15.0",
     "npm": "11.12.1",
     "browser_path": "/usr/bin/google-chrome",
     "browser": "Google Chrome 148.0.7778.96",
-    "cloudflared": "2026.1.2",
+    "cloudflared": "cloudflared version 2026.1.2 (built 2026-01-27-11:31 UTC)",
     "systemd": "255",
-    "disk_available_gib": 36,
-    "disk_use_percent": 84
+    "disk_available_gib": 35,
+    "disk_use_percent": 80
   },
   "model_smokes": [
     {
@@ -53,7 +53,7 @@
       "model": "gpt-5.6-sol",
       "available": true,
       "closed_schema_valid": true,
-      "elapsed_seconds": 4.20,
+      "elapsed_seconds": 4.2,
       "thread_id": "019f799a-1ed5-78d1-961e-e17479af3e69",
       "ephemeral": true,
       "quota_outcome": "success"
@@ -71,7 +71,8 @@
   "release_confirmations": {
     "account_workspace_type": "ChatGPT login; workspace tier not exposed by CLI",
     "remote_training_and_data_controls": "pending builder verification in account controls",
-    "repository_visibility_for_judging": "pending release decision",
-    "asset_licenses": "no third-party assets added in M0/M1"
-  }
+    "repository_visibility_for_judging": "owner will create and push the public repository after G6",
+    "asset_licenses": "MIT application code; GNU FreeFont under GPLv3+ with Font Exception"
+  },
+  "last_rechecked_at_utc": "2026-07-19T12:58:54Z"
 }

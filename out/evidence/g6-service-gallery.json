@@ -1,0 +1,81 @@
+{
+  "cards": [
+    {
+      "id": "moon_phases",
+      "badge": "فوري",
+      "enabled": true
+    },
+    {
+      "id": "buoyancy",
+      "badge": "فوري",
+      "enabled": true
+    },
+    {
+      "id": "pendulum",
+      "badge": "فوري",
+      "enabled": true
+    },
+    {
+      "id": "simple_circuit",
+      "badge": "فوري",
+      "enabled": true
+    },
+    {
+      "id": "sound_pitch",
+      "badge": "فوري",
+      "enabled": true
+    },
+    {
+      "id": "day_night",
+      "badge": "فوري",
+      "enabled": true
+    }
+  ],
+  "journeys": [
+    {
+      "id": "moon_phases",
+      "visible": true,
+      "title": "كيف تتكوّن أطوار القمر؟",
+      "tier": "فئة أ — مراجعة بشرية",
+      "src": "/api/sims/golden_a15b24cac1608e61/download?inline=1"
+    },
+    {
+      "id": "buoyancy",
+      "visible": true,
+      "title": "الكثافة وقوة الطفو في الماء",
+      "tier": "فئة أ — مراجعة بشرية",
+      "src": "/api/sims/golden_3fb522aa05d6f461/download?inline=1"
+    },
+    {
+      "id": "pendulum",
+      "visible": true,
+      "title": "طول البندول وزمن الذبذبة",
+      "tier": "فئة أ — مراجعة بشرية",
+      "src": "/api/sims/golden_2aec0f068a996676/download?inline=1"
+    },
+    {
+      "id": "simple_circuit",
+      "visible": true,
+      "title": "تأثير المقاومة في التيار وسطوع المصباح",
+      "tier": "فئة أ — مراجعة بشرية",
+      "src": "/api/sims/golden_b61de6c3feb4ab34/download?inline=1"
+    },
+    {
+      "id": "sound_pitch",
+      "visible": true,
+      "title": "العلاقة بين التردد وحدّة النغمة",
+      "tier": "فئة أ — مراجعة بشرية",
+      "src": "/api/sims/golden_aa3990d922a11395/download?inline=1"
+    },
+    {
+      "id": "day_night",
+      "visible": true,
+      "title": "دوران الأرض وتعاقب النهار والليل",
+      "tier": "فئة أ — مراجعة بشرية",
+      "src": "/api/sims/golden_64ae7cbbd1539119/download?inline=1"
+    }
+  ],
+  "askPosts": 0,
+  "externalRequests": 0,
+  "consoleErrors": []
+}

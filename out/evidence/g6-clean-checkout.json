@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0",
+  "captured_at_utc": "2026-07-19T13:20:31Z",
+  "source": "detached_git_worktree",
+  "commit": "218d91bda739f875347a9dc46a51ab3ffd7861cf",
+  "dependency_environment": "existing locked .venv attached as an untracked symlink; no network install repeated",
+  "commands": [
+    ".venv/bin/pytest -q",
+    ".venv/bin/ruff check .",
+    "git status --porcelain=v1 --untracked-files=no"
+  ],
+  "pytest": {
+    "passed": 174,
+    "skipped": 1,
+    "failed": 0,
+    "elapsed_seconds": 55.83
+  },
+  "ruff": "clean",
+  "tracked_status_clean": true,
+  "command_elapsed_seconds": 57,
+  "model_calls": 0,
+  "passed": true
+}

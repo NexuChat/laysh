@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -84,3 +85,38 @@ def test_runtime_configuration_and_release_docs_name_only_gpt56_runtime_models()
     )
     for path in runtime_files:
         assert not banned.search(path.read_text(encoding="utf-8")), path
+
+
+def test_g6_evidence_records_service_clean_checkout_and_owner_boundary_honestly():
+    verdict = json.loads(
+        (ROOT / "out" / "evidence" / "g6-verdict.json").read_text(encoding="utf-8")
+    )
+    clean = json.loads(
+        (ROOT / "out" / "evidence" / "g6-clean-checkout.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    service = json.loads(
+        (ROOT / "out" / "evidence" / "g6-service.json").read_text(encoding="utf-8")
+    )
+    gallery = json.loads(
+        (ROOT / "out" / "evidence" / "g6-service-gallery.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert verdict["verdict"] == "pass" and verdict["live_model_calls_in_m6"] == 0
+    assert verdict["acceptance_matrix"] == {
+        "p0_rows_total": 73,
+        "green_in_builder_scope": 68,
+        "failing_in_builder_scope": 0,
+        "unknown": 0,
+        "prepared_owner_only": verdict["acceptance_matrix"]["prepared_owner_only"],
+    }
+    assert len(verdict["acceptance_matrix"]["prepared_owner_only"]) == 5
+    assert clean["passed"] is True and clean["tracked_status_clean"] is True
+    assert service["passed"] is True and service["systemd_user"]["health_timer"][
+        "latest_result"
+    ] == "success"
+    assert len(gallery["cards"]) == len(gallery["journeys"]) == 6
+    assert gallery["askPosts"] == gallery["externalRequests"] == 0

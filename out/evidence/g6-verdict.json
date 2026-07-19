@@ -1,0 +1,84 @@
+{
+  "schema_version": "1.0",
+  "captured_at_utc": "2026-07-19T13:20:31Z",
+  "gate": "G6",
+  "verdict": "pass",
+  "scope": "Builder release-candidate gate with remote push, public hosting, video upload, and Devpost submission reserved for the owner",
+  "live_model_calls_in_m6": 0,
+  "service": {
+    "local_url": "http://127.0.0.1:8765",
+    "systemd_active": true,
+    "health_green": true,
+    "six_goldens_instant": true
+  },
+  "tests": {
+    "working_tree": {
+      "passed": 175,
+      "skipped": 1,
+      "failed": 0,
+      "elapsed_seconds": 72.67
+    },
+    "browser_marked": {
+      "passed": 6,
+      "skipped": 1,
+      "failed": 0,
+      "deselected": 167,
+      "elapsed_seconds": 72.96
+    },
+    "accessibility": {
+      "passed": 1,
+      "failed": 0,
+      "elapsed_seconds": 34.13
+    },
+    "clean_checkout": {
+      "passed": 174,
+      "skipped": 1,
+      "failed": 0,
+      "elapsed_seconds": 55.83,
+      "tracked_status_clean": true
+    },
+    "ruff": "clean"
+  },
+  "benchmark": {
+    "running_service_iterations": 20,
+    "running_service_http_requests": 60,
+    "deployed_gallery_p95_seconds": 0.004472113214433193,
+    "exact_cache_p95_seconds": 0.0017972206696867943,
+    "first_answer_p50_seconds": 21.6645,
+    "first_answer_p95_seconds": 25.295,
+    "new_module_p50_seconds": 158.13049999999998,
+    "new_module_p95_seconds": 178.283,
+    "latency_objectives_all_met": false,
+    "honestly_disclosed_in_readme": true
+  },
+  "release_assets": {
+    "readme": true,
+    "mit_license": true,
+    "font_license_notice": true,
+    "deploy_units": true,
+    "submission_description": true,
+    "submission_field_sheet": true,
+    "video_outline_under_three_minutes": true,
+    "owner_checklist": true,
+    "primary_session_id": "019f7998-9378-72b2-b590-ee10e632ce81"
+  },
+  "acceptance_matrix": {
+    "p0_rows_total": 73,
+    "green_in_builder_scope": 68,
+    "failing_in_builder_scope": 0,
+    "unknown": 0,
+    "prepared_owner_only": [
+      "COMP-01 final Devpost submission before deadline",
+      "COMP-04 public repository and public demo URLs",
+      "COMP-06 public narrated YouTube video",
+      "OPS-02 owner-managed tunnel persistence",
+      "OPS-05 availability ownership through the judging period"
+    ]
+  },
+  "security_release_audit": {
+    "tracked_secret_scan_clean": true,
+    "git_remote_configured": false,
+    "runtime_models_gpt_5_6_family_only": true
+  },
+  "release_tag": "v1.0.0"
+}
