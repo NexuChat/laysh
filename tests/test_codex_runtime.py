@@ -147,6 +147,29 @@ def test_every_codex_output_schema_matches_strict_structured_output_subset():
             },
             "$.$defs.choice:missing_type",
         ),
+        (
+            {
+                "type": "array",
+                "uniqueItems": True,
+                "items": {"type": "string"},
+            },
+            "$:forbidden_keyword:uniqueItems",
+        ),
+        (
+            {
+                "type": "object",
+                "$ref": "#/$defs/value",
+                "$defs": {
+                    "value": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {},
+                        "required": [],
+                    }
+                },
+            },
+            "$:ref_cannot_have_sibling_keywords",
+        ),
     ],
 )
 def test_strict_output_schema_guard_reports_every_restricted_shape(schema, violation):
