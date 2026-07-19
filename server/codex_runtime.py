@@ -29,7 +29,15 @@ ENV_ALLOWLIST = (
     "NO_PROXY",
 )
 FORBIDDEN_OUTPUT_SCHEMA_KEYWORDS = frozenset(
-    {"oneOf", "if", "then", "patternProperties", "unevaluatedProperties", "format"}
+    {
+        "oneOf",
+        "if",
+        "then",
+        "patternProperties",
+        "unevaluatedProperties",
+        "format",
+        "uniqueItems",
+    }
 )
 
 
@@ -61,6 +69,8 @@ def validate_strict_output_schema(schema: Any) -> list[str]:
 
         for keyword in sorted(FORBIDDEN_OUTPUT_SCHEMA_KEYWORDS.intersection(node)):
             violations.append(f"{path}:forbidden_keyword:{keyword}")
+        if "$ref" in node and len(node) > 1:
+            violations.append(f"{path}:ref_cannot_have_sibling_keywords")
         if "type" not in node:
             violations.append(f"{path}:missing_type")
 

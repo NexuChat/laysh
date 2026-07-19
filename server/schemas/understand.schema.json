@@ -35,14 +35,49 @@
     "tldr": {"type": "string", "maxLength": 420},
     "key_formula": {
       "type": ["string", "null"],
-      "anyOf": [
-        {"type": "string", "maxLength": 120},
-        {"type": "null"}
-      ]
+      "anyOf": [{"type": "string", "maxLength": 120}, {"type": "null"}]
     },
     "learning_objective": {"type": "string", "maxLength": 220},
-    "primary_parameter": {"type": ["object", "null"], "$ref": "#/$defs/nullableParameter"},
-    "secondary_parameter": {"type": ["object", "null"], "$ref": "#/$defs/nullableParameter"},
+    "primary_parameter": {
+      "type": ["object", "null"],
+      "anyOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "label", "unit", "min", "max", "default", "step"],
+          "properties": {
+            "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+            "label": {"type": "string", "maxLength": 80},
+            "unit": {"type": "string", "maxLength": 24},
+            "min": {"type": "number"},
+            "max": {"type": "number"},
+            "default": {"type": "number"},
+            "step": {"type": "number", "exclusiveMinimum": 0}
+          }
+        }
+      ]
+    },
+    "secondary_parameter": {
+      "type": ["object", "null"],
+      "anyOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "label", "unit", "min", "max", "default", "step"],
+          "properties": {
+            "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+            "label": {"type": "string", "maxLength": 80},
+            "unit": {"type": "string", "maxLength": 24},
+            "min": {"type": "number"},
+            "max": {"type": "number"},
+            "default": {"type": "number"},
+            "step": {"type": "number", "exclusiveMinimum": 0}
+          }
+        }
+      ]
+    },
     "prediction": {
       "type": ["object", "null"],
       "anyOf": [
@@ -57,7 +92,6 @@
               "type": "array",
               "minItems": 2,
               "maxItems": 3,
-              "uniqueItems": true,
               "items": {"type": "string", "maxLength": 80}
             }
           }
@@ -66,24 +100,15 @@
     },
     "misconception": {
       "type": ["string", "null"],
-      "anyOf": [
-        {"type": "string", "maxLength": 180},
-        {"type": "null"}
-      ]
+      "anyOf": [{"type": "string", "maxLength": 180}, {"type": "null"}]
     },
     "explanation_prompt": {
       "type": ["string", "null"],
-      "anyOf": [
-        {"type": "string", "maxLength": 180},
-        {"type": "null"}
-      ]
+      "anyOf": [{"type": "string", "maxLength": 180}, {"type": "null"}]
     },
     "transfer_prompt": {
       "type": ["string", "null"],
-      "anyOf": [
-        {"type": "string", "maxLength": 180},
-        {"type": "null"}
-      ]
+      "anyOf": [{"type": "string", "maxLength": 180}, {"type": "null"}]
     },
     "module_spec": {
       "type": "object",
@@ -93,7 +118,6 @@
         "outputs": {
           "type": "array",
           "maxItems": 8,
-          "uniqueItems": true,
           "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}
         }
       }
@@ -104,8 +128,78 @@
       "items": {
         "type": "object",
         "anyOf": [
-          {"type": "object", "$ref": "#/$defs/numericCheck"},
-          {"type": "object", "$ref": "#/$defs/relationCheck"}
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "kind", "inputs", "output", "expected", "tolerance", "unit"],
+            "properties": {
+              "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+              "kind": {"type": "string", "enum": ["numeric"]},
+              "inputs": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 8,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["name", "value"],
+                  "properties": {
+                    "name": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+                    "value": {"type": "number"}
+                  }
+                }
+              },
+              "output": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+              "expected": {"type": "number"},
+              "tolerance": {"type": "number", "minimum": 0},
+              "unit": {"type": "string", "maxLength": 24}
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id", "kind", "left_inputs", "right_inputs", "output", "relation", "minimum_ratio"
+            ],
+            "properties": {
+              "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+              "kind": {"type": "string", "enum": ["relation"]},
+              "left_inputs": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 8,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["name", "value"],
+                  "properties": {
+                    "name": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+                    "value": {"type": "number"}
+                  }
+                }
+              },
+              "right_inputs": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 8,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["name", "value"],
+                  "properties": {
+                    "name": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+                    "value": {"type": "number"}
+                  }
+                }
+              },
+              "output": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+              "relation": {
+                "type": "string",
+                "enum": ["right_gt_left", "right_lt_left", "right_eq_left"]
+              },
+              "minimum_ratio": {"type": "number", "exclusiveMinimum": 0}
+            }
+          }
         ]
       }
     },
@@ -113,75 +207,6 @@
       "type": "array",
       "maxItems": 3,
       "items": {"type": "string", "maxLength": 160}
-    }
-  },
-  "$defs": {
-    "parameter": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "label", "unit", "min", "max", "default", "step"],
-      "properties": {
-        "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
-        "label": {"type": "string", "maxLength": 80},
-        "unit": {"type": "string", "maxLength": 24},
-        "min": {"type": "number"},
-        "max": {"type": "number"},
-        "default": {"type": "number"},
-        "step": {"type": "number", "exclusiveMinimum": 0}
-      }
-    },
-    "nullableParameter": {
-      "type": ["object", "null"],
-      "anyOf": [
-        {"type": "null"},
-        {"type": "object", "$ref": "#/$defs/parameter"}
-      ]
-    },
-    "inputEntry": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["name", "value"],
-      "properties": {
-        "name": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
-        "value": {"type": "number"}
-      }
-    },
-    "inputEntries": {
-      "type": "array",
-      "minItems": 1,
-      "maxItems": 8,
-      "items": {"type": "object", "$ref": "#/$defs/inputEntry"}
-    },
-    "numericCheck": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "kind", "inputs", "output", "expected", "tolerance", "unit"],
-      "properties": {
-        "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
-        "kind": {"type": "string", "enum": ["numeric"]},
-        "inputs": {"type": "array", "$ref": "#/$defs/inputEntries"},
-        "output": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
-        "expected": {"type": "number"},
-        "tolerance": {"type": "number", "minimum": 0},
-        "unit": {"type": "string", "maxLength": 24}
-      }
-    },
-    "relationCheck": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["id", "kind", "left_inputs", "right_inputs", "output", "relation", "minimum_ratio"],
-      "properties": {
-        "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
-        "kind": {"type": "string", "enum": ["relation"]},
-        "left_inputs": {"type": "array", "$ref": "#/$defs/inputEntries"},
-        "right_inputs": {"type": "array", "$ref": "#/$defs/inputEntries"},
-        "output": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
-        "relation": {
-          "type": "string",
-          "enum": ["right_gt_left", "right_lt_left", "right_eq_left"]
-        },
-        "minimum_ratio": {"type": "number", "exclusiveMinimum": 0}
-      }
     }
   }
 }
