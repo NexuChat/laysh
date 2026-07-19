@@ -15,7 +15,7 @@ class ModuleSecurityError(ValueError):
 
 
 PERMITTED_ABI = ("destroy", "init", "resize", "setParameter", "test", "version")
-MAX_SOURCE_BYTES = 40 * 1024
+MAX_SOURCE_BYTES = 96 * 1024
 FORBIDDEN_CAPABILITIES = (
     ("html_document", r"<\s*!?doctype\b|<\s*html\b|<\s*/?\s*script\b"),
     ("network_fetch", r"\bfetch\b"),

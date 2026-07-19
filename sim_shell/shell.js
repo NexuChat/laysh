@@ -11,6 +11,8 @@
         explain: "فسّر ما رأيت",
         reset: "إعادة الضبط",
         replay: "إعادة العرض",
+        projector: "وضع العرض",
+        exitProjector: "إنهاء العرض",
         runtimeTitle: "تعذّر تشغيل المحاكاة",
         runtimeCopy: "يمكنك الاحتفاظ بالجواب والمحاولة مرة أخرى من Laysh.",
       }
@@ -21,6 +23,8 @@
         explain: "Explain what you saw",
         reset: "Reset",
         replay: "Replay",
+        projector: "Projector mode",
+        exitProjector: "Exit projector",
         runtimeTitle: "The simulation could not run",
         runtimeCopy: "Keep the answer and try again from Laysh.",
       };
@@ -33,6 +37,8 @@
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
   let simulation;
   let frameCount = 0;
+  let idleFrameId = 0;
+  let previousIdleAt = 0;
 
   document.body.dataset.direction = dir === "rtl" ? "rtl" : "ltr";
   byId("lesson-label").textContent = labels.lesson;
@@ -48,6 +54,7 @@
   byId("transfer").textContent = lesson.transfer_prompt || "";
   byId("reset").textContent = labels.reset;
   byId("replay").textContent = labels.replay;
+  byId("projector").textContent = labels.projector;
   byId("runtime-error-title").textContent = labels.runtimeTitle;
   byId("runtime-error-copy").textContent = labels.runtimeCopy;
 
@@ -118,6 +125,35 @@
     byId("explain").hidden = false;
   });
 
+  function syncProjectorState(active) {
+    document.body.classList.toggle("projector-mode", active);
+    byId("projector").textContent = active ? labels.exitProjector : labels.projector;
+    byId("projector").setAttribute("aria-pressed", String(active));
+  }
+
+  byId("projector").addEventListener("click", async () => {
+    const active = !document.body.classList.contains("projector-mode");
+    syncProjectorState(active);
+    try {
+      if (active && !document.fullscreenElement) await document.documentElement.requestFullscreen();
+      if (!active && document.fullscreenElement) await document.exitFullscreen();
+    } catch {
+      // The projector layout remains available when fullscreen permission is denied.
+    }
+  });
+  document.addEventListener("fullscreenchange", () => {
+    if (!document.fullscreenElement) syncProjectorState(false);
+  });
+
+  function scheduleIdleFrame(timestamp = 0) {
+    if (reducedMotion) return;
+    if (timestamp - previousIdleAt >= 80) {
+      previousIdleAt = timestamp;
+      simulation.setParameter(parameter.id, Number(control.value));
+    }
+    idleFrameId = requestAnimationFrame(scheduleIdleFrame);
+  }
+
   function resize() {
     const width = Math.max(280, Math.min(720, canvas.clientWidth || 720));
     const height = Math.round(width * 0.56);
@@ -138,8 +174,12 @@
       emitFrame,
     });
     update(parameter.default);
+    idleFrameId = requestAnimationFrame(scheduleIdleFrame);
     window.addEventListener("resize", resize, { passive: true });
-    window.addEventListener("pagehide", () => simulation.destroy(), { once: true });
+    window.addEventListener("pagehide", () => {
+      cancelAnimationFrame(idleFrameId);
+      simulation.destroy();
+    }, { once: true });
   } catch {
     byId("runtime-error").hidden = false;
     document.documentElement.dataset.runtimeError = "SIM_RUNTIME_ERROR";

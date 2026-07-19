@@ -3,39 +3,42 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
-  <meta name="theme-color" content="#173f35">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23efad31'/%3E%3Ctext x='32' y='45' text-anchor='middle' font-size='40'%3E%3F%3C/text%3E%3C/svg%3E">
+  <meta name="theme-color" content="#05080b">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%2305080b'/%3E%3Ccircle cx='40' cy='37' r='7' fill='%2358b7ff'/%3E%3Cpath d='M14 31a18 18 0 1 0 36 0' fill='none' stroke='%23f6a94a' stroke-width='4'/%3E%3C/svg%3E">
   <title>ليش — اسأل، افهم، وجرّب</title>
   <link rel="preload" href="/static/fonts/free-sans-arabic-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/static/fonts/free-serif-arabic-display.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/static/app.css">
   <script src="/static/app.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main-content">انتقل إلى المحتوى</a>
+  <div class="star-field" aria-hidden="true"><i></i><i></i><i></i></div>
   <div class="site-shell">
     <header class="site-header">
       <a class="brand" href="#ask" aria-label="ليش، الصفحة الرئيسية">
-        <span class="brand-mark" aria-hidden="true">؟</span>
-        <span>ليش</span>
+        <span>ليش<span class="brand-dot">.</span></span>
       </a>
-      <span class="lab-label">مختبر علوم تفاعلي</span>
+      <span class="lab-label">مرصد العلوم التفاعلي</span>
     </header>
 
     <main id="main-content" tabindex="-1">
       <section class="view ask-view" id="ask-view" data-view="ask" aria-labelledby="hero-title">
         <div class="hero-grid">
           <div class="hero-copy">
-            <p class="eyebrow"><span aria-hidden="true">✦</span> اسأل ليش، والعب الجواب</p>
+            <p class="eyebrow"><span aria-hidden="true">✦</span> اسأل ليش، والعب الجواب.</p>
             <h1 id="hero-title">كل سؤال فضولي يستحق جوابًا يمكنك لمسه.</h1>
             <p class="hero-promise">اسأل سؤالًا في العلوم. نجيبك باختصار، ثم نبني محاكاة آمنة إذا أمكن تمثيل الفكرة بصدق.</p>
           </div>
-          <div class="orbit-illustration" aria-hidden="true">
+          <div class="orbit-illustration orbit-scene" aria-hidden="true">
             <span class="orbit orbit-one"></span>
             <span class="orbit orbit-two"></span>
+            <span class="orbit orbit-three"></span>
             <span class="sun"></span>
             <span class="moon moon-one"></span>
             <span class="moon moon-two"></span>
-            <span class="orbit-note">لماذا؟</span>
+            <span class="orbit-note">ليش؟</span>
+            <span class="orbit-star star-a"></span><span class="orbit-star star-b"></span>
           </div>
         </div>
 
@@ -83,7 +86,7 @@
             <p id="answer-copy" dir="auto"></p>
             <p class="formula" id="answer-formula" dir="ltr"></p>
           </article>
-          <section class="agent-card" aria-labelledby="build-title">
+          <section class="agent-card" id="agent-theatre" aria-labelledby="build-title">
             <div class="agent-heading">
               <div><p class="eyebrow">بناء حقيقي، بلا نسب وهمية</p><h2 id="build-title">نحوّل الجواب إلى تجربة</h2></div>
               <time class="elapsed" id="elapsed" datetime="PT0S">٠:٠٠</time>
@@ -92,9 +95,22 @@
               <span class="pulse" aria-hidden="true"></span><span id="connection-copy">في قائمة البناء</span>
             </div>
             <ol class="stage-list" id="stage-list" aria-label="خطوات البناء"></ol>
+            <aside class="domain-fact" id="domain-fact" hidden>
+              <span class="fact-orbit" aria-hidden="true"></span>
+              <div><strong>هل تعلم؟</strong><p id="domain-fact-copy" dir="auto"></p></div>
+            </aside>
+            <div class="sim-silhouette" id="sim-silhouette" aria-hidden="true">
+              <span class="silhouette-ring ring-a"></span><span class="silhouette-ring ring-b"></span>
+              <span class="silhouette-core"></span><span class="scan-line"></span>
+            </div>
+            <section class="heal-act" id="heal-act" aria-live="polite" hidden>
+              <span class="heal-symbol" aria-hidden="true">↻</span>
+              <div><strong>إصلاح ذاتي</strong><p>نعيد بناء الجزء الذي لم يجتز الفحص.</p></div>
+            </section>
             <div class="verification-summary" id="verification-summary" hidden>
               <strong id="verification-title">نتيجة الفحص</strong>
               <p id="verification-copy"></p>
+              <div class="verification-grid" id="verification-grid" aria-label="بوابات التحقق"></div>
             </div>
           </section>
         </div>
@@ -110,7 +126,7 @@
           <p class="result-answer" id="result-answer" dir="auto"></p>
         </header>
         <section class="simulation-stage" aria-labelledby="simulation-heading">
-          <div class="simulation-bar"><h2 id="simulation-heading">جرّب بنفسك</h2><span class="verified-badge" id="tier-badge">فحص آلي مكتمل</span></div>
+          <div class="simulation-bar"><h2 id="simulation-heading">جرّب بنفسك</h2><div class="simulation-tools"><span class="verified-badge" id="tier-badge">فحص آلي مكتمل</span><button class="projector-button" id="projector-result" type="button" aria-label="اعرض المحاكاة بملء الشاشة">وضع العرض</button></div></div>
           <iframe id="simulation-frame" title="المحاكاة التفاعلية" sandbox="allow-scripts"></iframe>
           <p class="sr-only" id="simulation-alternative">تعرض المحاكاة التغيّر الموصوف في الجواب، مع وصف نصي مباشر للحالة داخل الإطار.</p>
         </section>

@@ -107,7 +107,7 @@ def test_hand_authored_module_passes_source_and_node_contract_checks():
     from server.verify import verify_module_source, verify_module_with_node
 
     source = FIXTURE_MODULE.read_text(encoding="utf-8")
-    assert verify_module_source(source)["source_size_bytes"] < 40 * 1024
+    assert verify_module_source(source)["source_size_bytes"] < 96 * 1024
     report = verify_module_with_node(source, VALID_UNDERSTANDING)
     assert report["passed"] is True
     assert report["fixture_count"] == 3

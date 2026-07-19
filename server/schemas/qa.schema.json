@@ -1,10 +1,10 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://laysh.local/schemas/qa-1.0.json",
-  "title": "Laysh healed-module QA output v1.0",
+  "$id": "https://laysh.local/schemas/qa-1.1.json",
+  "title": "Laysh healed-module QA output v1.1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["approved", "issues", "replacement_module_js"],
+  "required": ["approved", "issues", "replacement_module_js", "visual_richness"],
   "properties": {
     "approved": {"type": "boolean"},
     "issues": {
@@ -12,6 +12,24 @@
       "maxItems": 3,
       "items": {"type": "string", "maxLength": 180}
     },
-    "replacement_module_js": {"type": "null"}
+    "replacement_module_js": {"type": "null"},
+    "visual_richness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scene_depth",
+        "physical_light",
+        "idle_motion",
+        "reactive_feedback",
+        "readable_overlays"
+      ],
+      "properties": {
+        "scene_depth": {"type": "boolean"},
+        "physical_light": {"type": "boolean"},
+        "idle_motion": {"type": "boolean"},
+        "reactive_feedback": {"type": "boolean"},
+        "readable_overlays": {"type": "boolean"}
+      }
+    }
   }
 }

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import html
 import json
 from pathlib import Path
@@ -37,6 +38,12 @@ def assemble_artifact(understanding: dict[str, Any], module_output: dict[str, An
         "@@CSP@@": PORTABLE_CSP,
         "@@TITLE@@": html.escape(understanding["title"], quote=True),
         "@@SHELL_CSS@@": (SHELL_DIR / "shell.css").read_text(encoding="utf-8"),
+        "@@UI_FONT@@": base64.b64encode(
+            (ROOT / "web" / "fonts" / "free-sans-arabic-latin.woff2").read_bytes()
+        ).decode("ascii"),
+        "@@DISPLAY_FONT@@": base64.b64encode(
+            (ROOT / "web" / "fonts" / "free-serif-arabic-display.woff2").read_bytes()
+        ).decode("ascii"),
         "@@LESSON_JSON@@": _safe_script_json(understanding),
         "@@CONTRACT_JS@@": (SHELL_DIR / "contract.js").read_text(encoding="utf-8"),
         "@@MODULE_JS@@": module_output["module_js"],
@@ -48,4 +55,3 @@ def assemble_artifact(understanding: dict[str, Any], module_output: dict[str, An
     if "@@" in artifact:
         raise ValueError("unresolved trusted-shell marker")
     return artifact
-

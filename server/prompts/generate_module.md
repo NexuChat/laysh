@@ -14,11 +14,26 @@ Use only the supplied canvas/context, Math, Number, arrays, and plain objects. D
 network, storage, navigation, dynamic code, workers, timers, sensors, audio, clipboard, console, or
 external URLs. `init` draws synchronously and calls `emitFrame`. `setParameter` redraws and calls the
 captured `emitFrame`. `test(inputs)` is deterministic, has no visible side effects, and returns exactly
-the declared finite outputs. Honor reduced motion by avoiding automatic animation. Keep source under
-40 KiB.
+the declared finite outputs. Honor reduced motion by keeping same-value redraws visually still. Keep
+source under 96 KiB.
 
 Visual quality rules for the canvas module:
 
+- Build layered scene depth, never a flat single-color canvas. Combine a domain-appropriate gradient,
+  near and far bodies, and restrained ambient texture or particles: stars for astronomy, water
+  light-play for buoyancy, workshop glow for circuits, or an equally relevant physical setting.
+- Make physical light beautiful and physically consistent. Use soft shadows, controlled glows, and
+  visible occlusion. A sun may have a corona, a filament may visibly heat, and a waveform may leave a
+  luminous trail, but every effect must still encode the fixed model.
+- Include subtle idle motion that makes the instrument feel alive before interaction. The trusted
+  shell supplies a same-value redraw about twelve times per second; advance a private visual-only
+  phase on that redraw when `reducedMotion` is false. Never use timers, `requestAnimationFrame`, or any
+  hidden change to `test(inputs)` or its physics.
+- Add smooth reactive feedback tied directly to parameter changes: eased geometry, fading trails,
+  ripple rings, or particle speed proportional to the declared quantity. Preserve the previous
+  displayed parameter locally so each redraw can interpolate without changing `test(inputs)`.
+- Render readable Arabic or English readout chips near the action, with a translucent backing and
+  concise labels. Do not leave raw numbers floating in canvas corners.
 - Use smooth fills or gradients for continuous bodies and surfaces; never use golf-ball dot patterns
   as a substitute for shading.
 - In light-and-shadow models, never draw light through an opaque body. Show a subtle shadow cone on
@@ -27,7 +42,8 @@ Visual quality rules for the canvas module:
   Arabic labels use `منظر علوي` and `كما يبدو من الأرض`; English labels use `Top view` and
   `View from Earth`.
 - Keep labels precise, legible, and within the canvas. Depict only claims supported by the fixed
-  formula, fixtures, and assumptions; do not add decorative motion or unsupported causal effects.
+  formula, fixtures, and assumptions. Visual motion may add atmosphere but must not add an unsupported
+  causal claim.
 
 UNDERSTANDING_JSON:
 @@INPUT_JSON@@
