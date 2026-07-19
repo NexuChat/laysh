@@ -81,7 +81,7 @@ async def generate_candidate(fixture_id: str, attempt: int) -> int:
         "checks": {},
     }
     artifact_sha256 = None
-    if record.status == "complete" and record.artifact and record.builder_outputs:
+    if record.artifact and record.builder_outputs:
         review = review_golden_candidate(
             fixture=fixture,
             understanding=record.builder_outputs["understanding"],
