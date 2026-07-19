@@ -4,15 +4,22 @@ import argparse
 import json
 import math
 import statistics
+import sys
 import time
 from pathlib import Path
 from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
 
-from server.cache import VerifiedCache
-from server.goldens import GOLDEN_ROOT, load_golden_fixtures, load_pinned_golden
-
 ROOT = Path(__file__).parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from server.cache import VerifiedCache  # noqa: E402
+from server.goldens import (  # noqa: E402
+    GOLDEN_ROOT,
+    load_golden_fixtures,
+    load_pinned_golden,
+)
 
 
 def percentile(values: list[float], percentile_value: float) -> float:

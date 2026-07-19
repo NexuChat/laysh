@@ -1,6 +1,11 @@
 import json
+import subprocess
+import sys
+from pathlib import Path
 
 from scripts.benchmark import measure_service, percentile
+
+ROOT = Path(__file__).parents[1]
 
 
 def test_benchmark_percentile_uses_nearest_rank_without_hiding_tail_latency():
@@ -50,3 +55,14 @@ def test_service_benchmark_measures_health_and_instant_gallery_without_model_cal
     assert requests.count("http://127.0.0.1:8765/healthz") == 2
     assert requests.count("http://127.0.0.1:8765/api/gallery?locale=ar") == 2
     assert requests.count("http://127.0.0.1:8765/api/gallery/moon_phases") == 2
+
+
+def test_benchmark_is_directly_executable_from_the_repository_root():
+    completed = subprocess.run(  # noqa: S603
+        [sys.executable, str(ROOT / "scripts" / "benchmark.py"), "--help"],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.returncode == 0, completed.stderr
