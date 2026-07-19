@@ -6,6 +6,7 @@ const source = fs.readFileSync(sourcePath, "utf8");
 const understanding = JSON.parse(fs.readFileSync(understandingPath, "utf8"));
 const permittedAbi = ["destroy", "init", "resize", "setParameter", "test", "version"];
 const failures = [];
+const passingNumericFixtures = [];
 let checkCount = 0;
 let frames = 0;
 let drawOperations = 0;
@@ -206,6 +207,8 @@ if (simulation) {
             { output: fixture.output, value: leftValue },
             { fixture_id: fixture.id, inputs: fixture.inputs },
           );
+        } else {
+          passingNumericFixtures.push({ fixture_id: fixture.id, output: fixture.output });
         }
       } else {
         const rightInputs = fixture.right_inputs;
@@ -253,5 +256,6 @@ process.stdout.write(JSON.stringify({
   check_count: checkCount,
   fixture_count: understanding.checks.length,
   first_frame: frames > 0,
+  passing_numeric_fixtures: passingNumericFixtures,
   failures,
 }));

@@ -1,4 +1,7 @@
+from copy import deepcopy
 from pathlib import Path
+
+import pytest
 
 from tests.golden_cases import VALID_MODULE_OUTPUT, VALID_UNDERSTANDING
 
@@ -54,6 +57,40 @@ def test_numeric_fixture_failure_reports_id_inputs_expected_actual_and_tolerance
     assert failure["actual"] == {"output": "lit_fraction", "value": 0}
 
 
+def test_relation_contradiction_after_passing_numeric_checks_is_suspect_fixture():
+    from server.verify import verify_candidate
+
+    understanding = deepcopy(VALID_UNDERSTANDING)
+    understanding["checks"].append(
+        {
+            "id": "contradictory_relation",
+            "kind": "relation",
+            "left_inputs": [{"name": "angle_deg", "value": 90}],
+            "right_inputs": [{"name": "angle_deg", "value": 45}],
+            "output": "lit_fraction",
+            "relation": "right_gt_left",
+            "minimum_ratio": 1.5,
+        }
+    )
+
+    result = verify_candidate(GOOD_MODULE_OUTPUT, understanding)
+    failure = next(
+        item
+        for item in result.failures
+        if item["fixture_id"] == "contradictory_relation"
+    )
+
+    assert failure["gate"] == "fixture_integrity"
+    assert failure["code"] == "suspect_relation_fixture"
+    assert failure["expected"]["relation"] == "right_gt_left"
+    assert failure["actual"]["left_value"] == pytest.approx(0.5)
+    assert failure["actual"]["right_value"] < failure["actual"]["left_value"]
+    assert failure["numeric_cross_check"] == {
+        "output": "lit_fraction",
+        "passing_fixture_ids": ["quarter_phase", "full_phase"],
+    }
+
+
 def test_security_failure_names_the_forbidden_capability_without_echoing_source():
     from server.verify import verify_candidate
 
@@ -71,6 +108,46 @@ def test_security_failure_names_the_forbidden_capability_without_echoing_source(
     assert "network_fetch" in failure["actual"]["capabilities"]
     assert "module_js" not in str(failure)
     assert "/blocked" not in str(failure)
+
+
+def test_anonymous_functions_and_arrows_are_not_dynamic_code():
+    from server.verify import verify_candidate
+
+    source = GOOD_MODULE_OUTPUT["module_js"].replace(
+        '"use strict";',
+        '"use strict"; const add = function (a, b) { return a + b; }; '
+        "const double = (value) => value * 2; void add; void double;",
+    )
+
+    result = verify_candidate(
+        {**GOOD_MODULE_OUTPUT, "module_js": source},
+        VALID_UNDERSTANDING,
+    )
+
+    assert result.passed is True
+    assert not any(failure["gate"] == "security" for failure in result.failures)
+
+
+@pytest.mark.parametrize("construct", ["new Function('a', 'return a')", "eval('1 + 1')"])
+def test_actual_dynamic_code_constructs_fail_with_exact_diagnostic(construct):
+    from server.verify import verify_candidate
+
+    source = GOOD_MODULE_OUTPUT["module_js"].replace(
+        '"use strict";',
+        f'"use strict"; const forbidden = () => {construct}; void forbidden;',
+    )
+    result = verify_candidate(
+        {**GOOD_MODULE_OUTPUT, "module_js": source},
+        VALID_UNDERSTANDING,
+    )
+    failure = next(item for item in result.failures if item["gate"] == "security")
+
+    assert failure == {
+        "gate": "security",
+        "code": "forbidden_capability",
+        "expected": {"forbidden_capabilities": []},
+        "actual": {"capabilities": ["dynamic_code"]},
+    }
 
 
 def test_source_size_failure_reports_limit_and_actual_bytes():
