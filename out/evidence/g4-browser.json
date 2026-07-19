@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "1.0",
+  "success": {
+    "answerPinned": true,
+    "resultVisible": true,
+    "sandbox": "allow-scripts",
+    "receiptChecks": 26
+  },
+  "failures": {
+    "answerOnly": true,
+    "unsafeRedirect": true,
+    "generationFailed": true,
+    "runtimeError": true,
+    "backendDown": true,
+    "cancelled": true
+  },
+  "buildStates": {
+    "queued": true,
+    "reconnecting": true,
+    "stillTesting": true
+  },
+  "historyBack": true,
+  "accessibility": {
+    "unnamedInteractiveNodes": 0,
+    "duplicateIds": [],
+    "focusVisible": true,
+    "keyboardSequence": [
+      "question",
+      "safe-example",
+      "ask-submit"
+    ],
+    "smallTargets": [],
+    "strayEnglish": []
+  },
+  "responsive": {
+    "overflow320": false,
+    "overflowAt200Percent": false,
+    "reducedMotion": true
+  },
+  "consoleErrors": [],
+  "networkFailures": [],
+  "screenshots": [
+    "g4-mobile-390x844.png",
+    "g4-desktop-1440x900.png"
+  ]
+}

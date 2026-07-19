@@ -374,6 +374,16 @@
   });
 
   window.addEventListener("popstate", (event) => setView(event.state?.view || "ask"));
+  window.addEventListener("offline", () => {
+    if (state.terminal || !state.streamUrl) return;
+    state.streamController?.abort();
+    setConnection("انقطع الاتصال مؤقتًا؛ نحاول إعادة الاتصال واستعادة ما فات.", "reconnecting");
+  });
+  window.addEventListener("online", () => {
+    if (state.terminal || !state.streamUrl) return;
+    state.reconnectAttempt = 0;
+    connectStream();
+  });
   window.addEventListener("message", (event) => {
     const frame = byId("simulation-frame");
     if (event.source !== frame.contentWindow || event.origin !== "null") return;
