@@ -21,6 +21,7 @@ class Settings:
     evidence_stage_timeout_seconds: float = 300.0
     public_qa_timeout_seconds: float = 45.0
     evidence_qa_timeout_seconds: float = 120.0
+    cache_key_secret: str = ""
     record_runtime: bool = False
 
     def __post_init__(self) -> None:
@@ -96,5 +97,6 @@ class Settings:
                     str(defaults.evidence_qa_timeout_seconds),
                 )
             ),
+            cache_key_secret=os.getenv("LAYSH_CACHE_KEY_SECRET", defaults.cache_key_secret),
             record_runtime=os.getenv("LAYSH_RECORD_RUNTIME", "0") == "1",
         )

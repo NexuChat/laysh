@@ -76,6 +76,33 @@ def test_generated_module_forbidden_capabilities_are_rejected(source):
         verify_module_source(source)
 
 
+def test_script_breakout_markup_is_rejected_before_assembly():
+    from server.verify import ModuleSecurityError, verify_module_source
+
+    with pytest.raises(ModuleSecurityError):
+        verify_module_source(
+            "window.LayshSimulation={}; </script><script>globalThis.compromised=true</script>"
+        )
+
+
+def test_artifact_contract_reports_security_pedagogy_language_and_a11y_details():
+    from server.verify import verify_artifact_contract
+
+    broken = "<!doctype html><html lang=\"en\" dir=\"ltr\"><script></script></html>"
+    failures, check_count = verify_artifact_contract(
+        broken,
+        VALID_UNDERSTANDING,
+        module_output()["module_js"],
+    )
+
+    assert check_count >= 8
+    by_gate = {failure["gate"]: failure for failure in failures}
+    assert by_gate["assembly"]["actual"]["script_count"] == 1
+    assert by_gate["security"]["expected"]["portable_csp"]
+    assert by_gate["pedagogy"]["actual"]["missing_element_ids"]
+    assert by_gate["language_a11y"]["expected"]["lang"] == "ar"
+
+
 def test_hand_authored_module_passes_source_and_node_contract_checks():
     from server.verify import verify_module_source, verify_module_with_node
 

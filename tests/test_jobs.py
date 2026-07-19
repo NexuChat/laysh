@@ -73,6 +73,7 @@ def test_missing_job_returns_not_found(client):
 
 @pytest.mark.asyncio
 async def test_evidence_job_has_build_time_budget_without_changing_public_deadline():
+    from server.browser_verify import BrowserVerificationResult
     from server.codex_backend import MockCodexBackend
     from server.jobs import JobManager
 
@@ -85,6 +86,7 @@ async def test_evidence_job_has_build_time_budget_without_changing_public_deadli
         SlowMockCodexBackend(),
         public_job_timeout_seconds=0.0001,
         evidence_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
     )
     public_record = manager.start("success", "ar")
     evidence_record = manager.start_evidence("success", "ar", "moon_phases_ar")

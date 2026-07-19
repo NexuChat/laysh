@@ -21,6 +21,7 @@ def test_runtime_defaults_are_gpt_5_6_family_only():
     assert settings.evidence_stage_timeout_seconds == 300
     assert settings.public_qa_timeout_seconds == 45
     assert settings.evidence_qa_timeout_seconds == 120
+    assert settings.cache_key_secret == ""
     assert settings.record_runtime is False
 
 

@@ -4,6 +4,7 @@ import asyncio
 import hashlib
 from typing import Any, NoReturn
 
+from server.cache import VerificationReceipt
 from server.codex_backend import RuntimeContext
 from server.codex_runtime import CodexRuntimeError, StageExecution
 from server.schemas import (
@@ -151,6 +152,53 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         return
 
     manager.transition(record, "cache_lookup", "فحص النتائج الموثقة")
+    cache = manager.cache
+    if cache is not None:
+        cached = cache.lookup(
+            question=question,
+            locale=understanding["lang"],
+            domain=understanding["domain"],
+            canonical_intent=understanding["canonical_intent"],
+        )
+        if cached is not None:
+            manager.transition(record, "browser_check", "استخدام إيصال تحقق مخزّن")
+            manager.emit(
+                record,
+                "verification",
+                {
+                    "passed": True,
+                    "check_count": cached.receipt.check_count,
+                    "heal_count": 0,
+                    "evidence": ["verified_cache", "artifact_hash", "browser_readiness"],
+                },
+            )
+            sim_id = "sim_" + cached.artifact_sha256[:16]
+            manager.artifacts[sim_id] = cached.artifact
+            record.artifact = cached.artifact
+            record.simulation = SimulationMetadata(
+                sim_id=sim_id,
+                title=cached.title,
+                lang=cached.locale,
+                direction=cached.direction,
+                artifact_url=f"/api/sims/{sim_id}/download",
+                tier=cached.tier,
+                effective_model="verified/cache",
+                elapsed_ms=manager.elapsed_ms(record),
+                check_count=cached.receipt.check_count,
+                heal_count=0,
+            )
+            manager.emit(
+                record,
+                "result",
+                {
+                    "result_url": f"/api/jobs/{record.job_id}",
+                    "sim_id": sim_id,
+                    "title": cached.title,
+                    "tier": cached.tier,
+                },
+            )
+            manager.transition(record, "complete", "verified_cache_result")
+            return
     manager.transition(record, "generating", "بناء وحدة المحاكاة")
     generated = await manager.backend.generate(
         understanding,
@@ -164,12 +212,35 @@ async def run_pipeline(manager: Any, record: Any) -> None:
     verification = None
     heal_count = 0
     fixture_refresh_count = 0
+    browser_evidence: dict[str, Any] | None = None
     while True:
         if record.status != "verifying":
             manager.transition(record, "verifying", "فحص العقد والنتائج الحتمية")
         verification = verify_candidate(module_output, understanding)
         if verification.passed:
-            break
+            if verification.artifact is None:
+                raise RuntimeError("deterministic verification omitted its artifact")
+            browser_result = await asyncio.to_thread(
+                manager.browser_verifier,
+                verification.artifact,
+            )
+            browser_evidence = browser_result.evidence
+            if browser_result.passed:
+                verification = VerificationResult(
+                    passed=True,
+                    check_count=verification.check_count + browser_result.check_count,
+                    failures=[],
+                    artifact=verification.artifact,
+                    node_report=verification.node_report,
+                )
+                break
+            verification = VerificationResult(
+                passed=False,
+                check_count=verification.check_count + browser_result.check_count,
+                failures=browser_result.failures,
+                artifact=None,
+                node_report=verification.node_report,
+            )
         record_verification_failure(verification, heal_count)
         suspect_fixtures = [
             failure
@@ -348,9 +419,38 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             "passed": True,
             "check_count": check_count,
             "heal_count": heal_count,
-            "evidence": ["closed_schema", "restricted_source", "node_runtime", "fixtures"],
+            "evidence": [
+                "closed_schema",
+                "restricted_source",
+                "node_runtime",
+                "fixtures",
+                "browser_readiness",
+            ],
         },
     )
+    if cache is not None:
+        try:
+            cache.write_verified(
+                question=question,
+                locale=understanding["lang"],
+                domain=understanding["domain"],
+                canonical_intent=understanding["canonical_intent"],
+                artifact=artifact,
+                title=understanding["title"],
+                direction="rtl" if understanding["lang"] == "ar" else "ltr",
+                tier="B",
+                receipt=VerificationReceipt(
+                    deterministic_passed=True,
+                    browser_passed=bool(browser_evidence),
+                    failed_gate_count=0,
+                    check_count=check_count,
+                ),
+            )
+        except (OSError, ValueError) as error:
+            if not record.public:
+                record.builder_diagnostics.append(
+                    {"type": "cache_write_failed", "error_type": type(error).__name__}
+                )
     sim_id = "sim_" + hashlib.sha256(artifact.encode("utf-8")).hexdigest()[:16]
     manager.artifacts[sim_id] = artifact
     record.artifact = artifact
