@@ -53,7 +53,8 @@ async def run(selected: tuple[str, ...], *, force: bool) -> int:
         )
     settings = Settings.from_env()
     executor = CodexExecutor(
-        stage_timeout_seconds=settings.stage_timeout_seconds,
+        stage_timeout_seconds=settings.public_stage_timeout_seconds,
+        evidence_stage_timeout_seconds=settings.evidence_stage_timeout_seconds,
         record_runtime=True,
         evidence_allowlist=frozenset({SCHEMA_ACCEPTANCE_FIXTURE_ID}),
     )

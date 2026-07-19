@@ -1,4 +1,7 @@
+import asyncio
 import json
+
+import pytest
 
 from tests.conftest import wait_for_terminal
 from tests.test_pipeline import ask
@@ -67,3 +70,27 @@ def test_missing_job_returns_not_found(client):
     assert client.get("/api/jobs/missing").status_code == 404
     assert client.post("/api/jobs/missing/cancel").status_code == 404
 
+
+@pytest.mark.asyncio
+async def test_evidence_job_has_build_time_budget_without_changing_public_deadline():
+    from server.codex_backend import MockCodexBackend
+    from server.jobs import JobManager
+
+    class SlowMockCodexBackend(MockCodexBackend):
+        async def understand(self, *args, **kwargs):
+            await asyncio.sleep(0.01)
+            return await super().understand(*args, **kwargs)
+
+    manager = JobManager(
+        SlowMockCodexBackend(),
+        public_job_timeout_seconds=0.0001,
+        evidence_job_timeout_seconds=2,
+    )
+    public_record = manager.start("success", "ar")
+    evidence_record = manager.start_evidence("success", "ar", "moon_phases_ar")
+
+    await public_record.task
+    await evidence_record.task
+
+    assert public_record.status == "timed_out"
+    assert evidence_record.status == "complete"

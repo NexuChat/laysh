@@ -27,7 +27,8 @@ def create_app(
     elif settings.backend == "codex":
         selected_backend = CodexBackend(
             executor=CodexExecutor(
-                stage_timeout_seconds=settings.stage_timeout_seconds,
+                stage_timeout_seconds=settings.public_stage_timeout_seconds,
+                evidence_stage_timeout_seconds=settings.evidence_stage_timeout_seconds,
                 record_runtime=settings.record_runtime,
                 evidence_allowlist=frozenset({"moon_phases_ar"}),
             ),
@@ -35,9 +36,15 @@ def create_app(
         )
     else:
         selected_backend = MockCodexBackend()
-    timeout = settings.job_timeout_seconds if job_timeout_seconds is None else job_timeout_seconds
+    public_timeout = (
+        settings.public_job_timeout_seconds if job_timeout_seconds is None else job_timeout_seconds
+    )
     app = FastAPI(title="Laysh", version="0.1.0")
-    app.state.jobs = JobManager(selected_backend, timeout)
+    app.state.jobs = JobManager(
+        selected_backend,
+        public_job_timeout_seconds=public_timeout,
+        evidence_job_timeout_seconds=settings.evidence_job_timeout_seconds,
+    )
 
     @app.get("/", response_class=HTMLResponse)
     async def index() -> HTMLResponse:
