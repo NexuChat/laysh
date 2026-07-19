@@ -99,6 +99,9 @@ textarea[aria-invalid="true"] { border-color: var(--red); }
 .card-domain { margin: .5rem 0 .25rem; color: var(--ink-soft); font-size: .8rem; }
 .gallery-card h3 { margin-block-end: 1rem; font-size: 1.2rem; }
 .coming-badge { margin-block-start: auto; padding: .28rem .6rem; border: 1px dashed #8a6b2d; border-radius: 999px; background: #fff3d8; color: #614816; font-size: .74rem; }
+.instant-badge { margin-block-start: auto; padding: .28rem .6rem; border: 1px solid #438773; border-radius: 999px; background: #dff3ec; color: #174f41; font-size: .74rem; font-weight: 700; }
+.golden-launch { min-height: 44px; margin-block-start: .75rem; padding: .55rem .75rem; border: 1px solid var(--ink); border-radius: .7rem; background: var(--ink); color: white; cursor: pointer; font-weight: 700; }
+.golden-launch:disabled { display: none; }
 .view-toolbar { display: flex; justify-content: space-between; gap: 1rem; margin-block-end: 1rem; }
 .build-layout { display: grid; grid-template-columns: minmax(280px, .75fr) minmax(0, 1.25fr); align-items: start; gap: 1rem; }
 .answer-card, .agent-card, .failure-card, .receipt { border: 1px solid var(--line); border-radius: 1.35rem; background: var(--paper); box-shadow: var(--shadow); }
