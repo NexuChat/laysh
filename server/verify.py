@@ -21,7 +21,15 @@ FORBIDDEN_CAPABILITIES = (
     ("network_fetch", r"\bfetch\b"),
     ("network_transport", r"\b(?:XMLHttpRequest|WebSocket|EventSource|sendBeacon)\b"),
     ("browser_storage", r"\b(?:localStorage|sessionStorage|indexedDB)\b"),
-    ("dom_or_navigation", r"\b(?:document|location|parent|top|opener|navigator)\b"),
+    (
+        "dom_or_navigation",
+        r"\b(?:document|parent|top|opener|navigator)\s*\."
+        r"|\blocation\s*\.\s*(?:href|assign|replace|reload)\b"
+        r"|\b(?:window|globalThis|self)\s*\.\s*"
+        r"(?:document|location|parent|top|opener|navigator)\b"
+        r"|\b(?:window|globalThis|self)\s*\[\s*['\"]"
+        r"(?:document|location|parent|top|opener|navigator)['\"]\s*\]",
+    ),
     ("worker", r"\b(?:Worker|SharedWorker)\b"),
     (
         "dynamic_code",
