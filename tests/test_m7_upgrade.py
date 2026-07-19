@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).parents[1]
 
 
@@ -128,6 +130,7 @@ def test_qa_prompt_reviews_visual_richness_without_rewriting():
 
 def test_v11_builder_review_requires_every_visual_richness_item():
     source = (ROOT / "scripts" / "generate_goldens.py").read_text(encoding="utf-8")
+    browser_source = (ROOT / "scripts" / "check_golden.mjs").read_text(encoding="utf-8")
 
     for field in (
         "scene_depth_present",
@@ -138,6 +141,61 @@ def test_v11_builder_review_requires_every_visual_richness_item():
     ):
         assert field in source
     assert '"visual_richness"' in source
+    assert 'choices=("v1.1",)' in source
+    assert "idleFrameChanged" in browser_source
+    assert "reactiveFrameVariants" in browser_source
+
+
+def test_explicit_release_revision_can_replace_a_pin_but_live_writes_remain_blocked(
+    tmp_path: Path,
+):
+    from server.cache import VerificationReceipt, VerifiedCache
+
+    cache = VerifiedCache(
+        root=tmp_path / "live",
+        golden_root=tmp_path / "golden",
+        secret=b"release-test-secret",
+        contract_version="1.0",
+    )
+    receipt = VerificationReceipt(True, True, 0, 12)
+    common = {
+        "golden_id": "moon_phases",
+        "question": "لماذا يتغير شكل القمر؟",
+        "locale": "ar",
+        "domain": "astronomy",
+        "canonical_intent": "moon_phase_lit_fraction",
+        "title": "أطوار القمر",
+        "direction": "rtl",
+        "receipt": receipt,
+        "aliases": ["moon_phases"],
+        "answer": {"tldr": "جواب", "key_formula": "f = (1 − cos θ) / 2"},
+        "metadata": {"ar": {"title": "أطوار القمر"}},
+        "review": {"verdict": "pass"},
+        "evidence": {"gate": "G7"},
+    }
+    original = cache.pin_golden(artifact="<!doctype html><p>v1</p>", **common)
+    replacement = cache.pin_golden(
+        artifact="<!doctype html><p>v1.1</p>",
+        release_revision="v1.1",
+        expected_previous_sha256=original.artifact_sha256,
+        **common,
+    )
+
+    pinned = json.loads((tmp_path / "golden" / "moon_phases.json").read_text())
+    assert replacement.artifact_sha256 != original.artifact_sha256
+    assert pinned["release_revision"] == "v1.1"
+    with pytest.raises(ValueError, match="immutable"):
+        cache.write_verified(
+            question=common["question"],
+            locale="ar",
+            domain="astronomy",
+            canonical_intent="moon_phase_lit_fraction",
+            artifact="live overwrite",
+            title="live",
+            direction="rtl",
+            tier="B",
+            receipt=receipt,
+        )
 
 
 def test_qa_schema_change_keeps_structured_output_restrictions():
