@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "success": {
+    "answerPinned": true,
+    "resultVisible": true,
+    "sandbox": "allow-scripts",
+    "receiptChecks": 27
+  },
+  "failures": {
+    "answerOnly": true,
+    "unsafeRedirect": true,
+    "generationFailed": true,
+    "runtimeError": true,
+    "backendDown": true,
+    "cancelled": true
+  },
+  "buildStates": {
+    "queued": true,
+    "reconnecting": true,
+    "stillTesting": true
+  },
+  "historyBack": true,
+  "accessibility": {
+    "unnamedInteractiveNodes": 0,
+    "duplicateIds": [],
+    "focusVisible": true,
+    "keyboardSequence": [
+      "question",
+      "safe-example",
+      "ask-submit"
+    ],
+    "smallTargets": [],
+    "strayEnglish": []
+  },
+  "responsive": {
+    "overflow320": false,
+    "overflowAt200Percent": false,
+    "reducedMotion": true
+  },
+  "consoleErrors": [],
+  "networkFailures": [],
+  "screenshots": [
+    "v1.1-journey-landing-mobile-390x844.png",
+    "v1.1-journey-golden-mobile-390x844.png",
+    "v1.1-journey-build-mobile-390x844.png",
+    "v1.1-journey-result-mobile-390x844.png",
+    "v1.1-journey-landing-desktop-1440x900.png",
+    "v1.1-journey-golden-desktop-1440x900.png",
+    "v1.1-journey-build-desktop-1440x900.png",
+    "v1.1-journey-result-desktop-1440x900.png"
+  ]
+}
