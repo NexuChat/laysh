@@ -32,8 +32,8 @@ def wait_for_terminal(client: TestClient, job_id: str, timeout: float = 3.0) -> 
             "failed",
             "cancelled",
             "timed_out",
+            "qa_inconclusive",
         }:
             return result
         time.sleep(0.01)
     raise AssertionError(f"job {job_id} did not reach a terminal state")
-

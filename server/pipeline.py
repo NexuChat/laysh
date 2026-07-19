@@ -5,7 +5,7 @@ import hashlib
 from typing import Any, NoReturn
 
 from server.codex_backend import RuntimeContext
-from server.codex_runtime import StageExecution
+from server.codex_runtime import CodexRuntimeError, StageExecution
 from server.schemas import (
     AnswerPayload,
     FallbackResult,
@@ -254,39 +254,87 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 "elapsed_ms": manager.elapsed_ms(record),
             },
         )
-        qa_result = stage_data(
-            await manager.backend.qa(
-                module_output,
-                understanding,
-                runtime_context=runtime_context,
-            ),
-            "qa",
-        )
+        if verification is None:
+            raise RuntimeError("QA requires a verified candidate")
+        gate_outcome = {
+            "passed": True,
+            "check_count": verification.check_count,
+            "gate_names": [
+                "assembly",
+                "interface",
+                "invariant",
+                "runtime_init",
+                "security",
+                "source_size",
+                "syntax_runtime",
+            ],
+        }
+        qa_result = None
+        for qa_attempt in (1, 2):
+            try:
+                qa_result = stage_data(
+                    await manager.backend.qa(
+                        module_output,
+                        understanding,
+                        gate_outcome,
+                        runtime_context=runtime_context,
+                    ),
+                    "qa" if qa_attempt == 1 else "qa_retry",
+                )
+                break
+            except CodexRuntimeError as error:
+                if error.code != "stage_timeout":
+                    raise
+                if not record.public:
+                    record.builder_diagnostics.append(
+                        {
+                            "type": "qa_timeout",
+                            "attempt": qa_attempt,
+                            "code": error.code,
+                            "structured_output_observed": False,
+                            "candidate_sha256": hashlib.sha256(
+                                module_output["module_js"].encode("utf-8")
+                            ).hexdigest(),
+                            "input_fields": [
+                                "module_source",
+                                "module_spec",
+                                "fixtures",
+                                "gate_outcome",
+                            ],
+                            "gate_outcome": gate_outcome,
+                        }
+                    )
+                if qa_attempt == 1:
+                    manager.emit(
+                        record,
+                        "stage",
+                        {
+                            "stage": "qa_retry",
+                            "detail": "إعادة مراجعة QA المختصرة مرة واحدة",
+                            "elapsed_ms": manager.elapsed_ms(record),
+                        },
+                    )
+                    continue
+                if record.public:
+                    _fallback(
+                        manager,
+                        record,
+                        "qa_inconclusive",
+                        ["لماذا يتغير شكل القمر؟", "لماذا تطفو بعض الأجسام؟"],
+                    )
+                else:
+                    manager.terminal(record, "qa_inconclusive", "qa_inconclusive")
+                return
+        if qa_result is None:
+            raise RuntimeError("QA retry loop completed without an outcome")
         if not qa_result["approved"]:
-            replacement = qa_result["replacement_module_js"]
-            if replacement is None:
-                _fallback(
-                    manager,
-                    record,
-                    "qa_rejected",
-                    ["لماذا يتغير شكل القمر؟", "لماذا تطفو بعض الأجسام؟"],
-                )
-                return
-            module_output = validate_module_output(
-                {**module_output, "module_js": replacement}
+            _fallback(
+                manager,
+                record,
+                "qa_rejected",
+                ["لماذا يتغير شكل القمر؟", "لماذا تطفو بعض الأجسام؟"],
             )
-            manager.transition(record, "healing", "تطبيق تصحيح مراجعة QA")
-            manager.transition(record, "verifying", "إعادة جميع الفحوصات بعد QA")
-            verification = verify_candidate(module_output, understanding)
-            if not verification.passed:
-                record_verification_failure(verification, heal_count)
-                _fallback(
-                    manager,
-                    record,
-                    "qa_reverification_failed",
-                    ["لماذا يتغير شكل القمر؟", "لماذا تطفو بعض الأجسام؟"],
-                )
-                return
+            return
 
     manager.transition(record, "browser_check", "تأكيد جاهزية الغلاف الموثوق")
     if verification is None or verification.artifact is None:

@@ -121,18 +121,30 @@ class CodexBackend:
         self,
         module_output: dict[str, Any],
         understanding: dict[str, Any],
+        gate_outcome: dict[str, Any],
         *,
         runtime_context: RuntimeContext | None = None,
     ) -> StageExecution:
+        selected_context = runtime_context or RuntimeContext()
         return await self.executor.execute_stage(
             prompt=self._render_prompt(
                 "qa.md",
-                {"module_output": module_output, "understanding": understanding},
+                {
+                    "module_source": module_output["module_js"],
+                    "module_spec": understanding["module_spec"],
+                    "fixtures": understanding["checks"],
+                    "gate_outcome": gate_outcome,
+                },
             ),
             schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["qa"],
             model=self.settings.qa_model,
             effort="medium",
-            **self._execution_policy(runtime_context),
+            timeout_seconds=(
+                self.settings.public_qa_timeout_seconds
+                if selected_context.public
+                else self.settings.evidence_qa_timeout_seconds
+            ),
+            **self._execution_policy(selected_context),
         )
 
 
@@ -393,10 +405,11 @@ class MockCodexBackend:
         self,
         module_output: dict[str, Any],
         understanding: dict[str, Any],
+        gate_outcome: dict[str, Any],
         *,
         runtime_context: RuntimeContext | None = None,
     ) -> dict[str, Any]:
-        del module_output, understanding, runtime_context
+        del module_output, understanding, gate_outcome, runtime_context
         self.qa_calls += 1
         return {"approved": True, "issues": [], "replacement_module_js": None}
 

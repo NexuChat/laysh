@@ -77,7 +77,7 @@ class FallbackPayload(ClosedModel):
 
 
 class TerminalPayload(ClosedModel):
-    status: Literal["cancelled", "failed", "timed_out", "rejected"]
+    status: Literal["cancelled", "failed", "timed_out", "rejected", "qa_inconclusive"]
     reason_code: str
 
 
@@ -138,6 +138,7 @@ class PublicResult(ClosedModel):
         "failed",
         "cancelled",
         "timed_out",
+        "qa_inconclusive",
     ]
     answer: AnswerPayload | None
     simulation: SimulationMetadata | None

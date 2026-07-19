@@ -124,6 +124,95 @@ async def test_curated_builder_evidence_retains_the_exact_report_sent_to_heal(ba
 
 
 @pytest.mark.asyncio
+async def test_qa_timeout_retries_once_with_same_slim_input_then_completes():
+    from copy import deepcopy
+
+    from server.codex_backend import MockCodexBackend
+    from server.codex_runtime import CodexRuntimeError
+    from server.jobs import JobManager
+
+    class TransientQaBackend(MockCodexBackend):
+        def __init__(self):
+            super().__init__()
+            self.qa_inputs = []
+
+        async def qa(self, module_output, understanding, gate_outcome, **kwargs):
+            self.qa_calls += 1
+            self.qa_inputs.append(
+                (deepcopy(module_output), deepcopy(understanding), deepcopy(gate_outcome))
+            )
+            if self.qa_calls == 1:
+                raise CodexRuntimeError("stage_timeout")
+            return {"approved": True, "issues": [], "replacement_module_js": None}
+
+    backend = TransientQaBackend()
+    manager = JobManager(backend, public_job_timeout_seconds=2, evidence_job_timeout_seconds=2)
+    record = manager.start_evidence("broken first draft", "ar", "moon_phases_ar")
+    await record.task
+
+    assert record.status == "complete"
+    assert backend.qa_calls == 2
+    assert backend.qa_inputs[0] == backend.qa_inputs[1]
+    assert backend.qa_inputs[0][2]["passed"] is True
+    assert backend.qa_inputs[0][2]["check_count"] > 0
+    assert backend.qa_inputs[0][2]["gate_names"]
+    assert any(item.get("type") == "qa_timeout" for item in record.builder_diagnostics)
+
+
+@pytest.mark.asyncio
+async def test_double_qa_timeout_withholds_curated_artifact_as_inconclusive():
+    from server.codex_backend import MockCodexBackend
+    from server.codex_runtime import CodexRuntimeError
+    from server.jobs import JobManager
+
+    class TimedOutQaBackend(MockCodexBackend):
+        async def qa(self, *args, **kwargs):
+            self.qa_calls += 1
+            raise CodexRuntimeError("stage_timeout")
+
+    backend = TimedOutQaBackend()
+    manager = JobManager(backend, public_job_timeout_seconds=2, evidence_job_timeout_seconds=2)
+    record = manager.start_evidence("broken first draft", "ar", "moon_phases_ar")
+    await record.task
+
+    assert record.status == "qa_inconclusive"
+    assert backend.qa_calls == 2
+    assert record.artifact is None
+    assert record.simulation is None
+    assert manager.artifacts == {}
+    diagnostics = [
+        item for item in record.builder_diagnostics if item.get("type") == "qa_timeout"
+    ]
+    assert [item["attempt"] for item in diagnostics] == [1, 2]
+    assert all(item["structured_output_observed"] is False for item in diagnostics)
+    assert all(item["gate_outcome"]["passed"] is True for item in diagnostics)
+
+
+@pytest.mark.asyncio
+async def test_double_qa_timeout_public_job_falls_back_to_answer_only():
+    from server.codex_backend import MockCodexBackend
+    from server.codex_runtime import CodexRuntimeError
+    from server.jobs import JobManager
+
+    class TimedOutQaBackend(MockCodexBackend):
+        async def qa(self, *args, **kwargs):
+            self.qa_calls += 1
+            raise CodexRuntimeError("stage_timeout")
+
+    backend = TimedOutQaBackend()
+    manager = JobManager(backend, public_job_timeout_seconds=2)
+    record = manager.start("broken first draft", "ar")
+    await record.task
+
+    assert record.status == "answer_only"
+    assert backend.qa_calls == 2
+    assert record.fallback is not None
+    assert record.fallback.reason_code == "qa_inconclusive"
+    assert record.artifact is None
+    assert record.builder_diagnostics == []
+
+
+@pytest.mark.asyncio
 async def test_curated_suspect_fixture_refreshes_understand_once_without_heal():
     from copy import deepcopy
 
