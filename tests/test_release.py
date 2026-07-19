@@ -62,6 +62,14 @@ def test_release_documents_cover_judge_and_owner_handoff_requirements():
     assert "Submit" in submission
 
 
+def test_release_version_is_consistently_1_0_0():
+    assert 'version = "1.0.0"' in (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    assert '"version": "1.0.0"' in (ROOT / "package.json").read_text(encoding="utf-8")
+    assert 'version="1.0.0"' in (ROOT / "server" / "app.py").read_text(encoding="utf-8")
+    lock = (ROOT / "uv.lock").read_text(encoding="utf-8")
+    assert 'name = "laysh"\nversion = "1.0.0"' in lock
+
+
 def test_runtime_configuration_and_release_docs_name_only_gpt56_runtime_models():
     runtime_files = [
         ROOT / ".env.example",
