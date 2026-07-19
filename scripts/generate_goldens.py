@@ -9,6 +9,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+from server.browser_verify import verify_artifact_in_browser
 from server.cache import VerificationReceipt, VerifiedCache
 from server.codex_backend import CodexBackend
 from server.codex_runtime import CodexExecutor
@@ -21,6 +22,7 @@ from server.goldens import (
 )
 from server.jobs import JobManager
 from server.settings import Settings
+from server.verify import verify_candidate
 
 ROOT = Path(__file__).parents[1]
 EVIDENCE_ROOT = ROOT / "out" / "evidence" / "goldens"
@@ -195,6 +197,45 @@ def build_manifest() -> dict[str, Any]:
     return {"schema_version": "1.0", "contract_version": "1.0", "lessons": lessons}
 
 
+def refresh_candidate_shell(fixture_id: str) -> int:
+    golden_id = golden_id_for_fixture(fixture_id)
+    candidate_path = CANDIDATE_ROOT / f"{golden_id}.json"
+    candidate = json.loads(candidate_path.read_text(encoding="utf-8"))
+    if candidate["fixture_id"] != fixture_id:
+        raise ValueError("candidate fixture identity mismatch")
+    outputs = candidate["builder_outputs"]
+    verification = verify_candidate(outputs["module_output"], outputs["understanding"])
+    if not verification.passed or verification.artifact is None:
+        raise ValueError("candidate failed after trusted-shell refresh")
+    browser = verify_artifact_in_browser(verification.artifact)
+    if not browser.passed:
+        raise ValueError("candidate browser gate failed after trusted-shell refresh")
+    candidate["artifact"] = verification.artifact
+    candidate["artifact_sha256"] = hashlib.sha256(verification.artifact.encode()).hexdigest()
+    candidate["shell_refreshed_offline"] = True
+    outputs["verification"] = {
+        **outputs["verification"],
+        "passed": True,
+        "check_count": verification.check_count + browser.check_count,
+        "node_report": verification.node_report,
+    }
+    outputs["browser"] = browser.evidence
+    atomic_write(candidate_path, json.dumps(candidate, ensure_ascii=False, indent=2) + "\n")
+    atomic_write(CANDIDATE_ROOT / f"{golden_id}.html", verification.artifact)
+    print(
+        json.dumps(
+            {
+                "fixture_id": fixture_id,
+                "artifact_sha256": candidate["artifact_sha256"],
+                "check_count": outputs["verification"]["check_count"],
+                "shell_refreshed_offline": True,
+            },
+            ensure_ascii=False,
+        )
+    )
+    return 0
+
+
 def promote_candidate(fixture_id: str, revision: str | None = None) -> int:
     settings = Settings.from_env()
     if not settings.cache_key_secret:
@@ -311,6 +352,8 @@ def parse_args() -> argparse.Namespace:
     promote = subparsers.add_parser("promote")
     promote.add_argument("--fixture", required=True, choices=GOLDEN_FIXTURE_IDS)
     promote.add_argument("--revision", choices=("v1.1",))
+    refresh = subparsers.add_parser("refresh-shell")
+    refresh.add_argument("--fixture", required=True, choices=GOLDEN_FIXTURE_IDS)
     return parser.parse_args()
 
 
@@ -318,6 +361,8 @@ def main() -> int:
     arguments = parse_args()
     if arguments.command == "generate":
         return asyncio.run(generate_candidate(arguments.fixture, arguments.attempt))
+    if arguments.command == "refresh-shell":
+        return refresh_candidate_shell(arguments.fixture)
     return promote_candidate(arguments.fixture, arguments.revision)
 
 

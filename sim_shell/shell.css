@@ -49,7 +49,7 @@ body::before {
 }
 button, input { font: inherit; }
 
-.lesson { width: min(100%, 1000px); margin-inline: auto; padding: clamp(.7rem, 3vw, 2rem); }
+.lesson { width: min(100%, 1180px); margin-inline: auto; padding: clamp(.7rem, 3vw, 2rem); }
 .instrument-bar { min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-block: .4rem; }
 .instrument-brand { font-family: "Laysh Display", serif; font-size: 1.6rem; font-weight: 700; }
 .instrument-brand span { color: var(--moon); text-shadow: 0 0 16px rgb(88 183 255 / 70%); }
@@ -102,6 +102,34 @@ body.projector-mode .projector { pointer-events: auto; }
 body.projector-mode #observe { min-height: calc(100vh - .9rem); margin: 0; grid-template-columns: 1fr; align-items: center; }
 body.projector-mode #observe > .step-number { display: none; }
 body.projector-mode canvas { max-height: calc(100vh - 190px); }
+
+@media (min-width: 820px) {
+  .lesson {
+    display: grid;
+    grid-template-columns: minmax(280px, .68fr) minmax(0, 1.32fr);
+    grid-template-areas:
+      "bar bar"
+      "intro observe"
+      "predict observe"
+      "explain observe"
+      "error error";
+    align-items: start;
+    gap: .85rem;
+  }
+  .instrument-bar { grid-area: bar; margin: 0; }
+  .lesson > header { grid-area: intro; margin: 0; }
+  #prediction { grid-area: predict; margin: 0; }
+  #observe { grid-area: observe; position: sticky; inset-block-start: .7rem; margin: 0; }
+  #explain { grid-area: explain; margin: 0; }
+  #runtime-error { grid-area: error; }
+  .lesson > header h1 { font-size: clamp(1.9rem, 3.3vw, 3rem); }
+  .lesson > header .answer { font-size: .98rem; }
+  #prediction { grid-template-columns: 2rem minmax(0, 1fr); padding: 1rem; }
+  #prediction .step-number { width: 2rem; height: 2rem; }
+  #prediction .choices { gap: .45rem; }
+  #prediction button { width: 100%; min-height: 40px; padding: .5rem .65rem; }
+  body.projector-mode .lesson { display: block; }
+}
 
 @media (max-width: 480px) {
   .lesson { padding: .6rem; }
