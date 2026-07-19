@@ -19,6 +19,8 @@ class Settings:
     evidence_job_timeout_seconds: float = 600.0
     public_stage_timeout_seconds: float = 90.0
     evidence_stage_timeout_seconds: float = 300.0
+    public_qa_timeout_seconds: float = 45.0
+    evidence_qa_timeout_seconds: float = 120.0
     record_runtime: bool = False
 
     def __post_init__(self) -> None:
@@ -37,6 +39,8 @@ class Settings:
             self.evidence_job_timeout_seconds,
             self.public_stage_timeout_seconds,
             self.evidence_stage_timeout_seconds,
+            self.public_qa_timeout_seconds,
+            self.evidence_qa_timeout_seconds,
         )
         if any(value <= 0 for value in timeout_values):
             raise ValueError("timeout profile values must be positive")
@@ -78,6 +82,18 @@ class Settings:
                 os.getenv(
                     "LAYSH_EVIDENCE_STAGE_TIMEOUT_SECONDS",
                     str(defaults.evidence_stage_timeout_seconds),
+                )
+            ),
+            public_qa_timeout_seconds=float(
+                os.getenv(
+                    "LAYSH_PUBLIC_QA_TIMEOUT_SECONDS",
+                    str(defaults.public_qa_timeout_seconds),
+                )
+            ),
+            evidence_qa_timeout_seconds=float(
+                os.getenv(
+                    "LAYSH_EVIDENCE_QA_TIMEOUT_SECONDS",
+                    str(defaults.evidence_qa_timeout_seconds),
                 )
             ),
             record_runtime=os.getenv("LAYSH_RECORD_RUNTIME", "0") == "1",
