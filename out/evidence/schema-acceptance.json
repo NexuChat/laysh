@@ -1,0 +1,67 @@
+{
+  "contract_version": "1.0",
+  "model": "gpt-5.6-luna",
+  "schemas": {
+    "understand": {
+      "attempts": [
+        {
+          "schema": "understand",
+          "accepted": false,
+          "model": "gpt-5.6-luna",
+          "elapsed_ms": 2448,
+          "thread_id": null,
+          "error_code": "nonzero_exit",
+          "attempt": 1
+        },
+        {
+          "schema": "understand",
+          "accepted": true,
+          "model": "gpt-5.6-luna",
+          "elapsed_ms": 5499,
+          "thread_id": "019f79c7-d714-7be0-be02-18fd0e7b4fc9",
+          "error_code": null,
+          "attempt": 2
+        }
+      ],
+      "accepted": true
+    },
+    "module": {
+      "attempts": [
+        {
+          "schema": "module",
+          "accepted": false,
+          "model": "gpt-5.6-luna",
+          "elapsed_ms": 2460,
+          "thread_id": null,
+          "error_code": "nonzero_exit",
+          "attempt": 1
+        },
+        {
+          "schema": "module",
+          "accepted": true,
+          "model": "gpt-5.6-luna",
+          "elapsed_ms": 4288,
+          "thread_id": "019f79c7-ec9a-7a10-b484-b53a58e4b61f",
+          "error_code": null,
+          "attempt": 2
+        }
+      ],
+      "accepted": true
+    },
+    "qa": {
+      "attempts": [
+        {
+          "schema": "qa",
+          "accepted": true,
+          "model": "gpt-5.6-luna",
+          "elapsed_ms": 5542,
+          "thread_id": "019f79c5-9d79-75c0-a39d-b5daf80c0922",
+          "error_code": null,
+          "attempt": 1
+        }
+      ],
+      "accepted": true
+    }
+  },
+  "all_accepted": true
+}
