@@ -23,6 +23,8 @@ def test_deployment_units_are_secret_free_persistent_and_health_checked():
     assert "LAYSH_CACHE_KEY_SECRET=" not in service
     assert "127.0.0.1:8765/healthz" in health_service
     assert "scripts/healthcheck.py" in health_service
+    assert "OnActiveSec=30s" in timer
+    assert "OnBootSec=" not in timer
     assert "OnUnitActiveSec=5min" in timer
     assert "WantedBy=timers.target" in timer
     assert "uvicorn" in serve and "exec" in serve
