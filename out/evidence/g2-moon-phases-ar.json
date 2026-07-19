@@ -1,38 +1,38 @@
 {
   "schema_version": "1.0",
-  "captured_at_utc": "2026-07-19T10:01:27.629388+00:00",
+  "captured_at_utc": "2026-07-19T10:13:25.068776+00:00",
   "fixture_id": "moon_phases_ar",
   "runtime_family": "GPT-5.6",
-  "job_id": "job_343798835b4e3966",
+  "job_id": "job_794a2853ad7c97b1",
   "status": "answer_only",
-  "total_elapsed_ms": 220808,
+  "total_elapsed_ms": 235733,
   "stages": [
     {
       "stage": "understand",
       "model": "gpt-5.6-luna",
-      "elapsed_ms": 16326,
-      "thread_id": "019f79cf-7642-77f2-b43a-738eca4ace31",
+      "elapsed_ms": 16194,
+      "thread_id": "019f79da-2e62-7430-b877-a82eabea796b",
       "evidence_mode": true
     },
     {
       "stage": "generate",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 85335,
-      "thread_id": "019f79cf-b5c7-7d30-9a50-d42ebf7c3acf",
+      "elapsed_ms": 81989,
+      "thread_id": "019f79da-6d7f-7213-b975-e06f8d621602",
       "evidence_mode": true
     },
     {
       "stage": "heal_1",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 63767,
-      "thread_id": "019f79d1-033f-7553-afd2-4f5069585254",
+      "elapsed_ms": 72804,
+      "thread_id": "019f79db-ae06-7411-a000-de1d0fb3faac",
       "evidence_mode": true
     },
     {
       "stage": "heal_2",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 55304,
-      "thread_id": "019f79d1-fc5e-79c3-990f-cff783b54fbe",
+      "elapsed_ms": 64565,
+      "thread_id": "019f79dc-caa0-7723-bd75-b9343624028d",
       "evidence_mode": true
     }
   ],
@@ -56,10 +56,13 @@
     "stage",
     "stage",
     "stage",
+    "verification",
     "stage",
     "stage",
+    "verification",
     "stage",
     "stage",
+    "verification",
     "fallback"
   ],
   "simulation": null,
