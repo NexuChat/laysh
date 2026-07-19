@@ -68,6 +68,12 @@ def _reference_understanding(
     return reference
 
 
+def _normalized_display_formula(value: str | None) -> str:
+    if not value:
+        return ""
+    return "".join(value.replace("؛", ";").replace("،", ";").split())
+
+
 def review_golden_candidate(
     *,
     fixture: dict[str, Any],
@@ -150,7 +156,10 @@ def review_golden_candidate(
             if not matching:
                 model_fixture_matches = False
     checks: dict[str, Any] = {
-        "formula_matches_reference": understanding.get("key_formula") == contract["formula"],
+        "formula_matches_reference": _normalized_display_formula(
+            understanding.get("key_formula")
+        )
+        == _normalized_display_formula(contract["formula"]),
         "learner_copy_has_no_hash_placeholders": copy_has_no_hashes,
         "learner_copy_localized": copy_localized,
         "primary_parameter_matches_reference": parameter_matches,

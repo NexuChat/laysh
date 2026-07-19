@@ -3,7 +3,8 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
-    "test:artifact": ".venv/bin/pytest -q -m browser"
+    "test:artifact": ".venv/bin/pytest -q -m browser",
+    "test:a11y": ".venv/bin/pytest -q -m browser tests/test_m4_browser.py"
   },
   "devDependencies": {}
 }

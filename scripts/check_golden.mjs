@@ -8,6 +8,7 @@ import { pathToFileURL } from "node:url";
 const artifactPath = path.resolve(process.argv[2]);
 const screenshotRoot = path.resolve(process.argv[3]);
 const goldenId = process.argv[4];
+const reportPath = process.argv[5] ? path.resolve(process.argv[5]) : null;
 const chromePath = process.env.CHROME_BIN || "/usr/bin/google-chrome";
 const profilePath = fs.mkdtempSync(path.join(os.tmpdir(), "laysh-golden-chrome-"));
 fs.mkdirSync(screenshotRoot, { recursive: true });
@@ -120,6 +121,8 @@ try {
         control.dispatchEvent(new Event('input', { bubbles: true }));
         cases.push({ value: Number(value), frameChanged: Number(root.dataset.frameCount || 0) > before });
       }
+      control.value = initialValue;
+      control.dispatchEvent(new Event('input', { bubbles: true }));
       return {
         cases,
         lang: document.documentElement.lang,
@@ -149,12 +152,17 @@ try {
     screenshots.push(filename);
   }
   socket.close();
-  process.stdout.write(JSON.stringify({
+  const evidence = {
     ...interaction.result.value,
     externalRequests,
     consoleErrors,
     screenshots,
-  }));
+  };
+  if (reportPath) {
+    fs.mkdirSync(path.dirname(reportPath), { recursive: true });
+    fs.writeFileSync(reportPath, `${JSON.stringify(evidence, null, 2)}\n`);
+  }
+  process.stdout.write(JSON.stringify(evidence));
 } catch (error) {
   process.stderr.write(`${error.message}\n`);
   process.exitCode = 1;
