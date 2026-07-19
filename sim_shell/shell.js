@@ -62,12 +62,11 @@
 
   function formatState(value) {
     const tested = simulation.test({ [parameter.id]: Number(value) });
-    const firstName = lesson.module_spec.outputs[0];
-    const observed = tested[firstName];
+    const observed = tested[lesson.module_spec.outputs[0]];
     const valueText = Number.isFinite(observed) ? Number(observed).toFixed(2) : String(observed);
     return ar
-      ? `${parameter.label}: ${value} ${parameter.unit} — ${firstName}: ${valueText}`
-      : `${parameter.label}: ${value} ${parameter.unit} — ${firstName}: ${valueText}`;
+      ? `${parameter.label}: ${value} ${parameter.unit} — النتيجة المحسوبة: ${valueText}`
+      : `${parameter.label}: ${value} ${parameter.unit} — calculated outcome: ${valueText}`;
   }
 
   function emitFrame() {
@@ -152,4 +151,3 @@
     }
   }
 })();
-

@@ -53,7 +53,7 @@ def test_numeric_fixture_failure_reports_id_inputs_expected_actual_and_tolerance
 
     assert failure["code"] == "numeric_fixture_mismatch"
     assert failure["inputs"] == [{"name": "angle_deg", "value": 90}]
-    assert failure["expected"] == {"output": "lit_fraction", "value": 0.5, "tolerance": 0.02}
+    assert failure["expected"] == {"output": "lit_fraction", "value": 0.5, "tolerance": 0.01}
     assert failure["actual"] == {"output": "lit_fraction", "value": 0}
 
 
@@ -87,7 +87,7 @@ def test_relation_contradiction_after_passing_numeric_checks_is_suspect_fixture(
     assert failure["actual"]["right_value"] < failure["actual"]["left_value"]
     assert failure["numeric_cross_check"] == {
         "output": "lit_fraction",
-        "passing_fixture_ids": ["quarter_phase", "full_phase"],
+        "passing_fixture_ids": ["new_phase", "quarter_phase", "full_phase"],
     }
 
 

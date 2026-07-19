@@ -110,7 +110,7 @@ def test_hand_authored_module_passes_source_and_node_contract_checks():
     assert verify_module_source(source)["source_size_bytes"] < 40 * 1024
     report = verify_module_with_node(source, VALID_UNDERSTANDING)
     assert report["passed"] is True
-    assert report["fixture_count"] == 2
+    assert report["fixture_count"] == 3
     assert report["first_frame"] is True
 
 
