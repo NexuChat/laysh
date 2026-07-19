@@ -353,7 +353,8 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             )
         )
 
-    if heal_count:
+    qa_outcome: dict[str, Any] | None = None
+    if heal_count or record.promote_golden:
         manager.emit(
             record,
             "stage",
@@ -444,6 +445,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 ["لماذا يتغير شكل القمر؟", "لماذا تطفو بعض الأجسام؟"],
             )
             return
+        qa_outcome = qa_result
 
     manager.transition(record, "browser_check", "تأكيد جاهزية الغلاف الموثوق")
     if verification is None or verification.artifact is None:
@@ -492,6 +494,19 @@ async def run_pipeline(manager: Any, record: Any) -> None:
     sim_id = "sim_" + hashlib.sha256(artifact.encode("utf-8")).hexdigest()[:16]
     manager.artifacts[sim_id] = artifact
     record.artifact = artifact
+    if not record.public:
+        record.builder_outputs = {
+            "understanding": understanding,
+            "module_output": module_output,
+            "verification": {
+                "passed": True,
+                "check_count": check_count,
+                "heal_count": heal_count,
+                "node_report": verification.node_report,
+            },
+            "browser": browser_evidence or {},
+            "qa": qa_outcome,
+        }
     generated_execution = next(
         (
             execution

@@ -1,0 +1,20 @@
+{
+  "fixture_id": "buoyancy_ar",
+  "locale": "ar",
+  "question": "لماذا يطفو جسم ويغوص آخر في الماء، وما دور الكثافة وقوة الطفو؟",
+  "metadata": {
+    "ar": {"title": "لماذا تطفو بعض الأجسام؟", "domain": "الطفو والكثافة", "summary": "غيّر كثافة الجسم ولاحظ مقدار غمره أو غوصه في ماء ساكن."},
+    "en": {"title": "Why do some objects float?", "domain": "Buoyancy and density", "summary": "Change an object's density and observe how much submerges or whether it sinks in still water."}
+  },
+  "review_contract": {
+    "formula": "Fᵦ = ρ𝒻Vg",
+    "units": ["kg/m³", "N", "ratio"],
+    "assumptions": ["ماء ساكن كثافته 1000 kg/m³", "جسم متجانس", "إهمال التوتر السطحي"],
+    "misconception": "الطفو يعتمد على خفة الجسم المطلقة لا على كثافته مقارنة بالسائل",
+    "reference_fixtures": [
+      {"inputs": {"density_kg_m3": 250}, "expected": {"submerged_fraction": 0.25, "floats": 1}},
+      {"inputs": {"density_kg_m3": 750}, "expected": {"submerged_fraction": 0.75, "floats": 1}},
+      {"inputs": {"density_kg_m3": 1200}, "expected": {"submerged_fraction": 1.0, "floats": 0}}
+    ]
+  }
+}

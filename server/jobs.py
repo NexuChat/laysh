@@ -68,6 +68,8 @@ class JobRecord:
     evidence_fixture_id: str | None = None
     stage_executions: list[dict[str, Any]] = field(default_factory=list)
     builder_diagnostics: list[dict[str, Any]] = field(default_factory=list)
+    builder_outputs: dict[str, Any] = field(default_factory=dict)
+    promote_golden: bool = False
 
     def public_result(self) -> PublicResult:
         return PublicResult(
@@ -116,6 +118,7 @@ class JobManager:
         *,
         public: bool = True,
         evidence_fixture_id: str | None = None,
+        promote_golden: bool = False,
     ) -> JobRecord:
         job_id = f"job_{secrets.token_hex(8)}"
         record = JobRecord(
@@ -124,17 +127,26 @@ class JobManager:
             locale=locale,
             public=public,
             evidence_fixture_id=evidence_fixture_id,
+            promote_golden=promote_golden,
         )
         self.records[job_id] = record
         record.task = asyncio.create_task(self._run(record))
         return record
 
-    def start_evidence(self, question: str, locale: str, fixture_id: str) -> JobRecord:
+    def start_evidence(
+        self,
+        question: str,
+        locale: str,
+        fixture_id: str,
+        *,
+        promote_golden: bool = False,
+    ) -> JobRecord:
         return self.start(
             question,
             locale,
             public=False,
             evidence_fixture_id=fixture_id,
+            promote_golden=promote_golden,
         )
 
     async def _run(self, record: JobRecord) -> None:

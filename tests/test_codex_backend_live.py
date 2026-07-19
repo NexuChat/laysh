@@ -70,6 +70,26 @@ async def test_curated_understand_routes_to_sol_for_build_time_fixture_quality()
     assert executor.calls[0]["model"] == "gpt-5.6-sol"
     assert executor.calls[0]["effort"] == "low"
     assert executor.calls[0]["public"] is False
+    payload = json.loads(executor.calls[0]["prompt"].split("INPUT_JSON:\n", 1)[1])
+    assert payload["builder_reference_contract"]["formula"] == "f = (1 − cos θ) / 2"
+    assert len(payload["builder_reference_contract"]["reference_fixtures"]) == 3
+
+
+@pytest.mark.asyncio
+async def test_public_understand_never_receives_builder_fixture_contract():
+    from server.codex_backend import CodexBackend, RuntimeContext
+    from server.settings import Settings
+
+    executor = RecordingExecutor()
+    backend = CodexBackend(executor=executor, settings=Settings())
+    await backend.understand(
+        "ليش القمر يتغير شكله؟",
+        "ar",
+        runtime_context=RuntimeContext(public=True),
+    )
+
+    payload = json.loads(executor.calls[0]["prompt"].split("INPUT_JSON:\n", 1)[1])
+    assert set(payload) == {"question", "locale"}
 
 
 @pytest.mark.asyncio

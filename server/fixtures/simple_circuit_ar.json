@@ -1,0 +1,20 @@
+{
+  "fixture_id": "simple_circuit_ar",
+  "locale": "ar",
+  "question": "كيف تغيّر المقاومة شدة التيار وسطوع المصباح في دارة بسيطة ذات جهد ثابت؟",
+  "metadata": {
+    "ar": {"title": "المقاومة وسطوع المصباح", "domain": "الكهرباء", "summary": "غيّر المقاومة في دارة مبسطة ذات جهد ثابت ولاحظ التيار والقدرة."},
+    "en": {"title": "Resistance and bulb brightness", "domain": "Electric circuits", "summary": "Change resistance in a simplified constant-voltage circuit and observe current and power."}
+  },
+  "review_contract": {
+    "formula": "I = V/R; P = V²/R",
+    "units": ["V", "Ω", "A", "W"],
+    "assumptions": ["مصدر مثالي جهده 6 V", "مقاومة أومية", "السطوع يمثله تبديد القدرة"],
+    "misconception": "زيادة المقاومة تسمح بمرور تيار أكبر",
+    "reference_fixtures": [
+      {"inputs": {"resistance_ohm": 2}, "expected": {"current_a": 3.0, "power_w": 18.0}},
+      {"inputs": {"resistance_ohm": 6}, "expected": {"current_a": 1.0, "power_w": 6.0}},
+      {"inputs": {"resistance_ohm": 12}, "expected": {"current_a": 0.5, "power_w": 3.0}}
+    ]
+  }
+}
