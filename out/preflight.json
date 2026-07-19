@@ -26,14 +26,27 @@
   },
   "model_smokes": [
     {
-      "role": "understand",
+      "role": "historical_understand_candidate",
       "model": "gpt-5.3-codex-spark",
       "available": true,
       "closed_schema_valid": true,
       "elapsed_seconds": 3.91,
       "thread_id": "019f799a-01b5-7570-8f5a-46cc7bf52ff3",
       "ephemeral": true,
-      "quota_outcome": "success"
+      "quota_outcome": "success",
+      "selected": false,
+      "rejection_reason": "deliberately rejected by owner directive for GPT-5.6-only runtime purity"
+    },
+    {
+      "role": "understand",
+      "model": "gpt-5.6-luna",
+      "available": true,
+      "closed_schema_valid": true,
+      "elapsed_seconds": 4.16,
+      "thread_id": "019f79ab-6e32-7583-9a89-bb6c4101e084",
+      "ephemeral": true,
+      "quota_outcome": "success",
+      "selected": true
     },
     {
       "role": "generate",
@@ -47,9 +60,13 @@
     }
   ],
   "routing": {
-    "understand_model": "gpt-5.3-codex-spark",
+    "policy_corrected_at_utc": "2026-07-19T09:18:40Z",
+    "runtime_family_policy": "GPT-5.6 only",
+    "understand_model": "gpt-5.6-luna",
     "understand_fallback_model": "gpt-5.6-sol",
-    "generate_model": "gpt-5.6-sol"
+    "generate_model": "gpt-5.6-sol",
+    "heal_model": "gpt-5.6-sol",
+    "qa_model": "gpt-5.6-sol"
   },
   "release_confirmations": {
     "account_workspace_type": "ChatGPT login; workspace tier not exposed by CLI",
