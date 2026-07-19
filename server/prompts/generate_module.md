@@ -34,10 +34,17 @@ Visual quality rules for the canvas module:
   displayed parameter locally so each redraw can interpolate without changing `test(inputs)`.
 - Render readable Arabic or English readout chips near the action, with a translucent backing and
   concise labels. Do not leave raw numbers floating in canvas corners.
+- Before returning, self-check the implementation itself (not just the plan): the draw path must
+  contain at least three visible depth layers; a private `visualPhase` must visibly affect a subtle
+  coordinate, opacity, shimmer, or trail and advance on a same-value redraw only when reduced motion
+  is off; parameter changes must alter more than a text label; and at least one rounded translucent
+  readout chip must be drawn beside the phenomenon.
 - Use smooth fills or gradients for continuous bodies and surfaces; never use golf-ball dot patterns
   as a substitute for shading.
 - In light-and-shadow models, never draw light through an opaque body. Show a subtle shadow cone on
   the physically occluded side and keep illumination consistent in every view.
+- On illuminated spheres, use a curved terminator or an equivalent physically plausible lit mask;
+  never fake a phase with a rectangular clip or straight vertical cut.
 - If one canvas mixes a schematic with an observer view, label the views in the lesson language.
   Arabic labels use `منظر علوي` and `كما يبدو من الأرض`; English labels use `Top view` and
   `View from Earth`.

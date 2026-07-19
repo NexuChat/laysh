@@ -81,6 +81,9 @@ def test_generation_prompt_enforces_the_living_instrument_bar():
     prompt = (ROOT / "server" / "prompts" / "generate_module.md").read_text(
         encoding="utf-8"
     )
+    heal_prompt = (ROOT / "server" / "prompts" / "heal_module.md").read_text(
+        encoding="utf-8"
+    )
 
     for requirement in (
         "layered scene depth",
@@ -92,6 +95,11 @@ def test_generation_prompt_enforces_the_living_instrument_bar():
     ):
         assert requirement in prompt
     assert "timers" in prompt and "requestAnimationFrame" in prompt
+    assert "`visualPhase`" in prompt
+    assert "at least three visible depth layers" in prompt
+    assert "curved terminator" in prompt
+    assert "visual quality is part of the fixed contract" in heal_prompt
+    assert "same-value redraw" in heal_prompt
 
 
 def test_qa_contract_contains_a_closed_visual_richness_review():
