@@ -22,7 +22,12 @@ class Settings:
     public_qa_timeout_seconds: float = 45.0
     evidence_qa_timeout_seconds: float = 120.0
     cache_key_secret: str = ""
+    rate_limit_key_secret: str = ""
     record_runtime: bool = False
+    ip_generations_per_hour: int = 3
+    global_generations_per_day: int = 60
+    max_concurrent_jobs: int = 2
+    max_queued_jobs: int = 10
 
     def __post_init__(self) -> None:
         configured = {
@@ -45,6 +50,10 @@ class Settings:
         )
         if any(value <= 0 for value in timeout_values):
             raise ValueError("timeout profile values must be positive")
+        if self.ip_generations_per_hour <= 0 or self.global_generations_per_day <= 0:
+            raise ValueError("generation quota values must be positive")
+        if self.max_concurrent_jobs <= 0 or self.max_queued_jobs < 0:
+            raise ValueError("capacity values must allow at least one running job")
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -98,5 +107,26 @@ class Settings:
                 )
             ),
             cache_key_secret=os.getenv("LAYSH_CACHE_KEY_SECRET", defaults.cache_key_secret),
+            rate_limit_key_secret=os.getenv(
+                "LAYSH_RATE_LIMIT_KEY_SECRET", defaults.rate_limit_key_secret
+            ),
             record_runtime=os.getenv("LAYSH_RECORD_RUNTIME", "0") == "1",
+            ip_generations_per_hour=int(
+                os.getenv(
+                    "LAYSH_IP_GENERATIONS_PER_HOUR",
+                    str(defaults.ip_generations_per_hour),
+                )
+            ),
+            global_generations_per_day=int(
+                os.getenv(
+                    "LAYSH_GLOBAL_GENERATIONS_PER_DAY",
+                    str(defaults.global_generations_per_day),
+                )
+            ),
+            max_concurrent_jobs=int(
+                os.getenv("LAYSH_MAX_CONCURRENT_JOBS", str(defaults.max_concurrent_jobs))
+            ),
+            max_queued_jobs=int(
+                os.getenv("LAYSH_MAX_QUEUED_JOBS", str(defaults.max_queued_jobs))
+            ),
         )

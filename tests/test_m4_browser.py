@@ -1,4 +1,5 @@
 import json
+import os
 import socket
 import subprocess
 import time
@@ -33,6 +34,11 @@ def test_g4_mock_journeys_accessibility_and_accepted_screenshots():
             "warning",
         ],
         cwd=ROOT,
+        env=os.environ
+        | {
+            "LAYSH_IP_GENERATIONS_PER_HOUR": "100",
+            "LAYSH_GLOBAL_GENERATIONS_PER_DAY": "100",
+        },
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
