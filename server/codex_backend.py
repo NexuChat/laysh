@@ -90,7 +90,7 @@ class CodexBackend:
         self,
         module_output: dict[str, Any],
         understanding: dict[str, Any],
-        failures: list[str],
+        failures: list[dict[str, Any]],
         attempt: int,
         *,
         runtime_context: RuntimeContext | None = None,
@@ -302,6 +302,7 @@ class MockCodexBackend:
         self.generate_calls = 0
         self.heal_calls = 0
         self.qa_calls = 0
+        self.last_heal_failures: list[list[dict[str, Any]]] = []
         self._good_source = (ROOT / "tests" / "fixtures" / "moon_phase_module.js").read_text(
             encoding="utf-8"
         )
@@ -367,13 +368,14 @@ class MockCodexBackend:
         self,
         module_output: dict[str, Any],
         understanding: dict[str, Any],
-        failures: list[str],
+        failures: list[dict[str, Any]],
         attempt: int,
         *,
         runtime_context: RuntimeContext | None = None,
     ) -> dict[str, Any]:
-        del failures, attempt, runtime_context
+        del attempt, runtime_context
         self.heal_calls += 1
+        self.last_heal_failures.append(deepcopy(failures))
         candidate = deepcopy(module_output)
         repairable = self.scenario_for_source(module_output["module_js"]) != "exhausted"
         if module_output["module_js"] and repairable:

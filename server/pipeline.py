@@ -4,7 +4,6 @@ import asyncio
 import hashlib
 from typing import Any, NoReturn
 
-from server.assemble import assemble_artifact
 from server.codex_backend import RuntimeContext
 from server.codex_runtime import StageExecution
 from server.schemas import (
@@ -14,7 +13,7 @@ from server.schemas import (
     validate_module_output,
     validate_understanding,
 )
-from server.verify import verify_module_source, verify_module_with_node
+from server.verify import VerificationResult, verify_candidate
 
 
 class PipelineCancelled(Exception):
@@ -73,6 +72,31 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             )
             return result.data
         return result
+
+    def record_verification_failure(
+        result: VerificationResult,
+        heal_count: int,
+    ) -> None:
+        gate_names = sorted({failure["gate"] for failure in result.failures})
+        manager.emit(
+            record,
+            "verification",
+            {
+                "passed": False,
+                "check_count": result.check_count,
+                "heal_count": heal_count,
+                "evidence": gate_names,
+            },
+        )
+        if not record.public:
+            record.builder_diagnostics.append(
+                {
+                    "type": "verification_failure",
+                    "attempt": heal_count,
+                    "check_count": result.check_count,
+                    "failures": result.failures,
+                }
+            )
 
     manager.transition(record, "filtering", "فحص أولي محدود", emit_event=False)
     await asyncio.sleep(0)
@@ -137,39 +161,36 @@ async def run_pipeline(manager: Any, record: Any) -> None:
     if scenario == "exhausted_heal":
         module_output = manager.backend.mark_exhausted(module_output)
 
-    artifact = None
-    node_report = None
+    verification = None
     heal_count = 0
     while True:
         manager.transition(record, "verifying", "فحص العقد والنتائج الحتمية")
-        try:
-            verify_module_source(module_output["module_js"])
-            node_report = verify_module_with_node(module_output["module_js"], understanding)
-            artifact = assemble_artifact(understanding, module_output)
+        verification = verify_candidate(module_output, understanding)
+        if verification.passed:
             break
-        except (ValueError, TimeoutError):
-            if heal_count >= 2:
-                _fallback(
-                    manager,
-                    record,
-                    "verification_exhausted",
-                    ["لماذا يتغير شكل القمر؟", "لماذا تطفو بعض الأجسام؟"],
-                )
-                return
-            heal_count += 1
-            manager.transition(record, "healing", "إصلاح فشل تحقق محدد")
-            module_output = validate_module_output(
-                stage_data(
-                    await manager.backend.heal(
-                        module_output,
-                        understanding,
-                        ["deterministic_verification_failed"],
-                        heal_count,
-                        runtime_context=runtime_context,
-                    ),
-                    f"heal_{heal_count}",
-                )
+        record_verification_failure(verification, heal_count)
+        if heal_count >= 2:
+            _fallback(
+                manager,
+                record,
+                "verification_exhausted",
+                ["لماذا يتغير شكل القمر؟", "لماذا تطفو بعض الأجسام؟"],
             )
+            return
+        heal_count += 1
+        manager.transition(record, "healing", "إصلاح فشل تحقق محدد")
+        module_output = validate_module_output(
+            stage_data(
+                await manager.backend.heal(
+                    module_output,
+                    understanding,
+                    verification.failures,
+                    heal_count,
+                    runtime_context=runtime_context,
+                ),
+                f"heal_{heal_count}",
+            )
+        )
 
     if heal_count:
         manager.emit(
@@ -204,12 +225,22 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             )
             manager.transition(record, "healing", "تطبيق تصحيح مراجعة QA")
             manager.transition(record, "verifying", "إعادة جميع الفحوصات بعد QA")
-            verify_module_source(module_output["module_js"])
-            node_report = verify_module_with_node(module_output["module_js"], understanding)
-            artifact = assemble_artifact(understanding, module_output)
+            verification = verify_candidate(module_output, understanding)
+            if not verification.passed:
+                record_verification_failure(verification, heal_count)
+                _fallback(
+                    manager,
+                    record,
+                    "qa_reverification_failed",
+                    ["لماذا يتغير شكل القمر؟", "لماذا تطفو بعض الأجسام؟"],
+                )
+                return
 
     manager.transition(record, "browser_check", "تأكيد جاهزية الغلاف الموثوق")
-    check_count = int(node_report["fixture_count"]) + 5
+    if verification is None or verification.artifact is None:
+        raise RuntimeError("verified candidate missing artifact")
+    artifact = verification.artifact
+    check_count = verification.check_count
     manager.emit(
         record,
         "verification",

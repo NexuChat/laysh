@@ -1,0 +1,155 @@
+from pathlib import Path
+
+from tests.golden_cases import VALID_MODULE_OUTPUT, VALID_UNDERSTANDING
+
+GOOD_MODULE_OUTPUT = {
+    **VALID_MODULE_OUTPUT,
+    "module_js": (Path(__file__).parent / "fixtures" / "moon_phase_module.js").read_text(
+        encoding="utf-8"
+    ),
+}
+
+
+def test_interface_failure_reports_full_abi_and_exact_export_difference():
+    from server.verify import PERMITTED_ABI, verify_candidate
+
+    source = GOOD_MODULE_OUTPUT["module_js"].replace(
+        "version: 1,",
+        "version: 1,\n    draw() {},",
+        1,
+    )
+    result = verify_candidate(
+        {**GOOD_MODULE_OUTPUT, "module_js": source},
+        VALID_UNDERSTANDING,
+    )
+    failure = next(item for item in result.failures if item["gate"] == "interface")
+
+    assert failure["code"] == "exported_keys_mismatch"
+    assert failure["expected"]["permitted_abi"] == list(PERMITTED_ABI)
+    assert failure["actual"]["unexpected_keys"] == ["draw"]
+    assert failure["actual"]["missing_keys"] == []
+    assert failure["actual"]["exported_keys"] == sorted([*PERMITTED_ABI, "draw"])
+
+
+def test_numeric_fixture_failure_reports_id_inputs_expected_actual_and_tolerance():
+    from server.verify import verify_candidate
+
+    source = GOOD_MODULE_OUTPUT["module_js"].replace(
+        "return { lit_fraction: litFraction(Number(inputs.angle_deg)) };",
+        "return { lit_fraction: 0 };",
+    )
+    result = verify_candidate(
+        {**GOOD_MODULE_OUTPUT, "module_js": source},
+        VALID_UNDERSTANDING,
+    )
+    failure = next(
+        item
+        for item in result.failures
+        if item["gate"] == "invariant" and item.get("fixture_id") == "quarter_phase"
+    )
+
+    assert failure["code"] == "numeric_fixture_mismatch"
+    assert failure["inputs"] == [{"name": "angle_deg", "value": 90}]
+    assert failure["expected"] == {"output": "lit_fraction", "value": 0.5, "tolerance": 0.02}
+    assert failure["actual"] == {"output": "lit_fraction", "value": 0}
+
+
+def test_security_failure_names_the_forbidden_capability_without_echoing_source():
+    from server.verify import verify_candidate
+
+    source = GOOD_MODULE_OUTPUT["module_js"].replace(
+        '"use strict";',
+        '"use strict"; fetch("/blocked");',
+    )
+    result = verify_candidate(
+        {**GOOD_MODULE_OUTPUT, "module_js": source},
+        VALID_UNDERSTANDING,
+    )
+    failure = next(item for item in result.failures if item["gate"] == "security")
+
+    assert failure["code"] == "forbidden_capability"
+    assert "network_fetch" in failure["actual"]["capabilities"]
+    assert "module_js" not in str(failure)
+    assert "/blocked" not in str(failure)
+
+
+def test_source_size_failure_reports_limit_and_actual_bytes():
+    from server.verify import MAX_SOURCE_BYTES, verify_candidate
+
+    source = "window.LayshSimulation = {};/*" + ("x" * MAX_SOURCE_BYTES) + "*/"
+    result = verify_candidate(
+        {**VALID_MODULE_OUTPUT, "module_js": source},
+        VALID_UNDERSTANDING,
+    )
+    failure = next(item for item in result.failures if item["gate"] == "source_size")
+
+    assert failure["expected"] == {"maximum_bytes": MAX_SOURCE_BYTES}
+    assert failure["actual"]["source_size_bytes"] > MAX_SOURCE_BYTES
+
+
+def test_syntax_failure_reports_vm_expectation_and_error_type():
+    from server.verify import verify_candidate
+
+    source = "window.LayshSimulation = (() => {"
+    result = verify_candidate(
+        {**VALID_MODULE_OUTPUT, "module_js": source},
+        VALID_UNDERSTANDING,
+    )
+    failure = next(item for item in result.failures if item["gate"] == "syntax_runtime")
+
+    assert failure["code"] == "module_evaluation_failed"
+    assert failure["expected"] == {"evaluates_in_disposable_vm": True}
+    assert failure["actual"] == {"error_type": "SyntaxError"}
+
+
+def test_runtime_init_failure_reports_exact_trusted_option_names():
+    from server.verify import verify_candidate
+
+    source = GOOD_MODULE_OUTPUT["module_js"].replace(
+        "({ canvas, context, width, height, emitFrame } = options);",
+        'throw new TypeError("broken init");',
+    )
+    result = verify_candidate(
+        {**GOOD_MODULE_OUTPUT, "module_js": source},
+        VALID_UNDERSTANDING,
+    )
+    failure = next(item for item in result.failures if item["gate"] == "runtime_init")
+
+    assert failure["code"] == "init_failed"
+    assert failure["expected"]["accepts_trusted_options"] == [
+        "canvas",
+        "context",
+        "width",
+        "height",
+        "locale",
+        "reducedMotion",
+        "emitFrame",
+    ]
+    assert failure["actual"] == {"error_type": "TypeError"}
+
+
+def test_assembly_failure_reports_expected_shell_and_sanitized_error_type(monkeypatch):
+    from server import assemble
+    from server.verify import verify_candidate
+
+    def fail_assembly(*_args, **_kwargs):
+        raise ValueError("PRIVATE-ASSEMBLY-DETAIL")
+
+    monkeypatch.setattr(assemble, "assemble_artifact", fail_assembly)
+    result = verify_candidate(GOOD_MODULE_OUTPUT, VALID_UNDERSTANDING)
+    failure = next(item for item in result.failures if item["gate"] == "assembly")
+
+    assert failure["expected"] == {"trusted_shell_assembled": True}
+    assert failure["actual"] == {"error_type": "ValueError"}
+    assert "PRIVATE-ASSEMBLY-DETAIL" not in str(failure)
+
+
+def test_valid_candidate_returns_artifact_and_no_failures():
+    from server.verify import verify_candidate
+
+    result = verify_candidate(GOOD_MODULE_OUTPUT, VALID_UNDERSTANDING)
+
+    assert result.passed is True
+    assert result.failures == []
+    assert result.artifact
+    assert result.check_count >= len(VALID_UNDERSTANDING["checks"])
