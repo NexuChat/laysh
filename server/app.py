@@ -47,7 +47,7 @@ def create_app(
     public_timeout = (
         settings.public_job_timeout_seconds if job_timeout_seconds is None else job_timeout_seconds
     )
-    app = FastAPI(title="Laysh", version="1.0.0")
+    app = FastAPI(title="Laysh", version="1.1.0")
     app.mount("/static", StaticFiles(directory=ROOT / "web"), name="static")
     verified_cache = (
         VerifiedCache(
