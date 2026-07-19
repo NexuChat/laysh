@@ -2,15 +2,18 @@
   "cases": [
     {
       "value": 2,
-      "frameChanged": true
+      "frameChanged": true,
+      "visualSignature": 3045041429
     },
     {
       "value": 6,
-      "frameChanged": true
+      "frameChanged": true,
+      "visualSignature": 4045456631
     },
     {
       "value": 20,
-      "frameChanged": true
+      "frameChanged": true,
+      "visualSignature": 4249911775
     }
   ],
   "lang": "ar",
@@ -18,10 +21,12 @@
   "ready": true,
   "runtimeError": false,
   "alternative": "المقاومة: 6 Ω — النتيجة المحسوبة: 1.00",
+  "idleFrameChanged": true,
+  "reactiveFrameVariants": 3,
   "externalRequests": 0,
   "consoleErrors": [],
   "screenshots": [
-    "simple_circuit-mobile-390x844.png",
-    "simple_circuit-desktop-1440x900.png"
+    "simple_circuit-after-mobile-390x844.png",
+    "simple_circuit-after-desktop-1440x900.png"
   ]
 }

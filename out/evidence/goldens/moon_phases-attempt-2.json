@@ -2,47 +2,60 @@
   "schema_version": "1.0",
   "fixture_id": "moon_phases_ar",
   "attempt": 2,
-  "job_id": "job_35274843b9cd6a02",
-  "status": "complete",
-  "total_elapsed_ms": 215383,
+  "job_id": "job_976b91d5598b5c4e",
+  "status": "answer_only",
+  "total_elapsed_ms": 200021,
   "live_call_count": 4,
   "stages": [
     {
       "stage": "understand",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 19947,
+      "elapsed_ms": 29853,
       "thread_id_captured": true
     },
     {
       "stage": "generate",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 123534,
+      "elapsed_ms": 109700,
       "thread_id_captured": true
     },
     {
       "stage": "heal_1",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 61804,
+      "elapsed_ms": 44994,
       "thread_id_captured": true
     },
     {
       "stage": "qa",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 7613,
+      "elapsed_ms": 12970,
       "thread_id_captured": true
     }
   ],
   "heal_count": 1,
   "qa": {
-    "approved": true,
-    "issues": [],
-    "replacement_module_js": null
+    "approved": false,
+    "issues": [
+      "Scene remains flat: solid panels and discs provide no convincing layered spatial depth.",
+      "Moon lighting uses a rectangular clip with a straight terminator, so phase illumination is not physically consistent.",
+      "No reduced-motion-aware idle loop or same-value redraw motion exists; labels are plain text without readable overlay chips."
+    ],
+    "replacement_module_js": null,
+    "visual_richness": {
+      "scene_depth": false,
+      "physical_light": false,
+      "idle_motion": false,
+      "reactive_feedback": true,
+      "readable_overlays": false
+    }
   },
-  "artifact_sha256": "e614e4f529609dd28307252008ea2cdf8ba10bd2b63396c4d2f7d7d43d31668e",
+  "artifact_sha256": "dab7818c4b60ab140b944907a994efdf6c08785bb4f3f70b1ce717cc2f9b43d6",
   "automated_review": {
     "passed": true,
     "checks": {
       "formula_matches_reference": true,
+      "learner_copy_has_no_hash_placeholders": true,
+      "learner_copy_localized": true,
       "primary_parameter_matches_reference": true,
       "model_fixtures_match_reference": true,
       "bilingual_metadata": true,
@@ -96,6 +109,21 @@
           }
         }
       ]
+    },
+    {
+      "type": "qa_rejected",
+      "issues": [
+        "Scene remains flat: solid panels and discs provide no convincing layered spatial depth.",
+        "Moon lighting uses a rectangular clip with a straight terminator, so phase illumination is not physically consistent.",
+        "No reduced-motion-aware idle loop or same-value redraw motion exists; labels are plain text without readable overlay chips."
+      ],
+      "visual_richness": {
+        "scene_depth": false,
+        "physical_light": false,
+        "idle_motion": false,
+        "reactive_feedback": true,
+        "readable_overlays": false
+      }
     }
   ]
 }

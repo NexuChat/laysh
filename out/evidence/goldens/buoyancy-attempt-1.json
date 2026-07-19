@@ -2,33 +2,33 @@
   "schema_version": "1.0",
   "fixture_id": "buoyancy_ar",
   "attempt": 1,
-  "job_id": "job_92b6d90728a4d572",
+  "job_id": "job_b4bc0ce5a456669c",
   "status": "complete",
-  "total_elapsed_ms": 176832,
+  "total_elapsed_ms": 219847,
   "live_call_count": 4,
   "stages": [
     {
       "stage": "understand",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 41318,
+      "elapsed_ms": 29628,
       "thread_id_captured": true
     },
     {
       "stage": "generate",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 69039,
+      "elapsed_ms": 83348,
       "thread_id_captured": true
     },
     {
       "stage": "heal_1",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 59166,
+      "elapsed_ms": 93223,
       "thread_id_captured": true
     },
     {
       "stage": "qa",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 4806,
+      "elapsed_ms": 11069,
       "thread_id_captured": true
     }
   ],
@@ -36,9 +36,16 @@
   "qa": {
     "approved": true,
     "issues": [],
-    "replacement_module_js": null
+    "replacement_module_js": null,
+    "visual_richness": {
+      "scene_depth": true,
+      "physical_light": true,
+      "idle_motion": true,
+      "reactive_feedback": true,
+      "readable_overlays": true
+    }
   },
-  "artifact_sha256": "3fb522aa05d6f461c0064cbf0b5cf496742edf31d630f4a3beb7d98579f4e69f",
+  "artifact_sha256": "b4f03bb4153555c50d6c0dcc94980079d462edc656c7f092bf836cdd93054999",
   "automated_review": {
     "passed": true,
     "checks": {

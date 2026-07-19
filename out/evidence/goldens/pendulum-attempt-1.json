@@ -2,43 +2,56 @@
   "schema_version": "1.0",
   "fixture_id": "pendulum_ar",
   "attempt": 1,
-  "job_id": "job_9673445982ae5ce7",
+  "job_id": "job_3c9d281cdb986f57",
   "status": "complete",
-  "total_elapsed_ms": 196045,
-  "live_call_count": 4,
+  "total_elapsed_ms": 234189,
+  "live_call_count": 5,
   "stages": [
     {
       "stage": "understand",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 32469,
+      "elapsed_ms": 25748,
       "thread_id_captured": true
     },
     {
       "stage": "generate",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 83612,
+      "elapsed_ms": 64225,
       "thread_id_captured": true
     },
     {
       "stage": "heal_1",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 71774,
+      "elapsed_ms": 57711,
+      "thread_id_captured": true
+    },
+    {
+      "stage": "heal_2",
+      "model": "gpt-5.6-sol",
+      "elapsed_ms": 77754,
       "thread_id_captured": true
     },
     {
       "stage": "qa",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 5683,
+      "elapsed_ms": 6111,
       "thread_id_captured": true
     }
   ],
-  "heal_count": 1,
+  "heal_count": 2,
   "qa": {
     "approved": true,
     "issues": [],
-    "replacement_module_js": null
+    "replacement_module_js": null,
+    "visual_richness": {
+      "scene_depth": true,
+      "physical_light": true,
+      "idle_motion": true,
+      "reactive_feedback": true,
+      "readable_overlays": true
+    }
   },
-  "artifact_sha256": "2aec0f068a996676d0e69f6b38304626cb0f1cdf1f0553569bfce68b7da75916",
+  "artifact_sha256": "32e523e0edef43265b2922d6b8b9005b7e078a96b0a2ffd3e01c8e732c5e47cd",
   "automated_review": {
     "passed": true,
     "checks": {
@@ -95,6 +108,31 @@
           },
           "actual": {
             "emit_frame_calls": 0
+          }
+        }
+      ]
+    },
+    {
+      "type": "verification_failure",
+      "attempt": 1,
+      "check_count": 12,
+      "failures": [
+        {
+          "gate": "runtime_init",
+          "code": "init_failed",
+          "expected": {
+            "accepts_trusted_options": [
+              "canvas",
+              "context",
+              "width",
+              "height",
+              "locale",
+              "reducedMotion",
+              "emitFrame"
+            ]
+          },
+          "actual": {
+            "error_type": "TypeError"
           }
         }
       ]

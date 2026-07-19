@@ -2,15 +2,18 @@
   "cases": [
     {
       "value": 0,
-      "frameChanged": true
+      "frameChanged": true,
+      "visualSignature": 1546659944
     },
     {
       "value": 60,
-      "frameChanged": true
+      "frameChanged": true,
+      "visualSignature": 224530084
     },
     {
       "value": 360,
-      "frameChanged": true
+      "frameChanged": true,
+      "visualSignature": 1567682245
     }
   ],
   "lang": "ar",
@@ -18,10 +21,12 @@
   "ready": true,
   "runtimeError": false,
   "alternative": "زاوية دوران الأرض: 60 ° — النتيجة المحسوبة: 0.50",
+  "idleFrameChanged": true,
+  "reactiveFrameVariants": 3,
   "externalRequests": 0,
   "consoleErrors": [],
   "screenshots": [
-    "day_night-mobile-390x844.png",
-    "day_night-desktop-1440x900.png"
+    "day_night-after-mobile-390x844.png",
+    "day_night-after-desktop-1440x900.png"
   ]
 }

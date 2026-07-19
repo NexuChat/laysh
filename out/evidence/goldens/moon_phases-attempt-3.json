@@ -2,33 +2,33 @@
   "schema_version": "1.0",
   "fixture_id": "moon_phases_ar",
   "attempt": 3,
-  "job_id": "job_dd1ee17f75bce582",
+  "job_id": "job_8601cd49c37eaf68",
   "status": "complete",
-  "total_elapsed_ms": 206178,
+  "total_elapsed_ms": 301465,
   "live_call_count": 4,
   "stages": [
     {
       "stage": "understand",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 33584,
+      "elapsed_ms": 27201,
       "thread_id_captured": true
     },
     {
       "stage": "generate",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 98268,
+      "elapsed_ms": 155933,
       "thread_id_captured": true
     },
     {
       "stage": "heal_1",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 64639,
+      "elapsed_ms": 106410,
       "thread_id_captured": true
     },
     {
       "stage": "qa",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 7161,
+      "elapsed_ms": 9354,
       "thread_id_captured": true
     }
   ],
@@ -36,9 +36,16 @@
   "qa": {
     "approved": true,
     "issues": [],
-    "replacement_module_js": null
+    "replacement_module_js": null,
+    "visual_richness": {
+      "scene_depth": true,
+      "physical_light": true,
+      "idle_motion": true,
+      "reactive_feedback": true,
+      "readable_overlays": true
+    }
   },
-  "artifact_sha256": "a15b24cac1608e6131f51d4cf1709971a0565a66a21a70666e1ba6faada53811",
+  "artifact_sha256": "9a56895bcaae2b0149f9ad4ffa868d503793fbbb86af4078c517c8508f6102b3",
   "automated_review": {
     "passed": true,
     "checks": {
