@@ -96,3 +96,29 @@ async def test_evidence_job_has_build_time_budget_without_changing_public_deadli
 
     assert public_record.status == "timed_out"
     assert evidence_record.status == "complete"
+
+
+@pytest.mark.asyncio
+async def test_long_running_job_emits_real_replayable_heartbeat():
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend
+    from server.jobs import JobManager
+
+    class SlowBackend(MockCodexBackend):
+        async def understand(self, *args, **kwargs):
+            await asyncio.sleep(0.04)
+            return await super().understand(*args, **kwargs)
+
+    manager = JobManager(
+        SlowBackend(),
+        public_job_timeout_seconds=2,
+        heartbeat_interval_seconds=0.01,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+    )
+    record = manager.start("success", "ar")
+    await record.task
+
+    heartbeats = [event for event in record.events if event.type == "heartbeat"]
+    assert heartbeats
+    assert [event.id for event in record.events] == list(range(1, len(record.events) + 1))
+    assert all(event.payload.elapsed_ms >= 0 for event in heartbeats)

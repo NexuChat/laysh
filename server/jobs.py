@@ -87,6 +87,7 @@ class JobManager:
         evidence_job_timeout_seconds: float | None = None,
         browser_verifier: Callable[[str], BrowserVerificationResult] = verify_artifact_in_browser,
         cache: VerifiedCache | None = None,
+        heartbeat_interval_seconds: float = 5.0,
     ) -> None:
         self.backend = backend
         self.public_job_timeout_seconds = public_job_timeout_seconds
@@ -99,6 +100,7 @@ class JobManager:
         self.artifacts: dict[str, str] = {}
         self.browser_verifier = browser_verifier
         self.cache = cache
+        self.heartbeat_interval_seconds = heartbeat_interval_seconds
 
     @property
     def active_count(self) -> int:
@@ -139,6 +141,7 @@ class JobManager:
         from server.codex_runtime import CodexRuntimeError
         from server.pipeline import PipelineCancelled, run_pipeline
 
+        heartbeat_task = asyncio.create_task(self._emit_heartbeats(record))
         try:
             timeout = (
                 self.public_job_timeout_seconds
@@ -162,7 +165,26 @@ class JobManager:
         except Exception:
             self.terminal(record, "failed", "internal_pipeline_error")
         finally:
+            heartbeat_task.cancel()
+            try:
+                await heartbeat_task
+            except asyncio.CancelledError:
+                pass
             record.question = None
+
+    async def _emit_heartbeats(self, record: JobRecord) -> None:
+        while record.status not in TERMINAL_STATES:
+            await asyncio.sleep(self.heartbeat_interval_seconds)
+            if record.status in TERMINAL_STATES:
+                return
+            self.emit(
+                record,
+                "heartbeat",
+                {
+                    "stage": record.status,
+                    "elapsed_ms": self.elapsed_ms(record),
+                },
+            )
 
     def transition(
         self,
