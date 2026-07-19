@@ -11,19 +11,19 @@
       "instant_tier": "A",
       "iterations": 20,
       "request_count": 60,
-      "gallery_p95_seconds": 0.011325886473059654
+      "gallery_p95_seconds": 0.02047256287187338
     }
   },
   "metrics": {
-    "exact_cache_p95_seconds": 0.00930076651275158,
+    "exact_cache_p95_seconds": 0.010998343117535114,
     "first_answer_p50_seconds": 21.6645,
     "first_answer_p95_seconds": 25.295,
-    "semantic_cache_p95_seconds": 0.009169576689600945,
+    "semantic_cache_p95_seconds": 0.009123457595705986,
     "new_module_p50_seconds": 158.13049999999998,
     "new_module_p95_seconds": 178.283,
     "heartbeat_interval_seconds": 5.0,
     "hard_terminal_max_seconds": 178.283,
-    "deployed_gallery_p95_seconds": 0.011325886473059654
+    "deployed_gallery_p95_seconds": 0.02047256287187338
   },
   "targets": {
     "exact_cache_p95_seconds": 1.0,

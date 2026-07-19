@@ -1,27 +1,45 @@
 {
   "schema_version": "1.0",
-  "gate": "G7_public_live_journey",
-  "attempt_count": 2,
-  "completed_result_count": 0,
+  "gate": "G7_public_live_journey_closeout",
+  "attempt_count_across_g7": 4,
+  "completed_result_count": 1,
   "attempts": [
     {
       "job_id": "job_b3a503b8ac8a60fe",
-      "question": "لماذا تزيد مسافة توقف السيارة عندما تزيد سرعتها؟",
+      "phase": "initial_g7",
       "status": "failed",
       "public_reason_code": "nonzero_exit",
-      "answer_emitted": false,
-      "artifact_emitted": false
+      "answer_emitted": false
     },
     {
       "job_id": "job_926c973e18bd2d2c",
-      "question": "لماذا يتغير شكل القمر خلال الشهر؟",
+      "phase": "initial_g7",
       "status": "failed",
       "public_reason_code": "nonzero_exit",
-      "answer_emitted": false,
-      "artifact_emitted": false
+      "answer_emitted": false
+    },
+    {
+      "job_id": "job_6ae548998dc98538",
+      "phase": "closeout_diagnostic_before_systemd_fix",
+      "status": "failed",
+      "public_reason_code": "nonzero_exit",
+      "safe_classification": "process_exit_without_jsonl",
+      "attempted_models": ["gpt-5.6-luna", "gpt-5.6-sol"],
+      "answer_emitted": false
+    },
+    {
+      "job_id": "job_9c17056f52534e82",
+      "phase": "closeout_proof_after_systemd_fix",
+      "status": "complete",
+      "models": {"understand": "gpt-5.6-luna", "generate_heal_qa": "gpt-5.6-sol"},
+      "answer_first_ms": 18020,
+      "total_observed_ms": 159727,
+      "heal_count": 1,
+      "check_count": 28,
+      "artifact_playable": true,
+      "console_errors": []
     }
   ],
-  "service_health_after_attempts": "ok",
-  "note": "Both failures occurred at the first public runtime subprocess. No further live retries were spent. Public surfaces retained sanitized diagnostics as required.",
-  "passed": false
+  "service_health_after_proof": "ok",
+  "passed": true
 }

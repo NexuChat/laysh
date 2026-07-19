@@ -1,10 +1,10 @@
 {
   "schema_version": "1.0",
-  "gate": "G7_accessibility",
+  "gate": "G7_accessibility_closeout",
   "passed": true,
   "automated": {
-    "full_suite": "189 passed, 1 skipped",
-    "browser_suite": "6 passed, 1 skipped, 183 deselected",
+    "full_suite": "193 passed, 1 skipped",
+    "browser_suite": "6 passed, 1 skipped, 187 deselected",
     "unnamed_interactive_nodes": 0,
     "duplicate_ids": [],
     "small_targets": [],
