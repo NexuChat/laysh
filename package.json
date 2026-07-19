@@ -1,0 +1,9 @@
+{
+  "name": "laysh-browser-qa",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "test:artifact": ".venv/bin/pytest -q -m browser"
+  },
+  "devDependencies": {}
+}

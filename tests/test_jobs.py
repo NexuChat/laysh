@@ -1,0 +1,69 @@
+import json
+
+from tests.conftest import wait_for_terminal
+from tests.test_pipeline import ask
+
+
+def _sse_events(text: str) -> list[dict]:
+    events = []
+    current = {}
+    for line in text.splitlines():
+        if line.startswith("id: "):
+            current["id"] = int(line[4:])
+        elif line.startswith("event: "):
+            current["type"] = line[7:]
+        elif line.startswith("data: "):
+            current["data"] = json.loads(line[6:])
+        elif not line and current:
+            events.append(current)
+            current = {}
+    if current:
+        events.append(current)
+    return events
+
+
+def test_sse_replays_only_events_after_last_event_id(client):
+    job_id = ask(client, "success")
+    wait_for_terminal(client, job_id)
+
+    all_response = client.get(f"/api/jobs/{job_id}/events")
+    all_events = _sse_events(all_response.text)
+    assert all_response.headers["content-type"].startswith("text/event-stream")
+    assert len(all_events) >= 5
+
+    last_seen = all_events[2]["id"]
+    replay = client.get(
+        f"/api/jobs/{job_id}/events",
+        headers={"Last-Event-ID": str(last_seen)},
+    )
+    replayed = _sse_events(replay.text)
+    assert replayed
+    assert all(event["id"] > last_seen for event in replayed)
+    assert [event["id"] for event in replayed] == sorted({event["id"] for event in replayed})
+
+
+def test_cancel_affects_only_selected_job(client):
+    slow_job = ask(client, "timeout")
+    normal_job = ask(client, "success")
+
+    response = client.post(f"/api/jobs/{slow_job}/cancel")
+    assert response.status_code == 200
+    assert wait_for_terminal(client, slow_job)["status"] == "cancelled"
+    assert wait_for_terminal(client, normal_job)["status"] == "complete"
+
+
+def test_job_transitions_are_monotonic_and_sequence_ids_are_contiguous(client):
+    job_id = ask(client, "broken first draft")
+    wait_for_terminal(client, job_id)
+    record = client.app.state.jobs.get(job_id)
+
+    assert [event.id for event in record.events] == list(range(1, len(record.events) + 1))
+    assert record.state_history[0] == "queued"
+    assert record.state_history[-1] == "complete"
+    assert record.state_history.count("healing") == 1
+
+
+def test_missing_job_returns_not_found(client):
+    assert client.get("/api/jobs/missing").status_code == 404
+    assert client.post("/api/jobs/missing/cancel").status_code == 404
+
