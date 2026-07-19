@@ -61,9 +61,19 @@ class JobRecord:
 
 
 class JobManager:
-    def __init__(self, backend: Any, job_timeout_seconds: float) -> None:
+    def __init__(
+        self,
+        backend: Any,
+        public_job_timeout_seconds: float,
+        evidence_job_timeout_seconds: float | None = None,
+    ) -> None:
         self.backend = backend
-        self.job_timeout_seconds = job_timeout_seconds
+        self.public_job_timeout_seconds = public_job_timeout_seconds
+        self.evidence_job_timeout_seconds = (
+            public_job_timeout_seconds
+            if evidence_job_timeout_seconds is None
+            else evidence_job_timeout_seconds
+        )
         self.records: dict[str, JobRecord] = {}
         self.artifacts: dict[str, str] = {}
 
@@ -107,9 +117,14 @@ class JobManager:
         from server.pipeline import PipelineCancelled, run_pipeline
 
         try:
+            timeout = (
+                self.public_job_timeout_seconds
+                if record.public
+                else self.evidence_job_timeout_seconds
+            )
             await asyncio.wait_for(
                 run_pipeline(self, record),
-                timeout=self.job_timeout_seconds,
+                timeout=timeout,
             )
         except TimeoutError:
             self.terminal(record, "timed_out", "job_timeout")

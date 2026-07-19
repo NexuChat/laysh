@@ -13,8 +13,27 @@ def test_runtime_defaults_are_gpt_5_6_family_only():
         settings.heal_model,
         settings.qa_model,
     } <= ALLOWED_RUNTIME_MODELS
-    assert settings.stage_timeout_seconds == 90
+    assert settings.public_job_timeout_seconds == 180
+    assert settings.evidence_job_timeout_seconds == 600
+    assert settings.public_stage_timeout_seconds == 90
+    assert settings.evidence_stage_timeout_seconds == 300
     assert settings.record_runtime is False
+
+
+def test_timeout_profiles_are_independently_configurable(monkeypatch):
+    from server.settings import Settings
+
+    monkeypatch.setenv("LAYSH_PUBLIC_JOB_TIMEOUT_SECONDS", "179")
+    monkeypatch.setenv("LAYSH_EVIDENCE_JOB_TIMEOUT_SECONDS", "599")
+    monkeypatch.setenv("LAYSH_PUBLIC_STAGE_TIMEOUT_SECONDS", "89")
+    monkeypatch.setenv("LAYSH_EVIDENCE_STAGE_TIMEOUT_SECONDS", "299")
+
+    settings = Settings.from_env()
+
+    assert settings.public_job_timeout_seconds == 179
+    assert settings.evidence_job_timeout_seconds == 599
+    assert settings.public_stage_timeout_seconds == 89
+    assert settings.evidence_stage_timeout_seconds == 299
 
 
 def test_non_gpt_5_6_runtime_override_is_rejected(monkeypatch):

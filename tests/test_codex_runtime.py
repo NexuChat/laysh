@@ -422,6 +422,29 @@ async def test_timeout_terminates_the_process_group(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_curated_stage_uses_scaled_timeout_profile():
+    process = FakeProcess(success_jsonl(VALID_MODULE_OUTPUT), delay=0.03)
+    executor = executor_with_process(
+        process,
+        {},
+        stage_timeout_seconds=0.01,
+        evidence_stage_timeout_seconds=0.1,
+        record_runtime=True,
+    )
+
+    result = await executor.execute_stage(
+        prompt="repository-owned fixture",
+        schema_path=Path("server/schemas/module.schema.json").resolve(),
+        model="gpt-5.6-sol",
+        effort="medium",
+        public=False,
+        evidence_fixture_id="moon_phases_ar",
+    )
+
+    assert result.data == VALID_MODULE_OUTPUT
+
+
+@pytest.mark.asyncio
 async def test_cancellation_terminates_process_group_and_propagates(monkeypatch):
     process = FakeProcess(delay=5)
     signals = []

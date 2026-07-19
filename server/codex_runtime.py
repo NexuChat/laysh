@@ -137,12 +137,18 @@ class CodexExecutor:
         process_factory: ProcessFactory | None = None,
         codex_path: str | None = None,
         stage_timeout_seconds: float = 90,
+        evidence_stage_timeout_seconds: float | None = None,
         record_runtime: bool = False,
         evidence_allowlist: frozenset[str] = frozenset(),
     ) -> None:
         self.process_factory = process_factory or asyncio.create_subprocess_exec
         self.codex_path = codex_path or shutil.which("codex") or "/home/dev/bin/codex"
         self.stage_timeout_seconds = stage_timeout_seconds
+        self.evidence_stage_timeout_seconds = (
+            stage_timeout_seconds
+            if evidence_stage_timeout_seconds is None
+            else evidence_stage_timeout_seconds
+        )
         self.record_runtime = record_runtime
         self.evidence_allowlist = evidence_allowlist
 
@@ -292,9 +298,12 @@ class CodexExecutor:
             except (OSError, ValueError) as error:
                 raise CodexRuntimeError("spawn_failed") from error
             try:
+                stage_timeout = (
+                    self.stage_timeout_seconds if public else self.evidence_stage_timeout_seconds
+                )
                 stdout, stderr = await asyncio.wait_for(
                     process.communicate(prompt.encode("utf-8")),
-                    timeout=self.stage_timeout_seconds,
+                    timeout=stage_timeout,
                 )
             except TimeoutError as error:
                 await self._terminate_process_group(process)

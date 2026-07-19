@@ -59,12 +59,17 @@ async def run() -> int:
         raise RuntimeError("curated fixture identity mismatch")
 
     executor = CodexExecutor(
-        stage_timeout_seconds=settings.stage_timeout_seconds,
+        stage_timeout_seconds=settings.public_stage_timeout_seconds,
+        evidence_stage_timeout_seconds=settings.evidence_stage_timeout_seconds,
         record_runtime=True,
         evidence_allowlist=frozenset({"moon_phases_ar"}),
     )
     backend = CodexBackend(executor=executor, settings=settings)
-    manager = JobManager(backend, settings.job_timeout_seconds)
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=settings.public_job_timeout_seconds,
+        evidence_job_timeout_seconds=settings.evidence_job_timeout_seconds,
+    )
     started = time.monotonic()
     record = manager.start_evidence(
         fixture["question"],
