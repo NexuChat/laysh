@@ -17,7 +17,7 @@ class ModuleSecurityError(ValueError):
 PERMITTED_ABI = ("destroy", "init", "resize", "setParameter", "test", "version")
 MAX_SOURCE_BYTES = 40 * 1024
 FORBIDDEN_CAPABILITIES = (
-    ("html_document", r"<\s*!?doctype\b|<\s*html\b"),
+    ("html_document", r"<\s*!?doctype\b|<\s*html\b|<\s*/?\s*script\b"),
     ("network_fetch", r"\bfetch\b"),
     ("network_transport", r"\b(?:XMLHttpRequest|WebSocket|EventSource|sendBeacon)\b"),
     ("browser_storage", r"\b(?:localStorage|sessionStorage|indexedDB)\b"),
@@ -192,6 +192,101 @@ def verify_module_with_node(source: str, understanding: dict[str, Any]) -> dict[
     return report
 
 
+def verify_artifact_contract(
+    artifact: str,
+    understanding: dict[str, Any],
+    module_source: str,
+) -> tuple[list[dict[str, Any]], int]:
+    from server.assemble import PORTABLE_CSP
+
+    failures: list[dict[str, Any]] = []
+    doctype_count = len(re.findall(r"<!doctype\s+html>", artifact, flags=re.IGNORECASE))
+    script_count = len(re.findall(r"<script(?:\s|>)", artifact, flags=re.IGNORECASE))
+    source_count = artifact.count(module_source)
+    if (doctype_count, script_count, source_count) != (1, 4, 1):
+        failures.append(
+            {
+                "gate": "assembly",
+                "code": "single_shell_contract_mismatch",
+                "expected": {"doctype_count": 1, "script_count": 4, "module_count": 1},
+                "actual": {
+                    "doctype_count": doctype_count,
+                    "script_count": script_count,
+                    "module_count": source_count,
+                },
+            }
+        )
+
+    external_urls = re.findall(r"(?:https?|wss?):\/\/[^\s'\"<>]+", artifact)
+    csp_present = f'content="{PORTABLE_CSP}"' in artifact
+    if not csp_present or external_urls:
+        failures.append(
+            {
+                "gate": "security",
+                "code": "portable_artifact_security_mismatch",
+                "expected": {"portable_csp": PORTABLE_CSP, "external_urls": []},
+                "actual": {
+                    "portable_csp_present": csp_present,
+                    "external_urls": external_urls,
+                },
+            }
+        )
+
+    pedagogy_ids = {
+        "prediction",
+        "prediction-choices",
+        "primary-control",
+        "state-description",
+        "explain",
+        "explanation-prompt",
+        "misconception",
+        "reset",
+    }
+    missing_pedagogy_ids = sorted(
+        element_id
+        for element_id in pedagogy_ids
+        if f'id="{element_id}"' not in artifact
+    )
+    if missing_pedagogy_ids:
+        failures.append(
+            {
+                "gate": "pedagogy",
+                "code": "trusted_teaching_flow_incomplete",
+                "expected": {"required_element_ids": sorted(pedagogy_ids)},
+                "actual": {"missing_element_ids": missing_pedagogy_ids},
+            }
+        )
+
+    expected_direction = "rtl" if understanding["lang"] == "ar" else "ltr"
+    language_ok = (
+        f'<html lang="{understanding["lang"]}" dir="{expected_direction}">' in artifact
+    )
+    accessible_control = 'label for="primary-control"' in artifact
+    live_region = 'aria-live="polite"' in artifact
+    reduced_motion = "prefers-reduced-motion" in artifact
+    if not all((language_ok, accessible_control, live_region, reduced_motion)):
+        failures.append(
+            {
+                "gate": "language_a11y",
+                "code": "language_accessibility_contract_mismatch",
+                "expected": {
+                    "lang": understanding["lang"],
+                    "direction": expected_direction,
+                    "labeled_primary_control": True,
+                    "polite_live_region": True,
+                    "reduced_motion_honored": True,
+                },
+                "actual": {
+                    "language_direction_match": language_ok,
+                    "labeled_primary_control": accessible_control,
+                    "polite_live_region": live_region,
+                    "reduced_motion_honored": reduced_motion,
+                },
+            }
+        )
+    return failures, 10
+
+
 def verify_candidate(
     module_output: dict[str, Any],
     understanding: dict[str, Any],
@@ -236,6 +331,15 @@ def verify_candidate(
         try:
             artifact = assemble_artifact(understanding, module_output)
             check_count += 1
+            artifact_failures, artifact_checks = verify_artifact_contract(
+                artifact,
+                understanding,
+                source,
+            )
+            check_count += artifact_checks
+            if artifact_failures:
+                failures.extend(artifact_failures)
+                artifact = None
         except (OSError, ValueError) as error:
             failures.append(
                 {

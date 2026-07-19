@@ -104,9 +104,15 @@ def test_broken_first_draft_is_healed_once_and_reverified(client, backend):
 
 @pytest.mark.asyncio
 async def test_curated_builder_evidence_retains_the_exact_report_sent_to_heal(backend):
+    from server.browser_verify import BrowserVerificationResult
     from server.jobs import JobManager
 
-    manager = JobManager(backend, public_job_timeout_seconds=2, evidence_job_timeout_seconds=2)
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        evidence_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+    )
     record = manager.start_evidence("broken first draft", "ar", "moon_phases_ar")
     await record.task
 
@@ -127,6 +133,7 @@ async def test_curated_builder_evidence_retains_the_exact_report_sent_to_heal(ba
 async def test_qa_timeout_retries_once_with_same_slim_input_then_completes():
     from copy import deepcopy
 
+    from server.browser_verify import BrowserVerificationResult
     from server.codex_backend import MockCodexBackend
     from server.codex_runtime import CodexRuntimeError
     from server.jobs import JobManager
@@ -146,7 +153,12 @@ async def test_qa_timeout_retries_once_with_same_slim_input_then_completes():
             return {"approved": True, "issues": [], "replacement_module_js": None}
 
     backend = TransientQaBackend()
-    manager = JobManager(backend, public_job_timeout_seconds=2, evidence_job_timeout_seconds=2)
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        evidence_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+    )
     record = manager.start_evidence("broken first draft", "ar", "moon_phases_ar")
     await record.task
 
@@ -161,6 +173,7 @@ async def test_qa_timeout_retries_once_with_same_slim_input_then_completes():
 
 @pytest.mark.asyncio
 async def test_double_qa_timeout_withholds_curated_artifact_as_inconclusive():
+    from server.browser_verify import BrowserVerificationResult
     from server.codex_backend import MockCodexBackend
     from server.codex_runtime import CodexRuntimeError
     from server.jobs import JobManager
@@ -171,7 +184,12 @@ async def test_double_qa_timeout_withholds_curated_artifact_as_inconclusive():
             raise CodexRuntimeError("stage_timeout")
 
     backend = TimedOutQaBackend()
-    manager = JobManager(backend, public_job_timeout_seconds=2, evidence_job_timeout_seconds=2)
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        evidence_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+    )
     record = manager.start_evidence("broken first draft", "ar", "moon_phases_ar")
     await record.task
 
@@ -190,6 +208,7 @@ async def test_double_qa_timeout_withholds_curated_artifact_as_inconclusive():
 
 @pytest.mark.asyncio
 async def test_double_qa_timeout_public_job_falls_back_to_answer_only():
+    from server.browser_verify import BrowserVerificationResult
     from server.codex_backend import MockCodexBackend
     from server.codex_runtime import CodexRuntimeError
     from server.jobs import JobManager
@@ -200,7 +219,11 @@ async def test_double_qa_timeout_public_job_falls_back_to_answer_only():
             raise CodexRuntimeError("stage_timeout")
 
     backend = TimedOutQaBackend()
-    manager = JobManager(backend, public_job_timeout_seconds=2)
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+    )
     record = manager.start("broken first draft", "ar")
     await record.task
 
@@ -216,6 +239,7 @@ async def test_double_qa_timeout_public_job_falls_back_to_answer_only():
 async def test_curated_suspect_fixture_refreshes_understand_once_without_heal():
     from copy import deepcopy
 
+    from server.browser_verify import BrowserVerificationResult
     from server.codex_backend import MockCodexBackend
     from server.jobs import JobManager
     from server.schemas import validate_understanding
@@ -240,7 +264,12 @@ async def test_curated_suspect_fixture_refreshes_understand_once_without_heal():
             return understanding
 
     backend = RefreshingFixtureBackend()
-    manager = JobManager(backend, public_job_timeout_seconds=2, evidence_job_timeout_seconds=2)
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        evidence_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+    )
     record = manager.start_evidence("success", "ar", "moon_phases_ar")
     await record.task
 

@@ -14,8 +14,15 @@ def backend():
 @pytest.fixture
 def client(backend):
     from server.app import create_app
+    from server.browser_verify import BrowserVerificationResult
 
-    with TestClient(create_app(backend=backend, job_timeout_seconds=2.0)) as test_client:
+    with TestClient(
+        create_app(
+            backend=backend,
+            job_timeout_seconds=2.0,
+            browser_verifier=lambda _: BrowserVerificationResult.passing(),
+        )
+    ) as test_client:
         yield test_client
 
 

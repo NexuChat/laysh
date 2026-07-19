@@ -3,9 +3,12 @@ from __future__ import annotations
 import asyncio
 import secrets
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
+from server.browser_verify import BrowserVerificationResult, verify_artifact_in_browser
+from server.cache import VerifiedCache
 from server.schemas import (
     AnswerPayload,
     FallbackResult,
@@ -31,7 +34,7 @@ ALLOWED_TRANSITIONS = {
     "filtering": {"understanding", "cancelled", "timed_out", "failed"},
     "understanding": {"answered", "rejected", "cancelled", "timed_out", "failed"},
     "answered": {"cache_lookup", "answer_only", "cancelled", "timed_out", "failed"},
-    "cache_lookup": {"generating", "cancelled", "timed_out", "failed"},
+    "cache_lookup": {"generating", "browser_check", "cancelled", "timed_out", "failed"},
     "generating": {"verifying", "cancelled", "timed_out", "failed"},
     "verifying": {
         "healing",
@@ -82,6 +85,8 @@ class JobManager:
         backend: Any,
         public_job_timeout_seconds: float,
         evidence_job_timeout_seconds: float | None = None,
+        browser_verifier: Callable[[str], BrowserVerificationResult] = verify_artifact_in_browser,
+        cache: VerifiedCache | None = None,
     ) -> None:
         self.backend = backend
         self.public_job_timeout_seconds = public_job_timeout_seconds
@@ -92,6 +97,8 @@ class JobManager:
         )
         self.records: dict[str, JobRecord] = {}
         self.artifacts: dict[str, str] = {}
+        self.browser_verifier = browser_verifier
+        self.cache = cache
 
     @property
     def active_count(self) -> int:

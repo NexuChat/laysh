@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import json
 import unicodedata
+from collections.abc import Callable
 from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException, Query, Response, status
 from fastapi.responses import HTMLResponse, StreamingResponse
 
 from server.assemble import PORTABLE_CSP
+from server.browser_verify import BrowserVerificationResult, verify_artifact_in_browser
+from server.cache import VerifiedCache
 from server.codex_backend import CodexBackend, MockCodexBackend
 from server.codex_runtime import CodexExecutor
 from server.jobs import TERMINAL_STATES, JobManager
@@ -20,6 +23,7 @@ ROOT = Path(__file__).parents[1]
 def create_app(
     backend: MockCodexBackend | CodexBackend | None = None,
     job_timeout_seconds: float | None = None,
+    browser_verifier: Callable[[str], BrowserVerificationResult] = verify_artifact_in_browser,
 ) -> FastAPI:
     settings = Settings.from_env()
     if backend is not None:
@@ -40,10 +44,22 @@ def create_app(
         settings.public_job_timeout_seconds if job_timeout_seconds is None else job_timeout_seconds
     )
     app = FastAPI(title="Laysh", version="0.1.0")
+    verified_cache = (
+        VerifiedCache(
+            root=ROOT / "out" / "cache" / "live",
+            golden_root=ROOT / "cache" / "golden",
+            secret=settings.cache_key_secret.encode(),
+            contract_version="1.0",
+        )
+        if settings.cache_key_secret
+        else None
+    )
     app.state.jobs = JobManager(
         selected_backend,
         public_job_timeout_seconds=public_timeout,
         evidence_job_timeout_seconds=settings.evidence_job_timeout_seconds,
+        browser_verifier=browser_verifier,
+        cache=verified_cache,
     )
 
     @app.get("/", response_class=HTMLResponse)
