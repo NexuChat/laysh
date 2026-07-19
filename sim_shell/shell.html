@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="@@LANG@@" dir="@@DIR@@">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="@@CSP@@">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23ffcf56'/%3E%3C/svg%3E">
+  <title>@@TITLE@@</title>
+  <style>@@SHELL_CSS@@</style>
+</head>
+<body>
+  <main class="lesson" id="lesson">
+    <header>
+      <p class="eyebrow" id="lesson-label"></p>
+      <h1 id="lesson-title"></h1>
+      <p class="answer" id="answer"></p>
+      <p class="formula" id="formula" dir="ltr"></p>
+    </header>
+
+    <section class="step" id="prediction" aria-labelledby="prediction-title">
+      <p class="step-number">1</p>
+      <div>
+        <h2 id="prediction-title"></h2>
+        <p id="prediction-prompt"></p>
+        <div class="choices" id="prediction-choices"></div>
+      </div>
+    </section>
+
+    <section class="step phenomenon" id="observe" aria-labelledby="observe-title">
+      <p class="step-number">2</p>
+      <div class="stage">
+        <h2 id="observe-title"></h2>
+        <canvas id="simulation" width="720" height="400" role="img" aria-describedby="state-description"></canvas>
+        <p id="state-description" class="state" aria-live="polite"></p>
+        <div class="control-row">
+          <label for="primary-control" id="primary-label"></label>
+          <input id="primary-control" type="range" disabled>
+          <output id="primary-output" for="primary-control" dir="auto"></output>
+        </div>
+        <div class="actions">
+          <button id="reset" type="button"></button>
+          <button id="replay" type="button"></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="step" id="explain" aria-labelledby="explain-title" hidden>
+      <p class="step-number">3</p>
+      <div>
+        <h2 id="explain-title"></h2>
+        <p id="explanation-prompt"></p>
+        <p id="misconception" class="misconception"></p>
+        <p id="transfer"></p>
+      </div>
+    </section>
+
+    <section id="runtime-error" role="alert" hidden>
+      <h2 id="runtime-error-title"></h2>
+      <p id="runtime-error-copy"></p>
+    </section>
+  </main>
+  <script>window.__LAYSH_LESSON__ = @@LESSON_JSON@@;</script>
+  <script>@@CONTRACT_JS@@</script>
+  <script>@@MODULE_JS@@</script>
+  <script>@@SHELL_JS@@</script>
+</body>
+</html>
