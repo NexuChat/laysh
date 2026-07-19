@@ -136,6 +136,36 @@ def test_builder_review_rejects_loose_model_fixture_tolerances():
     assert "model_fixture_contract_mismatch" in review["failure_codes"]
 
 
+def test_builder_review_rejects_hash_placeholders_in_learner_copy():
+    from copy import deepcopy
+
+    from server.goldens import load_golden_fixtures, review_golden_candidate
+    from tests.golden_cases import VALID_MODULE_OUTPUT, VALID_UNDERSTANDING
+
+    fixture = load_golden_fixtures()["moon_phases_ar"]
+    understanding = deepcopy(VALID_UNDERSTANDING)
+    understanding["title"] = "3d9f70870e5a4e9b8beaa5bf8d7e27c8"
+    understanding["prediction"]["prompt"] = "3eb7f1ad304c420eb3dac23a762e9636"
+    module_output = {
+        **VALID_MODULE_OUTPUT,
+        "module_js": (Path(__file__).parent / "fixtures" / "moon_phase_module.js").read_text(
+            encoding="utf-8"
+        ),
+    }
+
+    review = review_golden_candidate(
+        fixture=fixture,
+        understanding=understanding,
+        module_output=module_output,
+    )
+
+    assert review["passed"] is False
+    assert review["checks"]["learner_copy_has_no_hash_placeholders"] is False
+    assert review["checks"]["learner_copy_localized"] is False
+    assert "learner_copy_placeholder" in review["failure_codes"]
+    assert "learner_copy_not_localized" in review["failure_codes"]
+
+
 def test_portable_shell_keeps_arabic_kicker_clear_and_text_alternative_localized():
     root = Path(__file__).parents[1]
     css = (root / "sim_shell" / "shell.css").read_text(encoding="utf-8")

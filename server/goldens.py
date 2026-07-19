@@ -87,6 +87,41 @@ def review_golden_candidate(
         "explanation_prompt",
         "transfer_prompt",
     )
+    prediction = understanding.get("prediction") or {}
+    learner_strings = [
+        understanding.get("title", ""),
+        understanding.get("tldr", ""),
+        understanding.get("learning_objective", ""),
+        (understanding.get("primary_parameter") or {}).get("label", ""),
+        prediction.get("prompt", ""),
+        *prediction.get("choices", []),
+        understanding.get("misconception", ""),
+        understanding.get("explanation_prompt", ""),
+        understanding.get("transfer_prompt", ""),
+    ]
+    hash_placeholder = re.compile(r"^[0-9a-f]{24,}$", flags=re.IGNORECASE)
+    copy_has_no_hashes = all(
+        not hash_placeholder.fullmatch(value.strip())
+        for value in learner_strings
+        if isinstance(value, str) and value.strip()
+    )
+    essential_copy = [
+        understanding.get("title", ""),
+        understanding.get("tldr", ""),
+        understanding.get("learning_objective", ""),
+        (understanding.get("primary_parameter") or {}).get("label", ""),
+        prediction.get("prompt", ""),
+        understanding.get("misconception", ""),
+        understanding.get("explanation_prompt", ""),
+        understanding.get("transfer_prompt", ""),
+    ]
+    localized_pattern = re.compile(
+        r"[\u0600-\u06ff]" if understanding.get("lang") == "ar" else r"[A-Za-z]"
+    )
+    copy_localized = all(
+        isinstance(value, str) and localized_pattern.search(value)
+        for value in essential_copy
+    )
     parameter_contract = contract["primary_parameter"]
     parameter = understanding.get("primary_parameter") or {}
     parameter_matches = all(
@@ -116,6 +151,8 @@ def review_golden_candidate(
                 model_fixture_matches = False
     checks: dict[str, Any] = {
         "formula_matches_reference": understanding.get("key_formula") == contract["formula"],
+        "learner_copy_has_no_hash_placeholders": copy_has_no_hashes,
+        "learner_copy_localized": copy_localized,
         "primary_parameter_matches_reference": parameter_matches,
         "model_fixtures_match_reference": model_fixture_matches,
         "bilingual_metadata": all(
@@ -133,6 +170,10 @@ def review_golden_candidate(
     failure_codes: list[str] = []
     if not checks["formula_matches_reference"]:
         failure_codes.append("formula_reference_mismatch")
+    if not checks["learner_copy_has_no_hash_placeholders"]:
+        failure_codes.append("learner_copy_placeholder")
+    if not checks["learner_copy_localized"]:
+        failure_codes.append("learner_copy_not_localized")
     if not checks["primary_parameter_matches_reference"]:
         failure_codes.append("primary_parameter_reference_mismatch")
     if not checks["model_fixtures_match_reference"]:
