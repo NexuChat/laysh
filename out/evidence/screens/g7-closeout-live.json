@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "1.0",
+  "journeyKind": "public-question-on-running-service",
+  "question": "كيف تؤثر القوة في تسارع جسم؟",
+  "liveJobCount": 1,
+  "publicEphemeral": true,
+  "answerObservedBeforeResult": true,
+  "answerLatencyMs": 18020,
+  "totalObservedMs": 159727,
+  "resultVisible": true,
+  "sandbox": "allow-scripts",
+  "checkCount": 28,
+  "effectiveModel": "gpt-5.6-sol",
+  "elapsedText": "159 ثانية",
+  "healText": "1",
+  "stageTimeline": [
+    {
+      "stage": "understanding",
+      "elapsedMs": 17988
+    },
+    {
+      "stage": "cache_lookup",
+      "elapsedMs": 17988
+    },
+    {
+      "stage": "generating",
+      "elapsedMs": 17988
+    },
+    {
+      "stage": "verifying",
+      "elapsedMs": 81673
+    },
+    {
+      "stage": "healing",
+      "elapsedMs": 81723
+    },
+    {
+      "stage": "verifying",
+      "elapsedMs": 148459
+    },
+    {
+      "stage": "qa",
+      "elapsedMs": 151031
+    },
+    {
+      "stage": "browser_check",
+      "elapsedMs": 159053
+    }
+  ],
+  "consoleErrors": [],
+  "screenshots": [
+    "g7-closeout-live-landing-mobile-390x844.png",
+    "g7-closeout-live-build-mobile-390x844.png",
+    "g7-closeout-live-result-mobile-390x844.png",
+    "g7-closeout-live-result-desktop-1440x900.png"
+  ]
+}

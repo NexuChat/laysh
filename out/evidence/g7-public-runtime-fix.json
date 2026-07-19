@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "gate": "G7_public_runtime_fix",
+  "root_cause": "The deployed systemd unit set ProtectHome=read-only but made only the repository out directory writable. Codex CLI 0.144.6 needs its own state directory during startup even for --ephemeral jobs, so both Luna and the newly wired Sol fallback exited before emitting JSONL.",
+  "diagnostic_evidence": {
+    "before": "codex doctor under the deployed hardening emitted a read-only runtime-path warning",
+    "after": "the warning disappeared when only /home/dev/.codex was added to ReadWritePaths",
+    "model_or_schema_error_observed": false,
+    "learner_content_logged": false
+  },
+  "fixes": [
+    "Keep ProtectHome=read-only and add only %h/.codex to systemd ReadWritePaths.",
+    "Retry the configured gpt-5.6-sol understand fallback once after a public Luna runtime failure.",
+    "Extract and log only allowlisted upstream type, code, status, or process-exit classification."
+  ],
+  "regression_tests": [
+    "public Luna nonzero retries Sol with the same public ephemeral policy",
+    "public nonzero diagnostics exclude prompts, stderr, and upstream messages",
+    "the deployed unit preserves ProtectHome=read-only while granting the Codex state path"
+  ],
+  "proof_job_id": "job_9c17056f52534e82",
+  "proof_status": "complete",
+  "proof_total_observed_ms": 159727,
+  "proof_check_count": 28,
+  "proof_heal_count": 1,
+  "passed": true
+}
