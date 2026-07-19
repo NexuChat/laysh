@@ -1,24 +1,38 @@
 {
   "schema_version": "1.0",
-  "captured_at_utc": "2026-07-19T09:52:55.702137+00:00",
+  "captured_at_utc": "2026-07-19T10:01:27.629388+00:00",
   "fixture_id": "moon_phases_ar",
   "runtime_family": "GPT-5.6",
-  "job_id": "job_9cbd43a699d96ca5",
-  "status": "timed_out",
-  "total_elapsed_ms": 180095,
+  "job_id": "job_343798835b4e3966",
+  "status": "answer_only",
+  "total_elapsed_ms": 220808,
   "stages": [
     {
       "stage": "understand",
       "model": "gpt-5.6-luna",
-      "elapsed_ms": 20805,
-      "thread_id": "019f79c8-4561-7c62-9883-75a23e4062e8",
+      "elapsed_ms": 16326,
+      "thread_id": "019f79cf-7642-77f2-b43a-738eca4ace31",
       "evidence_mode": true
     },
     {
       "stage": "generate",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 83525,
-      "thread_id": "019f79c8-96a6-7650-a7ae-5b7e4dc97d6a",
+      "elapsed_ms": 85335,
+      "thread_id": "019f79cf-b5c7-7d30-9a50-d42ebf7c3acf",
+      "evidence_mode": true
+    },
+    {
+      "stage": "heal_1",
+      "model": "gpt-5.6-sol",
+      "elapsed_ms": 63767,
+      "thread_id": "019f79d1-033f-7553-afd2-4f5069585254",
+      "evidence_mode": true
+    },
+    {
+      "stage": "heal_2",
+      "model": "gpt-5.6-sol",
+      "elapsed_ms": 55304,
+      "thread_id": "019f79d1-fc5e-79c3-990f-cff783b54fbe",
       "evidence_mode": true
     }
   ],
@@ -31,7 +45,10 @@
     "generating",
     "verifying",
     "healing",
-    "timed_out"
+    "verifying",
+    "healing",
+    "verifying",
+    "answer_only"
   ],
   "public_event_types": [
     "answer",
@@ -40,10 +57,13 @@
     "stage",
     "stage",
     "stage",
-    "terminal"
+    "stage",
+    "stage",
+    "stage",
+    "fallback"
   ],
   "simulation": null,
-  "fallback_reason_code": null,
+  "fallback_reason_code": "verification_exhausted",
   "artifact_sha256": null,
   "browser": {
     "ready": false,
