@@ -181,10 +181,7 @@
     setView("failure", { push: true });
   }
 
-  async function loadResult() {
-    const response = await fetch(state.resultUrl, { headers: { accept: "application/json" } });
-    if (!response.ok) throw new Error("result_unavailable");
-    const result = await response.json();
+  function displayResult(result) {
     if (result.status !== "complete" || !result.simulation) {
       const reason = normalizedReason(result.fallback?.reason_code, result.status);
       showFailure(reason, result.fallback?.suggestions || []);
@@ -209,6 +206,48 @@
     byId("result-elapsed").textContent = `${number.format(simulation.elapsed_ms / 1000)} ثانية`;
     byId("effective-model").textContent = simulation.effective_model;
     setView("result", { push: true });
+  }
+
+  async function loadResult() {
+    const response = await fetch(state.resultUrl, { headers: { accept: "application/json" } });
+    if (!response.ok) throw new Error("result_unavailable");
+    displayResult(await response.json());
+  }
+
+  async function loadGolden(goldenId) {
+    const response = await fetch(`/api/gallery/${encodeURIComponent(goldenId)}`, {
+      headers: { accept: "application/json" },
+    });
+    if (!response.ok) throw new Error("golden_unavailable");
+    const golden = await response.json();
+    pinAnswer(golden.answer);
+    displayResult({ status: "complete", answer: golden.answer, simulation: golden.simulation });
+  }
+
+  async function hydrateGallery() {
+    try {
+      const response = await fetch("/api/gallery?locale=ar", {
+        headers: { accept: "application/json" },
+      });
+      if (!response.ok) return;
+      const gallery = await response.json();
+      for (const lesson of gallery.lessons) {
+        const card = document.querySelector(`[data-golden-id="${lesson.id}"]`);
+        if (!card || !lesson.instant) continue;
+        card.querySelector("h3").textContent = lesson.title;
+        card.querySelector(".card-domain").textContent = lesson.domain;
+        const badge = card.querySelector(".coming-badge");
+        badge.className = "instant-badge";
+        badge.textContent = "فوري";
+        const launch = card.querySelector(".golden-launch");
+        launch.disabled = false;
+        launch.addEventListener("click", () => {
+          loadGolden(lesson.id).catch(() => showFailure("backend_unavailable"));
+        });
+      }
+    } catch {
+      // Honest placeholders remain visible when the gallery endpoint is unavailable.
+    }
   }
 
   function parseSseBlock(block) {
@@ -396,4 +435,5 @@
   });
 
   history.replaceState({ view: "ask" }, "", "#ask");
+  hydrateGallery();
 })();

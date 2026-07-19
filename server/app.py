@@ -14,6 +14,7 @@ from server.browser_verify import BrowserVerificationResult, verify_artifact_in_
 from server.cache import VerifiedCache
 from server.codex_backend import CodexBackend, MockCodexBackend
 from server.codex_runtime import CodexExecutor
+from server.goldens import GOLDEN_FIXTURE_IDS, GOLDEN_ROOT, list_pinned_goldens, load_pinned_golden
 from server.jobs import TERMINAL_STATES, JobManager
 from server.schemas import AskAccepted, AskRequest, PublicResult
 from server.settings import Settings
@@ -35,7 +36,7 @@ def create_app(
                 stage_timeout_seconds=settings.public_stage_timeout_seconds,
                 evidence_stage_timeout_seconds=settings.evidence_stage_timeout_seconds,
                 record_runtime=settings.record_runtime,
-                evidence_allowlist=frozenset({"moon_phases_ar"}),
+                evidence_allowlist=frozenset(GOLDEN_FIXTURE_IDS),
             ),
             settings=settings,
         )
@@ -49,7 +50,7 @@ def create_app(
     verified_cache = (
         VerifiedCache(
             root=ROOT / "out" / "cache" / "live",
-            golden_root=ROOT / "cache" / "golden",
+            golden_root=GOLDEN_ROOT,
             secret=settings.cache_key_secret.encode(),
             contract_version="1.0",
         )
@@ -133,17 +134,48 @@ def create_app(
         return await app.state.jobs.cancel(record)
 
     @app.get("/api/gallery")
-    async def gallery() -> dict:
+    async def gallery(locale: str = Query(default="ar", pattern="^(ar|en)$")) -> dict:
+        lessons = []
+        for document in list_pinned_goldens():
+            selected = document["metadata"][locale]
+            lessons.append(
+                {
+                    "id": document["golden_id"],
+                    "title": selected["title"],
+                    "domain": selected["domain"],
+                    "summary": selected["summary"],
+                    "instant": True,
+                    "tier": "A",
+                }
+            )
         return {
             "contract_version": "1.0",
-            "lessons": [
-                {
-                    "id": "mock_moon_phases",
-                    "title": "لماذا يتغير شكل القمر؟",
-                    "instant": True,
-                    "tier": "B",
-                }
-            ],
+            "lessons": lessons,
+        }
+
+    @app.get("/api/gallery/{golden_id}")
+    async def gallery_lesson(golden_id: str) -> dict:
+        document = load_pinned_golden(golden_id)
+        if document is None:
+            raise HTTPException(status_code=404, detail="golden lesson not found")
+        sim_id = "golden_" + document["artifact_sha256"][:16]
+        app.state.jobs.artifacts[sim_id] = document["artifact"]
+        return {
+            "contract_version": "1.0",
+            "id": golden_id,
+            "answer": document["answer"],
+            "simulation": {
+                "sim_id": sim_id,
+                "title": document["title"],
+                "lang": document["locale"],
+                "direction": document["direction"],
+                "artifact_url": f"/api/sims/{sim_id}/download",
+                "tier": "A",
+                "effective_model": "verified/golden",
+                "elapsed_ms": 0,
+                "check_count": document["receipt"]["check_count"],
+                "heal_count": document["evidence"].get("heal_count", 0),
+            },
         }
 
     @app.get("/api/sims/{sim_id}/download")
