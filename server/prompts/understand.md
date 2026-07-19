@@ -16,6 +16,8 @@ Rules:
   two independent numeric or relational fixtures.
 - Fixtures are the fixed scientific contract for module verification. Use finite values and honest
   tolerances.
+- Fixture inputs are closed arrays of `{ "name": string, "value": number }` entries, never
+  dynamic-key objects. Example: `[{ "name": "angle_deg", "value": 90 }]`.
 - Non-simulatable output preserves a useful answer, contains no checks, and offers three simulatable
   science suggestions.
 - `module_spec.outputs` lists every output the future module's `test(inputs)` must return.
@@ -23,4 +25,3 @@ Rules:
 
 INPUT_JSON:
 @@INPUT_JSON@@
-

@@ -12,6 +12,12 @@
       "maxItems": 8,
       "items": {"type": "string", "maxLength": 180}
     },
-    "replacement_module_js": {"type": ["string", "null"], "maxLength": 40960}
+    "replacement_module_js": {
+      "type": ["string", "null"],
+      "anyOf": [
+        {"type": "string", "maxLength": 40960},
+        {"type": "null"}
+      ]
+    }
   }
 }

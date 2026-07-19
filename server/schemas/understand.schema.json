@@ -15,7 +15,16 @@
     "safe": {"type": "boolean"},
     "unsafe_category": {
       "type": ["string", "null"],
-      "enum": [null, "sexual_minors", "self_harm", "graphic_violence", "hate_harassment", "wrongdoing", "personal_data", "medical"]
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "sexual_minors", "self_harm", "graphic_violence", "hate_harassment",
+            "wrongdoing", "personal_data", "medical"
+          ]
+        },
+        {"type": "null"}
+      ]
     },
     "simulatable": {"type": "boolean"},
     "reason_code": {"type": "string", "pattern": "^[a-z0-9_]+$", "maxLength": 64},
@@ -24,11 +33,18 @@
     "domain": {"type": "string", "pattern": "^[a-z0-9_]+$", "maxLength": 64},
     "title": {"type": "string", "maxLength": 120},
     "tldr": {"type": "string", "maxLength": 420},
-    "key_formula": {"type": ["string", "null"], "maxLength": 120},
+    "key_formula": {
+      "type": ["string", "null"],
+      "anyOf": [
+        {"type": "string", "maxLength": 120},
+        {"type": "null"}
+      ]
+    },
     "learning_objective": {"type": "string", "maxLength": 220},
-    "primary_parameter": {"$ref": "#/$defs/nullableParameter"},
-    "secondary_parameter": {"$ref": "#/$defs/nullableParameter"},
+    "primary_parameter": {"type": ["object", "null"], "$ref": "#/$defs/nullableParameter"},
+    "secondary_parameter": {"type": ["object", "null"], "$ref": "#/$defs/nullableParameter"},
     "prediction": {
+      "type": ["object", "null"],
       "anyOf": [
         {"type": "null"},
         {
@@ -37,24 +53,67 @@
           "required": ["prompt", "choices"],
           "properties": {
             "prompt": {"type": "string", "maxLength": 180},
-            "choices": {"type": "array", "minItems": 2, "maxItems": 3, "uniqueItems": true, "items": {"type": "string", "maxLength": 80}}
+            "choices": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 3,
+              "uniqueItems": true,
+              "items": {"type": "string", "maxLength": 80}
+            }
           }
         }
       ]
     },
-    "misconception": {"type": ["string", "null"], "maxLength": 180},
-    "explanation_prompt": {"type": ["string", "null"], "maxLength": 180},
-    "transfer_prompt": {"type": ["string", "null"], "maxLength": 180},
+    "misconception": {
+      "type": ["string", "null"],
+      "anyOf": [
+        {"type": "string", "maxLength": 180},
+        {"type": "null"}
+      ]
+    },
+    "explanation_prompt": {
+      "type": ["string", "null"],
+      "anyOf": [
+        {"type": "string", "maxLength": 180},
+        {"type": "null"}
+      ]
+    },
+    "transfer_prompt": {
+      "type": ["string", "null"],
+      "anyOf": [
+        {"type": "string", "maxLength": 180},
+        {"type": "null"}
+      ]
+    },
     "module_spec": {
       "type": "object",
       "additionalProperties": false,
       "required": ["outputs"],
       "properties": {
-        "outputs": {"type": "array", "maxItems": 8, "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}}
+        "outputs": {
+          "type": "array",
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}
+        }
       }
     },
-    "checks": {"type": "array", "maxItems": 12, "items": {"anyOf": [{"$ref": "#/$defs/numericCheck"}, {"$ref": "#/$defs/relationCheck"}]}},
-    "suggestions": {"type": "array", "maxItems": 3, "items": {"type": "string", "maxLength": 160}}
+    "checks": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "anyOf": [
+          {"type": "object", "$ref": "#/$defs/numericCheck"},
+          {"type": "object", "$ref": "#/$defs/relationCheck"}
+        ]
+      }
+    },
+    "suggestions": {
+      "type": "array",
+      "maxItems": 3,
+      "items": {"type": "string", "maxLength": 160}
+    }
   },
   "$defs": {
     "parameter": {
@@ -71,15 +130,36 @@
         "step": {"type": "number", "exclusiveMinimum": 0}
       }
     },
-    "nullableParameter": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/parameter"}]},
+    "nullableParameter": {
+      "type": ["object", "null"],
+      "anyOf": [
+        {"type": "null"},
+        {"type": "object", "$ref": "#/$defs/parameter"}
+      ]
+    },
+    "inputEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "value"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+        "value": {"type": "number"}
+      }
+    },
+    "inputEntries": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {"type": "object", "$ref": "#/$defs/inputEntry"}
+    },
     "numericCheck": {
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "kind", "inputs", "output", "expected", "tolerance", "unit"],
       "properties": {
         "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
-        "kind": {"const": "numeric"},
-        "inputs": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "number"}},
+        "kind": {"type": "string", "enum": ["numeric"]},
+        "inputs": {"type": "array", "$ref": "#/$defs/inputEntries"},
         "output": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
         "expected": {"type": "number"},
         "tolerance": {"type": "number", "minimum": 0},
@@ -92,11 +172,14 @@
       "required": ["id", "kind", "left_inputs", "right_inputs", "output", "relation", "minimum_ratio"],
       "properties": {
         "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
-        "kind": {"const": "relation"},
-        "left_inputs": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "number"}},
-        "right_inputs": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "number"}},
+        "kind": {"type": "string", "enum": ["relation"]},
+        "left_inputs": {"type": "array", "$ref": "#/$defs/inputEntries"},
+        "right_inputs": {"type": "array", "$ref": "#/$defs/inputEntries"},
         "output": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
-        "relation": {"enum": ["right_gt_left", "right_lt_left", "right_eq_left"]},
+        "relation": {
+          "type": "string",
+          "enum": ["right_gt_left", "right_lt_left", "right_eq_left"]
+        },
         "minimum_ratio": {"type": "number", "exclusiveMinimum": 0}
       }
     }

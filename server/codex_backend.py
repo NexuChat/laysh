@@ -186,7 +186,7 @@ def _success_understanding(locale: str) -> dict[str, Any]:
             {
                 "id": "quarter_phase",
                 "kind": "numeric",
-                "inputs": {"angle_deg": 90},
+                "inputs": [{"name": "angle_deg", "value": 90}],
                 "output": "lit_fraction",
                 "expected": 0.5,
                 "tolerance": 0.02,
@@ -195,7 +195,7 @@ def _success_understanding(locale: str) -> dict[str, Any]:
             {
                 "id": "full_phase",
                 "kind": "numeric",
-                "inputs": {"angle_deg": 180},
+                "inputs": [{"name": "angle_deg", "value": 180}],
                 "output": "lit_fraction",
                 "expected": 1.0,
                 "tolerance": 0.02,
