@@ -1,13 +1,126 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from copy import deepcopy
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from server.codex_runtime import CodexExecutor, StageExecution
 from server.schemas import validate_module_output, validate_understanding
+from server.settings import Settings
 
 ROOT = Path(__file__).parents[1]
+PROMPT_DIR = Path(__file__).parent / "prompts"
+SCHEMA_DIR = Path(__file__).parent / "schemas"
+
+
+@dataclass(frozen=True, slots=True)
+class RuntimeContext:
+    public: bool = True
+    evidence_fixture_id: str | None = None
+
+
+class CodexBackend:
+    """Structured GPT-5.6-only stage backend."""
+
+    backend_name = "codex"
+
+    def __init__(self, *, executor: CodexExecutor, settings: Settings) -> None:
+        self.executor = executor
+        self.settings = settings
+
+    @staticmethod
+    def _render_prompt(name: str, payload: dict[str, Any]) -> str:
+        template = (PROMPT_DIR / name).read_text(encoding="utf-8")
+        serialized = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+        return template.replace("@@INPUT_JSON@@", serialized)
+
+    @staticmethod
+    def _execution_policy(context: RuntimeContext | None) -> dict[str, Any]:
+        selected = context or RuntimeContext()
+        return {
+            "public": selected.public,
+            "evidence_fixture_id": selected.evidence_fixture_id,
+        }
+
+    async def understand(
+        self,
+        question: str,
+        locale: str | None,
+        *,
+        runtime_context: RuntimeContext | None = None,
+    ) -> StageExecution:
+        return await self.executor.execute_stage(
+            prompt=self._render_prompt(
+                "understand.md",
+                {"question": question, "locale": locale},
+            ),
+            schema_path=SCHEMA_DIR / "understand.schema.json",
+            model=self.settings.understand_model,
+            effort="low",
+            **self._execution_policy(runtime_context),
+        )
+
+    async def generate(
+        self,
+        understanding: dict[str, Any],
+        scenario: str = "live",
+        *,
+        runtime_context: RuntimeContext | None = None,
+    ) -> StageExecution:
+        del scenario
+        return await self.executor.execute_stage(
+            prompt=self._render_prompt("generate_module.md", understanding),
+            schema_path=SCHEMA_DIR / "module.schema.json",
+            model=self.settings.generate_model,
+            effort="medium",
+            **self._execution_policy(runtime_context),
+        )
+
+    async def heal(
+        self,
+        module_output: dict[str, Any],
+        understanding: dict[str, Any],
+        failures: list[str],
+        attempt: int,
+        *,
+        runtime_context: RuntimeContext | None = None,
+    ) -> StageExecution:
+        return await self.executor.execute_stage(
+            prompt=self._render_prompt(
+                "heal_module.md",
+                {
+                    "module_output": module_output,
+                    "understanding": understanding,
+                    "exact_gate_failures": failures,
+                    "attempt": attempt,
+                },
+            ),
+            schema_path=SCHEMA_DIR / "module.schema.json",
+            model=self.settings.heal_model,
+            effort="high" if attempt == 2 else "medium",
+            **self._execution_policy(runtime_context),
+        )
+
+    async def qa(
+        self,
+        module_output: dict[str, Any],
+        understanding: dict[str, Any],
+        *,
+        runtime_context: RuntimeContext | None = None,
+    ) -> StageExecution:
+        return await self.executor.execute_stage(
+            prompt=self._render_prompt(
+                "qa.md",
+                {"module_output": module_output, "understanding": understanding},
+            ),
+            schema_path=SCHEMA_DIR / "qa.schema.json",
+            model=self.settings.qa_model,
+            effort="medium",
+            **self._execution_policy(runtime_context),
+        )
 
 
 def _success_understanding(locale: str) -> dict[str, Any]:
@@ -175,11 +288,13 @@ class MockCodexBackend:
             "timeout",
         }
     )
+    backend_name = "mock"
 
     def __init__(self) -> None:
         self.understand_calls = 0
         self.generate_calls = 0
         self.heal_calls = 0
+        self.qa_calls = 0
         self._good_source = (ROOT / "tests" / "fixtures" / "moon_phase_module.js").read_text(
             encoding="utf-8"
         )
@@ -198,7 +313,18 @@ class MockCodexBackend:
             return "timeout"
         return "success"
 
-    async def understand(self, question: str, locale: str | None) -> dict[str, Any]:
+    def normalize_fixture(self, question: str) -> dict[str, Any]:
+        english = question.casefold().startswith("why does")
+        return _success_understanding("en" if english else "ar")
+
+    async def understand(
+        self,
+        question: str,
+        locale: str | None,
+        *,
+        runtime_context: RuntimeContext | None = None,
+    ) -> dict[str, Any]:
+        del runtime_context
         self.understand_calls += 1
         scenario = self.scenario_for(question)
         if scenario == "timeout":
@@ -210,8 +336,13 @@ class MockCodexBackend:
         return deepcopy(_success_understanding(locale or "ar"))
 
     async def generate(
-        self, understanding: dict[str, Any], scenario: str = "success"
+        self,
+        understanding: dict[str, Any],
+        scenario: str = "success",
+        *,
+        runtime_context: RuntimeContext | None = None,
     ) -> dict[str, Any]:
+        del runtime_context
         self.generate_calls += 1
         source = self._good_source
         if scenario in {"broken_first_draft", "exhausted_heal"}:
@@ -231,8 +362,10 @@ class MockCodexBackend:
         understanding: dict[str, Any],
         failures: list[str],
         attempt: int,
+        *,
+        runtime_context: RuntimeContext | None = None,
     ) -> dict[str, Any]:
-        del failures, attempt
+        del failures, attempt, runtime_context
         self.heal_calls += 1
         candidate = deepcopy(module_output)
         repairable = self.scenario_for_source(module_output["module_js"]) != "exhausted"
@@ -240,6 +373,17 @@ class MockCodexBackend:
             candidate["module_js"] = self._good_source
         candidate["output_names"] = list(understanding["module_spec"]["outputs"])
         return validate_module_output(candidate)
+
+    async def qa(
+        self,
+        module_output: dict[str, Any],
+        understanding: dict[str, Any],
+        *,
+        runtime_context: RuntimeContext | None = None,
+    ) -> dict[str, Any]:
+        del module_output, understanding, runtime_context
+        self.qa_calls += 1
+        return {"approved": True, "issues": [], "replacement_module_js": None}
 
     @staticmethod
     def scenario_for_source(source: str) -> str:

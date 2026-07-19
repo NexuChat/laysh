@@ -63,3 +63,15 @@ def test_gallery_contract_is_available_offline(client):
     assert response.status_code == 200
     assert response.json()["contract_version"] == "1.0"
     assert isinstance(response.json()["lessons"], list)
+
+
+def test_codex_backend_is_selected_only_by_explicit_configuration(monkeypatch):
+    from server.app import create_app
+    from server.codex_backend import CodexBackend
+
+    monkeypatch.setenv("LAYSH_CODEX_BACKEND", "codex")
+    configured = create_app()
+    assert isinstance(configured.state.jobs.backend, CodexBackend)
+    assert configured.state.jobs.backend.settings.understand_model == "gpt-5.6-luna"
+    assert configured.state.jobs.backend.settings.generate_model == "gpt-5.6-sol"
+    assert configured.state.jobs.backend.executor.record_runtime is False

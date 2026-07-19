@@ -15,6 +15,8 @@ class Settings:
     qa_model: str = "gpt-5.6-sol"
     backend: str = "mock"
     job_timeout_seconds: float = 180.0
+    stage_timeout_seconds: float = 90.0
+    record_runtime: bool = False
 
     def __post_init__(self) -> None:
         configured = {
@@ -42,4 +44,8 @@ class Settings:
             job_timeout_seconds=float(
                 os.getenv("LAYSH_JOB_TIMEOUT_SECONDS", str(defaults.job_timeout_seconds))
             ),
+            stage_timeout_seconds=float(
+                os.getenv("LAYSH_STAGE_TIMEOUT_SECONDS", str(defaults.stage_timeout_seconds))
+            ),
+            record_runtime=os.getenv("LAYSH_RECORD_RUNTIME", "0") == "1",
         )

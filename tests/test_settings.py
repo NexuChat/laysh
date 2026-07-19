@@ -13,6 +13,8 @@ def test_runtime_defaults_are_gpt_5_6_family_only():
         settings.heal_model,
         settings.qa_model,
     } <= ALLOWED_RUNTIME_MODELS
+    assert settings.stage_timeout_seconds == 90
+    assert settings.record_runtime is False
 
 
 def test_non_gpt_5_6_runtime_override_is_rejected(monkeypatch):

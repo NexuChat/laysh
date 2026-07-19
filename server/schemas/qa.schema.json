@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://laysh.local/schemas/qa-1.0.json",
+  "title": "Laysh healed-module QA output v1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["approved", "issues", "replacement_module_js"],
+  "properties": {
+    "approved": {"type": "boolean"},
+    "issues": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {"type": "string", "maxLength": 180}
+    },
+    "replacement_module_js": {"type": ["string", "null"], "maxLength": 40960}
+  }
+}

@@ -8,7 +8,8 @@ from fastapi import FastAPI, Header, HTTPException, Query, Response, status
 from fastapi.responses import HTMLResponse, StreamingResponse
 
 from server.assemble import PORTABLE_CSP
-from server.codex_backend import MockCodexBackend
+from server.codex_backend import CodexBackend, MockCodexBackend
+from server.codex_runtime import CodexExecutor
 from server.jobs import TERMINAL_STATES, JobManager
 from server.schemas import AskAccepted, AskRequest, PublicResult
 from server.settings import Settings
@@ -17,11 +18,23 @@ ROOT = Path(__file__).parents[1]
 
 
 def create_app(
-    backend: MockCodexBackend | None = None,
+    backend: MockCodexBackend | CodexBackend | None = None,
     job_timeout_seconds: float | None = None,
 ) -> FastAPI:
     settings = Settings.from_env()
-    selected_backend = backend or MockCodexBackend()
+    if backend is not None:
+        selected_backend = backend
+    elif settings.backend == "codex":
+        selected_backend = CodexBackend(
+            executor=CodexExecutor(
+                stage_timeout_seconds=settings.stage_timeout_seconds,
+                record_runtime=settings.record_runtime,
+                evidence_allowlist=frozenset({"moon_phases_ar"}),
+            ),
+            settings=settings,
+        )
+    else:
+        selected_backend = MockCodexBackend()
     timeout = settings.job_timeout_seconds if job_timeout_seconds is None else job_timeout_seconds
     app = FastAPI(title="Laysh", version="0.1.0")
     app.state.jobs = JobManager(selected_backend, timeout)
@@ -127,7 +140,7 @@ def create_app(
     async def health() -> dict:
         return {
             "status": "ok",
-            "backend": "mock",
+            "backend": selected_backend.backend_name,
             "queue": {
                 "active": app.state.jobs.active_count,
                 "known_jobs": len(app.state.jobs.records),
@@ -138,4 +151,3 @@ def create_app(
 
 
 app = create_app()
-

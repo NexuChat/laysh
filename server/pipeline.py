@@ -5,7 +5,15 @@ import hashlib
 from typing import Any, NoReturn
 
 from server.assemble import assemble_artifact
-from server.schemas import AnswerPayload, FallbackResult, SimulationMetadata, validate_understanding
+from server.codex_backend import RuntimeContext
+from server.codex_runtime import StageExecution
+from server.schemas import (
+    AnswerPayload,
+    FallbackResult,
+    SimulationMetadata,
+    validate_module_output,
+    validate_understanding,
+)
 from server.verify import verify_module_source, verify_module_with_node
 
 
@@ -43,12 +51,41 @@ def _reject(manager: Any, record: Any, reason_code: str, suggestions: list[str])
 
 async def run_pipeline(manager: Any, record: Any) -> None:
     question = record.question or ""
-    scenario = manager.backend.scenario_for(question)
-    manager.transition(record, "filtering", "فحص أولي محدود")
+    scenario_resolver = getattr(manager.backend, "scenario_for", None)
+    scenario = scenario_resolver(question) if scenario_resolver else "live"
+    runtime_context = RuntimeContext(
+        public=record.public,
+        evidence_fixture_id=record.evidence_fixture_id,
+    )
+
+    def stage_data(result: dict[str, Any] | StageExecution) -> dict[str, Any]:
+        if isinstance(result, StageExecution):
+            record.stage_executions.append(
+                {
+                    "model": result.model,
+                    "elapsed_ms": result.elapsed_ms,
+                    "thread_id": result.thread_id,
+                }
+            )
+            return result.data
+        return result
+
+    manager.transition(record, "filtering", "فحص أولي محدود", emit_event=False)
     await asyncio.sleep(0)
-    manager.transition(record, "understanding", "صياغة جواب وعقد تعليمي")
+    manager.transition(
+        record,
+        "understanding",
+        "صياغة جواب وعقد تعليمي",
+        emit_event=False,
+    )
     understanding = validate_understanding(
-        await manager.backend.understand(question, record.locale)
+        stage_data(
+            await manager.backend.understand(
+                question,
+                record.locale,
+                runtime_context=runtime_context,
+            )
+        )
     )
 
     if not understanding["safe"]:
@@ -63,8 +100,17 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         tldr=understanding["tldr"],
         key_formula=understanding["key_formula"],
     )
-    manager.transition(record, "answered", "الجواب جاهز")
+    manager.transition(record, "answered", "الجواب جاهز", emit_event=False)
     manager.emit(record, "answer", record.answer.model_dump(mode="json"))
+    manager.emit(
+        record,
+        "stage",
+        {
+            "stage": "understanding",
+            "detail": "اكتمل فهم السؤال وصياغة الجواب",
+            "elapsed_ms": manager.elapsed_ms(record),
+        },
+    )
 
     if not understanding["simulatable"]:
         _fallback(
@@ -77,7 +123,12 @@ async def run_pipeline(manager: Any, record: Any) -> None:
 
     manager.transition(record, "cache_lookup", "فحص النتائج الموثقة")
     manager.transition(record, "generating", "بناء وحدة المحاكاة")
-    module_output = await manager.backend.generate(understanding, scenario)
+    generated = await manager.backend.generate(
+        understanding,
+        scenario,
+        runtime_context=runtime_context,
+    )
+    module_output = validate_module_output(stage_data(generated))
     if scenario == "exhausted_heal":
         module_output = manager.backend.mark_exhausted(module_output)
 
@@ -102,12 +153,53 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 return
             heal_count += 1
             manager.transition(record, "healing", "إصلاح فشل تحقق محدد")
-            module_output = await manager.backend.heal(
+            module_output = validate_module_output(
+                stage_data(
+                    await manager.backend.heal(
+                        module_output,
+                        understanding,
+                        ["deterministic_verification_failed"],
+                        heal_count,
+                        runtime_context=runtime_context,
+                    )
+                )
+            )
+
+    if heal_count:
+        manager.emit(
+            record,
+            "stage",
+            {
+                "stage": "qa",
+                "detail": "مراجعة المرشح المُصلح",
+                "elapsed_ms": manager.elapsed_ms(record),
+            },
+        )
+        qa_result = stage_data(
+            await manager.backend.qa(
                 module_output,
                 understanding,
-                ["deterministic_verification_failed"],
-                heal_count,
+                runtime_context=runtime_context,
             )
+        )
+        if not qa_result["approved"]:
+            replacement = qa_result["replacement_module_js"]
+            if replacement is None:
+                _fallback(
+                    manager,
+                    record,
+                    "qa_rejected",
+                    ["لماذا يتغير شكل القمر؟", "لماذا تطفو بعض الأجسام؟"],
+                )
+                return
+            module_output = validate_module_output(
+                {**module_output, "module_js": replacement}
+            )
+            manager.transition(record, "healing", "تطبيق تصحيح مراجعة QA")
+            manager.transition(record, "verifying", "إعادة جميع الفحوصات بعد QA")
+            verify_module_source(module_output["module_js"])
+            node_report = verify_module_with_node(module_output["module_js"], understanding)
+            artifact = assemble_artifact(understanding, module_output)
 
     manager.transition(record, "browser_check", "تأكيد جاهزية الغلاف الموثوق")
     check_count = int(node_report["fixture_count"]) + 5
@@ -124,6 +216,17 @@ async def run_pipeline(manager: Any, record: Any) -> None:
     sim_id = "sim_" + hashlib.sha256(artifact.encode("utf-8")).hexdigest()[:16]
     manager.artifacts[sim_id] = artifact
     record.artifact = artifact
+    generated_execution = next(
+        (
+            execution
+            for execution in reversed(record.stage_executions)
+            if execution["model"] != manager.backend.__class__.__name__
+        ),
+        None,
+    )
+    effective_model = (
+        generated_execution["model"] if generated_execution else "mock/offline"
+    )
     record.simulation = SimulationMetadata(
         sim_id=sim_id,
         title=understanding["title"],
@@ -131,7 +234,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         direction="rtl" if understanding["lang"] == "ar" else "ltr",
         artifact_url=f"/api/sims/{sim_id}/download",
         tier="B",
-        effective_model="mock/offline",
+        effective_model=effective_model,
         elapsed_ms=manager.elapsed_ms(record),
         check_count=check_count,
         heal_count=heal_count,
@@ -147,4 +250,3 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         },
     )
     manager.transition(record, "complete", "verified_mock_result")
-
