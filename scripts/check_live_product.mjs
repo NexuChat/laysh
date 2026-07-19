@@ -6,6 +6,7 @@ import path from "node:path";
 
 const baseUrl = process.argv[2];
 const screenshotDirectory = path.resolve(process.argv[3]);
+const evidencePrefix = process.argv[4] || "g4-live";
 const chromePath = process.env.CHROME_BIN || "/usr/bin/google-chrome";
 const profilePath = fs.mkdtempSync(path.join(os.tmpdir(), "laysh-live-product-"));
 fs.mkdirSync(screenshotDirectory, { recursive: true });
@@ -139,12 +140,16 @@ try {
   await setViewport(390, 844, true);
   await command("Page.navigate", { url: `${baseUrl}/` });
   await waitFor("document.readyState === 'complete'", 10000);
+  await capture(`${evidencePrefix}-landing-mobile-390x844.png`);
+  const startedAt = Date.now();
   await evaluate(`(() => {
-    document.querySelector('#question').value = 'لماذا يتغير شكل القمر خلال الشهر؟';
+    document.querySelector('#question').value = 'لماذا تزيد مسافة توقف السيارة عندما تزيد سرعتها؟';
     document.querySelector('#ask-form').requestSubmit();
   })()`);
 
   let answerObservedBeforeResult = false;
+  let answerLatencyMs = null;
+  let buildCaptured = false;
   const deadline = Date.now() + 195000;
   while (Date.now() < deadline) {
     const observation = await evaluate(`({
@@ -153,7 +158,14 @@ try {
       failure: !document.querySelector('#failure-view').hidden,
       failureTitle: document.querySelector('#failure-title').textContent,
     })`);
-    if (observation.answer && !observation.result) answerObservedBeforeResult = true;
+    if (observation.answer && !observation.result) {
+      answerObservedBeforeResult = true;
+      answerLatencyMs ??= Date.now() - startedAt;
+      if (!buildCaptured) {
+        await capture(`${evidencePrefix}-build-mobile-390x844.png`);
+        buildCaptured = true;
+      }
+    }
     if (observation.failure) throw new Error(`Live job failed: ${observation.failureTitle}`);
     if (observation.result) break;
     await delay(200);
@@ -161,6 +173,7 @@ try {
   await waitFor("!document.querySelector('#result-view').hidden", 1000);
   await waitFor("document.querySelector('#simulation-frame').src.includes('/api/sims/')", 5000);
   await delay(500);
+  const totalObservedMs = Date.now() - startedAt;
   const result = await evaluate(`(() => {
     const arabicDigits = '٠١٢٣٤٥٦٧٨٩';
     const toNumber = (value) => Number([...value].map((character) => {
@@ -176,22 +189,29 @@ try {
       healText: document.querySelector('#heal-count').textContent,
     };
   })()`);
-  await capture("g4-live-mobile-390x844.png");
+  await capture(`${evidencePrefix}-result-mobile-390x844.png`);
   await setViewport(1440, 900, false);
   await delay(300);
-  await capture("g4-live-desktop-1440x900.png");
+  await capture(`${evidencePrefix}-result-desktop-1440x900.png`);
 
   const evidence = {
     schemaVersion: "1.0",
     liveJobCount: 1,
     publicEphemeral: true,
     answerObservedBeforeResult,
+    answerLatencyMs,
+    totalObservedMs,
     ...result,
     consoleErrors,
-    screenshots: ["g4-live-mobile-390x844.png", "g4-live-desktop-1440x900.png"],
+    screenshots: [
+      `${evidencePrefix}-landing-mobile-390x844.png`,
+      `${evidencePrefix}-build-mobile-390x844.png`,
+      `${evidencePrefix}-result-mobile-390x844.png`,
+      `${evidencePrefix}-result-desktop-1440x900.png`,
+    ],
   };
   fs.writeFileSync(
-    path.join(screenshotDirectory, "..", "g4-live.json"),
+    path.join(screenshotDirectory, "..", `${evidencePrefix}.json`),
     `${JSON.stringify(evidence, null, 2)}\n`,
   );
   process.stdout.write(JSON.stringify(evidence));
