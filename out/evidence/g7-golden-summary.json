@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.0",
+  "gate": "G7",
+  "accepted_count": 6,
+  "live_model_calls": 38,
+  "lessons": [
+    {
+      "id": "moon_phases",
+      "attempts": 3,
+      "regenerations": 2,
+      "accepted_total_ms": 301465,
+      "accepted_heal_count": 1,
+      "accepted_stage_ms": {"understand": 27201, "generate": 155933, "heal_1": 106410, "qa": 9354},
+      "automated_gates": "pass",
+      "visual_richness": "pass",
+      "builder_review": "pass"
+    },
+    {
+      "id": "buoyancy",
+      "attempts": 1,
+      "regenerations": 0,
+      "accepted_total_ms": 219847,
+      "accepted_heal_count": 1,
+      "accepted_stage_ms": {"understand": 29628, "generate": 83348, "heal_1": 93223, "qa": 11069},
+      "automated_gates": "pass",
+      "visual_richness": "pass",
+      "builder_review": "pass"
+    },
+    {
+      "id": "pendulum",
+      "attempts": 2,
+      "regenerations": 1,
+      "accepted_total_ms": 288725,
+      "accepted_heal_count": 2,
+      "accepted_stage_ms": {"understand": 25567, "generate": 88356, "heal_1": 82388, "heal_2": 83176, "qa": 6661},
+      "automated_gates": "pass",
+      "visual_richness": "pass",
+      "builder_review": "pass"
+    },
+    {
+      "id": "simple_circuit",
+      "attempts": 1,
+      "regenerations": 0,
+      "accepted_total_ms": 287525,
+      "accepted_heal_count": 1,
+      "accepted_stage_ms": {"understand": 27395, "generate": 128350, "heal_1": 124111, "qa": 5067},
+      "automated_gates": "pass",
+      "visual_richness": "pass",
+      "builder_review": "pass"
+    },
+    {
+      "id": "sound_pitch",
+      "attempts": 1,
+      "regenerations": 0,
+      "accepted_total_ms": 191714,
+      "accepted_heal_count": 1,
+      "accepted_stage_ms": {"understand": 28416, "generate": 68883, "heal_1": 77692, "qa": 14022},
+      "automated_gates": "pass",
+      "visual_richness": "pass",
+      "builder_review": "pass"
+    },
+    {
+      "id": "day_night",
+      "attempts": 1,
+      "regenerations": 0,
+      "accepted_total_ms": 230963,
+      "accepted_heal_count": 1,
+      "accepted_stage_ms": {"understand": 29042, "generate": 103804, "heal_1": 89176, "qa": 6383},
+      "automated_gates": "pass",
+      "visual_richness": "pass",
+      "builder_review": "pass"
+    }
+  ]
+}

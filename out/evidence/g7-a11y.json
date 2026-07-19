@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "gate": "G7_accessibility",
+  "passed": true,
+  "automated": {
+    "full_suite": "189 passed, 1 skipped",
+    "browser_suite": "6 passed, 1 skipped, 183 deselected",
+    "unnamed_interactive_nodes": 0,
+    "duplicate_ids": [],
+    "small_targets": [],
+    "stray_english_in_arabic_mode": [],
+    "keyboard_order": ["question", "safe-example", "ask-submit"],
+    "visible_focus": true,
+    "overflow_at_320px": false,
+    "overflow_at_200_percent_zoom": false,
+    "reduced_motion_honored": true,
+    "wcag_aa_contrast_ratios": {
+      "cream_on_space": 18.10,
+      "cream_on_glass": 15.52,
+      "slate_on_space": 6.32,
+      "slate_on_glass": 5.42,
+      "amber_on_space": 10.22,
+      "moonlight_on_space": 9.21
+    }
+  },
+  "manual_limits": [
+    "Screen-reader announcement phrasing still requires testing with native Arabic voices in VoiceOver or NVDA.",
+    "Cognitive load and motion comfort require observation with learners even though reduced-motion behavior is automated.",
+    "Palette token ratios are automated; translucent compositing and real-display variance remain part of manual visual review."
+  ]
+}

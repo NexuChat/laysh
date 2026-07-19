@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0",
+  "gate": "G7",
+  "verdict": "fail",
+  "acceptance": {
+    "six_regenerated_goldens_pass_physics": true,
+    "six_regenerated_goldens_pass_visual_richness": true,
+    "before_after_screenshots_complete": true,
+    "mock_full_journey_mobile_and_desktop": true,
+    "all_designed_failure_states": true,
+    "public_live_question_reaches_result": false,
+    "dark_theme_accessibility": true,
+    "offline_test_minimum_175": true,
+    "ruff_clean": true,
+    "understand_latency_within_10_percent": true,
+    "generate_latency_within_10_percent": false,
+    "owner_review": "pending"
+  },
+  "test_totals": {
+    "pytest": "189 passed, 1 skipped in 84.81s",
+    "browser": "6 passed, 1 skipped, 183 deselected in 77.66s",
+    "ruff": "clean"
+  },
+  "live_model_attempts_in_m7": 41,
+  "live_model_attempt_breakdown": {
+    "structured_schema_probe": 1,
+    "golden_stage_calls": 38,
+    "public_runtime_failures": 2
+  },
+  "blocking_findings": [
+    "Generate-stage p95 increased from 98268 ms to 155933 ms, a 58.7% regression.",
+    "Two bounded public live-journey attempts terminated with sanitized nonzero_exit before answer emission."
+  ],
+  "tag_created": false
+}
