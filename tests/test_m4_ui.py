@@ -69,6 +69,12 @@ def test_build_controller_has_replay_watchdog_cancel_and_history_states(client):
     assert "Math.round" not in source
 
 
+def test_public_wait_copy_sets_an_honest_three_minute_expectation(client):
+    html = client.get("/").text
+
+    assert "قد يستغرق بناء تجربة جديدة حتى ٣ دقائق" in html
+
+
 def test_result_and_every_designed_failure_have_arabic_recovery_copy(client):
     html = client.get("/").text
     source = client.get("/static/app.js").text

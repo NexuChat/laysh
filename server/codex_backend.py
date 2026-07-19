@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
+import time
 from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from server.codex_runtime import CodexExecutor, StageExecution
+from server.codex_runtime import CodexExecutor, CodexPolicyError, CodexRuntimeError, StageExecution
 from server.schemas import validate_module_output, validate_understanding
 from server.settings import Settings
 
@@ -21,6 +23,7 @@ CODEX_OUTPUT_SCHEMA_BY_STAGE = {
     "qa": SCHEMA_DIR / "qa.schema.json",
 }
 CODEX_OUTPUT_SCHEMAS = tuple(sorted(set(CODEX_OUTPUT_SCHEMA_BY_STAGE.values())))
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True, slots=True)
@@ -72,15 +75,47 @@ class CodexBackend:
             fixture = load_golden_fixtures().get(selected_context.evidence_fixture_id)
             if fixture is not None:
                 input_payload["builder_reference_contract"] = fixture["review_contract"]
-        return await self.executor.execute_stage(
-            prompt=self._render_prompt(
-                "understand.md",
-                input_payload,
-            ),
+        prompt = self._render_prompt("understand.md", input_payload)
+        policy = self._execution_policy(selected_context)
+        started = time.monotonic()
+        try:
+            return await self.executor.execute_stage(
+                prompt=prompt,
+                schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["understand"],
+                model=model,
+                effort="low",
+                **policy,
+            )
+        except CodexPolicyError:
+            raise
+        except CodexRuntimeError as error:
+            fallback = self.settings.understand_fallback_model
+            if not selected_context.public or fallback == model:
+                raise
+            failure_code = error.code
+            LOGGER.warning(
+                "public understand retry: primary_model=%s failure=%s upstream_kind=%s "
+                "upstream_code=%s fallback_model=%s",
+                model,
+                error.code,
+                error.safe_detail.get("kind"),
+                error.safe_detail.get("code"),
+                fallback,
+            )
+        result = await self.executor.execute_stage(
+            prompt=prompt,
             schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["understand"],
-            model=model,
+            model=fallback,
             effort="low",
-            **self._execution_policy(selected_context),
+            **policy,
+        )
+        return StageExecution(
+            data=result.data,
+            thread_id=result.thread_id,
+            model=result.model,
+            elapsed_ms=max(result.elapsed_ms, int((time.monotonic() - started) * 1000)),
+            attempted_models=(model, fallback),
+            prior_failure_codes=(failure_code,),
         )
 
     async def generate(
