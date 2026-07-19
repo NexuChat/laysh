@@ -10,6 +10,10 @@
 </head>
 <body>
   <main class="lesson" id="lesson">
+    <nav class="instrument-bar" aria-label="أدوات العرض">
+      <span class="instrument-brand" aria-label="ليش">ليش<span>.</span></span>
+      <button class="projector" id="projector" type="button"></button>
+    </nav>
     <header>
       <p class="eyebrow" id="lesson-label"></p>
       <h1 id="lesson-title"></h1>
@@ -31,7 +35,7 @@
       <div class="stage">
         <h2 id="observe-title"></h2>
         <canvas id="simulation" width="720" height="400" role="img" aria-describedby="state-description"></canvas>
-        <p id="state-description" class="state" aria-live="polite"></p>
+        <p id="state-description" class="state readout-chip" aria-live="polite"></p>
         <div class="control-row">
           <label for="primary-control" id="primary-label"></label>
           <input id="primary-control" type="range" disabled>

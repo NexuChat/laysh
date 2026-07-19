@@ -52,6 +52,13 @@ OUTPUT_SCHEMA_PROBES: dict[str, tuple[str, dict[str, Any]]] = {
             "approved": True,
             "issues": [],
             "replacement_module_js": None,
+            "visual_richness": {
+                "scene_depth": True,
+                "physical_light": True,
+                "idle_motion": True,
+                "reactive_feedback": True,
+                "readable_overlays": True,
+            },
         },
     ),
 }

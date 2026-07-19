@@ -418,7 +418,18 @@ class MockCodexBackend:
     ) -> dict[str, Any]:
         del module_output, understanding, gate_outcome, runtime_context
         self.qa_calls += 1
-        return {"approved": True, "issues": [], "replacement_module_js": None}
+        return {
+            "approved": True,
+            "issues": [],
+            "replacement_module_js": None,
+            "visual_richness": {
+                "scene_depth": True,
+                "physical_light": True,
+                "idle_motion": True,
+                "reactive_feedback": True,
+                "readable_overlays": True,
+            },
+        }
 
     @staticmethod
     def scenario_for_source(source: str) -> str:

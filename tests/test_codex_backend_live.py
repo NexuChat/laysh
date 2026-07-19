@@ -17,7 +17,18 @@ class RecordingExecutor:
         if schema_name == "understand.schema.json":
             data = VALID_UNDERSTANDING
         elif schema_name == "qa.schema.json":
-            data = {"approved": True, "issues": [], "replacement_module_js": None}
+            data = {
+                "approved": True,
+                "issues": [],
+                "replacement_module_js": None,
+                "visual_richness": {
+                    "scene_depth": True,
+                    "physical_light": True,
+                    "idle_motion": True,
+                    "reactive_feedback": True,
+                    "readable_overlays": True,
+                },
+            }
         else:
             data = VALID_MODULE_OUTPUT
         return StageExecution(
@@ -281,7 +292,18 @@ def test_qa_schema_is_closed():
 
     from server.schemas import load_schema, validate_document
 
-    valid = {"approved": True, "issues": [], "replacement_module_js": None}
+    valid = {
+        "approved": True,
+        "issues": [],
+        "replacement_module_js": None,
+        "visual_richness": {
+            "scene_depth": True,
+            "physical_light": True,
+            "idle_motion": True,
+            "reactive_feedback": True,
+            "readable_overlays": True,
+        },
+    }
     schema = load_schema("qa.schema.json")
     assert validate_document(valid, schema) == valid
     with pytest.raises(ValidationError):

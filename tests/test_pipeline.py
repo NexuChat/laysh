@@ -150,7 +150,18 @@ async def test_qa_timeout_retries_once_with_same_slim_input_then_completes():
             )
             if self.qa_calls == 1:
                 raise CodexRuntimeError("stage_timeout")
-            return {"approved": True, "issues": [], "replacement_module_js": None}
+            return {
+                "approved": True,
+                "issues": [],
+                "replacement_module_js": None,
+                "visual_richness": {
+                    "scene_depth": True,
+                    "physical_light": True,
+                    "idle_motion": True,
+                    "reactive_feedback": True,
+                    "readable_overlays": True,
+                },
+            }
 
     backend = TransientQaBackend()
     manager = JobManager(

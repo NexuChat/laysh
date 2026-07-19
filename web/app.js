@@ -29,6 +29,32 @@
   const byId = (id) => document.getElementById(id);
   const views = [...document.querySelectorAll("[data-view]")];
   const number = new Intl.NumberFormat("ar", { maximumFractionDigits: 0 });
+  const stageLabels = {
+    filtering: "حماية السؤال",
+    understanding: "فهم الفكرة",
+    cache_lookup: "البحث في المرصد",
+    generating: "رسم الأداة",
+    verifying: "اختبار القوانين",
+    healing: "إصلاح ذاتي",
+    qa: "مراجعة الجودة",
+    qa_retry: "إعادة مراجعة الجودة",
+    browser_check: "اختبار المشهد",
+    complete: "التجربة جاهزة",
+  };
+  const gateLabels = {
+    closed_schema: "العقد المغلق",
+    restricted_source: "المصدر الآمن",
+    node_runtime: "وقت التشغيل",
+    fixtures: "القيم المرجعية",
+    browser_readiness: "جاهزية المتصفح",
+    verified_cache: "نسخة مثبتة",
+    artifact_hash: "بصمة الأثر",
+    interface: "واجهة الوحدة",
+    security: "الأمان",
+    invariant: "ثبات النموذج",
+    formula_presentation: "صياغة المعادلة",
+    fixture_integrity: "سلامة القيم",
+  };
 
   const failureCopy = {
     not_simulatable: {
@@ -127,13 +153,18 @@
 
   function addStage(payload) {
     const item = document.createElement("li");
+    const name = document.createElement("strong");
     const detail = document.createElement("span");
     const time = document.createElement("span");
+    item.dataset.stage = payload.stage;
+    name.className = "stage-name";
+    name.textContent = stageLabels[payload.stage] || "خطوة بناء";
     detail.textContent = payload.detail;
     time.className = "stage-time";
     time.textContent = `${number.format(payload.elapsed_ms / 1000)} ث`;
-    item.append(detail, time);
+    item.append(name, detail, time);
     byId("stage-list").append(item);
+    if (payload.stage === "healing") byId("heal-act").hidden = false;
     setConnection("تقدّم البناء إلى خطوة جديدة", "working");
   }
 
@@ -144,6 +175,8 @@
     byId("answer-formula").textContent = payload.key_formula || "";
     byId("answer-formula").hidden = !payload.key_formula;
     byId("answer-card").hidden = false;
+    byId("domain-fact-copy").textContent = state.answer;
+    byId("domain-fact").hidden = false;
   }
 
   function showVerification(payload) {
@@ -151,6 +184,15 @@
     box.hidden = false;
     byId("verification-title").textContent = payload.passed ? "اجتاز المرشح الفحص" : "وجد الفحص نقاطًا تحتاج إصلاحًا";
     byId("verification-copy").textContent = `${number.format(payload.check_count)} فحصًا · ${number.format(payload.heal_count)} محاولة إصلاح`;
+    const grid = byId("verification-grid");
+    grid.replaceChildren();
+    for (const [index, gate] of payload.evidence.entries()) {
+      const chip = document.createElement("span");
+      chip.className = `verification-chip ${payload.passed ? "passed" : "failed"}`;
+      chip.textContent = `${payload.passed ? "✓" : "!"} ${gateLabels[gate] || gate}`;
+      grid.append(chip);
+      setTimeout(() => chip.classList.add("visible"), Math.min(index * 90, 720));
+    }
   }
 
   function normalizedReason(reason, status) {
@@ -340,6 +382,9 @@
     byId("answer-card").hidden = true;
     byId("stage-list").replaceChildren();
     byId("verification-summary").hidden = true;
+    byId("verification-grid").replaceChildren();
+    byId("domain-fact").hidden = true;
+    byId("heal-act").hidden = true;
     byId("elapsed").textContent = "٠:٠٠";
     setConnection("في قائمة البناء", "queued");
     setView("build", { push: true });
@@ -410,6 +455,16 @@
     const frame = byId("simulation-frame");
     frame.src = frame.src;
     frame.focus();
+  });
+  byId("projector-result").addEventListener("click", async () => {
+    const frame = byId("simulation-frame");
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await frame.requestFullscreen();
+    } catch {
+      frame.scrollIntoView({ block: "center" });
+      frame.focus();
+    }
   });
 
   window.addEventListener("popstate", (event) => setView(event.state?.view || "ask"));

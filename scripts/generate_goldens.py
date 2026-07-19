@@ -151,8 +151,29 @@ def _manual_review_passed(review: dict[str, Any]) -> bool:
         "min_default_max_tested",
         "arabic_metadata_reviewed",
         "english_metadata_reviewed",
+        "scene_depth_present",
+        "physical_light_beautiful",
+        "idle_motion_present",
+        "reactive_feedback_present",
+        "readout_overlay_clear",
     )
     return review.get("verdict") == "pass" and all(review.get(key) is True for key in required)
+
+
+def _qa_visual_richness_passed(qa: dict[str, Any] | None) -> bool:
+    if not qa or qa.get("approved") is not True:
+        return False
+    visual_richness = qa.get("visual_richness")
+    return isinstance(visual_richness, dict) and all(
+        visual_richness.get(key) is True
+        for key in (
+            "scene_depth",
+            "physical_light",
+            "idle_motion",
+            "reactive_feedback",
+            "readable_overlays",
+        )
+    )
 
 
 def build_manifest() -> dict[str, Any]:
@@ -196,6 +217,8 @@ def promote_candidate(fixture_id: str) -> int:
         raise ValueError("candidate has not passed automated promotion review")
     if not _manual_review_passed(manual_review):
         raise ValueError("candidate has not passed the complete builder review checklist")
+    if not _qa_visual_richness_passed(outputs.get("qa")):
+        raise ValueError("candidate has not passed the structured visual_richness review")
     screenshot_root = ROOT / "out" / "evidence" / "screens" / "goldens"
     browser_report_path = EVIDENCE_ROOT / f"{golden_id}-browser.json"
     screenshots = [
