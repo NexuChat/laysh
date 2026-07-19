@@ -7,6 +7,7 @@ import path from "node:path";
 const baseUrl = process.argv[2];
 const screenshotDirectory = path.resolve(process.argv[3]);
 const evidencePrefix = process.argv[4] || "g4-live";
+const liveQuestion = process.argv[5] || "لماذا يتغير شكل القمر خلال الشهر؟";
 const chromePath = process.env.CHROME_BIN || "/usr/bin/google-chrome";
 const profilePath = fs.mkdtempSync(path.join(os.tmpdir(), "laysh-live-product-"));
 fs.mkdirSync(screenshotDirectory, { recursive: true });
@@ -143,7 +144,7 @@ try {
   await capture(`${evidencePrefix}-landing-mobile-390x844.png`);
   const startedAt = Date.now();
   await evaluate(`(() => {
-    document.querySelector('#question').value = 'لماذا تزيد مسافة توقف السيارة عندما تزيد سرعتها؟';
+    document.querySelector('#question').value = ${JSON.stringify(liveQuestion)};
     document.querySelector('#ask-form').requestSubmit();
   })()`);
 
@@ -196,6 +197,8 @@ try {
 
   const evidence = {
     schemaVersion: "1.0",
+    journeyKind: "public-question-on-running-service",
+    question: liveQuestion,
     liveJobCount: 1,
     publicEphemeral: true,
     answerObservedBeforeResult,
@@ -216,6 +219,15 @@ try {
   );
   process.stdout.write(JSON.stringify(evidence));
 } catch (error) {
+  fs.writeFileSync(
+    path.join(screenshotDirectory, "..", `${evidencePrefix}-failure.json`),
+    `${JSON.stringify({
+      schemaVersion: "1.0",
+      journeyKind: "public-question-on-running-service",
+      question: liveQuestion,
+      error: error.message,
+    }, null, 2)}\n`,
+  );
   process.stderr.write(`${error.stack || error.message}\n`);
   process.exitCode = 1;
 } finally {
