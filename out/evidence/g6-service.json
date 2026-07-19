@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "captured_at_utc": "2026-07-19T13:11:18Z",
+  "local_url": "http://127.0.0.1:8765",
+  "systemd_user": {
+    "linger_enabled": true,
+    "laysh_service": {
+      "enabled": true,
+      "active": true,
+      "backend": "codex",
+      "restart_policy": "always",
+      "pid_before_controlled_restart": 14421,
+      "pid_after_controlled_restart": 27311
+    },
+    "health_timer": {
+      "enabled": true,
+      "active": true,
+      "interval_seconds": 300,
+      "first_probe_delay_seconds": 30,
+      "restart_after_consecutive_failures": 3,
+      "latest_result": "success"
+    },
+    "installed_units_match_repository": true
+  },
+  "healthz": {
+    "status": "ok",
+    "backend": "codex",
+    "active_jobs": 0
+  },
+  "gallery": {
+    "tier_a_count": 6,
+    "browser_journeys": 6,
+    "generation_posts": 0,
+    "external_requests": 0,
+    "console_errors": 0,
+    "evidence": "out/evidence/g6-service-gallery.json"
+  },
+  "tunnel": {
+    "started": false,
+    "reason": "Owner boundary: no public-host or external-account action in the build session",
+    "owner_template": "deploy/cloudflared.example.yml",
+    "owner_runbook": "deploy/README.md"
+  },
+  "passed": true
+}
