@@ -13,5 +13,6 @@ out/jobs/
 out/cache/live/
 out/logs/
 out/tmp/
+out/evidence/*-diagnostic.json
 *.log
 .DS_Store

@@ -20,6 +20,7 @@ FIXTURE_PATH = ROOT / "server" / "fixtures" / "moon_phases_ar.json"
 EVIDENCE_DIR = ROOT / "out" / "evidence"
 ARTIFACT_PATH = EVIDENCE_DIR / "g2-moon-phases-ar.html"
 REPORT_PATH = EVIDENCE_DIR / "g2-moon-phases-ar.json"
+DIAGNOSTIC_PATH = EVIDENCE_DIR / "g2-moon-phases-ar-diagnostic.json"
 
 
 def atomic_write(path: Path, content: str) -> None:
@@ -93,6 +94,17 @@ async def run() -> int:
         total_elapsed_ms=total_elapsed_ms,
     )
     atomic_write(REPORT_PATH, json.dumps(evidence, ensure_ascii=False, indent=2) + "\n")
+    if record.builder_diagnostics:
+        diagnostic = {
+            "fixture_id": fixture["fixture_id"],
+            "job_id": record.job_id,
+            "public": False,
+            "diagnostics": record.builder_diagnostics,
+        }
+        atomic_write(
+            DIAGNOSTIC_PATH,
+            json.dumps(diagnostic, ensure_ascii=False, indent=2) + "\n",
+        )
     print(
         json.dumps(
             {

@@ -48,6 +48,7 @@ class JobRecord:
     public: bool = True
     evidence_fixture_id: str | None = None
     stage_executions: list[dict[str, Any]] = field(default_factory=list)
+    builder_diagnostics: list[dict[str, str]] = field(default_factory=list)
 
     def public_result(self) -> PublicResult:
         return PublicResult(
@@ -102,6 +103,7 @@ class JobManager:
         )
 
     async def _run(self, record: JobRecord) -> None:
+        from server.codex_runtime import CodexRuntimeError
         from server.pipeline import PipelineCancelled, run_pipeline
 
         try:
@@ -113,6 +115,12 @@ class JobManager:
             self.terminal(record, "timed_out", "job_timeout")
         except (asyncio.CancelledError, PipelineCancelled):
             self.terminal(record, "cancelled", "cancelled_by_user")
+        except CodexRuntimeError as error:
+            if not record.public and error.builder_detail:
+                record.builder_diagnostics.append(
+                    {"code": error.code, "upstream_detail": error.builder_detail}
+                )
+            self.terminal(record, "failed", error.code)
         except Exception:
             self.terminal(record, "failed", "internal_pipeline_error")
         finally:

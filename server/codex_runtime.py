@@ -52,8 +52,9 @@ def find_forbidden_schema_keywords(value: Any) -> list[str]:
 class CodexRuntimeError(RuntimeError):
     """A sanitized runtime failure safe to use in internal stage control flow."""
 
-    def __init__(self, code: str):
+    def __init__(self, code: str, *, builder_detail: str | None = None):
         self.code = code
+        self.builder_detail = builder_detail
         super().__init__(code)
 
 
@@ -218,7 +219,7 @@ class CodexExecutor:
             except (OSError, ValueError) as error:
                 raise CodexRuntimeError("spawn_failed") from error
             try:
-                stdout, _stderr = await asyncio.wait_for(
+                stdout, stderr = await asyncio.wait_for(
                     process.communicate(prompt.encode("utf-8")),
                     timeout=self.stage_timeout_seconds,
                 )
@@ -229,8 +230,14 @@ class CodexExecutor:
                 await self._terminate_process_group(process)
                 raise
             if process.returncode != 0:
-                raise CodexRuntimeError("nonzero_exit")
-        data, thread_id = self._parse_output(stdout, schema_path)
+                detail = stderr.decode("utf-8", errors="replace")[:20_000] if not public else None
+                raise CodexRuntimeError("nonzero_exit", builder_detail=detail)
+        try:
+            data, thread_id = self._parse_output(stdout, schema_path)
+        except CodexRuntimeError as error:
+            if not public:
+                error.builder_detail = stderr.decode("utf-8", errors="replace")[:20_000]
+            raise
         return StageExecution(
             data=data,
             thread_id=thread_id,
