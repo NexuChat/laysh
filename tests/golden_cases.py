@@ -8,7 +8,7 @@ VALID_UNDERSTANDING = {
     "domain": "astronomy",
     "title": "لماذا يتغير شكل القمر؟",
     "tldr": "يتغير الجزء المضيء الذي نراه لأن موضع القمر يتغير بالنسبة إلى الأرض والشمس.",
-    "key_formula": "f = (1 - cos θ) / 2",
+    "key_formula": "f = (1 − cos θ) / 2",
     "learning_objective": "ربط زاوية المدار بالجزء المضيء المرئي",
     "primary_parameter": {
         "id": "angle_deg",

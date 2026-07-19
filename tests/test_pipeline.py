@@ -280,6 +280,76 @@ async def test_curated_suspect_fixture_refreshes_understand_once_without_heal():
     assert any(item.get("type") == "fixture_refresh" for item in record.builder_diagnostics)
 
 
+@pytest.mark.asyncio
+async def test_curated_code_style_formula_refreshes_understand_before_answer_or_generate():
+    from copy import deepcopy
+
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend
+    from server.jobs import JobManager
+
+    class RefreshingFormulaBackend(MockCodexBackend):
+        async def understand(self, *args, **kwargs):
+            understanding = await super().understand(*args, **kwargs)
+            if self.understand_calls == 1:
+                understanding = deepcopy(understanding)
+                understanding["key_formula"] = "illuminated_fraction = 1 - lunar_day"
+            return understanding
+
+    backend = RefreshingFormulaBackend()
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        evidence_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+    )
+    record = manager.start_evidence("success", "ar", "moon_phases_ar")
+    await record.task
+
+    assert record.status == "complete"
+    assert backend.understand_calls == 2
+    assert backend.generate_calls == 1
+    assert backend.heal_calls == 0
+    assert record.answer is not None
+    assert record.answer.key_formula == "f = (1 − cos θ) / 2"
+    assert any(
+        item.get("type") == "understanding_refresh"
+        and item["trigger_failures"][0]["actual"]["code_identifiers"]
+        == ["illuminated_fraction", "lunar_day"]
+        for item in record.builder_diagnostics
+    )
+
+
+@pytest.mark.asyncio
+async def test_public_code_style_formula_is_not_exposed_and_does_not_enter_heal_loop():
+    from copy import deepcopy
+
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend
+    from server.jobs import JobManager
+
+    class CodeFormulaBackend(MockCodexBackend):
+        async def understand(self, *args, **kwargs):
+            understanding = deepcopy(await super().understand(*args, **kwargs))
+            understanding["key_formula"] = "illuminated_fraction = 1 - lunar_day"
+            return understanding
+
+    backend = CodeFormulaBackend()
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+    )
+    record = manager.start("success", "ar")
+    await record.task
+
+    assert record.status == "complete"
+    assert record.answer is not None and record.answer.key_formula is None
+    assert backend.understand_calls == 1
+    assert backend.heal_calls == 0
+    assert "illuminated_fraction" not in str(record.public_result())
+
+
 def test_exhausted_heal_preserves_answer_and_never_exposes_artifact(client, backend):
     job_id = ask(client, "exhausted heal")
     result = wait_for_terminal(client, job_id)

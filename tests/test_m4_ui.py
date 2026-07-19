@@ -41,6 +41,16 @@ def test_local_font_is_preloaded_served_and_license_checked(client):
     assert "@media (prefers-reduced-motion: reduce)" in css.text
 
 
+def test_result_kicker_has_dedicated_vertical_space_before_title(client):
+    css = client.get("/static/app.css").text
+
+    assert ".result-header .eyebrow" in css
+    assert "margin-block-end: 1rem" in css
+    assert "line-height: 1.8" in css
+    assert ".result-header h1" in css
+    assert "line-height: 1.2" in css
+
+
 def test_build_controller_has_replay_watchdog_cancel_and_history_states(client):
     script = client.get("/static/app.js")
     assert script.status_code == 200

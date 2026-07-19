@@ -14,7 +14,7 @@ from server.schemas import (
     validate_module_output,
     validate_understanding,
 )
-from server.verify import VerificationResult, verify_candidate
+from server.verify import VerificationResult, formula_presentation_report, verify_candidate
 
 
 class PipelineCancelled(Exception):
@@ -126,9 +126,47 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             understanding["suggestions"],
         )
 
+    formula_failures, _ = formula_presentation_report(understanding)
+    if formula_failures and not record.public:
+        record.builder_diagnostics.append(
+            {
+                "type": "understanding_refresh",
+                "attempt": 1,
+                "trigger_failures": formula_failures,
+            }
+        )
+        understanding = validate_understanding(
+            stage_data(
+                await manager.backend.understand(
+                    question,
+                    record.locale,
+                    runtime_context=runtime_context,
+                ),
+                "understand_retry",
+            )
+        )
+        formula_failures, _ = formula_presentation_report(understanding)
+        if formula_failures:
+            record.builder_diagnostics.append(
+                {
+                    "type": "understanding_refresh_exhausted",
+                    "failures": formula_failures,
+                }
+            )
+            _fallback(
+                manager,
+                record,
+                "formula_presentation_unresolved",
+                understanding["suggestions"],
+            )
+            return
+    answer_formula = None if formula_failures else understanding["key_formula"]
+    if formula_failures:
+        understanding = {**understanding, "key_formula": None}
+
     record.answer = AnswerPayload(
         tldr=understanding["tldr"],
-        key_formula=understanding["key_formula"],
+        key_formula=answer_formula,
     )
     manager.transition(record, "answered", "الجواب جاهز", emit_event=False)
     manager.emit(record, "answer", record.answer.model_dump(mode="json"))
