@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "liveJobCount": 1,
+  "publicEphemeral": true,
+  "answerObservedBeforeResult": true,
+  "resultVisible": true,
+  "sandbox": "allow-scripts",
+  "checkCount": 27,
+  "effectiveModel": "gpt-5.6-sol",
+  "elapsedText": "89 ثانية",
+  "healText": "0",
+  "consoleErrors": [],
+  "screenshots": [
+    "g4-live-mobile-390x844.png",
+    "g4-live-desktop-1440x900.png"
+  ]
+}
