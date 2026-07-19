@@ -58,6 +58,15 @@
           "thread_id": "019f79c5-9d79-75c0-a39d-b5daf80c0922",
           "error_code": null,
           "attempt": 1
+        },
+        {
+          "schema": "qa",
+          "accepted": true,
+          "model": "gpt-5.6-luna",
+          "elapsed_ms": 4170,
+          "thread_id": "019f7bb0-f3d6-7aa1-a09f-0ec119a81e6d",
+          "error_code": null,
+          "attempt": 2
         }
       ],
       "accepted": true
