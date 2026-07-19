@@ -247,6 +247,53 @@ async def test_double_qa_timeout_public_job_falls_back_to_answer_only():
 
 
 @pytest.mark.asyncio
+async def test_curated_qa_rejection_retains_candidate_and_actionable_visual_review():
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend
+    from server.jobs import JobManager
+
+    class RejectingVisualQaBackend(MockCodexBackend):
+        async def qa(self, *args, **kwargs):
+            self.qa_calls += 1
+            return {
+                "approved": False,
+                "issues": ["المشهد مسطح ولا يحتوي حركة هادئة."],
+                "replacement_module_js": None,
+                "visual_richness": {
+                    "scene_depth": False,
+                    "physical_light": True,
+                    "idle_motion": False,
+                    "reactive_feedback": True,
+                    "readable_overlays": True,
+                },
+            }
+
+    backend = RejectingVisualQaBackend()
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        evidence_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+    )
+    record = manager.start_evidence(
+        "success",
+        "ar",
+        "moon_phases_ar",
+        promote_golden=True,
+    )
+    await record.task
+
+    assert record.status == "answer_only"
+    assert record.artifact is not None
+    assert record.builder_outputs["qa"]["visual_richness"]["scene_depth"] is False
+    diagnostic = next(
+        item for item in record.builder_diagnostics if item["type"] == "qa_rejected"
+    )
+    assert diagnostic["issues"] == ["المشهد مسطح ولا يحتوي حركة هادئة."]
+    assert diagnostic["visual_richness"]["idle_motion"] is False
+
+
+@pytest.mark.asyncio
 async def test_curated_suspect_fixture_refreshes_understand_once_without_heal():
     from copy import deepcopy
 

@@ -437,7 +437,29 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 return
         if qa_result is None:
             raise RuntimeError("QA retry loop completed without an outcome")
+        if not record.public:
+            record.artifact = verification.artifact
+            record.builder_outputs = {
+                "understanding": understanding,
+                "module_output": module_output,
+                "verification": {
+                    "passed": True,
+                    "check_count": verification.check_count,
+                    "heal_count": heal_count,
+                    "node_report": verification.node_report,
+                },
+                "browser": browser_evidence or {},
+                "qa": qa_result,
+            }
         if not qa_result["approved"]:
+            if not record.public:
+                record.builder_diagnostics.append(
+                    {
+                        "type": "qa_rejected",
+                        "issues": qa_result["issues"],
+                        "visual_richness": qa_result.get("visual_richness"),
+                    }
+                )
             _fallback(
                 manager,
                 record,
