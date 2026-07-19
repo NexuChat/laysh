@@ -128,6 +128,40 @@ def test_anonymous_functions_and_arrows_are_not_dynamic_code():
     assert not any(failure["gate"] == "security" for failure in result.failures)
 
 
+def test_local_layout_identifiers_do_not_trigger_navigation_security():
+    from server.verify import verify_candidate
+
+    source = GOOD_MODULE_OUTPUT["module_js"].replace(
+        '"use strict";',
+        '"use strict"; const top = 12; const parent = { x: top }; void parent;',
+    )
+
+    result = verify_candidate(
+        {**GOOD_MODULE_OUTPUT, "module_js": source},
+        VALID_UNDERSTANDING,
+    )
+
+    assert result.passed is True
+    assert not any(failure["gate"] == "security" for failure in result.failures)
+
+
+@pytest.mark.parametrize("construct", ["top.location", "document.body", "location.href"])
+def test_actual_dom_or_navigation_access_fails_security(construct):
+    from server.verify import verify_candidate
+
+    source = GOOD_MODULE_OUTPUT["module_js"].replace(
+        '"use strict";',
+        f'"use strict"; const forbidden = () => {construct}; void forbidden;',
+    )
+    result = verify_candidate(
+        {**GOOD_MODULE_OUTPUT, "module_js": source},
+        VALID_UNDERSTANDING,
+    )
+    failure = next(item for item in result.failures if item["gate"] == "security")
+
+    assert failure["actual"] == {"capabilities": ["dom_or_navigation"]}
+
+
 @pytest.mark.parametrize("construct", ["new Function('a', 'return a')", "eval('1 + 1')"])
 def test_actual_dynamic_code_constructs_fail_with_exact_diagnostic(construct):
     from server.verify import verify_candidate
