@@ -109,6 +109,30 @@ def test_builder_reference_review_rejects_wrong_formula_and_reference_outputs():
     assert "builder_reference_fixture_failed" in review["failure_codes"]
 
 
+def test_builder_review_accepts_equivalent_display_formula_spacing():
+    from copy import deepcopy
+
+    from server.goldens import load_golden_fixtures, review_golden_candidate
+    from tests.golden_cases import VALID_MODULE_OUTPUT, VALID_UNDERSTANDING
+
+    fixture = load_golden_fixtures()["moon_phases_ar"]
+    understanding = deepcopy(VALID_UNDERSTANDING)
+    understanding["key_formula"] = " f = ( 1 − cos θ ) / 2 "
+    module_output = {
+        **VALID_MODULE_OUTPUT,
+        "module_js": (Path(__file__).parent / "fixtures" / "moon_phase_module.js").read_text(
+            encoding="utf-8"
+        ),
+    }
+    review = review_golden_candidate(
+        fixture=fixture,
+        understanding=understanding,
+        module_output=module_output,
+    )
+
+    assert review["checks"]["formula_matches_reference"] is True
+
+
 def test_builder_review_rejects_loose_model_fixture_tolerances():
     from copy import deepcopy
 
@@ -176,6 +200,56 @@ def test_portable_shell_keeps_arabic_kicker_clear_and_text_alternative_localized
     assert "line-height: 1.3" in css
     assert "firstName" not in script
     assert "النتيجة المحسوبة" in script
+
+
+def test_committed_gallery_serves_six_bilingual_tier_a_lessons_instantly(client):
+    arabic = client.get("/api/gallery?locale=ar")
+    english = client.get("/api/gallery?locale=en")
+
+    assert arabic.status_code == english.status_code == 200
+    assert len(arabic.json()["lessons"]) == len(english.json()["lessons"]) == 6
+    assert {lesson["id"] for lesson in arabic.json()["lessons"]} == {
+        "moon_phases",
+        "buoyancy",
+        "pendulum",
+        "simple_circuit",
+        "sound_pitch",
+        "day_night",
+    }
+    assert all(
+        lesson["instant"] is True and lesson["tier"] == "A"
+        for lesson in arabic.json()["lessons"]
+    )
+    assert all(
+        any("\u0600" <= char <= "\u06ff" for char in lesson["title"])
+        for lesson in arabic.json()["lessons"]
+    )
+    assert all(
+        any(char.isascii() and char.isalpha() for char in lesson["title"])
+        for lesson in english.json()["lessons"]
+    )
+
+    for lesson in arabic.json()["lessons"]:
+        detail = client.get(f"/api/gallery/{lesson['id']}")
+        assert detail.status_code == 200
+        payload = detail.json()
+        assert payload["simulation"]["tier"] == "A"
+        assert payload["simulation"]["effective_model"] == "verified/golden"
+        assert payload["answer"]["tldr"]
+        artifact = client.get(payload["simulation"]["artifact_url"])
+        assert artifact.status_code == 200
+        assert artifact.text.startswith("<!doctype html>")
+        assert "connect-src 'none'" in artifact.text
+
+
+def test_gallery_controller_enables_only_server_confirmed_pinned_lessons(client):
+    source = client.get("/static/app.js").text
+
+    assert 'fetch("/api/gallery?locale=ar"' in source
+    assert "/api/gallery/${encodeURIComponent(goldenId)}" in source
+    assert 'badge.textContent = "فوري"' in source
+    assert "launch.disabled = false" in source
+    assert "verified/golden" not in client.get("/").text
 
 
 def test_verified_golden_pin_is_tier_a_alias_aware_and_immutable(tmp_path):

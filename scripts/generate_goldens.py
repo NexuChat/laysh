@@ -184,18 +184,36 @@ def promote_candidate(fixture_id: str) -> int:
     review_path = EVIDENCE_ROOT / f"{golden_id}-manual-review.json"
     candidate = json.loads(candidate_path.read_text(encoding="utf-8"))
     manual_review = json.loads(review_path.read_text(encoding="utf-8"))
-    if candidate["fixture_id"] != fixture_id or not candidate["automated_review"]["passed"]:
+    if candidate["fixture_id"] != fixture_id:
+        raise ValueError("candidate fixture identity mismatch")
+    outputs = candidate["builder_outputs"]
+    current_review = review_golden_candidate(
+        fixture=fixture,
+        understanding=outputs["understanding"],
+        module_output=outputs["module_output"],
+    )
+    if not current_review["passed"]:
         raise ValueError("candidate has not passed automated promotion review")
     if not _manual_review_passed(manual_review):
         raise ValueError("candidate has not passed the complete builder review checklist")
     screenshot_root = ROOT / "out" / "evidence" / "screens" / "goldens"
+    browser_report_path = EVIDENCE_ROOT / f"{golden_id}-browser.json"
     screenshots = [
         screenshot_root / f"{golden_id}-mobile-390x844.png",
         screenshot_root / f"{golden_id}-desktop-1440x900.png",
     ]
     if any(not path.exists() or path.stat().st_size < 10_000 for path in screenshots):
         raise ValueError("accepted mobile and desktop screenshots are required")
-    outputs = candidate["builder_outputs"]
+    browser_report = json.loads(browser_report_path.read_text(encoding="utf-8"))
+    if not (
+        browser_report.get("ready") is True
+        and browser_report.get("runtimeError") is False
+        and browser_report.get("externalRequests") == 0
+        and browser_report.get("consoleErrors") == []
+        and len(browser_report.get("cases", [])) == 3
+        and all(case.get("frameChanged") is True for case in browser_report["cases"])
+    ):
+        raise ValueError("golden browser evidence did not pass")
     understanding = outputs["understanding"]
     verification = outputs["verification"]
     cache = VerifiedCache(
@@ -223,7 +241,7 @@ def promote_candidate(fixture_id: str) -> int:
         answer={"tldr": understanding["tldr"], "key_formula": understanding["key_formula"]},
         metadata=fixture["metadata"],
         review={
-            "automated": candidate["automated_review"],
+            "automated": current_review,
             "builder": manual_review,
             "reference_contract": fixture["review_contract"],
         },
@@ -232,6 +250,8 @@ def promote_candidate(fixture_id: str) -> int:
             "job_id": candidate["job_id"],
             "stages": candidate["stages"],
             "total_elapsed_ms": candidate["total_elapsed_ms"],
+            "heal_count": verification["heal_count"],
+            "browser": browser_report,
             "screenshots": [str(path.relative_to(ROOT)) for path in screenshots],
         },
     )
