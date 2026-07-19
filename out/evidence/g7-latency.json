@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0",
+  "gate": "G7_latency",
+  "method": "nearest-rank p95 across the six accepted golden runs, compared with the six accepted v1.0 golden runs",
+  "threshold_percent": 10.0,
+  "understand": {
+    "v1_0_ms": [33584, 41318, 32469, 30299, 42091, 25972],
+    "v1_1_ms": [27201, 29628, 25567, 27395, 28416, 29042],
+    "v1_0_p95_ms": 42091,
+    "v1_1_p95_ms": 29628,
+    "change_percent": -29.6,
+    "passed": true
+  },
+  "generate": {
+    "v1_0_ms": [98268, 69039, 83612, 67547, 59482, 96176],
+    "v1_1_ms": [155933, 83348, 88356, 128350, 68883, 103804],
+    "v1_0_p95_ms": 98268,
+    "v1_1_p95_ms": 155933,
+    "change_percent": 58.7,
+    "passed": false
+  },
+  "running_service": {
+    "health": "ok",
+    "gallery_count": 6,
+    "instant_tier": "A",
+    "gallery_p95_seconds": 0.011325886473059654
+  },
+  "passed": false
+}

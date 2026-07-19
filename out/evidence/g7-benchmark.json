@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "observations": {
+    "cache_iterations": 200,
+    "live_smoke_count": 2,
+    "running_service": {
+      "base_url": "http://127.0.0.1:8765",
+      "health_status": "ok",
+      "backend": "codex",
+      "gallery_count": 6,
+      "instant_tier": "A",
+      "iterations": 20,
+      "request_count": 60,
+      "gallery_p95_seconds": 0.011325886473059654
+    }
+  },
+  "metrics": {
+    "exact_cache_p95_seconds": 0.00930076651275158,
+    "first_answer_p50_seconds": 21.6645,
+    "first_answer_p95_seconds": 25.295,
+    "semantic_cache_p95_seconds": 0.009169576689600945,
+    "new_module_p50_seconds": 158.13049999999998,
+    "new_module_p95_seconds": 178.283,
+    "heartbeat_interval_seconds": 5.0,
+    "hard_terminal_max_seconds": 178.283,
+    "deployed_gallery_p95_seconds": 0.011325886473059654
+  },
+  "targets": {
+    "exact_cache_p95_seconds": 1.0,
+    "first_answer_p50_seconds": 5.0,
+    "first_answer_p95_seconds": 12.0,
+    "semantic_cache_p95_seconds": 15.0,
+    "new_module_p50_seconds": 45.0,
+    "new_module_p95_seconds": 90.0,
+    "heartbeat_interval_seconds": 10.0,
+    "hard_terminal_max_seconds": 180.0,
+    "deployed_gallery_p95_seconds": 1.0
+  },
+  "passes": {
+    "exact_cache_p95_seconds": true,
+    "first_answer_p50_seconds": false,
+    "first_answer_p95_seconds": false,
+    "semantic_cache_p95_seconds": true,
+    "new_module_p50_seconds": false,
+    "new_module_p95_seconds": false,
+    "heartbeat_interval_seconds": true,
+    "hard_terminal_max_seconds": true,
+    "deployed_gallery_p95_seconds": true
+  }
+}

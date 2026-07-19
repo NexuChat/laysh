@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "gate": "G7_public_live_journey",
+  "attempt_count": 2,
+  "completed_result_count": 0,
+  "attempts": [
+    {
+      "job_id": "job_b3a503b8ac8a60fe",
+      "question": "لماذا تزيد مسافة توقف السيارة عندما تزيد سرعتها؟",
+      "status": "failed",
+      "public_reason_code": "nonzero_exit",
+      "answer_emitted": false,
+      "artifact_emitted": false
+    },
+    {
+      "job_id": "job_926c973e18bd2d2c",
+      "question": "لماذا يتغير شكل القمر خلال الشهر؟",
+      "status": "failed",
+      "public_reason_code": "nonzero_exit",
+      "answer_emitted": false,
+      "artifact_emitted": false
+    }
+  ],
+  "service_health_after_attempts": "ok",
+  "note": "Both failures occurred at the first public runtime subprocess. No further live retries were spent. Public surfaces retained sanitized diagnostics as required.",
+  "passed": false
+}
