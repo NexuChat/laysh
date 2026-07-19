@@ -28,6 +28,25 @@ ENV_ALLOWLIST = (
     "HTTPS_PROXY",
     "NO_PROXY",
 )
+FORBIDDEN_OUTPUT_SCHEMA_KEYWORDS = frozenset(
+    {"oneOf", "if", "then", "patternProperties", "unevaluatedProperties"}
+)
+
+
+def find_forbidden_schema_keywords(value: Any) -> list[str]:
+    found: set[str] = set()
+
+    def walk(node: Any) -> None:
+        if isinstance(node, dict):
+            found.update(FORBIDDEN_OUTPUT_SCHEMA_KEYWORDS.intersection(node))
+            for child in node.values():
+                walk(child)
+        elif isinstance(node, list):
+            for child in node:
+                walk(child)
+
+    walk(value)
+    return sorted(found)
 
 
 class CodexRuntimeError(RuntimeError):
@@ -148,6 +167,15 @@ class CodexExecutor:
         public: bool = True,
         evidence_fixture_id: str | None = None,
     ) -> StageExecution:
+        try:
+            output_schema = json.loads(schema_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as error:
+            raise CodexPolicyError("invalid_local_output_schema") from error
+        forbidden_keywords = find_forbidden_schema_keywords(output_schema)
+        if forbidden_keywords:
+            raise CodexPolicyError(
+                f"unsupported_output_schema_keyword:{forbidden_keywords[0]}"
+            )
         self._enforce_policy(
             model=model,
             effort=effort,

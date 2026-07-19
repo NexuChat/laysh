@@ -67,6 +67,53 @@ def executor_with_process(process, captured, **overrides):
     )
 
 
+def test_every_codex_output_schema_avoids_upstream_forbidden_keywords():
+    from server.codex_backend import CODEX_OUTPUT_SCHEMAS
+    from server.codex_runtime import find_forbidden_schema_keywords
+
+    violations = {
+        path.name: find_forbidden_schema_keywords(json.loads(path.read_text(encoding="utf-8")))
+        for path in CODEX_OUTPUT_SCHEMAS
+    }
+    assert violations == {path.name: [] for path in CODEX_OUTPUT_SCHEMAS}
+
+
+@pytest.mark.asyncio
+async def test_executor_rejects_incompatible_schema_before_spawning(tmp_path):
+    from server.codex_runtime import CodexPolicyError
+
+    incompatible = tmp_path / "incompatible.schema.json"
+    incompatible.write_text(
+        json.dumps(
+            {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {"value": {"oneOf": [{"type": "null"}, {"type": "string"}]}},
+                "required": ["value"],
+            }
+        ),
+        encoding="utf-8",
+    )
+    spawned = False
+
+    async def factory(*_args, **_kwargs):
+        nonlocal spawned
+        spawned = True
+        return FakeProcess()
+
+    from server.codex_runtime import CodexExecutor
+
+    executor = CodexExecutor(process_factory=factory)
+    with pytest.raises(CodexPolicyError, match="unsupported_output_schema_keyword:oneOf"):
+        await executor.execute_stage(
+            prompt="must not run",
+            schema_path=incompatible,
+            model="gpt-5.6-luna",
+            effort="low",
+        )
+    assert spawned is False
+
+
 @pytest.mark.asyncio
 async def test_public_stage_uses_stdin_argument_array_isolated_cwd_and_ephemeral(monkeypatch):
     process = FakeProcess(success_jsonl(VALID_MODULE_OUTPUT))
