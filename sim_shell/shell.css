@@ -69,6 +69,7 @@ h1, h2 { font-family: "Laysh Display", serif; text-wrap: balance; }
 h1 { margin-block: 0 .7rem; font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1.3; }
 h2 { margin-block: 0 .5rem; font-size: 1.35rem; line-height: 1.4; }
 .answer { max-width: 68ch; color: #c5d2dc; font-size: 1.08rem; line-height: 1.85; }
+.answer-detail > summary { display: none; }
 .formula { display: inline-block; padding: .4rem .65rem; border: 1px solid rgb(88 183 255 / 22%); border-radius: .6rem; background: rgb(2 8 13 / 65%); color: #caeaff; unicode-bidi: isolate; }
 .step { display: grid; grid-template-columns: 2.4rem minmax(0, 1fr); gap: .85rem; }
 .step-number { width: 2.4rem; height: 2.4rem; display: flex; align-items: center; justify-content: center; margin: 0; border: 1px solid rgb(88 183 255 / 50%); border-radius: 999px; background: rgb(88 183 255 / 10%); color: #bfe4ff; font-weight: 700; box-shadow: 0 0 20px rgb(88 183 255 / 12%); }
@@ -135,6 +136,10 @@ body.projector-mode canvas { max-height: calc(100vh - 190px); }
   .lesson { padding: .6rem; }
   .step { grid-template-columns: 1fr; }
   .step-number { width: 2rem; height: 2rem; }
+  .answer-detail > summary { min-height: 44px; display: flex; align-items: center; color: #bfe4ff; cursor: pointer; font-weight: 700; }
+  .answer-detail .answer { margin-block-end: .6rem; }
+  #prediction .choices { flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: inline mandatory; padding-block-end: .35rem; }
+  #prediction .choices button { min-width: 74%; flex: 0 0 74%; scroll-snap-align: start; }
   .control-row { grid-template-columns: 1fr auto; }
   .control-row input { grid-column: 1 / -1; grid-row: 2; }
   .readout-chip { border-radius: .75rem; line-height: 1.6; }
