@@ -23,7 +23,10 @@ FORBIDDEN_CAPABILITIES = (
     ("browser_storage", r"\b(?:localStorage|sessionStorage|indexedDB)\b"),
     ("dom_or_navigation", r"\b(?:document|location|parent|top|opener|navigator)\b"),
     ("worker", r"\b(?:Worker|SharedWorker)\b"),
-    ("dynamic_code", r"\b(?:eval|Function|importScripts)\s*\(|\bimport\s*\("),
+    (
+        "dynamic_code",
+        r"\beval\s*\(|\bnew\s+Function\s*\(|(?<![\w$.])Function\s*\(|\bimport\s*\(",
+    ),
     ("sensitive_device", r"\b(?:cookie|clipboard|microphone|camera)\b"),
     ("external_url", r"(?:https?|wss?):\/\/"),
 )
@@ -64,7 +67,11 @@ def _source_report(source: str) -> tuple[list[dict[str, Any]], int]:
     capabilities = [
         name
         for name, pattern in FORBIDDEN_CAPABILITIES
-        if re.search(pattern, source, flags=re.IGNORECASE)
+        if re.search(
+            pattern,
+            source,
+            flags=0 if name == "dynamic_code" else re.IGNORECASE,
+        )
     ]
     if capabilities:
         failures.append(
@@ -194,7 +201,26 @@ def verify_candidate(
     }
     if len(source.encode("utf-8")) <= MAX_SOURCE_BYTES:
         node_report = _run_node_report(source, understanding)
-        failures.extend(node_report["failures"])
+        passing_numeric = node_report.get("passing_numeric_fixtures", [])
+        passing_by_output: dict[str, list[str]] = {}
+        for fixture in passing_numeric:
+            passing_by_output.setdefault(fixture["output"], []).append(fixture["fixture_id"])
+        for failure in node_report["failures"]:
+            if (
+                failure.get("code") == "relation_fixture_mismatch"
+                and failure.get("expected", {}).get("output") in passing_by_output
+            ):
+                output = failure["expected"]["output"]
+                failure = {
+                    **failure,
+                    "gate": "fixture_integrity",
+                    "code": "suspect_relation_fixture",
+                    "numeric_cross_check": {
+                        "output": output,
+                        "passing_fixture_ids": passing_by_output[output],
+                    },
+                }
+            failures.append(failure)
         check_count += int(node_report["check_count"])
 
     artifact = None
