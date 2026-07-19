@@ -1,8 +1,8 @@
 [Unit]
-Description=Check Laysh health every minute
+Description=Check Laysh health every five minutes
 
 [Timer]
-OnBootSec=30s
+OnActiveSec=30s
 OnUnitActiveSec=5min
 AccuracySec=5s
 Unit=laysh-healthcheck.service
