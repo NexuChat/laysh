@@ -109,9 +109,20 @@ Measured public-mode latency on two unseen smoke cases is above the product obje
 | Hard public terminal | 178.3 s max observed | ≤180 s | Met in G5 |
 
 The two-sample live p95 is a nearest-rank release measurement, not a population-level
-performance claim. The UI does not promise “under a minute.” Instant goldens and verified
-cache paths are the dependable fast experience; new generation is intentionally shown as
-a real staged job with heartbeat, reconnect, retry, cancel, and answer-preserving fallback.
+performance claim. The richer v1.1 golden set raised generate-stage p95 from 98.3 s to
+155.9 s. That regression is accepted as an explicit quality trade-off, not hidden.
+
+For the bounded v1.1 optimization pass, the representative rendered generation prompt was
+trimmed from 5,285 to 4,164 characters (−21.2%) without removing the visual or safety bar.
+The matched Arabic force–acceleration smoke generated in 63.7 s versus 58.0 s in v1.0
+(+9.9%), emitted its first answer at 18.0 s, healed once, and completed in 159.7 s. This is
+one matched observation, not a new p95 claim; the full measurements live in
+`out/evidence/g7-latency.json`.
+
+The Arabic UI says that a new experience may take up to three minutes. During that wait it
+shows only real answer, stage, heartbeat, verification, and self-heal events. Instant
+goldens remain the dependable fast path, while every public job retains its 180-second hard
+terminal and every evidence build retains its 600-second budget.
 
 ## Quota protection
 
@@ -240,4 +251,3 @@ GNU FreeFont is **not** relicensed under MIT. It is distributed under GPLv3 or l
 the GNU Font Exception; see [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) and the
 license files beside the WOFF2 assets. The UI and simulation artwork are code-drawn; no
 remote image, icon, analytics, or ad asset is bundled.
-
