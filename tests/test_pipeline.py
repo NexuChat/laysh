@@ -25,9 +25,11 @@ def test_success_pipeline_answers_first_and_returns_playable_artifact(client, ba
     assert result["simulation"]["heal_count"] == 0
     assert result["simulation"]["effective_model"] == "mock/offline"
     assert backend.understand_calls == backend.generate_calls == 1
+    assert backend.qa_calls == 0
 
     events = client.app.state.jobs.get(job_id).events
     event_types = [event.type for event in events]
+    assert event_types[0] == "answer"
     assert event_types.index("answer") < event_types.index("verification")
     assert event_types.index("answer") < event_types.index("result")
 
@@ -82,6 +84,7 @@ def test_broken_first_draft_is_healed_once_and_reverified(client, backend):
     assert stages.count("verifying") == 2
     assert "healing" in stages
     assert backend.heal_calls == 1
+    assert backend.qa_calls == 1
 
 
 def test_exhausted_heal_preserves_answer_and_never_exposes_artifact(client, backend):
@@ -93,6 +96,7 @@ def test_exhausted_heal_preserves_answer_and_never_exposes_artifact(client, back
     assert result["simulation"] is None
     assert result["fallback"]["reason_code"] == "verification_exhausted"
     assert backend.heal_calls == 2
+    assert backend.qa_calls == 0
 
 
 def test_timeout_reaches_truthful_terminal_state_and_discards_question(backend):

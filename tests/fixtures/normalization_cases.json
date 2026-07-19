@@ -1,0 +1,23 @@
+[
+  {"question": "ليش القمر يتغير شكله؟", "intent": "moon_phase_lit_fraction", "lang": "ar"},
+  {"question": "ليه القمر كل يوم شكل؟", "intent": "moon_phase_lit_fraction", "lang": "ar"},
+  {"question": "ليش نشوف القمر هلال وبدر؟", "intent": "moon_phase_lit_fraction", "lang": "ar"},
+  {"question": "شو سبب أطوار القمر؟", "intent": "moon_phase_lit_fraction", "lang": "ar"},
+  {"question": "شلون يتغير شكل القمر؟", "intent": "moon_phase_lit_fraction", "lang": "ar"},
+  {"question": "علاش القمر مرة هلال ومرة كامل؟", "intent": "moon_phase_lit_fraction", "lang": "ar"},
+  {"question": "واش علاش القمر كيتبدل؟", "intent": "moon_phase_lit_fraction", "lang": "ar"},
+  {"question": "لماذا تتغير أطوار القمر؟", "intent": "moon_phase_lit_fraction", "lang": "ar"},
+  {"question": "كيفاش القمر يولي بدر؟", "intent": "moon_phase_lit_fraction", "lang": "ar"},
+  {"question": "ليه بنشوف جزء من القمر؟", "intent": "moon_phase_lit_fraction", "lang": "ar"},
+  {"question": "ليش moon shape بيتغير؟", "intent": "moon_phase_lit_fraction", "lang": "ar"},
+  {"question": "why القمر يصير بدر؟", "intent": "moon_phase_lit_fraction", "lang": "ar"},
+  {"question": "ليش ال moon مرات crescent؟", "intent": "moon_phase_lit_fraction", "lang": "ar"},
+  {"question": "moon phases ليش تصير؟", "intent": "moon_phase_lit_fraction", "lang": "ar"},
+  {"question": "ليش القمر full وبعدين يصغر؟", "intent": "moon_phase_lit_fraction", "lang": "ar"},
+  {"question": "lesh el qamar yetghayar shaklo", "intent": "moon_phase_lit_fraction", "lang": "ar"},
+  {"question": "leh el amar marra helal", "intent": "moon_phase_lit_fraction", "lang": "ar"},
+  {"question": "3lash l9amar kaytbdel", "intent": "moon_phase_lit_fraction", "lang": "ar"},
+  {"question": "shlon el qamar yseer badr", "intent": "moon_phase_lit_fraction", "lang": "ar"},
+  {"question": "why does the moon change shape", "intent": "moon_phase_lit_fraction", "lang": "en"}
+]
+

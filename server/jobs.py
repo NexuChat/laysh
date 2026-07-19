@@ -45,6 +45,9 @@ class JobRecord:
     artifact: str | None = None
     task: asyncio.Task[None] | None = None
     started_at: float = field(default_factory=time.monotonic)
+    public: bool = True
+    evidence_fixture_id: str | None = None
+    stage_executions: list[dict[str, Any]] = field(default_factory=list)
 
     def public_result(self) -> PublicResult:
         return PublicResult(
@@ -70,12 +73,33 @@ class JobManager:
     def get(self, job_id: str) -> JobRecord | None:
         return self.records.get(job_id)
 
-    def start(self, question: str, locale: str | None) -> JobRecord:
+    def start(
+        self,
+        question: str,
+        locale: str | None,
+        *,
+        public: bool = True,
+        evidence_fixture_id: str | None = None,
+    ) -> JobRecord:
         job_id = f"job_{secrets.token_hex(8)}"
-        record = JobRecord(job_id=job_id, question=question, locale=locale)
+        record = JobRecord(
+            job_id=job_id,
+            question=question,
+            locale=locale,
+            public=public,
+            evidence_fixture_id=evidence_fixture_id,
+        )
         self.records[job_id] = record
         record.task = asyncio.create_task(self._run(record))
         return record
+
+    def start_evidence(self, question: str, locale: str, fixture_id: str) -> JobRecord:
+        return self.start(
+            question,
+            locale,
+            public=False,
+            evidence_fixture_id=fixture_id,
+        )
 
     async def _run(self, record: JobRecord) -> None:
         from server.pipeline import PipelineCancelled, run_pipeline
@@ -94,14 +118,21 @@ class JobManager:
         finally:
             record.question = None
 
-    def transition(self, record: JobRecord, status: str, detail: str) -> None:
+    def transition(
+        self,
+        record: JobRecord,
+        status: str,
+        detail: str,
+        *,
+        emit_event: bool = True,
+    ) -> None:
         if record.status in TERMINAL_STATES:
             return
         if status not in ALLOWED_TRANSITIONS.get(record.status, set()):
             raise ValueError(f"invalid job transition {record.status} -> {status}")
         record.status = status
         record.state_history.append(status)
-        if status not in TERMINAL_STATES:
+        if status not in TERMINAL_STATES and emit_event:
             self.emit(
                 record,
                 "stage",
@@ -142,4 +173,3 @@ class JobManager:
     @staticmethod
     def elapsed_ms(record: JobRecord) -> int:
         return max(0, int((time.monotonic() - record.started_at) * 1000))
-
