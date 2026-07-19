@@ -7,6 +7,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException, Query, Response, status
 from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 
 from server.assemble import PORTABLE_CSP
 from server.browser_verify import BrowserVerificationResult, verify_artifact_in_browser
@@ -44,6 +45,7 @@ def create_app(
         settings.public_job_timeout_seconds if job_timeout_seconds is None else job_timeout_seconds
     )
     app = FastAPI(title="Laysh", version="0.1.0")
+    app.mount("/static", StaticFiles(directory=ROOT / "web"), name="static")
     verified_cache = (
         VerifiedCache(
             root=ROOT / "out" / "cache" / "live",

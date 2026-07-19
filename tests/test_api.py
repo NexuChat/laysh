@@ -8,18 +8,20 @@ def test_root_is_arabic_first_ask_build_result_application(client):
     assert '<html lang="ar" dir="rtl">' in response.text
     assert "اسأل ليش، والعب الجواب" in response.text
     assert 'id="ask-form"' in response.text
-    assert "new EventSource" in response.text
+    controller = client.get("/static/app.js").text
+    assert 'headers["Last-Event-ID"]' in controller
+    assert "AbortController" in controller
     assert 'sandbox="allow-scripts"' in response.text
     assert "allow-same-origin" not in response.text
     assert "fake-percent" not in response.text
 
 
 def test_parent_accepts_only_narrow_origin_checked_runtime_error_beacon(client):
-    source = client.get("/").text
+    source = client.get("/static/app.js").text
     assert 'event.origin !== "null"' in source
-    assert "event.source !== simulationFrame.contentWindow" in source
+    assert "event.source !== frame.contentWindow" in source
     assert 'payload.source !== "laysh-artifact"' in source
-    assert 'payload.code !== "SIM_RUNTIME_ERROR"' in source
+    assert 'payload.code === "SIM_RUNTIME_ERROR"' in source
 
 
 def test_ask_normalizes_and_validates_question(client):
