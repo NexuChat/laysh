@@ -35,7 +35,7 @@ ALLOWED_TRANSITIONS = {
     "understanding": {"answered", "rejected", "cancelled", "timed_out", "failed"},
     "answered": {"cache_lookup", "answer_only", "cancelled", "timed_out", "failed"},
     "cache_lookup": {"generating", "browser_check", "cancelled", "timed_out", "failed"},
-    "generating": {"verifying", "cancelled", "timed_out", "failed"},
+    "generating": {"verifying", "answer_only", "cancelled", "timed_out", "failed"},
     "verifying": {
         "healing",
         "browser_check",
@@ -45,7 +45,7 @@ ALLOWED_TRANSITIONS = {
         "timed_out",
         "failed",
     },
-    "healing": {"verifying", "cancelled", "timed_out", "failed"},
+    "healing": {"verifying", "answer_only", "cancelled", "timed_out", "failed"},
     "browser_check": {"complete", "answer_only", "cancelled", "timed_out", "failed"},
 }
 

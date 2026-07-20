@@ -127,14 +127,19 @@ body.projector-mode canvas { max-height: calc(100vh - 190px); }
 }
 
 @media (max-width: 480px) {
-  .lesson { padding: .6rem; }
-  .step { grid-template-columns: 1fr; }
-  .step-number { width: 2rem; height: 2rem; }
+  .lesson { padding: .35rem; }
+  .instrument-bar { min-height: 44px; margin-block: .15rem; }
+  header, .step, #runtime-error { margin-block: .45rem; padding: .6rem; border-radius: .9rem; }
+  .step { grid-template-columns: 1fr; gap: .35rem; }
+  .step-number { width: 1.75rem; height: 1.75rem; }
+  .stage { padding: .35rem; }
+  .stage h2 { margin-block-end: .3rem; font-size: 1.12rem; }
   .answer-detail > summary { min-height: 44px; display: flex; align-items: center; color: #bfe4ff; cursor: pointer; font-weight: 700; }
   .answer-detail .answer { margin-block-end: .6rem; }
-  .control-row { grid-template-columns: 1fr auto; }
+  .control-row { grid-template-columns: 1fr auto; gap: .35rem .55rem; margin-block: .45rem; }
   .control-row input { grid-column: 1 / -1; grid-row: 2; }
-  .readout-chip { border-radius: .75rem; line-height: 1.6; }
+  .readout-chip { margin-block: .4rem .1rem; padding: .4rem .55rem; border-radius: .75rem; line-height: 1.45; }
+  .actions { gap: .4rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

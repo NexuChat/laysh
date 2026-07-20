@@ -1,0 +1,505 @@
+{
+  "schema_version": "1.0",
+  "phase": "before",
+  "runtime_mode": "public_ephemeral",
+  "job_timeout_seconds": 420.0,
+  "case_count": 2,
+  "success_count": 0,
+  "success_rate": 0.0,
+  "results": [
+    {
+      "case_id": "rainbow_refraction_ar",
+      "locale": "ar",
+      "status": "answer_only",
+      "fallback_reason": "verification_exhausted",
+      "total_elapsed_ms": 347376,
+      "first_answer_ms": 16221,
+      "heal_count": 2,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "safe_science_explanation",
+        "domain": "optics",
+        "canonical_intent": "explanation_of_rainbow_formation_after_rain",
+        "actor_id": "sunlight_ray",
+        "action": "propagates",
+        "fixture_count": 3,
+        "contract_failures": []
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 16217,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 125679,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 38
+        },
+        {
+          "stage": "heal_1",
+          "elapsed_ms": 100799,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 63
+        },
+        {
+          "stage": "heal_2",
+          "elapsed_ms": 94338,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 71
+        },
+        {
+          "stage": "browser_verify",
+          "elapsed_ms": 10157
+        }
+      ],
+      "verification_attempts": [
+        {
+          "attempt": 0,
+          "gate_phase": "deterministic",
+          "passed": false,
+          "check_count": 13,
+          "failures": [
+            {
+              "gate": "runtime_init",
+              "code": "init_failed",
+              "expected": {
+                "accepts_trusted_options": [
+                  "canvas",
+                  "context",
+                  "width",
+                  "height",
+                  "locale",
+                  "reducedMotion",
+                  "emitFrame"
+                ]
+              },
+              "actual": {
+                "error_type": "TypeError"
+              }
+            },
+            {
+              "gate": "runtime_init",
+              "code": "first_frame_missing",
+              "expected": {
+                "minimum_emit_frame_calls": 1
+              },
+              "actual": {
+                "emit_frame_calls": 0
+              }
+            },
+            {
+              "gate": "invariant",
+              "code": "numeric_fixture_mismatch",
+              "expected": {
+                "output": "refraction_angle_deg",
+                "value": 0,
+                "tolerance": 0.1
+              },
+              "actual": {
+                "output": "refraction_angle_deg",
+                "value": 22.082413194472252
+              },
+              "fixture_id": "normal_incidence",
+              "inputs": [
+                {
+                  "name": "incidence_angle_deg",
+                  "value": 0
+                },
+                {
+                  "name": "refractive_index",
+                  "value": 1.33
+                }
+              ]
+            },
+            {
+              "gate": "fixture_integrity",
+              "code": "suspect_relation_fixture",
+              "expected": {
+                "output": "refraction_angle_deg",
+                "relation": "right_lt_left",
+                "minimum_ratio": 1.1
+              },
+              "actual": {
+                "left_value": 22.082413194472252,
+                "right_value": 22.082413194472252
+              },
+              "fixture_id": "higher_index_refracts_more",
+              "inputs": {
+                "left": [
+                  {
+                    "name": "incidence_angle_deg",
+                    "value": 30
+                  },
+                  {
+                    "name": "refractive_index",
+                    "value": 1.33
+                  }
+                ],
+                "right": [
+                  {
+                    "name": "incidence_angle_deg",
+                    "value": 30
+                  },
+                  {
+                    "name": "refractive_index",
+                    "value": 1.5
+                  }
+                ]
+              },
+              "numeric_cross_check": {
+                "output": "refraction_angle_deg",
+                "passing_fixture_ids": [
+                  "angled_incidence"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "attempt": 1,
+          "gate_phase": "deterministic",
+          "passed": false,
+          "check_count": 13,
+          "failures": [
+            {
+              "gate": "runtime_init",
+              "code": "init_failed",
+              "expected": {
+                "accepts_trusted_options": [
+                  "canvas",
+                  "context",
+                  "width",
+                  "height",
+                  "locale",
+                  "reducedMotion",
+                  "emitFrame"
+                ]
+              },
+              "actual": {
+                "error_type": "TypeError"
+              }
+            },
+            {
+              "gate": "runtime_init",
+              "code": "first_frame_missing",
+              "expected": {
+                "minimum_emit_frame_calls": 1
+              },
+              "actual": {
+                "emit_frame_calls": 0
+              }
+            }
+          ]
+        },
+        {
+          "attempt": 2,
+          "gate_phase": "deterministic",
+          "passed": true,
+          "check_count": 24,
+          "failures": []
+        },
+        {
+          "attempt": 2,
+          "gate_phase": "browser",
+          "passed": false,
+          "check_count": 18,
+          "failures": [
+            {
+              "gate": "actor_action_tracking",
+              "code": "actor_trajectory_mismatch",
+              "expected": {
+                "declared_action_performed": true
+              },
+              "actual": {}
+            },
+            {
+              "gate": "actor_action_tracking",
+              "code": "paused_actor_tracking_missing",
+              "expected": {
+                "sweep_state": "paused",
+                "held_parameter_stable": true,
+                "declared_action_continues": true
+              },
+              "actual": {}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "seasons_tilt_en",
+      "locale": "en",
+      "status": "answer_only",
+      "fallback_reason": "verification_exhausted",
+      "total_elapsed_ms": 397446,
+      "first_answer_ms": 13130,
+      "heal_count": 2,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "safe_science_explanation",
+        "domain": "earth_science",
+        "canonical_intent": "understand_why_seasons_change_during_the_year",
+        "actor_id": "earth",
+        "action": "orbits",
+        "fixture_count": 3,
+        "contract_failures": []
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 13124,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 99914,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 66
+        },
+        {
+          "stage": "heal_1",
+          "elapsed_ms": 129573,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 51
+        },
+        {
+          "stage": "heal_2",
+          "elapsed_ms": 154656,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 52
+        }
+      ],
+      "verification_attempts": [
+        {
+          "attempt": 0,
+          "gate_phase": "deterministic",
+          "passed": false,
+          "check_count": 13,
+          "failures": [
+            {
+              "gate": "runtime_init",
+              "code": "init_failed",
+              "expected": {
+                "accepts_trusted_options": [
+                  "canvas",
+                  "context",
+                  "width",
+                  "height",
+                  "locale",
+                  "reducedMotion",
+                  "emitFrame"
+                ]
+              },
+              "actual": {
+                "error_type": "TypeError"
+              }
+            },
+            {
+              "gate": "runtime_init",
+              "code": "first_frame_missing",
+              "expected": {
+                "minimum_emit_frame_calls": 1
+              },
+              "actual": {
+                "emit_frame_calls": 0
+              }
+            },
+            {
+              "gate": "fixture_integrity",
+              "code": "suspect_relation_fixture",
+              "expected": {
+                "output": "solar_declination_deg",
+                "relation": "right_gt_left",
+                "minimum_ratio": 2
+              },
+              "actual": {
+                "left_value": -23.5,
+                "right_value": 23.5
+              },
+              "fixture_id": "southern_vs_northern_declination",
+              "inputs": {
+                "left": [
+                  {
+                    "name": "orbital_angle_deg",
+                    "value": 270
+                  },
+                  {
+                    "name": "axial_tilt_deg",
+                    "value": 23.5
+                  }
+                ],
+                "right": [
+                  {
+                    "name": "orbital_angle_deg",
+                    "value": 90
+                  },
+                  {
+                    "name": "axial_tilt_deg",
+                    "value": 23.5
+                  }
+                ]
+              },
+              "numeric_cross_check": {
+                "output": "solar_declination_deg",
+                "passing_fixture_ids": [
+                  "declination_at_equinox",
+                  "declination_at_northern_summer"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "attempt": 1,
+          "gate_phase": "deterministic",
+          "passed": false,
+          "check_count": 13,
+          "failures": [
+            {
+              "gate": "runtime_init",
+              "code": "init_failed",
+              "expected": {
+                "accepts_trusted_options": [
+                  "canvas",
+                  "context",
+                  "width",
+                  "height",
+                  "locale",
+                  "reducedMotion",
+                  "emitFrame"
+                ]
+              },
+              "actual": {
+                "error_type": "TypeError"
+              }
+            },
+            {
+              "gate": "runtime_init",
+              "code": "first_frame_missing",
+              "expected": {
+                "minimum_emit_frame_calls": 1
+              },
+              "actual": {
+                "emit_frame_calls": 0
+              }
+            },
+            {
+              "gate": "fixture_integrity",
+              "code": "suspect_relation_fixture",
+              "expected": {
+                "output": "solar_declination_deg",
+                "relation": "right_gt_left",
+                "minimum_ratio": 2
+              },
+              "actual": {
+                "left_value": -23.5,
+                "right_value": 23.5
+              },
+              "fixture_id": "southern_vs_northern_declination",
+              "inputs": {
+                "left": [
+                  {
+                    "name": "orbital_angle_deg",
+                    "value": 270
+                  },
+                  {
+                    "name": "axial_tilt_deg",
+                    "value": 23.5
+                  }
+                ],
+                "right": [
+                  {
+                    "name": "orbital_angle_deg",
+                    "value": 90
+                  },
+                  {
+                    "name": "axial_tilt_deg",
+                    "value": 23.5
+                  }
+                ]
+              },
+              "numeric_cross_check": {
+                "output": "solar_declination_deg",
+                "passing_fixture_ids": [
+                  "declination_at_equinox",
+                  "declination_at_northern_summer"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "attempt": 2,
+          "gate_phase": "deterministic",
+          "passed": false,
+          "check_count": 13,
+          "failures": [
+            {
+              "gate": "fixture_integrity",
+              "code": "suspect_relation_fixture",
+              "expected": {
+                "output": "solar_declination_deg",
+                "relation": "right_gt_left",
+                "minimum_ratio": 2
+              },
+              "actual": {
+                "left_value": -23.5,
+                "right_value": 23.5
+              },
+              "fixture_id": "southern_vs_northern_declination",
+              "inputs": {
+                "left": [
+                  {
+                    "name": "orbital_angle_deg",
+                    "value": 270
+                  },
+                  {
+                    "name": "axial_tilt_deg",
+                    "value": 23.5
+                  }
+                ],
+                "right": [
+                  {
+                    "name": "orbital_angle_deg",
+                    "value": 90
+                  },
+                  {
+                    "name": "axial_tilt_deg",
+                    "value": 23.5
+                  }
+                ]
+              },
+              "numeric_cross_check": {
+                "output": "solar_declination_deg",
+                "passing_fixture_ids": [
+                  "declination_at_equinox",
+                  "declination_at_northern_summer"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -12,7 +12,7 @@
       ],
       "instant": true,
       "tier": "A",
-      "artifact_sha256": "544771249d172e8d74e5684eaeb9baabf8a9cfa72c92c13064cb4c85cddfdf36",
+      "artifact_sha256": "89f0f70176fd938211de8b3c928e905d606e8508e12f1ee6da0b2efcaf3db5c6",
       "metadata": {
         "ar": {
           "title": "لماذا تطفو بعض الأجسام؟",
@@ -36,7 +36,7 @@
       ],
       "instant": true,
       "tier": "A",
-      "artifact_sha256": "a8ce26d9ebe9924a02850b5b1645b2e68d61fbc609edda50fa522c1a1c53c63a",
+      "artifact_sha256": "d82d3e411c5b85707314d34c943a7162ce91fa712e855e9783f95cbc228ad9ea",
       "metadata": {
         "ar": {
           "title": "لماذا تطفو بعض الأجسام؟",
@@ -60,7 +60,7 @@
       ],
       "instant": true,
       "tier": "A",
-      "artifact_sha256": "ffb42675c348ac040a9c8c10e1a88102b552c527d00551f13207827ebb2c2539",
+      "artifact_sha256": "39e748e34500ab178f5bf802cb5e1b9c5d85b5c0f41cb202a8c90210280e41a9",
       "metadata": {
         "ar": {
           "title": "دوران الأرض والنهار والليل",
@@ -84,7 +84,7 @@
       ],
       "instant": true,
       "tier": "A",
-      "artifact_sha256": "ce0c5f4fb5d0236f881a013578fe468aab9e81d021843bfc6c013891845dd1cb",
+      "artifact_sha256": "60c28fdc15d7b4fd33fdf467d5986ac92095851bfbfdc6d81297475bd860d8e3",
       "metadata": {
         "ar": {
           "title": "دوران الأرض والنهار والليل",
@@ -108,7 +108,7 @@
       ],
       "instant": true,
       "tier": "A",
-      "artifact_sha256": "e90776b7e1c01326859fb3b67374ce1caa0e8375ba164fb803d837ba09b297e6",
+      "artifact_sha256": "19022031bd06c14764bd746504d314d900f86a7620078fa3c2432eb431b41816",
       "metadata": {
         "ar": {
           "title": "أطوار القمر",
@@ -132,7 +132,7 @@
       ],
       "instant": true,
       "tier": "A",
-      "artifact_sha256": "2635f3e3b94a1f708b1fb6f87a44296d83035a32e0900c183b7670866a80cab2",
+      "artifact_sha256": "4591ec652a0586e08471ebf15545f2e617a22cdd98d23112c484148d82b72d05",
       "metadata": {
         "ar": {
           "title": "أطوار القمر",
@@ -156,7 +156,7 @@
       ],
       "instant": true,
       "tier": "A",
-      "artifact_sha256": "802633af58066dbf9120b4c44a20cbdf514fc579652af03d652c941d29dd38fb",
+      "artifact_sha256": "eb22553e99384c22351fceee077635984fb0d91001d9c9549c666f3d5fb225b7",
       "metadata": {
         "ar": {
           "title": "طول البندول وزمنه",
@@ -180,7 +180,7 @@
       ],
       "instant": true,
       "tier": "A",
-      "artifact_sha256": "1170caa4fcc925cb3a7550ae03330997189c2ff621f25965254a2fc93d45403c",
+      "artifact_sha256": "5a25601076f74e4d2beb5d306dc988ee69b944342bc144cdd13bee55df16a9ec",
       "metadata": {
         "ar": {
           "title": "طول البندول وزمنه",
@@ -204,7 +204,7 @@
       ],
       "instant": true,
       "tier": "A",
-      "artifact_sha256": "e1a5a15794d053ec3d67dfb68651cebe4e8144bd174ffac2456da53d3f126261",
+      "artifact_sha256": "36f3c738ea4851f3b71746cc9bd6cadc65c4612894084bbd226b674634e30769",
       "metadata": {
         "ar": {
           "title": "المقاومة وسطوع المصباح",
@@ -228,7 +228,7 @@
       ],
       "instant": true,
       "tier": "A",
-      "artifact_sha256": "af557d799d491ef086ef51a4e08527ad05876e70b5bc6c117b1ccbdd28a25b89",
+      "artifact_sha256": "4628c6ded032d37b7276311e16cb6da548b43b898cbaad66e494b0f3cc68feef",
       "metadata": {
         "ar": {
           "title": "المقاومة وسطوع المصباح",
@@ -252,7 +252,7 @@
       ],
       "instant": true,
       "tier": "A",
-      "artifact_sha256": "c2f0cef991576259e98cd43c08daae4089ae3fdb068e0b9e28a889061670e3d2",
+      "artifact_sha256": "24246dc34e9f16a89e0ce5d6067a70e65dfb16e3c6e740954975985f3540f65a",
       "metadata": {
         "ar": {
           "title": "التردد وحدّة الصوت",
@@ -276,7 +276,7 @@
       ],
       "instant": true,
       "tier": "A",
-      "artifact_sha256": "50b49c863421034f0b7311e3ec7879661a66f11cf2ca87fd7311aa52a53bbb2b",
+      "artifact_sha256": "741522b6a03d1a68a5d46fb244729c5a2a92c0d753deea523b005d26c6b293c4",
       "metadata": {
         "ar": {
           "title": "التردد وحدّة الصوت",

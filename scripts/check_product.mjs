@@ -181,13 +181,13 @@ try {
   await capture(`${evidencePrefix}-landing-mobile-390x844.png`);
   await waitFor("!document.querySelector('[data-golden-id=\"moon_phases\"] .golden-launch').disabled", 5000);
   await evaluate("document.querySelector('[data-golden-id=\"moon_phases\"] .golden-launch').click()");
-  await waitFor("!document.querySelector('#result-view').hidden", 5000);
+  await waitFor("!document.querySelector('#result-view').hidden", 10000);
   await waitFor("document.querySelector('#simulation-frame').src.includes('/api/sims/')", 5000);
   await delay(300);
   await capture(`${evidencePrefix}-golden-mobile-390x844.png`);
   const goldenShareUrl = await evaluate("document.querySelector('#share-actions').dataset.shareUrl");
   await navigate(goldenShareUrl);
-  await waitFor("!document.querySelector('#result-view').hidden", 5000);
+  await waitFor("!document.querySelector('#result-view').hidden", 10000);
   await waitFor("document.querySelector('#simulation-frame').src.includes('/api/sims/')", 5000);
   await evaluate("document.querySelector('#copy-share').click()");
   await waitFor("document.querySelector('#share-status').textContent.includes('تم نسخ الرابط')", 3000);
@@ -205,6 +205,11 @@ try {
   await capture(`${evidencePrefix}-build-mobile-390x844.png`);
   await waitFor("!document.querySelector('#result-view').hidden", 20000);
   await waitFor("document.querySelector('#simulation-frame').src.includes('/api/sims/')", 5000);
+  await waitFor("Boolean(document.querySelector('#simulation-frame').dataset.contentHeight)", 5000);
+  await waitFor(`(() => {
+    const frame = document.querySelector('#simulation-frame');
+    return Number(frame.dataset.scrollHeight) <= Number(frame.dataset.clientHeight) + 1;
+  })()`, 5000);
   await delay(500);
   const success = await evaluate(`(() => {
     const arabicDigits = '٠١٢٣٤٥٦٧٨٩';
@@ -217,6 +222,23 @@ try {
       resultVisible: !document.querySelector('#result-view').hidden,
       sandbox: document.querySelector('#simulation-frame').getAttribute('sandbox'),
       receiptChecks: toNumber(document.querySelector('#check-count').textContent),
+    };
+  })()`);
+  const artifactLayout = await evaluate(`(() => {
+    const frame = document.querySelector('#simulation-frame');
+    const scrollHeight = Number(frame.dataset.scrollHeight);
+    const clientHeight = Number(frame.dataset.clientHeight);
+    const unitBottom = Number(frame.dataset.interactiveUnitBottom);
+    return {
+      scrollHeight,
+      clientHeight,
+      innerScrollbar: scrollHeight > clientHeight + 1,
+      canvasSliderPauseInFirstViewport: unitBottom <= 844,
+      unitBottom,
+      canvas: {
+        width: Number(frame.dataset.canvasWidth),
+        height: Number(frame.dataset.canvasHeight),
+      },
     };
   })()`);
   await capture(`${evidencePrefix}-result-mobile-390x844.png`);
@@ -405,6 +427,7 @@ try {
       overflowAt200Percent,
       reducedMotion: accessibilityDom.reducedMotion,
     },
+    artifactLayout,
     consoleErrors,
     networkFailures,
     screenshots: [

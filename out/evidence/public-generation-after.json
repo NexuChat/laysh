@@ -1,0 +1,502 @@
+{
+  "schema_version": "1.0",
+  "phase": "after",
+  "runtime_mode": "public_ephemeral",
+  "job_timeout_seconds": 180.0,
+  "case_count": 5,
+  "success_count": 1,
+  "success_rate": 0.2,
+  "results": [
+    {
+      "case_id": "rainbow_refraction_ar",
+      "locale": "ar",
+      "status": "answer_only",
+      "fallback_reason": "healing_timeout",
+      "total_elapsed_ms": 168973,
+      "first_answer_ms": 16622,
+      "heal_count": 1,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "safe_science_explanation_simulatable",
+        "domain": "optics_and_weather",
+        "canonical_intent": "explanation_rainbow_formation_after_rain",
+        "actor_id": "white_light_ray",
+        "action": "responds",
+        "fixture_count": 3,
+        "primary_parameter_id": "wavelength_nm",
+        "tracking_output": "deviation_angle_deg",
+        "contract_failures": []
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 16621,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 87232,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 47
+        },
+        {
+          "stage": "browser_verify",
+          "elapsed_ms": 10038
+        },
+        {
+          "stage": "heal_1",
+          "elapsed_ms": 55031
+        }
+      ],
+      "verification_attempts": [
+        {
+          "attempt": 0,
+          "gate_phase": "deterministic",
+          "passed": true,
+          "check_count": 24,
+          "failures": []
+        },
+        {
+          "attempt": 0,
+          "gate_phase": "browser",
+          "passed": false,
+          "check_count": 18,
+          "failures": [
+            {
+              "gate": "mobile_overlay_safe_band",
+              "code": "mobile_overlay_registration_missing",
+              "expected": {
+                "canvas_width_max": 420,
+                "overlay_count_max": 1,
+                "overlay_height_ratio_max": 0.22,
+                "subject_overlap_pixels": 0,
+                "label_subject_overlap_pixels": 0,
+                "drawn_label_count_max": 1,
+                "unregistered_label_count": 0,
+                "unanchored_overlay_count": 0
+              },
+              "actual": {
+                "overlay_count": 0,
+                "drawn_label_count": 1,
+                "overlay_height_ratio": 0,
+                "subject_overlap_pixels": 0,
+                "label_subject_overlap_pixels": 0,
+                "unregistered_label_count": 1,
+                "unanchored_overlay_count": 0
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "seasons_tilt_en",
+      "locale": "en",
+      "status": "answer_only",
+      "fallback_reason": "healing_timeout",
+      "total_elapsed_ms": 148153,
+      "first_answer_ms": 13519,
+      "heal_count": 1,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "safe_science_lesson",
+        "domain": "earth_science",
+        "canonical_intent": "understand_seasonal_change",
+        "actor_id": "earth",
+        "action": "orbits",
+        "fixture_count": 3,
+        "primary_parameter_id": "orbital_angle_deg",
+        "tracking_output": null,
+        "contract_failures": []
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 13516,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 69078,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 58
+        },
+        {
+          "stage": "browser_verify",
+          "elapsed_ms": 10475
+        },
+        {
+          "stage": "heal_1",
+          "elapsed_ms": 55020
+        }
+      ],
+      "verification_attempts": [
+        {
+          "attempt": 0,
+          "gate_phase": "deterministic",
+          "passed": true,
+          "check_count": 24,
+          "failures": []
+        },
+        {
+          "attempt": 0,
+          "gate_phase": "browser",
+          "passed": false,
+          "check_count": 18,
+          "failures": [
+            {
+              "gate": "render_output_consistency",
+              "code": "rendered_output_not_monotonic_consistent",
+              "expected": {
+                "full_parameter_sweep": true,
+                "render_tracks_computed_output": true,
+                "adjacent_discontinuities": 0
+              },
+              "actual": {
+                "code": "rendered_output_not_monotonic_consistent",
+                "metric": "meanLuminance",
+                "rankCorrelation": 0.5680985871495359,
+                "left": {
+                  "parameter": 90,
+                  "computedOutput": 23.5,
+                  "renderedMeasure": 29.76111339063956
+                },
+                "right": {
+                  "parameter": 112.5,
+                  "computedOutput": 21.616734784486315,
+                  "renderedMeasure": 29.869088310924635
+                }
+              }
+            },
+            {
+              "gate": "actor_action_tracking",
+              "code": "paused_phenomenon_actor_static",
+              "expected": {
+                "lesson": "Why do seasons change during the year?",
+                "held_parameter": {
+                  "id": "orbital_angle_deg",
+                  "value": 18,
+                  "unit": "degrees"
+                },
+                "action": "orbits",
+                "minimum_trajectory_span_pixels": 6,
+                "sample_duration_seconds": 1.1
+              },
+              "actual": {
+                "lesson": "Why do seasons change during the year?",
+                "held_parameter": {
+                  "id": "orbital_angle_deg",
+                  "value": 18,
+                  "unit": "degrees"
+                },
+                "action": "orbits",
+                "trajectory_span_pixels": 3.4004,
+                "horizontal_span_pixels": 1,
+                "vertical_span_pixels": 3.25,
+                "sample_count": 13
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "lever_torque_en",
+      "locale": "en",
+      "status": "complete",
+      "fallback_reason": null,
+      "total_elapsed_ms": 137424,
+      "first_answer_ms": 11163,
+      "heal_count": 1,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "safe_science_lesson",
+        "domain": "physics",
+        "canonical_intent": "understand_how_lever_arm_length_affects_required_effort",
+        "actor_id": "lever",
+        "action": "responds",
+        "fixture_count": 3,
+        "primary_parameter_id": "effort_arm_length",
+        "tracking_output": "required_force",
+        "contract_failures": []
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 11162,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 50902,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 68
+        },
+        {
+          "stage": "browser_verify",
+          "elapsed_ms": 10068
+        },
+        {
+          "stage": "heal_1",
+          "elapsed_ms": 43417,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 56
+        },
+        {
+          "stage": "browser_verify",
+          "elapsed_ms": 10170
+        },
+        {
+          "stage": "vision",
+          "elapsed_ms": 6720,
+          "model": "gpt-5.6-terra"
+        },
+        {
+          "stage": "qa",
+          "elapsed_ms": 4851,
+          "model": "gpt-5.6-terra"
+        }
+      ],
+      "verification_attempts": [
+        {
+          "attempt": 0,
+          "gate_phase": "deterministic",
+          "passed": true,
+          "check_count": 24,
+          "failures": []
+        },
+        {
+          "attempt": 0,
+          "gate_phase": "browser",
+          "passed": false,
+          "check_count": 18,
+          "failures": [
+            {
+              "gate": "actor_action_tracking",
+              "code": "actor_response_not_output_consistent",
+              "expected": {
+                "visibleSamplesAtLeast": 7,
+                "minimumAbsoluteCorrelation": 0.7,
+                "minimumActorResponseSpan": 6,
+                "heldStateMotionExpected": false
+              },
+              "actual": {
+                "visibleSamples": 9,
+                "responseMetric": "y",
+                "absoluteCorrelation": 0.9309,
+                "actorResponseSpan": 0.0566
+              }
+            }
+          ]
+        },
+        {
+          "attempt": 1,
+          "gate_phase": "deterministic",
+          "passed": true,
+          "check_count": 24,
+          "failures": []
+        },
+        {
+          "attempt": 1,
+          "gate_phase": "browser",
+          "passed": true,
+          "check_count": 18,
+          "failures": []
+        }
+      ]
+    },
+    {
+      "case_id": "evaporation_ar",
+      "locale": "ar",
+      "status": "answer_only",
+      "fallback_reason": "healing_timeout",
+      "total_elapsed_ms": 165661,
+      "first_answer_ms": 16791,
+      "heal_count": 1,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "safe_simulatable",
+        "domain": "physics",
+        "canonical_intent": "aiyad_tasri_al_taba5ur_ma3a_irtifa3_hararat_alma2",
+        "actor_id": "water_surface",
+        "action": "responds",
+        "fixture_count": 2,
+        "primary_parameter_id": "temperature_c",
+        "tracking_output": "evaporation_rate",
+        "contract_failures": []
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 16790,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 75060,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 52
+        },
+        {
+          "stage": "browser_verify",
+          "elapsed_ms": 10177
+        },
+        {
+          "stage": "vision",
+          "elapsed_ms": 8547,
+          "model": "gpt-5.6-terra"
+        },
+        {
+          "stage": "heal_1",
+          "elapsed_ms": 55030
+        }
+      ],
+      "verification_attempts": [
+        {
+          "attempt": 0,
+          "gate_phase": "deterministic",
+          "passed": true,
+          "check_count": 23,
+          "failures": []
+        },
+        {
+          "attempt": 0,
+          "gate_phase": "browser",
+          "passed": true,
+          "check_count": 18,
+          "failures": []
+        },
+        {
+          "attempt": 0,
+          "gate_phase": "semantic_vision",
+          "passed": false,
+          "check_count": 1,
+          "failures": [
+            {
+              "gate": "semantic_vision",
+              "code": "semantic_action_not_performed",
+              "expected": {
+                "actor_visible": true,
+                "action_performed": true,
+                "paused_action_performed": true,
+                "physically_consistent": true,
+                "labels_obscure_subject": false
+              },
+              "actual": {
+                "actor_visible": true,
+                "action_performed": false,
+                "paused_action_performed": false,
+                "physically_consistent": false,
+                "labels_obscure_subject": false,
+                "defects": [
+                  "Water surface does not visibly show a causal response across temperature states; only labels/decorative particles change.",
+                  "Held paused frame provides no observable actor response to preserve."
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "magnetism_en",
+      "locale": "en",
+      "status": "answer_only",
+      "fallback_reason": "healing_timeout",
+      "total_elapsed_ms": 151433,
+      "first_answer_ms": 11395,
+      "heal_count": 1,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "safe_science_concept_with_distance_sweep",
+        "domain": "physics",
+        "canonical_intent": "distance_dependence_of_magnetic_force_between_two_magnets",
+        "actor_id": "magnet_force_indicator",
+        "action": "responds",
+        "fixture_count": 3,
+        "primary_parameter_id": "separation_distance",
+        "tracking_output": "force_magnitude",
+        "contract_failures": []
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 11394,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 74580,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 66
+        },
+        {
+          "stage": "browser_verify",
+          "elapsed_ms": 10365
+        },
+        {
+          "stage": "heal_1",
+          "elapsed_ms": 55023
+        }
+      ],
+      "verification_attempts": [
+        {
+          "attempt": 0,
+          "gate_phase": "deterministic",
+          "passed": true,
+          "check_count": 24,
+          "failures": []
+        },
+        {
+          "attempt": 0,
+          "gate_phase": "browser",
+          "passed": false,
+          "check_count": 18,
+          "failures": [
+            {
+              "gate": "mobile_overlay_safe_band",
+              "code": "mobile_overlay_count_exceeded",
+              "expected": {
+                "canvas_width_max": 420,
+                "overlay_count_max": 1,
+                "overlay_height_ratio_max": 0.22,
+                "subject_overlap_pixels": 0,
+                "label_subject_overlap_pixels": 0,
+                "drawn_label_count_max": 1,
+                "unregistered_label_count": 0,
+                "unanchored_overlay_count": 0
+              },
+              "actual": {
+                "overlay_count": 1,
+                "drawn_label_count": 4,
+                "overlay_height_ratio": 0.0923,
+                "subject_overlap_pixels": 0,
+                "label_subject_overlap_pixels": 192,
+                "unregistered_label_count": 4,
+                "unanchored_overlay_count": 0
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

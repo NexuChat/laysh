@@ -1,14 +1,16 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://laysh.local/schemas/vision-1.0.json",
-  "title": "Laysh semantic vision judgment v1.0",
+  "$id": "https://laysh.local/schemas/vision-1.2.json",
+  "title": "Laysh semantic vision judgment v1.2",
   "type": "object",
   "additionalProperties": false,
-  "required": ["actor_visible", "action_performed", "physically_consistent", "defects"],
+  "required": ["actor_visible", "action_performed", "paused_action_performed", "physically_consistent", "labels_obscure_subject", "defects"],
   "properties": {
     "actor_visible": {"type": "boolean"},
     "action_performed": {"type": "boolean"},
+    "paused_action_performed": {"type": "boolean"},
     "physically_consistent": {"type": "boolean"},
+    "labels_obscure_subject": {"type": "boolean"},
     "defects": {
       "type": "array",
       "maxItems": 4,

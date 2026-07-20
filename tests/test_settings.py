@@ -19,8 +19,10 @@ def test_runtime_defaults_are_gpt_5_6_family_only():
     assert settings.evidence_job_timeout_seconds == 600
     assert settings.public_stage_timeout_seconds == 90
     assert settings.evidence_stage_timeout_seconds == 300
-    assert settings.public_qa_timeout_seconds == 45
+    assert settings.public_qa_timeout_seconds == 25
     assert settings.evidence_qa_timeout_seconds == 120
+    assert settings.public_heal_timeout_seconds == 55
+    assert settings.evidence_heal_timeout_seconds == 120
     assert settings.cache_key_secret == ""
     assert settings.live_cache_root == ""
     assert settings.max_live_lessons == 100
@@ -38,6 +40,8 @@ def test_timeout_profiles_are_independently_configurable(monkeypatch):
     monkeypatch.setenv("LAYSH_EVIDENCE_STAGE_TIMEOUT_SECONDS", "299")
     monkeypatch.setenv("LAYSH_PUBLIC_QA_TIMEOUT_SECONDS", "44")
     monkeypatch.setenv("LAYSH_EVIDENCE_QA_TIMEOUT_SECONDS", "119")
+    monkeypatch.setenv("LAYSH_PUBLIC_HEAL_TIMEOUT_SECONDS", "43")
+    monkeypatch.setenv("LAYSH_EVIDENCE_HEAL_TIMEOUT_SECONDS", "118")
     monkeypatch.setenv("LAYSH_LIVE_CACHE_ROOT", "/srv/laysh/live-cache")
     monkeypatch.setenv("LAYSH_MAX_LIVE_LESSONS", "42")
 
@@ -49,6 +53,8 @@ def test_timeout_profiles_are_independently_configurable(monkeypatch):
     assert settings.evidence_stage_timeout_seconds == 299
     assert settings.public_qa_timeout_seconds == 44
     assert settings.evidence_qa_timeout_seconds == 119
+    assert settings.public_heal_timeout_seconds == 43
+    assert settings.evidence_heal_timeout_seconds == 118
     assert settings.live_cache_root == "/srv/laysh/live-cache"
     assert settings.max_live_lessons == 42
 

@@ -173,8 +173,10 @@ def _qa_visual_richness_passed(qa: dict[str, Any] | None) -> bool:
             "scene_depth",
             "physical_light",
             "idle_motion",
+            "paused_phenomenon_motion",
             "reactive_feedback",
             "readable_overlays",
+            "overlay_safe_band",
         )
     )
 

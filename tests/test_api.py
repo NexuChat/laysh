@@ -57,6 +57,17 @@ def test_parent_accepts_only_narrow_origin_checked_runtime_error_beacon(client):
     assert 'payload.code === "SIM_RUNTIME_ERROR"' in source
 
 
+def test_parent_auto_sizes_only_the_matching_artifact_iframe(client):
+    source = client.get("/static/app.js").text
+    css = client.get("/static/app.css").text
+
+    assert 'payload.type === "content-height"' in source
+    assert "event.source !== frame.contentWindow" in source
+    assert "Math.min(MAX_ARTIFACT_HEIGHT" in source
+    assert 'frame.style.height = `${height}px`' in source
+    assert "height: min(74vh, 760px)" not in css
+
+
 def test_ask_normalizes_and_validates_question(client):
     accepted = client.post("/api/ask", json={"question": "  success  ", "locale": "ar"})
     assert accepted.status_code == 202

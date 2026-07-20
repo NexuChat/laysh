@@ -1,0 +1,21 @@
+{
+  "algorithm": "sha256",
+  "contract_version": "1.0",
+  "files": {
+    "server/prompts/generate_module.md": "c7f5b6c25cd9a890a79d26cbf5fe1316c56f89e252936349da741bb1fa9ef91b",
+    "server/prompts/heal_module.md": "5a4872b72223ab893789b39d5442798dcd87dce3a67c94789b8f839494dc0d64",
+    "server/prompts/qa.md": "d080708f7ed5d61427d2439f39c3a0a895aada85c3884f06afb824e48c561dd1",
+    "server/prompts/understand.md": "7b9ecfb29e3b4dd271ad426a9d5c361dc247bcc407185dcb8941c73711ec6f6e",
+    "server/prompts/vision.md": "f88bd83deb10af5cf3f66b7a55893abb242d233e926de9dac178b50297d1c85f",
+    "server/schemas.py": "e89115245ec93033b2ce398726353e2f0d4741022b57d91822cece4758a1aa4a",
+    "server/schemas/module.schema.json": "eaa9c90e2d5a8303ae599519e5ce769fa63473341157322aba3920ca533e769e",
+    "server/schemas/module_fixture.schema.json": "1191f30e60aee78ae02f92440421a3175c63af080ce9d14d3453a8f3f27d447e",
+    "server/schemas/qa.schema.json": "308edb6feb9b19a5cb1adcf803c9128dbab02ff1ab94f0271ce26e46d8e6d754",
+    "server/schemas/understand.schema.json": "dab48c9b9f4720d59dbbf2276449d2bb2bccc761edb45300a04bcf766d4d5733",
+    "server/schemas/verification_report.schema.json": "5fa54e7d4cbe52fe10bc114532fe8fa5085c4cfb21534fb134e333cc95728a81",
+    "server/schemas/vision.schema.json": "2810ee2d56df1d2e891eff511e6f1299b380c5c60934fa5f59ffe8222fc8f748",
+    "sim_shell/contract.js": "06c9037adeb87e135ab03209fbb71d173b57e5a0622133fe46e5c586fd0d70c3"
+  },
+  "freeze_revision": 7,
+  "schema_version": "1.0"
+}

@@ -9,8 +9,8 @@
         observe: "لاحظ ما يتغيّر",
         explain: "فسّر ما رأيت",
         reset: "إعادة الضبط",
-        pause: "إيقاف الحركة",
-        play: "متابعة الحركة",
+        pause: "إيقاف المسح التلقائي",
+        play: "متابعة المسح التلقائي",
         projector: "وضع العرض",
         exitProjector: "إنهاء العرض",
         answerDetails: "اقرأ الجواب الكامل",
@@ -25,8 +25,8 @@
         observe: "Observe what changes",
         explain: "Explain what you saw",
         reset: "Reset",
-        pause: "Pause motion",
-        play: "Resume motion",
+        pause: "Pause auto-sweep",
+        play: "Resume auto-sweep",
         projector: "Projector mode",
         exitProjector: "Exit projector",
         answerDetails: "Read the full answer",
@@ -40,6 +40,11 @@
   const SWEEP_CYCLE_SECONDS = 24;
   const SWEEP_HALF_CYCLE_SECONDS = 10;
   const SETTLE_REDRAW_INTERVAL_MS = 80;
+  const MOBILE_CANVAS_BREAKPOINT = 430;
+  const MOBILE_CANVAS_ASPECT_RATIO = 0.76;
+  const DESKTOP_CANVAS_ASPECT_RATIO = 0.56;
+  const MINIMUM_CANVAS_WIDTH = 280;
+  const MAXIMUM_CANVAS_WIDTH = 720;
   const byId = (id) => document.getElementById(id);
   const canvas = byId("simulation");
   const control = byId("primary-control");
@@ -52,15 +57,18 @@
   const state = {
     value: Number(parameter.default),
     direction: 1,
-    paused: reducedMotion,
+    sweepPaused: reducedMotion,
     interacting: false,
     lastTimestamp: null,
     lastSettleRedraw: 0,
-    elapsedTime: 0,
+    sweepElapsedTime: 0,
+    phenomenonElapsedTime: 0,
   };
   let simulation;
   let frameCount = 0;
   let animationFrameId = 0;
+  let heightReportFrame = 0;
+  let overlayRects = [];
 
   document.body.dataset.direction = dir === "rtl" ? "rtl" : "ltr";
   byId("lesson-label").textContent = labels.lesson;
@@ -118,15 +126,68 @@
     if (window.parent !== window) {
       window.parent.postMessage({ source: "laysh-artifact", type: "ready", version: 1 }, "*");
     }
+    scheduleContentHeightReport();
+  }
+
+  function reportContentHeight() {
+    heightReportFrame = 0;
+    if (window.parent === window || document.body.classList.contains("projector-mode")) return;
+    const scrollHeight = Math.ceil(Math.max(
+      document.documentElement.scrollHeight,
+      document.body.scrollHeight,
+    ));
+    const interactiveUnitBottom = Math.ceil(Math.max(
+      canvas.getBoundingClientRect().bottom,
+      control.getBoundingClientRect().bottom,
+      playPause.getBoundingClientRect().bottom,
+    ) + window.scrollY);
+    window.parent.postMessage(
+      {
+        source: "laysh-artifact",
+        type: "content-height",
+        version: 1,
+        height: scrollHeight,
+        scrollHeight,
+        clientHeight: document.documentElement.clientHeight,
+        interactiveUnitBottom,
+        canvasWidth: canvas.width,
+        canvasHeight: canvas.height,
+      },
+      "*",
+    );
+  }
+
+  function scheduleContentHeightReport() {
+    if (!heightReportFrame) heightReportFrame = requestAnimationFrame(reportContentHeight);
+  }
+
+  function beginOverlayFrame() {
+    overlayRects = [];
+    window.__LAYSH_OVERLAY_RECTS__ = overlayRects;
+  }
+
+  function registerOverlayRect(rect) {
+    if (!rect || ![rect.x, rect.y, rect.width, rect.height].every(Number.isFinite)) return;
+    overlayRects.push({
+      x: Number(rect.x),
+      y: Number(rect.y),
+      width: Math.max(0, Number(rect.width)),
+      height: Math.max(0, Number(rect.height)),
+      role: rect.role === "essential-state" ? "essential-state" : "readout",
+    });
   }
 
   function simulationTime() {
     const verificationTime = Number(window.__LAYSH_VERIFICATION_TIME__);
-    return Number.isFinite(verificationTime) ? verificationTime : state.elapsedTime;
+    return Number.isFinite(verificationTime)
+      ? verificationTime
+      : state.phenomenonElapsedTime;
   }
 
   function update(value, syncControl = true) {
     state.value = Math.max(Number(parameter.min), Math.min(Number(parameter.max), Number(value)));
+    document.documentElement.dataset.parameterValue = String(state.value);
+    beginOverlayFrame();
     simulation.setParameter(parameter.id, state.value, simulationTime());
     if (syncControl) control.value = String(state.value);
     const parameterText = displayValue(state.value);
@@ -135,9 +196,11 @@
   }
 
   function syncPlayback() {
-    playPause.textContent = state.paused ? labels.play : labels.pause;
-    playPause.setAttribute("aria-pressed", String(state.paused));
-    document.documentElement.dataset.motionState = state.paused ? "paused" : "playing";
+    playPause.textContent = state.sweepPaused ? labels.play : labels.pause;
+    playPause.setAttribute("aria-pressed", String(state.sweepPaused));
+    const sweepState = state.sweepPaused ? "paused" : "playing";
+    document.documentElement.dataset.motionState = sweepState;
+    document.documentElement.dataset.sweepState = sweepState;
   }
 
   function advanceParameter(deltaSeconds) {
@@ -167,7 +230,6 @@
   function beginInteraction() {
     state.interacting = true;
     state.lastTimestamp = null;
-    state.elapsedTime = 0;
   }
 
   function endInteraction() {
@@ -185,16 +247,18 @@
   control.addEventListener("blur", endInteraction);
 
   playPause.addEventListener("click", () => {
-    state.paused = !state.paused;
+    state.sweepPaused = !state.sweepPaused;
     state.lastTimestamp = null;
     syncPlayback();
   });
 
   byId("reset").addEventListener("click", () => {
     state.direction = 1;
-    state.paused = reducedMotion;
+    state.sweepPaused = reducedMotion;
     state.interacting = false;
     state.lastTimestamp = null;
+    state.sweepElapsedTime = 0;
+    state.phenomenonElapsedTime = 0;
     update(parameter.default);
     syncPlayback();
   });
@@ -203,6 +267,10 @@
     document.body.classList.toggle("projector-mode", active);
     byId("projector").textContent = active ? labels.exitProjector : labels.projector;
     byId("projector").setAttribute("aria-pressed", String(active));
+    requestAnimationFrame(() => {
+      resize();
+      scheduleContentHeightReport();
+    });
   }
 
   byId("projector").addEventListener("click", async () => {
@@ -217,49 +285,76 @@
   });
   document.addEventListener("fullscreenchange", () => {
     if (!document.fullscreenElement) syncProjectorState(false);
+    else requestAnimationFrame(resize);
   });
 
   function animate(timestamp) {
     if (state.lastTimestamp === null) state.lastTimestamp = timestamp;
     const deltaSeconds = Math.min(0.1, Math.max(0, timestamp - state.lastTimestamp) / 1000);
     state.lastTimestamp = timestamp;
-    if (!state.paused) {
-      state.elapsedTime += deltaSeconds;
-      if (!state.interacting) {
-        advanceParameter(deltaSeconds);
-      } else {
-        update(state.value);
-      }
+    if (!reducedMotion) state.phenomenonElapsedTime += deltaSeconds;
+    document.documentElement.dataset.phenomenonTime = String(state.phenomenonElapsedTime);
+    if (!state.sweepPaused && !state.interacting) {
+      state.sweepElapsedTime += deltaSeconds;
+      advanceParameter(deltaSeconds);
+    } else if (!reducedMotion) {
+      update(state.value);
     } else if (timestamp - state.lastSettleRedraw >= SETTLE_REDRAW_INTERVAL_MS) {
       state.lastSettleRedraw = timestamp;
+      beginOverlayFrame();
       simulation.setParameter(parameter.id, state.value, simulationTime());
     }
     animationFrameId = requestAnimationFrame(animate);
   }
 
+  function responsiveCanvasSize() {
+    const width = Math.max(
+      MINIMUM_CANVAS_WIDTH,
+      Math.min(MAXIMUM_CANVAS_WIDTH, Math.round(canvas.clientWidth || MAXIMUM_CANVAS_WIDTH)),
+    );
+    const ratio = width < MOBILE_CANVAS_BREAKPOINT
+      ? MOBILE_CANVAS_ASPECT_RATIO
+      : DESKTOP_CANVAS_ASPECT_RATIO;
+    return { width, height: Math.round(width * ratio) };
+  }
+
   function resize() {
-    const width = Math.max(280, Math.min(720, canvas.clientWidth || 720));
-    const height = Math.round(width * 0.56);
-    canvas.width = width;
-    canvas.height = height;
-    simulation.resize(width, height);
+    const size = responsiveCanvasSize();
+    if (canvas.width === size.width && canvas.height === size.height) {
+      scheduleContentHeightReport();
+      return;
+    }
+    canvas.width = size.width;
+    canvas.height = size.height;
+    if (simulation) {
+      beginOverlayFrame();
+      simulation.resize(size.width, size.height);
+    }
+    scheduleContentHeightReport();
   }
 
   try {
     simulation = window.LayshContract.assertSimulation(window.LayshSimulation);
+    const initialSize = responsiveCanvasSize();
+    canvas.width = initialSize.width;
+    canvas.height = initialSize.height;
+    beginOverlayFrame();
     simulation.init({
       canvas,
       context: canvas.getContext("2d"),
-      width: canvas.width,
-      height: canvas.height,
+      width: initialSize.width,
+      height: initialSize.height,
       locale: lesson.lang,
       reducedMotion,
       emitFrame,
+      registerOverlayRect,
     });
     update(parameter.default);
     syncPlayback();
     animationFrameId = requestAnimationFrame(animate);
     window.addEventListener("resize", resize, { passive: true });
+    new ResizeObserver(scheduleContentHeightReport).observe(byId("lesson"));
+    scheduleContentHeightReport();
     window.addEventListener("pagehide", () => {
       cancelAnimationFrame(animationFrameId);
       simulation.destroy();

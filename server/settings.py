@@ -21,8 +21,10 @@ class Settings:
     evidence_job_timeout_seconds: float = 600.0
     public_stage_timeout_seconds: float = 90.0
     evidence_stage_timeout_seconds: float = 300.0
-    public_qa_timeout_seconds: float = 45.0
+    public_qa_timeout_seconds: float = 25.0
     evidence_qa_timeout_seconds: float = 120.0
+    public_heal_timeout_seconds: float = 55.0
+    evidence_heal_timeout_seconds: float = 120.0
     cache_key_secret: str = ""
     live_cache_root: str = ""
     max_live_lessons: int = 100
@@ -54,6 +56,8 @@ class Settings:
             self.evidence_stage_timeout_seconds,
             self.public_qa_timeout_seconds,
             self.evidence_qa_timeout_seconds,
+            self.public_heal_timeout_seconds,
+            self.evidence_heal_timeout_seconds,
         )
         if any(value <= 0 for value in timeout_values):
             raise ValueError("timeout profile values must be positive")
@@ -115,6 +119,18 @@ class Settings:
                 os.getenv(
                     "LAYSH_EVIDENCE_QA_TIMEOUT_SECONDS",
                     str(defaults.evidence_qa_timeout_seconds),
+                )
+            ),
+            public_heal_timeout_seconds=float(
+                os.getenv(
+                    "LAYSH_PUBLIC_HEAL_TIMEOUT_SECONDS",
+                    str(defaults.public_heal_timeout_seconds),
+                )
+            ),
+            evidence_heal_timeout_seconds=float(
+                os.getenv(
+                    "LAYSH_EVIDENCE_HEAL_TIMEOUT_SECONDS",
+                    str(defaults.evidence_heal_timeout_seconds),
                 )
             ),
             cache_key_secret=os.getenv("LAYSH_CACHE_KEY_SECRET", defaults.cache_key_secret),

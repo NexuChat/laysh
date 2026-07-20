@@ -77,8 +77,48 @@ def test_slider_is_always_free_and_shell_owns_play_pause_and_parameter_sweep():
     assert "state.interacting" in shell_js
     assert 'addEventListener("pointerdown"' in shell_js
     assert 'addEventListener("pointerup"' in shell_js
-    assert "إيقاف الحركة" in shell_js and "متابعة الحركة" in shell_js
+    assert "إيقاف المسح التلقائي" in shell_js
+    assert "متابعة المسح التلقائي" in shell_js
+    assert "Pause auto-sweep" in shell_js and "Resume auto-sweep" in shell_js
     assert "prediction" not in shell_css
+
+
+def test_shell_advances_phenomenon_clock_independently_of_paused_sweep():
+    shell_js = (ROOT / "sim_shell" / "shell.js").read_text(encoding="utf-8")
+
+    assert "sweepPaused: reducedMotion" in shell_js
+    assert "sweepElapsedTime: 0" in shell_js
+    assert "phenomenonElapsedTime: 0" in shell_js
+    assert "state.phenomenonElapsedTime += deltaSeconds" in shell_js
+    assert "if (!state.sweepPaused && !state.interacting)" in shell_js
+    assert ": state.phenomenonElapsedTime;" in shell_js
+    assert (
+        "function beginInteraction() {\n"
+        "    state.interacting = true;\n"
+        "    state.lastTimestamp = null;\n"
+        "  }"
+    ) in shell_js
+
+
+def test_shell_uses_a_taller_mobile_canvas_and_reports_resizes_to_the_module():
+    shell_js = (ROOT / "sim_shell" / "shell.js").read_text(encoding="utf-8")
+
+    assert "MOBILE_CANVAS_BREAKPOINT = 430" in shell_js
+    assert "MOBILE_CANVAS_ASPECT_RATIO = 0.76" in shell_js
+    assert "DESKTOP_CANVAS_ASPECT_RATIO = 0.56" in shell_js
+    assert "function responsiveCanvasSize" in shell_js
+    assert "const initialSize = responsiveCanvasSize();" in shell_js
+    assert "width: initialSize.width" in shell_js
+    assert "height: initialSize.height" in shell_js
+    assert "simulation.resize(size.width, size.height);" in shell_js
+
+
+def test_shell_reports_content_height_over_the_existing_parent_channel():
+    shell_js = (ROOT / "sim_shell" / "shell.js").read_text(encoding="utf-8")
+
+    assert 'type: "content-height"' in shell_js
+    assert "document.documentElement.scrollHeight" in shell_js
+    assert "new ResizeObserver" in shell_js
 
 
 @pytest.mark.parametrize(
@@ -129,7 +169,7 @@ def test_hand_authored_module_passes_source_and_node_contract_checks():
     from server.verify import verify_module_source, verify_module_with_node
 
     source = FIXTURE_MODULE.read_text(encoding="utf-8")
-    assert verify_module_source(source)["source_size_bytes"] < 96 * 1024
+    assert verify_module_source(source)["source_size_bytes"] < 40 * 1024
     report = verify_module_with_node(source, VALID_UNDERSTANDING)
     assert report["passed"] is True
     assert report["fixture_count"] == 3

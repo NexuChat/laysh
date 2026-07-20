@@ -33,13 +33,13 @@ SCREENSHOT_ROOT = ROOT / "out" / "evidence" / "screens" / "goldens"
 CANDIDATE_ROOT = ROOT / "out" / "tmp" / "goldens"
 VISION_CACHE_PATH = ROOT / "out" / "tmp" / "model-driven-vision-cache.json"
 VISION_JUDGMENT_REVISION = {
-    "rotates": 2,
-    "oscillates": 3,
-    "orbits": 1,
-    "propagates": 2,
-    "flows": 3,
-    "floats_sinks": 1,
-    "phases": 2,
+    "rotates": 3,
+    "oscillates": 4,
+    "orbits": 2,
+    "propagates": 3,
+    "flows": 4,
+    "floats_sinks": 2,
+    "phases": 3,
 }
 
 
@@ -514,6 +514,446 @@ def _circuit(source: str) -> str:
     )
 
 
+def _phenomenon_clock_upgrade(base: str, source: str) -> str:
+    if "Laysh phenomenon-clock contract r1" in source:
+        return source
+    source = source.replace(
+        "  'use strict';",
+        "  'use strict';\n  // Laysh phenomenon-clock contract r1",
+        1,
+    ) if "  'use strict';" in source else source.replace(
+        '  "use strict";',
+        '  "use strict";\n  // Laysh phenomenon-clock contract r1',
+        1,
+    ) if '  "use strict";' in source else source.replace(
+        "window.LayshSimulation = (function () {",
+        "window.LayshSimulation = (function () {\n  // Laysh phenomenon-clock contract r1",
+        1,
+    )
+    if base == "pendulum":
+        return _replace(
+            source,
+            "    var amplitude = 8 * Math.PI / 180;",
+            "    var amplitude = 12 * Math.PI / 180;",
+            "pendulum legible physical amplitude",
+        )
+    if base == "day_night":
+        source = _replace(
+            source,
+            "  var visualPhase = 0;",
+            "  var visualPhase = 0;\n  var phenomenonTimeSeconds = 0;",
+            "day-night phenomenon clock",
+        )
+        source = _replace(
+            source,
+            "    var theta = model.angleRad;",
+            "    var theta = model.angleRad + phenomenonTimeSeconds * Math.PI * 2 / 10;",
+            "day-night legible rotation",
+        )
+        source = _replace(
+            source,
+            "earthR * 0.19 * Math.max(0.18, visibility), earthR * 0.13,",
+            "earthR * 0.30 * Math.max(0.18, visibility), earthR * 0.20,",
+            "day-night legible surface feature",
+        )
+        source = _replace(
+            source,
+            "Math.max(5, earthR * 0.065)",
+            "Math.max(7, earthR * 0.11)",
+            "day-night legible tracked feature",
+        )
+        source = _replace(
+            source,
+            "    visualPhase = 0;\n    draw(false);",
+            "    visualPhase = 0;\n    phenomenonTimeSeconds = 0;\n    draw(false);",
+            "day-night init clock",
+        )
+        source = _replace(
+            source,
+            "  function setParameter(name, value) {",
+            "  function setParameter(name, value, shellPhenomenonTimeSeconds) {",
+            "day-night time signature",
+        )
+        return _replace(
+            source,
+            "    rotationDeg = next;\n    if (reducedMotion) displayedDeg = rotationDeg;",
+            "    rotationDeg = next;\n"
+            "    if (Number.isFinite(Number(shellPhenomenonTimeSeconds))) {\n"
+            "      phenomenonTimeSeconds = Math.max(0, Number(shellPhenomenonTimeSeconds));\n"
+            "    }\n"
+            "    if (reducedMotion) displayedDeg = rotationDeg;",
+            "day-night clock update",
+        )
+    if base == "moon_phases":
+        source = _replace(
+            source,
+            "  var angleDeg = 90;",
+            "  var angleDeg = 90;\n  var phenomenonTimeSeconds = 0;",
+            "moon phenomenon clock",
+        )
+        source = _replace(
+            source,
+            "    var a = phase(angleDeg) * Math.PI / 180;",
+            "    var a = phase(angleDeg + phenomenonTimeSeconds * 360 / 12) * Math.PI / 180;",
+            "moon legible orbit",
+        )
+        source = _replace(
+            source,
+            "    angleDeg = 90;\n    draw();",
+            "    angleDeg = 90;\n    phenomenonTimeSeconds = 0;\n    draw();",
+            "moon init clock",
+        )
+        source = _replace(
+            source,
+            "  function setParameter(name, value) {",
+            "  function setParameter(name, value, shellPhenomenonTimeSeconds) {",
+            "moon time signature",
+        )
+        return _replace(
+            source,
+            "      angleDeg = phase(value);\n      draw();",
+            "      angleDeg = phase(value);\n"
+            "      if (Number.isFinite(Number(shellPhenomenonTimeSeconds))) {\n"
+            "        phenomenonTimeSeconds = Math.max(0, Number(shellPhenomenonTimeSeconds));\n"
+            "      }\n"
+            "      draw();",
+            "moon clock update",
+        )
+    if base == "buoyancy":
+        source = _replace(
+            source,
+            "  var visualPhase = 0;",
+            "  var visualPhase = 0;\n  var phenomenonTimeSeconds = 0;",
+            "buoyancy phenomenon clock",
+        )
+        source = _replace(
+            source,
+            "    var phase = reducedMotion ? 0 : visualPhase;",
+            "    var phase = reducedMotion ? 0 : phenomenonTimeSeconds * Math.PI * 2 / 2.4;",
+            "buoyancy physical bob phase",
+        )
+        source = _replace(
+            source,
+            "    } else {\n      bodyY = waterY;\n    }",
+            "    } else {\n      bodyY = waterY;\n    }\n"
+            "    if (fraction >= 0.98) {\n"
+            "      bodyY += Math.min(7, bodySize * 0.06);\n"
+            "    }",
+            "buoyancy legible bob",
+        )
+        source = _replace(
+            source,
+            "      visualPhase = 0;\n      safeDraw();",
+            "      visualPhase = 0;\n      phenomenonTimeSeconds = 0;\n      safeDraw();",
+            "buoyancy init clock",
+        )
+        source = _replace(
+            source,
+            "    setParameter: function (name, value) {",
+            "    setParameter: function (name, value, shellPhenomenonTimeSeconds) {",
+            "buoyancy time signature",
+        )
+        return _replace(
+            source,
+            "      density = next;\n      redraw(changed);",
+            "      density = next;\n"
+            "      if (Number.isFinite(Number(shellPhenomenonTimeSeconds))) {\n"
+            "        phenomenonTimeSeconds = Math.max(0, Number(shellPhenomenonTimeSeconds));\n"
+            "      }\n"
+            "      redraw(changed);",
+            "buoyancy clock update",
+        )
+    if base == "sound_pitch":
+        return _replace(
+            source,
+            "    context.restore();\n\n    var lambdaPixels = waveW / cycles;",
+            "    context.restore();\n\n"
+            "    var packetProgress = (timeSeconds * 0.12) % 1;\n"
+            "    var packetX = startX + packetProgress * waveW;\n"
+            "    var packetT = (packetX - startX) / waveW;\n"
+            "    var packetEnvelope = Math.sin(Math.PI * Math.min(1, packetT * 1.12));\n"
+            "    var packetY = cy + Math.sin(packetT * Math.PI * 2 * cycles - phaseShift) "
+            "* amp * packetEnvelope;\n"
+            "    context.fillStyle = \"rgb(103,232,249)\";\n"
+            "    context.beginPath();\n"
+            "    context.arc(packetX, packetY, Math.max(6, amp * 0.13), 0, Math.PI * 2);\n"
+            "    context.fill();\n\n"
+            "    var lambdaPixels = waveW / cycles;",
+            "sound legible physical wave packet",
+        )
+    if base == "simple_circuit":
+        return source
+    raise ValueError(f"unsupported phenomenon-clock module: {base}")
+
+
+def _overlay_safe_band(base: str, source: str) -> str:
+    marker = "registerOverlayRect = function () {};"
+    if marker in source:
+        return source
+    if base == "buoyancy":
+        source = _replace(
+            source,
+            "      bodyY = waterY + (height - waterY - bodySize - 24 * scale) * "
+            "clamp((d - 1000) / 250, 0, 1);",
+            "      bodyY = waterY;",
+            "buoyancy single-source submerged position",
+        )
+        source = _replace(
+            source,
+            "  var emitFrame = null;",
+            "  var emitFrame = null;\n  var registerOverlayRect = function () {};",
+            "buoyancy overlay callback",
+        )
+        source = _replace(
+            source,
+            "  function chip(x, y, w, h, text, accent) {\n    context.save();",
+            "  function chip(x, y, w, h, text, accent, role) {\n"
+            "    if (width < 420) return;\n"
+            "    registerOverlayRect({x: x, y: y, width: w, height: h, "
+            "role: role || 'readout'});\n"
+            "    context.save();",
+            "buoyancy registered chip",
+        )
+        source = _replace(
+            source,
+            "    var chipW = Math.min(width * 0.42, 220);\n"
+            "    var chipX = clamp(bodyX + bodySize + 18, 12, width - chipW - 12);\n"
+            "    var chipY = clamp(bodyY + bodySize * 0.14, 14, height - 126);\n"
+            "    chip(chipX, chipY, chipW, 38, densityText, 'rgba(120,225,236,0.50)');\n"
+            "    chip(chipX, chipY + 44, chipW, 38, fractionText, 'rgba(120,225,236,0.50)');\n"
+            "    chip(chipX, chipY + 88, chipW, 34, status, "
+            "floats ? 'rgba(116,240,185,0.66)' : 'rgba(255,151,112,0.68)');",
+            "    var chipGap = 8;\n"
+            "    var chipW = Math.min(220, (width - 24 - chipGap * 2) / 3);\n"
+            "    var chipX = (width - chipW * 3 - chipGap * 2) / 2;\n"
+            "    var chipY = 12;\n"
+            "    chip(chipX, chipY, chipW, 38, densityText, 'rgba(120,225,236,0.50)');\n"
+            "    chip(chipX + chipW + chipGap, chipY, chipW, 38, fractionText, "
+            "'rgba(120,225,236,0.50)');\n"
+            "    chip(chipX + (chipW + chipGap) * 2, chipY, chipW, 38, status, "
+            "floats ? 'rgba(116,240,185,0.66)' : 'rgba(255,151,112,0.68)', "
+            "'essential-state');",
+            "buoyancy top safe band",
+        )
+        return _replace(
+            source,
+            "      emitFrame = typeof options.emitFrame === 'function' ? options.emitFrame : null;",
+            "      emitFrame = typeof options.emitFrame === 'function' ? "
+            "options.emitFrame : null;\n"
+            "      registerOverlayRect = typeof options.registerOverlayRect === 'function' "
+            "? options.registerOverlayRect : function () {};",
+            "buoyancy init overlay callback",
+        )
+    if base == "day_night":
+        source = _replace(
+            source,
+            "    var markerX = earthX + Math.sin(theta) * earthR * 0.88;",
+            "    var markerX = earthX - Math.sin(theta) * earthR * 0.88;",
+            "day-night location marker illuminated hemisphere",
+        )
+        source = _replace(
+            source,
+            "  var emitFrame = null;",
+            "  var emitFrame = null;\n  var registerOverlayRect = function () {};",
+            "day-night overlay callback",
+        )
+        source = _replace(
+            source,
+            "    var chipW = Math.max(174, Math.min(238 * scale, w * 0.4));",
+            "    if (w < 420) return;\n"
+            "    var chipW = Math.max(174, Math.min(238 * scale, w * 0.4));",
+            "day-night mobile label collapse",
+        )
+        source = _replace(
+            source,
+            "    var chipY = Math.min(h - chipH - 14, earthY + earthR + 22 * scale);\n"
+            "    roundedRect(chipX, chipY, chipW, chipH, Math.max(12, 16 * scale));",
+            "    var chipY = h - chipH - 14;\n"
+            "    registerOverlayRect({x: chipX, y: chipY, width: chipW, height: chipH, "
+            "role: 'essential-state'});\n"
+            "    roundedRect(chipX, chipY, chipW, chipH, Math.max(12, 16 * scale));",
+            "day-night bottom safe band",
+        )
+        return _replace(
+            source,
+            "    emitFrame = typeof options.emitFrame === \"function\" ? options.emitFrame : null;",
+            "    emitFrame = typeof options.emitFrame === \"function\" ? "
+            "options.emitFrame : null;\n"
+            "    registerOverlayRect = typeof options.registerOverlayRect === \"function\" "
+            "? options.registerOverlayRect : function () {};",
+            "day-night init overlay callback",
+        )
+    if base == "moon_phases":
+        source = _replace(
+            source,
+            "  var emitFrame = function () {};",
+            "  var emitFrame = function () {};\n  var registerOverlayRect = function () {};",
+            "moon overlay callback",
+        )
+        source = _replace(
+            source,
+            "  function text(value, x, y, size, align, color, weight) {\n"
+            "    if (typeof ctx.fillText !== 'function') return;",
+            "  function text(value, x, y, size, align, color, weight) {\n"
+            "    if (width < 420 || typeof ctx.fillText !== 'function') return;",
+            "moon mobile label collapse",
+        )
+        source = _replace(
+            source,
+            "  function chip(x, y, w, h, title, value, fill) {\n    var rtl = arabic();",
+            "  function chip(x, y, w, h, title, value, fill) {\n"
+            "    if (width < 420) return;\n"
+            "    registerOverlayRect({x: x, y: y, width: w, height: h, role: 'readout'});\n"
+            "    var rtl = arabic();",
+            "moon registered chip",
+        )
+        source = _replace(
+            source,
+            "    var fractionY = Math.min(height - fractionH - 45, cy + radius + 18);",
+            "    var fractionY = 12;",
+            "moon fraction top safe band",
+        )
+        source = _replace(
+            source,
+            "    chip(Math.max(12, Math.min(width - angleW - 12, width * 0.025)), "
+            "Math.min(height - angleH - 44, height * 0.79), angleW, angleH,",
+            "    chip(12, 12, angleW, angleH,",
+            "moon angle top safe band",
+        )
+        return _replace(
+            source,
+            "    emitFrame = typeof options.emitFrame === 'function' ? "
+            "options.emitFrame : function () {};",
+            "    emitFrame = typeof options.emitFrame === 'function' ? "
+            "options.emitFrame : function () {};\n"
+            "    registerOverlayRect = typeof options.registerOverlayRect === 'function' "
+            "? options.registerOverlayRect : function () {};",
+            "moon init overlay callback",
+        )
+    if base == "pendulum":
+        source = _replace(
+            source,
+            "  var emitFrame = null;",
+            "  var emitFrame = null;\n  var registerOverlayRect = function () {};",
+            "pendulum overlay callback",
+        )
+        source = _replace(
+            source,
+            "  function chip(x, y, w, h, title, value, accent) {\n    context.save();",
+            "  function chip(x, y, w, h, title, value, accent) {\n"
+            "    if (width < 420) return;\n"
+            "    registerOverlayRect({x: x, y: y, width: w, height: h, role: 'readout'});\n"
+            "    context.save();",
+            "pendulum registered chip",
+        )
+        source = _replace(
+            source,
+            "      if (tick === 9) {",
+            "      if (tick === 9 && width >= 420) {",
+            "pendulum mobile ruler label collapse",
+        )
+        source = _replace(
+            source,
+            "    var chipX = clamp(bobX + bobRadius + 13, 10, width - chipW - 10);\n"
+            "    var chipY = clamp(bobY - chipH * 0.5, 10, height - chipH - 10);",
+            "    var chipX = width - chipW - 12;\n    var chipY = 12;",
+            "pendulum period top safe band",
+        )
+        return _replace(
+            source,
+            "      emitFrame = typeof options.emitFrame === \"function\" ? "
+            "options.emitFrame : null;",
+            "      emitFrame = typeof options.emitFrame === \"function\" ? "
+            "options.emitFrame : null;\n"
+            "      registerOverlayRect = typeof options.registerOverlayRect === \"function\" "
+            "? options.registerOverlayRect : function () {};",
+            "pendulum init overlay callback",
+        )
+    if base == "sound_pitch":
+        source = _replace(
+            source,
+            "  var locale = \"ar\", reducedMotion = false, emitFrame = null;",
+            "  var locale = \"ar\", reducedMotion = false, emitFrame = null;\n"
+            "  var registerOverlayRect = function () {};",
+            "sound overlay callback",
+        )
+        source = _replace(
+            source,
+            "  function chip(x, y, w, label, value, accent) {\n    context.save();",
+            "  function chip(x, y, w, label, value, accent) {\n"
+            "    if (width < 420) return;\n"
+            "    registerOverlayRect({x: x, y: y, width: w, height: 48, role: 'readout'});\n"
+            "    context.save();",
+            "sound registered chip",
+        )
+        source = _replace(
+            source,
+            "    context.fillText(\"λ\", bx + lambdaPixels / 2, by - 10);",
+            "    if (w >= 420) context.fillText(\"λ\", bx + lambdaPixels / 2, by - 10);",
+            "sound mobile wavelength label collapse",
+        )
+        source = _replace(
+            source,
+            "    context.fillText(\"سرعة الصوت ثابتة: 343 m/s  ·  "
+            "التردد يغيّر الحدّة لا الشدة\", w / 2, Math.min(h - 15, floorY + 27));",
+            "    if (w >= 420) context.fillText(\"سرعة الصوت ثابتة: 343 m/s  ·  "
+            "التردد يغيّر الحدّة لا الشدة\", w / 2, "
+            "Math.min(h - 15, floorY + 27));",
+            "sound Arabic mobile footer collapse",
+        ) if "سرعة الصوت ثابتة" in source else _replace(
+            source,
+            "    context.fillText(\"Sound speed is fixed: 343 m/s  ·  "
+            "frequency changes pitch, not loudness\", w / 2, "
+            "Math.min(h - 15, floorY + 27));",
+            "    if (w >= 420) context.fillText(\"Sound speed is fixed: 343 m/s  ·  "
+            "frequency changes pitch, not loudness\", w / 2, "
+            "Math.min(h - 15, floorY + 27));",
+            "sound English mobile footer collapse",
+        )
+        return _replace(
+            source,
+            "      emitFrame = options.emitFrame;",
+            "      emitFrame = options.emitFrame;\n"
+            "      registerOverlayRect = typeof options.registerOverlayRect === \"function\" "
+            "? options.registerOverlayRect : function () {};",
+            "sound init overlay callback",
+        )
+    if base == "simple_circuit":
+        source = _replace(
+            source,
+            "  var emitFrame = function () {};",
+            "  var emitFrame = function () {};\n  var registerOverlayRect = function () {};",
+            "circuit overlay callback",
+        )
+        source = _replace(
+            source,
+            "  function label(text, x, y, size, color, align) {",
+            "  function label(text, x, y, size, color, align) {\n"
+            "    if (width < 420) return;",
+            "circuit mobile label collapse",
+        )
+        source = _replace(
+            source,
+            "  function chip(x, y, w, h, top, bottom, accent) {\n    call(\"save\");",
+            "  function chip(x, y, w, h, top, bottom, accent) {\n"
+            "    if (width < 420) return;\n"
+            "    registerOverlayRect({x: x, y: y, width: w, height: h, role: 'readout'});\n"
+            "    call(\"save\");",
+            "circuit registered chip",
+        )
+        return _replace(
+            source,
+            "    emitFrame = typeof options.emitFrame === \"function\" ? "
+            "options.emitFrame : function () {};",
+            "    emitFrame = typeof options.emitFrame === \"function\" ? "
+            "options.emitFrame : function () {};\n"
+            "    registerOverlayRect = typeof options.registerOverlayRect === \"function\" "
+            "? options.registerOverlayRect : function () {};",
+            "circuit init overlay callback",
+        )
+    raise ValueError(f"unsupported overlay safe-band module: {base}")
+
+
 def rederive_module(golden_id: str, source: str) -> str:
     base = golden_id.removesuffix("_en")
     derived_markers = {
@@ -524,8 +964,6 @@ def rederive_module(golden_id: str, source: str) -> str:
         "sound_pitch": "var phaseShift = 2 * Math.PI * timeSeconds",
         "simple_circuit": "var phase = timeSeconds * current * 0.30;",
     }
-    if derived_markers[base] in source:
-        return source
     transforms = {
         "pendulum": _pendulum,
         "day_night": _day_night,
@@ -534,7 +972,10 @@ def rederive_module(golden_id: str, source: str) -> str:
         "sound_pitch": _sound,
         "simple_circuit": _circuit,
     }
-    return transforms[base](source)
+    if derived_markers[base] not in source:
+        source = transforms[base](source)
+    source = _overlay_safe_band(base, source)
+    return _phenomenon_clock_upgrade(base, source)
 
 
 def load_rederived(golden_id: str) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -571,8 +1012,8 @@ async def _semantic_vision(
     fixture_id: str,
     frame_states: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    if len(frames) != 3:
-        raise ValueError(f"{fixture_id}: browser gate did not capture three vision frames")
+    if len(frames) != 5:
+        raise ValueError(f"{fixture_id}: browser gate did not capture five vision frames")
     with tempfile.TemporaryDirectory(prefix="laysh-curated-vision-") as temporary:
         image_paths = []
         for index, frame in enumerate(frames, start=1):
@@ -694,7 +1135,9 @@ async def verify_rederived(*, run_vision: bool) -> list[dict[str, Any]]:
             vision = {
                 "actor_visible": True,
                 "action_performed": True,
+                "paused_action_performed": True,
                 "physically_consistent": True,
+                "labels_obscure_subject": False,
                 "defects": [],
             }
         elif vision_key in vision_cache:
@@ -754,6 +1197,36 @@ def _public_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
                 "deterministic_check_count": result["deterministic"]["check_count"],
                 "browser_check_count": result["browser"]["check_count"],
                 "actor_tracking": result["browser"]["evidence"]["actorTracking"],
+                "paused_actor_tracking": result["browser"]["evidence"][
+                    "pausedActorTracking"
+                ],
+                "motion_measurements": {
+                    "playing": {
+                        "subject_changed_pixel_ratio": result["browser"]["evidence"][
+                            "idleMotionSubjectChangedPixelRatio"
+                        ],
+                        "whole_canvas_changed_pixel_ratio": result["browser"][
+                            "evidence"
+                        ]["idleMotionWholeCanvasChangedPixelRatio"],
+                        "capture_interval_ms": result["browser"]["evidence"][
+                            "idleMotionCaptureIntervalMs"
+                        ],
+                    },
+                    "paused_auto_sweep": {
+                        "subject_changed_pixel_ratio": result["browser"]["evidence"][
+                            "pausedMotionSubjectChangedPixelRatio"
+                        ],
+                        "whole_canvas_changed_pixel_ratio": result["browser"][
+                            "evidence"
+                        ]["pausedMotionWholeCanvasChangedPixelRatio"],
+                        "capture_interval_ms": result["browser"]["evidence"][
+                            "pausedMotionCaptureIntervalMs"
+                        ],
+                    },
+                },
+                "mobile_overlay_layout": result["browser"]["evidence"][
+                    "mobileOverlayLayout"
+                ],
                 "vision": result["vision"],
             }
             for result in results

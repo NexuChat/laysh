@@ -91,6 +91,96 @@ def test_relation_contradiction_after_passing_numeric_checks_is_suspect_fixture(
     }
 
 
+def test_signed_relation_crossing_zero_checks_order_without_an_invalid_ratio():
+    from server.verify import verify_candidate
+
+    understanding = deepcopy(VALID_UNDERSTANDING)
+    understanding["actor"]["tracking_output"] = None
+    understanding["module_spec"] = {"outputs": ["solar_declination_deg"]}
+    understanding["checks"] = [
+        {
+            "id": "southern_solstice",
+            "kind": "numeric",
+            "inputs": [{"name": "angle_deg", "value": 270}],
+            "output": "solar_declination_deg",
+            "expected": -23.5,
+            "tolerance": 0.01,
+            "unit": "deg",
+        },
+        {
+            "id": "northern_solstice",
+            "kind": "numeric",
+            "inputs": [{"name": "angle_deg", "value": 90}],
+            "output": "solar_declination_deg",
+            "expected": 23.5,
+            "tolerance": 0.01,
+            "unit": "deg",
+        },
+        {
+            "id": "south_to_north",
+            "kind": "relation",
+            "left_inputs": [{"name": "angle_deg", "value": 270}],
+            "right_inputs": [{"name": "angle_deg", "value": 90}],
+            "output": "solar_declination_deg",
+            "relation": "right_gt_left",
+            "minimum_ratio": 2,
+        },
+    ]
+    source = GOOD_MODULE_OUTPUT["module_js"].replace(
+        "return { lit_fraction: litFraction(Number(inputs.angle_deg)) };",
+        "return { solar_declination_deg: Number(inputs.angle_deg) === 270 ? -23.5 : 23.5 };",
+    )
+    output = {
+        **GOOD_MODULE_OUTPUT,
+        "module_js": source,
+        "output_names": ["solar_declination_deg"],
+    }
+
+    result = verify_candidate(output, understanding)
+
+    assert result.passed is True
+
+
+def test_deterministic_runtime_supplies_the_trusted_overlay_registration_callback():
+    from server.verify import verify_candidate
+
+    source = GOOD_MODULE_OUTPUT["module_js"].replace(
+        "({ canvas, context, width, height, emitFrame } = options);",
+        "({ canvas, context, width, height, emitFrame } = options);\n"
+        '      options.registerOverlayRect({x: 0, y: 0, width: 10, height: 10, role: "readout"});',
+    )
+
+    result = verify_candidate(
+        {**GOOD_MODULE_OUTPUT, "module_js": source},
+        VALID_UNDERSTANDING,
+    )
+
+    assert result.passed is True
+
+
+def test_deterministic_runtime_supports_standard_canvas_gradients_and_rounded_paths():
+    from server.verify import verify_candidate
+
+    source = GOOD_MODULE_OUTPUT["module_js"].replace(
+        "({ canvas, context, width, height, emitFrame } = options);",
+        "({ canvas, context, width, height, emitFrame } = options);\n"
+        "      const gradient = context.createLinearGradient(0, 0, width, height);\n"
+        '      gradient.addColorStop(0, "#000");\n'
+        '      gradient.addColorStop(1, "#fff");\n'
+        "      context.beginPath();\n"
+        "      context.roundRect(0, 0, 20, 20, 4);\n"
+        "      context.fillStyle = gradient;\n"
+        "      context.fill();",
+    )
+
+    result = verify_candidate(
+        {**GOOD_MODULE_OUTPUT, "module_js": source},
+        VALID_UNDERSTANDING,
+    )
+
+    assert result.passed is True
+
+
 def test_security_failure_names_the_forbidden_capability_without_echoing_source():
     from server.verify import verify_candidate
 
@@ -233,9 +323,10 @@ def test_runtime_init_failure_reports_exact_trusted_option_names():
         "width",
         "height",
         "locale",
-        "reducedMotion",
-        "emitFrame",
-    ]
+            "reducedMotion",
+            "emitFrame",
+            "registerOverlayRect",
+        ]
     assert failure["actual"] == {"error_type": "TypeError"}
 
 

@@ -151,8 +151,10 @@ class EnglishGoldenBackend:
                 "scene_depth": approved,
                 "physical_light": approved,
                 "idle_motion": approved,
+                "paused_phenomenon_motion": approved,
                 "reactive_feedback": approved,
                 "readable_overlays": approved,
+                "overlay_safe_band": approved,
             },
         }
 
@@ -161,7 +163,9 @@ class EnglishGoldenBackend:
         return {
             "actor_visible": True,
             "action_performed": True,
+            "paused_action_performed": True,
             "physically_consistent": True,
+            "labels_obscure_subject": False,
             "defects": [],
         }
 

@@ -1,0 +1,449 @@
+{
+  "schema_version": "1.0",
+  "phase": "after",
+  "runtime_mode": "public_ephemeral",
+  "job_timeout_seconds": 180.0,
+  "case_count": 3,
+  "success_count": 0,
+  "success_rate": 0.0,
+  "results": [
+    {
+      "case_id": "rainbow_refraction_ar",
+      "locale": "ar",
+      "status": "answer_only",
+      "fallback_reason": "verification_exhausted",
+      "total_elapsed_ms": 136505,
+      "first_answer_ms": 25913,
+      "heal_count": 1,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "safe_science_explanation",
+        "domain": "optics",
+        "canonical_intent": "explain_rainbow_formation_after_rain",
+        "actor_id": "sunlight_ray",
+        "action": "responds",
+        "fixture_count": 3,
+        "primary_parameter_id": "wavelength_nm",
+        "tracking_output": "deviation_angle_deg",
+        "contract_failures": []
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 25912,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 62910,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 43
+        },
+        {
+          "stage": "heal_1",
+          "elapsed_ms": 37334,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 68
+        },
+        {
+          "stage": "browser_verify",
+          "elapsed_ms": 10233
+        }
+      ],
+      "verification_attempts": [
+        {
+          "attempt": 0,
+          "gate_phase": "deterministic",
+          "passed": false,
+          "check_count": 13,
+          "failures": [
+            {
+              "gate": "invariant",
+              "code": "numeric_fixture_mismatch",
+              "expected": {
+                "output": "deviation_angle_deg",
+                "value": 40.5,
+                "tolerance": 0.2
+              },
+              "actual": {
+                "output": "deviation_angle_deg",
+                "value": 42
+              },
+              "fixture_id": "violet_deviation",
+              "inputs": [
+                {
+                  "name": "wavelength_nm",
+                  "value": 400
+                }
+              ]
+            },
+            {
+              "gate": "invariant",
+              "code": "numeric_fixture_mismatch",
+              "expected": {
+                "output": "deviation_angle_deg",
+                "value": 43.5,
+                "tolerance": 0.2
+              },
+              "actual": {
+                "output": "deviation_angle_deg",
+                "value": 42
+              },
+              "fixture_id": "red_deviation",
+              "inputs": [
+                {
+                  "name": "wavelength_nm",
+                  "value": 700
+                }
+              ]
+            },
+            {
+              "gate": "invariant",
+              "code": "relation_fixture_mismatch",
+              "expected": {
+                "output": "deviation_angle_deg",
+                "relation": "right_gt_left",
+                "minimum_ratio": 1.02
+              },
+              "actual": {
+                "left_value": 42,
+                "right_value": 42
+              },
+              "fixture_id": "red_exceeds_violet",
+              "inputs": {
+                "left": [
+                  {
+                    "name": "wavelength_nm",
+                    "value": 400
+                  }
+                ],
+                "right": [
+                  {
+                    "name": "wavelength_nm",
+                    "value": 700
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "attempt": 1,
+          "gate_phase": "deterministic",
+          "passed": true,
+          "check_count": 24,
+          "failures": []
+        },
+        {
+          "attempt": 1,
+          "gate_phase": "browser",
+          "passed": false,
+          "check_count": 18,
+          "failures": [
+            {
+              "gate": "render_output_consistency",
+              "code": "rendered_output_discontinuity",
+              "expected": {
+                "full_parameter_sweep": true,
+                "render_tracks_computed_output": true,
+                "adjacent_discontinuities": 0
+              },
+              "actual": {
+                "code": "rendered_output_discontinuity",
+                "metric": "dark32",
+                "left": {
+                  "parameter": 437.5,
+                  "computedOutput": 40.875,
+                  "renderedMeasure": 0.008360884578649622
+                },
+                "right": {
+                  "parameter": 456.25,
+                  "computedOutput": 41.0625,
+                  "renderedMeasure": 0
+                }
+              }
+            },
+            {
+              "gate": "mobile_overlay_safe_band",
+              "code": "mobile_overlay_registration_missing",
+              "expected": {
+                "canvas_width_max": 420,
+                "overlay_count_max": 1,
+                "overlay_height_ratio_max": 0.22,
+                "subject_overlap_pixels": 0,
+                "unregistered_label_count": 0,
+                "unanchored_overlay_count": 0
+              },
+              "actual": {
+                "overlay_count": 1,
+                "drawn_label_count": 3,
+                "overlay_height_ratio": 0.1308,
+                "subject_overlap_pixels": 0,
+                "unregistered_label_count": 2,
+                "unanchored_overlay_count": 0
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "lever_torque_en",
+      "locale": "en",
+      "status": "answer_only",
+      "fallback_reason": "verification_exhausted",
+      "total_elapsed_ms": 118039,
+      "first_answer_ms": 12157,
+      "heal_count": 1,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "safe_science_question",
+        "domain": "physics",
+        "canonical_intent": "understand_how_lever_arm_length_affects_required_effort",
+        "actor_id": "lever",
+        "action": "responds",
+        "fixture_count": 3,
+        "primary_parameter_id": "lever_arm_length_m",
+        "tracking_output": "required_effort_n",
+        "contract_failures": []
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 12153,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 42688,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 63
+        },
+        {
+          "stage": "browser_verify",
+          "elapsed_ms": 10282
+        },
+        {
+          "stage": "heal_1",
+          "elapsed_ms": 42651,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 55
+        },
+        {
+          "stage": "browser_verify",
+          "elapsed_ms": 10136
+        }
+      ],
+      "verification_attempts": [
+        {
+          "attempt": 0,
+          "gate_phase": "deterministic",
+          "passed": true,
+          "check_count": 24,
+          "failures": []
+        },
+        {
+          "attempt": 0,
+          "gate_phase": "browser",
+          "passed": false,
+          "check_count": 18,
+          "failures": [
+            {
+              "gate": "mobile_overlay_safe_band",
+              "code": "mobile_overlay_registration_missing",
+              "expected": {
+                "canvas_width_max": 420,
+                "overlay_count_max": 1,
+                "overlay_height_ratio_max": 0.22,
+                "subject_overlap_pixels": 0,
+                "unregistered_label_count": 0,
+                "unanchored_overlay_count": 0
+              },
+              "actual": {
+                "overlay_count": 1,
+                "drawn_label_count": 3,
+                "overlay_height_ratio": 0.09,
+                "subject_overlap_pixels": 0,
+                "unregistered_label_count": 3,
+                "unanchored_overlay_count": 0
+              }
+            }
+          ]
+        },
+        {
+          "attempt": 1,
+          "gate_phase": "deterministic",
+          "passed": true,
+          "check_count": 24,
+          "failures": []
+        },
+        {
+          "attempt": 1,
+          "gate_phase": "browser",
+          "passed": false,
+          "check_count": 18,
+          "failures": [
+            {
+              "gate": "mobile_overlay_safe_band",
+              "code": "mobile_overlay_registration_missing",
+              "expected": {
+                "canvas_width_max": 420,
+                "overlay_count_max": 1,
+                "overlay_height_ratio_max": 0.22,
+                "subject_overlap_pixels": 0,
+                "unregistered_label_count": 0,
+                "unanchored_overlay_count": 0
+              },
+              "actual": {
+                "overlay_count": 1,
+                "drawn_label_count": 1,
+                "overlay_height_ratio": 0.09,
+                "subject_overlap_pixels": 0,
+                "unregistered_label_count": 1,
+                "unanchored_overlay_count": 0
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "magnetism_en",
+      "locale": "en",
+      "status": "answer_only",
+      "fallback_reason": "verification_exhausted",
+      "total_elapsed_ms": 99059,
+      "first_answer_ms": 11224,
+      "heal_count": 1,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "safe_science_concept",
+        "domain": "physics",
+        "canonical_intent": "understand_how_magnetic_force_changes_with_separation_distance",
+        "actor_id": "magnetic_force_vector",
+        "action": "responds",
+        "fixture_count": 3,
+        "primary_parameter_id": "separation_distance",
+        "tracking_output": "force_magnitude",
+        "contract_failures": []
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 11223,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 30426,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 68
+        },
+        {
+          "stage": "browser_verify",
+          "elapsed_ms": 10058
+        },
+        {
+          "stage": "heal_1",
+          "elapsed_ms": 37152,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 56
+        },
+        {
+          "stage": "browser_verify",
+          "elapsed_ms": 10071
+        }
+      ],
+      "verification_attempts": [
+        {
+          "attempt": 0,
+          "gate_phase": "deterministic",
+          "passed": true,
+          "check_count": 24,
+          "failures": []
+        },
+        {
+          "attempt": 0,
+          "gate_phase": "browser",
+          "passed": false,
+          "check_count": 18,
+          "failures": [
+            {
+              "gate": "mobile_overlay_safe_band",
+              "code": "mobile_overlay_registration_missing",
+              "expected": {
+                "canvas_width_max": 420,
+                "overlay_count_max": 1,
+                "overlay_height_ratio_max": 0.22,
+                "subject_overlap_pixels": 0,
+                "unregistered_label_count": 0,
+                "unanchored_overlay_count": 0
+              },
+              "actual": {
+                "overlay_count": 1,
+                "drawn_label_count": 1,
+                "overlay_height_ratio": 0.0831,
+                "subject_overlap_pixels": 0,
+                "unregistered_label_count": 1,
+                "unanchored_overlay_count": 0
+              }
+            }
+          ]
+        },
+        {
+          "attempt": 1,
+          "gate_phase": "deterministic",
+          "passed": true,
+          "check_count": 24,
+          "failures": []
+        },
+        {
+          "attempt": 1,
+          "gate_phase": "browser",
+          "passed": false,
+          "check_count": 18,
+          "failures": [
+            {
+              "gate": "mobile_overlay_safe_band",
+              "code": "mobile_overlay_registration_missing",
+              "expected": {
+                "canvas_width_max": 420,
+                "overlay_count_max": 1,
+                "overlay_height_ratio_max": 0.22,
+                "subject_overlap_pixels": 0,
+                "unregistered_label_count": 0,
+                "unanchored_overlay_count": 0
+              },
+              "actual": {
+                "overlay_count": 1,
+                "drawn_label_count": 1,
+                "overlay_height_ratio": 0.0831,
+                "subject_overlap_pixels": 0,
+                "unregistered_label_count": 1,
+                "unanchored_overlay_count": 0
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

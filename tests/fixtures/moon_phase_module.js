@@ -6,7 +6,7 @@ window.LayshSimulation = (() => {
   let height;
   let emitFrame;
   let angleDeg = 90;
-  let visualPhase = 0;
+  let phenomenonTimeSeconds = 0;
   let reducedMotion = false;
 
   function litFraction(angle) {
@@ -18,12 +18,13 @@ window.LayshSimulation = (() => {
     context.clearRect(0, 0, width, height);
     context.fillStyle = "#071520";
     context.fillRect(0, 0, width, height);
-    const orbitOffset = Math.sin(visualPhase) * Math.min(width, height) * 0.12;
+    const orbitOffset = Math.sin(phenomenonTimeSeconds * Math.PI * 2 / 12)
+      * Math.min(width, height) * 0.12;
     context.beginPath();
     context.arc(width / 2 + orbitOffset, height / 2, Math.min(width, height) * 0.27, 0, Math.PI * 2);
     context.fillStyle = `rgb(${Math.round(42 + fraction * 213)} ${Math.round(51 + fraction * 184)} ${Math.round(61 + fraction * 102)})`;
     context.fill();
-    const actorAngle = (angleDeg * Math.PI) / 180;
+    const actorAngle = ((angleDeg + phenomenonTimeSeconds * 360 / 12) * Math.PI) / 180;
     const actorRadiusX = Math.min(width, height) * 0.32;
     const actorRadiusY = Math.min(width, height) * 0.2;
     context.beginPath();
@@ -46,10 +47,12 @@ window.LayshSimulation = (() => {
       reducedMotion = options.reducedMotion;
       draw();
     },
-    setParameter(name, value) {
+    setParameter(name, value, timeSeconds) {
       if (name !== "angle_deg") return;
       angleDeg = Math.max(0, Math.min(360, Number(value)));
-      if (!reducedMotion) visualPhase += 0.2;
+      phenomenonTimeSeconds = Number.isFinite(Number(timeSeconds))
+        ? Math.max(0, Number(timeSeconds))
+        : 0;
       draw();
     },
     test(inputs) {

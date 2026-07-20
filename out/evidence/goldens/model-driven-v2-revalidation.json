@@ -6,9 +6,9 @@
     {
       "id": "moon_phases",
       "passed": true,
-      "artifact_sha256": "e90776b7e1c01326859fb3b67374ce1caa0e8375ba164fb803d837ba09b297e6",
+      "artifact_sha256": "19022031bd06c14764bd746504d314d900f86a7620078fa3c2432eb431b41816",
       "deterministic_check_count": 24,
-      "browser_check_count": 16,
+      "browser_check_count": 18,
       "actor_tracking": {
         "passed": true,
         "action": "phases",
@@ -20,24 +20,78 @@
         },
         "measured": {
           "angularDisplacementDegrees": 360,
-          "maximumAngularErrorDegrees": 0.1593,
-          "orbitRadiusPixels": 83.7353,
+          "maximumAngularErrorDegrees": 0.3237,
+          "orbitRadiusPixels": 68.3554,
           "direction": 1
         }
+      },
+      "paused_actor_tracking": {
+        "passed": true,
+        "lesson": "كيف تتغير أطوار القمر؟",
+        "action": "phases",
+        "actorId": "moon",
+        "heldParameter": {
+          "id": "angle_deg",
+          "value": 107,
+          "unit": "°"
+        },
+        "expected": {
+          "minimum_trajectory_span_pixels": 6,
+          "sample_duration_seconds": 1.1
+        },
+        "measured": {
+          "trajectory_span_pixels": 46.1952,
+          "horizontal_span_pixels": 43.2963,
+          "vertical_span_pixels": 16.1068,
+          "sample_count": 13
+        }
+      },
+      "motion_measurements": {
+        "playing": {
+          "subject_changed_pixel_ratio": 0.06994342810961722,
+          "whole_canvas_changed_pixel_ratio": 0.03505997933927856,
+          "capture_interval_ms": 1100
+        },
+        "paused_auto_sweep": {
+          "subject_changed_pixel_ratio": 0.021688340312982148,
+          "whole_canvas_changed_pixel_ratio": 0.007779394092720258,
+          "capture_interval_ms": 1100
+        }
+      },
+      "mobile_overlay_layout": {
+        "passed": true,
+        "canvas": {
+          "width": 342,
+          "height": 260
+        },
+        "subjectRegion": {
+          "x": 68.4,
+          "y": 52,
+          "width": 205.2,
+          "height": 156
+        },
+        "overlayRects": [],
+        "drawnLabelRects": [],
+        "overlayCount": 0,
+        "overlayHeightRatio": 0,
+        "subjectOverlapPixels": 0,
+        "failure": null
       },
       "vision": {
         "actor_visible": true,
         "action_performed": true,
+        "paused_action_performed": true,
         "physically_consistent": true,
+        "labels_obscure_subject": false,
         "defects": []
       }
     },
     {
       "id": "buoyancy",
       "passed": true,
-      "artifact_sha256": "544771249d172e8d74e5684eaeb9baabf8a9cfa72c92c13064cb4c85cddfdf36",
+      "artifact_sha256": "89f0f70176fd938211de8b3c928e905d606e8508e12f1ee6da0b2efcaf3db5c6",
       "deterministic_check_count": 27,
-      "browser_check_count": 16,
+      "browser_check_count": 18,
       "actor_tracking": {
         "passed": true,
         "action": "floats_sinks",
@@ -47,22 +101,22 @@
           "sampleCount": 5
         },
         "measured": {
-          "maximumSubmergedFractionError": 0.1177,
+          "maximumSubmergedFractionError": 0.121,
           "samples": [
             {
               "parameter": 200,
               "expectedFraction": 0.2,
-              "measuredFraction": 0.3177
+              "measuredFraction": 0.321
             },
             {
               "parameter": 500,
               "expectedFraction": 0.5,
-              "measuredFraction": 0.4691
+              "measuredFraction": 0.4729
             },
             {
               "parameter": 800,
               "expectedFraction": 0.8,
-              "measuredFraction": 0.7371
+              "measuredFraction": 0.7387
             },
             {
               "parameter": 1100,
@@ -77,19 +131,74 @@
           ]
         }
       },
+      "paused_actor_tracking": {
+        "passed": true,
+        "lesson": "الكثافة والطفو في الماء",
+        "action": "floats_sinks",
+        "actorId": "floating_body",
+        "heldParameter": {
+          "id": "density_kg_m3",
+          "value": 890,
+          "unit": "kg/m³"
+        },
+        "expected": {
+          "equilibrium_state_persists": true,
+          "actor_pixels_minimum": 20,
+          "computed_submerged_fraction": 0.89
+        },
+        "measured": {
+          "equilibrium_state_persists": true,
+          "actor_pixels_first": 673,
+          "actor_pixels_second": 516,
+          "centroid_displacement_pixels": 8.6637
+        }
+      },
+      "motion_measurements": {
+        "playing": {
+          "subject_changed_pixel_ratio": 0.47291161560502537,
+          "whole_canvas_changed_pixel_ratio": 0.2682151666561255,
+          "capture_interval_ms": 1100
+        },
+        "paused_auto_sweep": {
+          "subject_changed_pixel_ratio": 0.40324737344794653,
+          "whole_canvas_changed_pixel_ratio": 0.22427951004574875,
+          "capture_interval_ms": 1100
+        }
+      },
+      "mobile_overlay_layout": {
+        "passed": true,
+        "canvas": {
+          "width": 342,
+          "height": 260
+        },
+        "subjectRegion": {
+          "x": 68.4,
+          "y": 52,
+          "width": 205.2,
+          "height": 156
+        },
+        "overlayRects": [],
+        "drawnLabelRects": [],
+        "overlayCount": 0,
+        "overlayHeightRatio": 0,
+        "subjectOverlapPixels": 0,
+        "failure": null
+      },
       "vision": {
         "actor_visible": true,
         "action_performed": true,
+        "paused_action_performed": true,
         "physically_consistent": true,
+        "labels_obscure_subject": false,
         "defects": []
       }
     },
     {
       "id": "pendulum",
       "passed": true,
-      "artifact_sha256": "802633af58066dbf9120b4c44a20cbdf514fc579652af03d652c941d29dd38fb",
+      "artifact_sha256": "eb22553e99384c22351fceee077635984fb0d91001d9c9549c666f3d5fb225b7",
       "deterministic_check_count": 24,
-      "browser_check_count": 16,
+      "browser_check_count": 18,
       "actor_tracking": {
         "passed": true,
         "action": "oscillates",
@@ -102,24 +211,77 @@
         },
         "measured": {
           "signReversals": 4,
-          "periodSeconds": 2.0509,
-          "periodErrorRatio": 0.0223,
-          "horizontalSpanPixels": 36.0615
+          "periodSeconds": 2.0196,
+          "periodErrorRatio": 0.0068,
+          "horizontalSpanPixels": 23.4812
         }
+      },
+      "paused_actor_tracking": {
+        "passed": true,
+        "lesson": "طول البندول وزمن الذبذبة",
+        "action": "oscillates",
+        "actorId": "pendulum_bob",
+        "heldParameter": {
+          "id": "length_m",
+          "value": 1.2,
+          "unit": "m"
+        },
+        "expected": {
+          "minimum_direction_reversals": 2,
+          "minimum_span_pixels": 6
+        },
+        "measured": {
+          "direction_reversals": 2,
+          "horizontal_span_pixels": 27.7633,
+          "sample_count": 37
+        }
+      },
+      "motion_measurements": {
+        "playing": {
+          "subject_changed_pixel_ratio": 0.12060833149658365,
+          "whole_canvas_changed_pixel_ratio": 0.04690827061328611,
+          "capture_interval_ms": 1100
+        },
+        "paused_auto_sweep": {
+          "subject_changed_pixel_ratio": 0.12943942399529793,
+          "whole_canvas_changed_pixel_ratio": 0.048673919001539015,
+          "capture_interval_ms": 1100
+        }
+      },
+      "mobile_overlay_layout": {
+        "passed": true,
+        "canvas": {
+          "width": 342,
+          "height": 260
+        },
+        "subjectRegion": {
+          "x": 68.4,
+          "y": 52,
+          "width": 205.2,
+          "height": 156
+        },
+        "overlayRects": [],
+        "drawnLabelRects": [],
+        "overlayCount": 0,
+        "overlayHeightRatio": 0,
+        "subjectOverlapPixels": 0,
+        "failure": null
       },
       "vision": {
         "actor_visible": true,
         "action_performed": true,
+        "paused_action_performed": true,
         "physically_consistent": true,
+        "labels_obscure_subject": false,
         "defects": []
       }
     },
     {
       "id": "simple_circuit",
       "passed": true,
-      "artifact_sha256": "e1a5a15794d053ec3d67dfb68651cebe4e8144bd174ffac2456da53d3f126261",
+      "artifact_sha256": "36f3c738ea4851f3b71746cc9bd6cadc65c4612894084bbd226b674634e30769",
       "deterministic_check_count": 27,
-      "browser_check_count": 16,
+      "browser_check_count": 18,
       "actor_tracking": {
         "passed": true,
         "action": "flows",
@@ -129,25 +291,79 @@
           "maximumRatioError": 0.35
         },
         "measured": {
-          "displacementRatio": 3.5167,
-          "ratioError": 0.0446,
-          "lowDisplacementPixels": 32.8014,
-          "highDisplacementPixels": 9.3274
+          "displacementRatio": 3.4917,
+          "ratioError": 0.0514,
+          "lowDisplacementPixels": 26.6246,
+          "highDisplacementPixels": 7.625
         }
+      },
+      "paused_actor_tracking": {
+        "passed": true,
+        "lesson": "تأثير المقاومة في التيار وسطوع المصباح",
+        "action": "flows",
+        "actorId": "moving_charge",
+        "heldParameter": {
+          "id": "resistance_ohm",
+          "value": 8,
+          "unit": "Ω"
+        },
+        "expected": {
+          "minimum_trajectory_span_pixels": 6,
+          "sample_duration_seconds": 0.08
+        },
+        "measured": {
+          "trajectory_span_pixels": 15.9095,
+          "horizontal_span_pixels": 15.9091,
+          "vertical_span_pixels": 0.1202,
+          "sample_count": 7
+        }
+      },
+      "motion_measurements": {
+        "playing": {
+          "subject_changed_pixel_ratio": 0.3092792594225259,
+          "whole_canvas_changed_pixel_ratio": 0.1774871924609449,
+          "capture_interval_ms": 1100
+        },
+        "paused_auto_sweep": {
+          "subject_changed_pixel_ratio": 0.10090368084637426,
+          "whole_canvas_changed_pixel_ratio": 0.06728965066514873,
+          "capture_interval_ms": 1100
+        }
+      },
+      "mobile_overlay_layout": {
+        "passed": true,
+        "canvas": {
+          "width": 342,
+          "height": 260
+        },
+        "subjectRegion": {
+          "x": 68.4,
+          "y": 52,
+          "width": 205.2,
+          "height": 156
+        },
+        "overlayRects": [],
+        "drawnLabelRects": [],
+        "overlayCount": 0,
+        "overlayHeightRatio": 0,
+        "subjectOverlapPixels": 0,
+        "failure": null
       },
       "vision": {
         "actor_visible": true,
         "action_performed": true,
+        "paused_action_performed": true,
         "physically_consistent": true,
+        "labels_obscure_subject": false,
         "defects": []
       }
     },
     {
       "id": "sound_pitch",
       "passed": true,
-      "artifact_sha256": "c2f0cef991576259e98cd43c08daae4089ae3fdb068e0b9e28a889061670e3d2",
+      "artifact_sha256": "24246dc34e9f16a89e0ce5d6067a70e65dfb16e3c6e740954975985f3540f65a",
       "deterministic_check_count": 27,
-      "browser_check_count": 16,
+      "browser_check_count": 18,
       "actor_tracking": {
         "passed": true,
         "action": "propagates",
@@ -157,25 +373,80 @@
           "maximumErrorRadians": 0.6
         },
         "measured": {
-          "phaseShiftRadians": 2.0309,
-          "phaseErrorRadians": 0.4601,
+          "phaseShiftRadians": 2.035,
+          "phaseErrorRadians": 0.4642,
           "dominantSpatialCycles": 7,
-          "matchedColumns": 548
+          "matchedColumns": 448
         }
+      },
+      "paused_actor_tracking": {
+        "passed": true,
+        "lesson": "كيف يغيّر التردد حدّة النغمة؟",
+        "action": "propagates",
+        "actorId": "sound_wave",
+        "heldParameter": {
+          "id": "frequency_hz",
+          "value": 530,
+          "unit": "Hz"
+        },
+        "expected": {
+          "phase_shift_radians": 1.5708,
+          "maximum_error_radians": 0.6,
+          "minimum_matched_columns": 40
+        },
+        "measured": {
+          "phase_shift_radians": 1.5615,
+          "phase_error_radians": 0.0093,
+          "matched_columns": 448,
+          "dominant_spatial_cycles": 7
+        }
+      },
+      "motion_measurements": {
+        "playing": {
+          "subject_changed_pixel_ratio": 0.3771949158768643,
+          "whole_canvas_changed_pixel_ratio": 0.15102354900596632,
+          "capture_interval_ms": 1100
+        },
+        "paused_auto_sweep": {
+          "subject_changed_pixel_ratio": 0.4429505546984057,
+          "whole_canvas_changed_pixel_ratio": 0.17009255159909767,
+          "capture_interval_ms": 1100
+        }
+      },
+      "mobile_overlay_layout": {
+        "passed": true,
+        "canvas": {
+          "width": 342,
+          "height": 260
+        },
+        "subjectRegion": {
+          "x": 68.4,
+          "y": 52,
+          "width": 205.2,
+          "height": 156
+        },
+        "overlayRects": [],
+        "drawnLabelRects": [],
+        "overlayCount": 0,
+        "overlayHeightRatio": 0,
+        "subjectOverlapPixels": 0,
+        "failure": null
       },
       "vision": {
         "actor_visible": true,
         "action_performed": true,
+        "paused_action_performed": true,
         "physically_consistent": true,
+        "labels_obscure_subject": false,
         "defects": []
       }
     },
     {
       "id": "day_night",
       "passed": true,
-      "artifact_sha256": "ffb42675c348ac040a9c8c10e1a88102b552c527d00551f13207827ebb2c2539",
+      "artifact_sha256": "39e748e34500ab178f5bf802cb5e1b9c5d85b5c0f41cb202a8c90210280e41a9",
       "deterministic_check_count": 27,
-      "browser_check_count": 16,
+      "browser_check_count": 18,
       "actor_tracking": {
         "passed": true,
         "action": "rotates",
@@ -188,25 +459,79 @@
         },
         "measured": {
           "angularDisplacementDegrees": 360,
-          "horizontalSpanPixels": 111.9571,
-          "trajectoryErrorRatio": 0.0004,
+          "horizontalSpanPixels": 91.1884,
+          "trajectoryErrorRatio": 0.0017,
           "visibilityMatchRatio": 0.96,
           "fittedFeatureLongitudeDegrees": 300
         }
       },
+      "paused_actor_tracking": {
+        "passed": true,
+        "lesson": "كيف يصنع دوران الأرض تعاقب النهار والليل؟",
+        "action": "rotates",
+        "actorId": "earth",
+        "heldParameter": {
+          "id": "rotation_deg",
+          "value": 77,
+          "unit": "°"
+        },
+        "expected": {
+          "minimum_trajectory_span_pixels": 6,
+          "sample_duration_seconds": 1.1
+        },
+        "measured": {
+          "trajectory_span_pixels": 25.7043,
+          "horizontal_span_pixels": 25.704,
+          "vertical_span_pixels": 0.1374,
+          "sample_count": 13
+        }
+      },
+      "motion_measurements": {
+        "playing": {
+          "subject_changed_pixel_ratio": 0.026860627433693336,
+          "whole_canvas_changed_pixel_ratio": 0.010741466911222144,
+          "capture_interval_ms": 1100
+        },
+        "paused_auto_sweep": {
+          "subject_changed_pixel_ratio": 0.05320696495481596,
+          "whole_canvas_changed_pixel_ratio": 0.019569708852486666,
+          "capture_interval_ms": 1100
+        }
+      },
+      "mobile_overlay_layout": {
+        "passed": true,
+        "canvas": {
+          "width": 342,
+          "height": 260
+        },
+        "subjectRegion": {
+          "x": 68.4,
+          "y": 52,
+          "width": 205.2,
+          "height": 156
+        },
+        "overlayRects": [],
+        "drawnLabelRects": [],
+        "overlayCount": 0,
+        "overlayHeightRatio": 0,
+        "subjectOverlapPixels": 0,
+        "failure": null
+      },
       "vision": {
         "actor_visible": true,
         "action_performed": true,
+        "paused_action_performed": true,
         "physically_consistent": true,
+        "labels_obscure_subject": false,
         "defects": []
       }
     },
     {
       "id": "moon_phases_en",
       "passed": true,
-      "artifact_sha256": "2635f3e3b94a1f708b1fb6f87a44296d83035a32e0900c183b7670866a80cab2",
+      "artifact_sha256": "4591ec652a0586e08471ebf15545f2e617a22cdd98d23112c484148d82b72d05",
       "deterministic_check_count": 24,
-      "browser_check_count": 16,
+      "browser_check_count": 18,
       "actor_tracking": {
         "passed": true,
         "action": "phases",
@@ -218,24 +543,78 @@
         },
         "measured": {
           "angularDisplacementDegrees": 360,
-          "maximumAngularErrorDegrees": 0.1593,
-          "orbitRadiusPixels": 83.7353,
+          "maximumAngularErrorDegrees": 0.3237,
+          "orbitRadiusPixels": 68.3554,
           "direction": 1
         }
+      },
+      "paused_actor_tracking": {
+        "passed": true,
+        "lesson": "How do Moon phases change?",
+        "action": "phases",
+        "actorId": "moon",
+        "heldParameter": {
+          "id": "angle_deg",
+          "value": 107,
+          "unit": "°"
+        },
+        "expected": {
+          "minimum_trajectory_span_pixels": 6,
+          "sample_duration_seconds": 1.1
+        },
+        "measured": {
+          "trajectory_span_pixels": 46.1952,
+          "horizontal_span_pixels": 43.2963,
+          "vertical_span_pixels": 16.1068,
+          "sample_count": 13
+        }
+      },
+      "motion_measurements": {
+        "playing": {
+          "subject_changed_pixel_ratio": 0.06995812210711924,
+          "whole_canvas_changed_pixel_ratio": 0.03530769717285434,
+          "capture_interval_ms": 1100
+        },
+        "paused_auto_sweep": {
+          "subject_changed_pixel_ratio": 0.021570788332965985,
+          "whole_canvas_changed_pixel_ratio": 0.007737229355090338,
+          "capture_interval_ms": 1100
+        }
+      },
+      "mobile_overlay_layout": {
+        "passed": true,
+        "canvas": {
+          "width": 342,
+          "height": 260
+        },
+        "subjectRegion": {
+          "x": 68.4,
+          "y": 52,
+          "width": 205.2,
+          "height": 156
+        },
+        "overlayRects": [],
+        "drawnLabelRects": [],
+        "overlayCount": 0,
+        "overlayHeightRatio": 0,
+        "subjectOverlapPixels": 0,
+        "failure": null
       },
       "vision": {
         "actor_visible": true,
         "action_performed": true,
+        "paused_action_performed": true,
         "physically_consistent": true,
+        "labels_obscure_subject": false,
         "defects": []
       }
     },
     {
       "id": "buoyancy_en",
       "passed": true,
-      "artifact_sha256": "a8ce26d9ebe9924a02850b5b1645b2e68d61fbc609edda50fa522c1a1c53c63a",
+      "artifact_sha256": "d82d3e411c5b85707314d34c943a7162ce91fa712e855e9783f95cbc228ad9ea",
       "deterministic_check_count": 27,
-      "browser_check_count": 16,
+      "browser_check_count": 18,
       "actor_tracking": {
         "passed": true,
         "action": "floats_sinks",
@@ -245,22 +624,22 @@
           "sampleCount": 5
         },
         "measured": {
-          "maximumSubmergedFractionError": 0.1177,
+          "maximumSubmergedFractionError": 0.121,
           "samples": [
             {
               "parameter": 200,
               "expectedFraction": 0.2,
-              "measuredFraction": 0.3177
+              "measuredFraction": 0.321
             },
             {
               "parameter": 500,
               "expectedFraction": 0.5,
-              "measuredFraction": 0.4691
+              "measuredFraction": 0.4729
             },
             {
               "parameter": 800,
               "expectedFraction": 0.8,
-              "measuredFraction": 0.7371
+              "measuredFraction": 0.7387
             },
             {
               "parameter": 1100,
@@ -275,19 +654,74 @@
           ]
         }
       },
+      "paused_actor_tracking": {
+        "passed": true,
+        "lesson": "Density and buoyancy in water",
+        "action": "floats_sinks",
+        "actorId": "floating_body",
+        "heldParameter": {
+          "id": "density_kg_m3",
+          "value": 890,
+          "unit": "kg/m³"
+        },
+        "expected": {
+          "equilibrium_state_persists": true,
+          "actor_pixels_minimum": 20,
+          "computed_submerged_fraction": 0.89
+        },
+        "measured": {
+          "equilibrium_state_persists": true,
+          "actor_pixels_first": 673,
+          "actor_pixels_second": 516,
+          "centroid_displacement_pixels": 8.6637
+        }
+      },
+      "motion_measurements": {
+        "playing": {
+          "subject_changed_pixel_ratio": 0.46197928146352213,
+          "whole_canvas_changed_pixel_ratio": 0.26206965614656463,
+          "capture_interval_ms": 1100
+        },
+        "paused_auto_sweep": {
+          "subject_changed_pixel_ratio": 0.3976342664021747,
+          "whole_canvas_changed_pixel_ratio": 0.2207692956380579,
+          "capture_interval_ms": 1100
+        }
+      },
+      "mobile_overlay_layout": {
+        "passed": true,
+        "canvas": {
+          "width": 342,
+          "height": 260
+        },
+        "subjectRegion": {
+          "x": 68.4,
+          "y": 52,
+          "width": 205.2,
+          "height": 156
+        },
+        "overlayRects": [],
+        "drawnLabelRects": [],
+        "overlayCount": 0,
+        "overlayHeightRatio": 0,
+        "subjectOverlapPixels": 0,
+        "failure": null
+      },
       "vision": {
         "actor_visible": true,
         "action_performed": true,
+        "paused_action_performed": true,
         "physically_consistent": true,
+        "labels_obscure_subject": false,
         "defects": []
       }
     },
     {
       "id": "pendulum_en",
       "passed": true,
-      "artifact_sha256": "1170caa4fcc925cb3a7550ae03330997189c2ff621f25965254a2fc93d45403c",
+      "artifact_sha256": "5a25601076f74e4d2beb5d306dc988ee69b944342bc144cdd13bee55df16a9ec",
       "deterministic_check_count": 24,
-      "browser_check_count": 16,
+      "browser_check_count": 18,
       "actor_tracking": {
         "passed": true,
         "action": "oscillates",
@@ -300,24 +734,77 @@
         },
         "measured": {
           "signReversals": 4,
-          "periodSeconds": 2.057,
-          "periodErrorRatio": 0.0254,
-          "horizontalSpanPixels": 36.0996
+          "periodSeconds": 2.0197,
+          "periodErrorRatio": 0.0068,
+          "horizontalSpanPixels": 23.7975
         }
+      },
+      "paused_actor_tracking": {
+        "passed": true,
+        "lesson": "Pendulum length and period",
+        "action": "oscillates",
+        "actorId": "pendulum_bob",
+        "heldParameter": {
+          "id": "length_m",
+          "value": 1.2,
+          "unit": "m"
+        },
+        "expected": {
+          "minimum_direction_reversals": 2,
+          "minimum_span_pixels": 6
+        },
+        "measured": {
+          "direction_reversals": 2,
+          "horizontal_span_pixels": 27.465,
+          "sample_count": 37
+        }
+      },
+      "motion_measurements": {
+        "playing": {
+          "subject_changed_pixel_ratio": 0.12096098743663214,
+          "whole_canvas_changed_pixel_ratio": 0.047503847532308734,
+          "capture_interval_ms": 1100
+        },
+        "paused_auto_sweep": {
+          "subject_changed_pixel_ratio": 0.12913085004775549,
+          "whole_canvas_changed_pixel_ratio": 0.04854215419644551,
+          "capture_interval_ms": 1100
+        }
+      },
+      "mobile_overlay_layout": {
+        "passed": true,
+        "canvas": {
+          "width": 342,
+          "height": 260
+        },
+        "subjectRegion": {
+          "x": 68.4,
+          "y": 52,
+          "width": 205.2,
+          "height": 156
+        },
+        "overlayRects": [],
+        "drawnLabelRects": [],
+        "overlayCount": 0,
+        "overlayHeightRatio": 0,
+        "subjectOverlapPixels": 0,
+        "failure": null
       },
       "vision": {
         "actor_visible": true,
         "action_performed": true,
+        "paused_action_performed": true,
         "physically_consistent": true,
+        "labels_obscure_subject": false,
         "defects": []
       }
     },
     {
       "id": "simple_circuit_en",
       "passed": true,
-      "artifact_sha256": "af557d799d491ef086ef51a4e08527ad05876e70b5bc6c117b1ccbdd28a25b89",
+      "artifact_sha256": "4628c6ded032d37b7276311e16cb6da548b43b898cbaad66e494b0f3cc68feef",
       "deterministic_check_count": 27,
-      "browser_check_count": 16,
+      "browser_check_count": 18,
       "actor_tracking": {
         "passed": true,
         "action": "flows",
@@ -327,25 +814,79 @@
           "maximumRatioError": 0.35
         },
         "measured": {
-          "displacementRatio": 3.5167,
-          "ratioError": 0.0446,
-          "lowDisplacementPixels": 32.8014,
-          "highDisplacementPixels": 9.3274
+          "displacementRatio": 3.4917,
+          "ratioError": 0.0514,
+          "lowDisplacementPixels": 26.6246,
+          "highDisplacementPixels": 7.625
         }
+      },
+      "paused_actor_tracking": {
+        "passed": true,
+        "lesson": "How resistance affects current and bulb brightness",
+        "action": "flows",
+        "actorId": "moving_charge",
+        "heldParameter": {
+          "id": "resistance_ohm",
+          "value": 8,
+          "unit": "Ω"
+        },
+        "expected": {
+          "minimum_trajectory_span_pixels": 6,
+          "sample_duration_seconds": 0.08
+        },
+        "measured": {
+          "trajectory_span_pixels": 15.9095,
+          "horizontal_span_pixels": 15.9091,
+          "vertical_span_pixels": 0.1202,
+          "sample_count": 7
+        }
+      },
+      "motion_measurements": {
+        "playing": {
+          "subject_changed_pixel_ratio": 0.310087429285137,
+          "whole_canvas_changed_pixel_ratio": 0.17741867476229628,
+          "capture_interval_ms": 1100
+        },
+        "paused_auto_sweep": {
+          "subject_changed_pixel_ratio": 0.09436485195797517,
+          "whole_canvas_changed_pixel_ratio": 0.061866211287500264,
+          "capture_interval_ms": 1100
+        }
+      },
+      "mobile_overlay_layout": {
+        "passed": true,
+        "canvas": {
+          "width": 342,
+          "height": 260
+        },
+        "subjectRegion": {
+          "x": 68.4,
+          "y": 52,
+          "width": 205.2,
+          "height": 156
+        },
+        "overlayRects": [],
+        "drawnLabelRects": [],
+        "overlayCount": 0,
+        "overlayHeightRatio": 0,
+        "subjectOverlapPixels": 0,
+        "failure": null
       },
       "vision": {
         "actor_visible": true,
         "action_performed": true,
+        "paused_action_performed": true,
         "physically_consistent": true,
+        "labels_obscure_subject": false,
         "defects": []
       }
     },
     {
       "id": "sound_pitch_en",
       "passed": true,
-      "artifact_sha256": "50b49c863421034f0b7311e3ec7879661a66f11cf2ca87fd7311aa52a53bbb2b",
+      "artifact_sha256": "741522b6a03d1a68a5d46fb244729c5a2a92c0d753deea523b005d26c6b293c4",
       "deterministic_check_count": 27,
-      "browser_check_count": 16,
+      "browser_check_count": 18,
       "actor_tracking": {
         "passed": true,
         "action": "propagates",
@@ -355,25 +896,80 @@
           "maximumErrorRadians": 0.6
         },
         "measured": {
-          "phaseShiftRadians": 2.0401,
-          "phaseErrorRadians": 0.4693,
+          "phaseShiftRadians": 2.0637,
+          "phaseErrorRadians": 0.4929,
           "dominantSpatialCycles": 7,
-          "matchedColumns": 548
+          "matchedColumns": 448
         }
+      },
+      "paused_actor_tracking": {
+        "passed": true,
+        "lesson": "How does frequency change sound pitch?",
+        "action": "propagates",
+        "actorId": "sound_wave",
+        "heldParameter": {
+          "id": "frequency_hz",
+          "value": 530,
+          "unit": "Hz"
+        },
+        "expected": {
+          "phase_shift_radians": 1.5708,
+          "maximum_error_radians": 0.6,
+          "minimum_matched_columns": 40
+        },
+        "measured": {
+          "phase_shift_radians": 1.5626,
+          "phase_error_radians": 0.0082,
+          "matched_columns": 448,
+          "dominant_spatial_cycles": 7
+        }
+      },
+      "motion_measurements": {
+        "playing": {
+          "subject_changed_pixel_ratio": 0.4651972669164646,
+          "whole_canvas_changed_pixel_ratio": 0.18130837180865642,
+          "capture_interval_ms": 1100
+        },
+        "paused_auto_sweep": {
+          "subject_changed_pixel_ratio": 0.47947983248842846,
+          "whole_canvas_changed_pixel_ratio": 0.1840965150844349,
+          "capture_interval_ms": 1100
+        }
+      },
+      "mobile_overlay_layout": {
+        "passed": true,
+        "canvas": {
+          "width": 342,
+          "height": 260
+        },
+        "subjectRegion": {
+          "x": 68.4,
+          "y": 52,
+          "width": 205.2,
+          "height": 156
+        },
+        "overlayRects": [],
+        "drawnLabelRects": [],
+        "overlayCount": 0,
+        "overlayHeightRatio": 0,
+        "subjectOverlapPixels": 0,
+        "failure": null
       },
       "vision": {
         "actor_visible": true,
         "action_performed": true,
+        "paused_action_performed": true,
         "physically_consistent": true,
+        "labels_obscure_subject": false,
         "defects": []
       }
     },
     {
       "id": "day_night_en",
       "passed": true,
-      "artifact_sha256": "ce0c5f4fb5d0236f881a013578fe468aab9e81d021843bfc6c013891845dd1cb",
+      "artifact_sha256": "60c28fdc15d7b4fd33fdf467d5986ac92095851bfbfdc6d81297475bd860d8e3",
       "deterministic_check_count": 27,
-      "browser_check_count": 16,
+      "browser_check_count": 18,
       "actor_tracking": {
         "passed": true,
         "action": "rotates",
@@ -386,16 +982,70 @@
         },
         "measured": {
           "angularDisplacementDegrees": 360,
-          "horizontalSpanPixels": 111.9571,
-          "trajectoryErrorRatio": 0.0004,
+          "horizontalSpanPixels": 91.1884,
+          "trajectoryErrorRatio": 0.0017,
           "visibilityMatchRatio": 0.96,
           "fittedFeatureLongitudeDegrees": 300
         }
       },
+      "paused_actor_tracking": {
+        "passed": true,
+        "lesson": "How does Earth's rotation create day and night?",
+        "action": "rotates",
+        "actorId": "earth",
+        "heldParameter": {
+          "id": "rotation_deg",
+          "value": 77,
+          "unit": "°"
+        },
+        "expected": {
+          "minimum_trajectory_span_pixels": 6,
+          "sample_duration_seconds": 1.1
+        },
+        "measured": {
+          "trajectory_span_pixels": 25.7043,
+          "horizontal_span_pixels": 25.704,
+          "vertical_span_pixels": 0.1374,
+          "sample_count": 13
+        }
+      },
+      "motion_measurements": {
+        "playing": {
+          "subject_changed_pixel_ratio": 0.026728381456175152,
+          "whole_canvas_changed_pixel_ratio": 0.010741466911222144,
+          "capture_interval_ms": 1100
+        },
+        "paused_auto_sweep": {
+          "subject_changed_pixel_ratio": 0.05294247299977959,
+          "whole_canvas_changed_pixel_ratio": 0.019495920561634305,
+          "capture_interval_ms": 1100
+        }
+      },
+      "mobile_overlay_layout": {
+        "passed": true,
+        "canvas": {
+          "width": 342,
+          "height": 260
+        },
+        "subjectRegion": {
+          "x": 68.4,
+          "y": 52,
+          "width": 205.2,
+          "height": 156
+        },
+        "overlayRects": [],
+        "drawnLabelRects": [],
+        "overlayCount": 0,
+        "overlayHeightRatio": 0,
+        "subjectOverlapPixels": 0,
+        "failure": null
+      },
       "vision": {
         "actor_visible": true,
         "action_performed": true,
+        "paused_action_performed": true,
         "physically_consistent": true,
+        "labels_obscure_subject": false,
         "defects": []
       }
     }

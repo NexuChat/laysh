@@ -20,12 +20,24 @@ Rules:
 - A simulatable result has one primary parameter, no more than one secondary parameter, and at least
   two independent numeric or relational fixtures.
 - Every simulatable lesson declares one central physical `actor` and exactly one `action` from the
-  closed list `rotates`, `oscillates`, `orbits`, `propagates`, `flows`, `floats_sinks`, `phases`.
-  Give the actor a unique, high-contrast RGB tracking signature that the painter can use as a small
-  solid core or surface feature and must not reuse in decoration. For waterline comparison also
+  closed action adapter list below. Give the actor a distinct, high-contrast solid RGB tracking
+  signature that the painter must not reuse in decoration. For waterline comparison also
   declare the reference RGB signature; otherwise both reference fields are null. `tracking_output`
-  names the model output used to judge period, rate, phase, or submerged fraction, or is null when
-  the primary angle alone defines the trajectory. Non-simulatable results use null actor and action.
+  must be present in `module_spec.outputs` when non-null.
+- Choose an action adapter only when its measurable semantics fit exactly:
+  - `rotates`: the primary parameter is the actor's physical rotation angle.
+  - `orbits`/`phases`: the primary parameter is a complete orbital angle.
+  - `oscillates`: `tracking_output` is the positive physical period in seconds.
+  - `propagates`: `tracking_output` is a positive wave/travel period in seconds or milliseconds.
+  - `flows`: `tracking_output` is a positive flow/rate whose ratio across the parameter range is
+    physically meaningful; the RGB actor is moving matter, never a stationary surface or field.
+  - `floats_sinks`: `tracking_output` is submerged fraction and both RGB signatures are present.
+  - `responds`: a static-by-nature actor visibly changes position, size, or extent monotonically with
+    `tracking_output`; at a held parameter the state stays stable without invented motion.
+    Examples include ray bending/dispersion in a rainbow, lever response to arm length, and magnetic
+    force or field extent versus distance.
+  If none fits truthfully, return non-simulatable immediately instead of forcing a taxonomy match or
+  asking generation/heal to fake motion. Non-simulatable results use null actor and action.
 - Give every primary parameter an honest `sweep_mode`: use `cyclic` only when the maximum reconnects
   physically to the minimum (for example a complete 0°–360° rotation); use `bounce` for bounded
   non-cyclic quantities such as length, density, resistance, or frequency.
@@ -52,6 +64,8 @@ Rules:
   for every numeric input and expected output; do not expose scratch work or reasoning.
 - A relation fixture must agree with every numeric fixture for the same output and with the direction
   implied by `key_formula`. Recalculate both sides before choosing the relation and minimum ratio.
+- Never use a multiplicative `minimum_ratio` to express a change that crosses zero or compares signed
+  directions. For signed outputs that cross zero, use independent numeric fixtures instead.
 - Fixture inputs are closed arrays of `{ "name": string, "value": number }` entries, never
   dynamic-key objects. Example: `[{ "name": "angle_deg", "value": 90 }]`.
 - Non-simulatable output preserves a useful answer, contains no checks, and offers three simulatable

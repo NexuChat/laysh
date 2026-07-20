@@ -73,7 +73,8 @@ def test_codegen_contract_requires_shell_driven_subject_motion_and_render_consis
 
     for prompt in (generate, heal):
         normalized = " ".join(prompt.split())
-        assert "advancing parameter" in normalized or "advancing value" in normalized
+        assert "phenomenon clock" in normalized.lower()
+        assert "held parameter" in normalized or "held value" in normalized
         assert "must not own animation clocks" in normalized
         assert "visual cliff" in normalized
         assert "central 60%" in normalized and "1.0%" in normalized

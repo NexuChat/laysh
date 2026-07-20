@@ -25,8 +25,10 @@ class RecordingExecutor:
                     "scene_depth": True,
                     "physical_light": True,
                     "idle_motion": True,
+                    "paused_phenomenon_motion": True,
                     "reactive_feedback": True,
                     "readable_overlays": True,
+                    "overlay_safe_band": True,
                 },
             }
         else:
@@ -186,7 +188,7 @@ async def test_generate_heal_and_qa_route_only_to_sol_with_bounded_effort(monkey
     )
 
     assert [call["model"] for call in executor.calls] == ["gpt-5.6-sol"] * 4
-    assert [call["effort"] for call in executor.calls] == ["medium", "medium", "high", "medium"]
+    assert [call["effort"] for call in executor.calls] == ["low", "low", "medium", "low"]
     assert [call["schema_path"].name for call in executor.calls] == [
         "module.schema.json",
         "module.schema.json",
@@ -233,7 +235,7 @@ async def test_qa_input_is_slim_bounded_and_review_only():
     assert "immediate" in call["prompt"]
     assert "at most 3" in call["prompt"]
     assert "Do not rewrite" in call["prompt"]
-    assert call["timeout_seconds"] == 45
+    assert call["timeout_seconds"] == 25
 
 
 def test_generate_prompt_states_the_exact_runtime_interface_contract():
@@ -244,6 +246,10 @@ def test_generate_prompt_states_the_exact_runtime_interface_contract():
     assert "`version` must be the number `1`" in prompt
     assert "`init(options)` receives `canvas`, `context`" in prompt
     assert "Do not rename `context` to `ctx`" in prompt
+    assert "distinct solid RGB tracking signature" in prompt
+    assert "SINGLE-SOURCE RULE" in prompt
+    assert "responds" in prompt
+    assert "held state stays stable" in prompt
 
 
 def test_generate_prompt_is_bounded_without_reducing_the_visual_contract():
@@ -251,7 +257,7 @@ def test_generate_prompt_is_bounded_without_reducing_the_visual_contract():
 
     prompt = CodexBackend._render_prompt("generate_module.md", VALID_UNDERSTANDING)
 
-    assert len(prompt) <= 4_800
+    assert len(prompt) <= 5_000
     for requirement in (
         "three visible depth layers",
         "physical light",
@@ -277,6 +283,9 @@ def test_understand_prompt_requires_formula_derived_consistent_fixtures():
     assert "no prediction step" in prompt
     assert "Check the arithmetic internally" in prompt
     assert "relation fixture must agree with every numeric fixture" in prompt
+    assert "crosses zero" in prompt
+    assert "action adapter" in prompt
+    assert "non-simulatable" in prompt
 
 
 def test_understand_prompt_requires_student_facing_display_math():
@@ -366,11 +375,23 @@ def test_qa_schema_is_closed():
             "scene_depth": True,
             "physical_light": True,
             "idle_motion": True,
+            "paused_phenomenon_motion": True,
             "reactive_feedback": True,
             "readable_overlays": True,
+            "overlay_safe_band": True,
         },
     }
     schema = load_schema("qa.schema.json")
     assert validate_document(valid, schema) == valid
     with pytest.raises(ValidationError):
         validate_document({**valid, "reasoning": "private"}, schema)
+
+
+def test_qa_prompt_treats_measured_static_response_stability_as_honest():
+    from server.codex_backend import CodexBackend
+
+    prompt = CodexBackend._render_prompt("qa.md", {"gate_outcome": {"passed": True}})
+
+    assert "already passed on this exact candidate" in prompt
+    assert "For `responds`" in prompt
+    assert "held state remains stable" in prompt

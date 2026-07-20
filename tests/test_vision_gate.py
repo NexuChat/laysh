@@ -20,20 +20,22 @@ class VisionRecordingExecutor:
 
 
 @pytest.mark.asyncio
-async def test_semantic_vision_uses_terra_three_frames_and_closed_judgment(tmp_path):
+async def test_semantic_vision_uses_terra_desktop_sequence_plus_mobile_frame(tmp_path):
     from server.codex_backend import CodexBackend, RuntimeContext
     from server.settings import Settings
 
     verdict = {
         "actor_visible": True,
         "action_performed": True,
+        "paused_action_performed": True,
         "physically_consistent": True,
+        "labels_obscure_subject": False,
         "defects": [],
     }
     executor = VisionRecordingExecutor(verdict)
     backend = CodexBackend(executor=executor, settings=Settings())
     frames = []
-    for index in range(3):
+    for index in range(5):
         path = tmp_path / f"frame-{index}.png"
         path.write_bytes(b"png")
         frames.append(path)
@@ -51,6 +53,9 @@ async def test_semantic_vision_uses_terra_three_frames_and_closed_judgment(tmp_p
     assert call["schema_path"].name == "vision.schema.json"
     assert call["image_paths"] == frames
     assert "actor_visible" in call["prompt"]
+    assert "paused_action_performed" in call["prompt"]
+    assert "labels_obscure_subject" in call["prompt"]
+    assert "mobile" in call["prompt"].lower()
     assert VALID_UNDERSTANDING["actor"]["id"] in call["prompt"]
 
 
@@ -60,7 +65,9 @@ def test_vision_verdict_failure_becomes_exact_heal_diagnostic():
     verdict = {
         "actor_visible": True,
         "action_performed": False,
+        "paused_action_performed": False,
         "physically_consistent": False,
+        "labels_obscure_subject": False,
         "defects": ["The landmass remains fixed while only the shadow boundary moves."],
     }
     result = evaluate_vision_verdict(verdict)
@@ -72,7 +79,9 @@ def test_vision_verdict_failure_becomes_exact_heal_diagnostic():
         "expected": {
             "actor_visible": True,
             "action_performed": True,
+            "paused_action_performed": True,
             "physically_consistent": True,
+            "labels_obscure_subject": False,
         },
         "actual": verdict,
     }
@@ -89,13 +98,17 @@ async def test_failed_vision_verdict_enters_bounded_heal_loop_with_exact_critiqu
         {
             "actor_visible": True,
             "action_performed": False,
+            "paused_action_performed": False,
             "physically_consistent": False,
+            "labels_obscure_subject": False,
             "defects": ["The actor remains fixed while its shadow changes."],
         },
         {
             "actor_visible": True,
             "action_performed": True,
+            "paused_action_performed": True,
             "physically_consistent": True,
+            "labels_obscure_subject": False,
             "defects": [],
         },
     ]
@@ -121,12 +134,16 @@ async def test_failed_vision_verdict_enters_bounded_heal_loop_with_exact_critiqu
             "expected": {
                 "actor_visible": True,
                 "action_performed": True,
+                "paused_action_performed": True,
                 "physically_consistent": True,
+                "labels_obscure_subject": False,
             },
             "actual": {
                 "actor_visible": True,
                 "action_performed": False,
+                "paused_action_performed": False,
                 "physically_consistent": False,
+                "labels_obscure_subject": False,
                 "defects": ["The actor remains fixed while its shadow changes."],
             },
         }

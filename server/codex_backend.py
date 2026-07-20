@@ -127,12 +127,13 @@ class CodexBackend:
         runtime_context: RuntimeContext | None = None,
     ) -> StageExecution:
         del scenario
+        selected_context = runtime_context or RuntimeContext()
         return await self.executor.execute_stage(
             prompt=self._render_prompt("generate_module.md", understanding),
             schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["generate"],
             model=self.settings.generate_model,
-            effort="medium",
-            **self._execution_policy(runtime_context),
+            effort="low",
+            **self._execution_policy(selected_context),
         )
 
     async def heal(
@@ -144,6 +145,15 @@ class CodexBackend:
         *,
         runtime_context: RuntimeContext | None = None,
     ) -> StageExecution:
+        selected_context = runtime_context or RuntimeContext()
+        repair_scope = sorted(
+            {
+                str(failure.get("code", "unknown"))
+                if isinstance(failure, dict)
+                else str(failure)
+                for failure in failures
+            }
+        )
         return await self.executor.execute_stage(
             prompt=self._render_prompt(
                 "heal_module.md",
@@ -151,13 +161,19 @@ class CodexBackend:
                     "module_output": module_output,
                     "understanding": understanding,
                     "exact_gate_failures": failures,
+                    "repair_scope": repair_scope,
                     "attempt": attempt,
                 },
             ),
             schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["heal"],
             model=self.settings.heal_model,
-            effort="high" if attempt == 2 else "medium",
-            **self._execution_policy(runtime_context),
+            effort="medium" if attempt == 2 else "low",
+            timeout_seconds=(
+                self.settings.public_heal_timeout_seconds
+                if selected_context.public
+                else self.settings.evidence_heal_timeout_seconds
+            ),
+            **self._execution_policy(selected_context),
         )
 
     async def qa(
@@ -181,7 +197,7 @@ class CodexBackend:
             ),
             schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["qa"],
             model=self.settings.qa_model,
-            effort="medium",
+            effort="low",
             timeout_seconds=(
                 self.settings.public_qa_timeout_seconds
                 if selected_context.public
@@ -199,7 +215,7 @@ class CodexBackend:
         runtime_context: RuntimeContext | None = None,
     ) -> StageExecution:
         selected_context = runtime_context or RuntimeContext()
-        if len(image_paths) != 3:
+        if len(image_paths) != 5:
             raise CodexRuntimeError("vision_frame_count_invalid")
         actor = understanding["actor"]
         payload = {
@@ -209,6 +225,12 @@ class CodexBackend:
             "formula": understanding["key_formula"],
             "primary_parameter": understanding["primary_parameter"],
             "frame_parameter_positions": ["see_exact_frame_model_states"],
+            "frame_order": [
+                "desktop_parameter_state_1",
+                "desktop_parameter_state_2",
+                "desktop_parameter_state_3",
+                "mobile_390x844_label_obscuration_check",
+            ],
             "frame_model_states": frame_states or [],
             "judgment_note": {
                 "rotates": (
@@ -230,6 +252,10 @@ class CodexBackend:
                 "flows": (
                     "These are parameter-ordered snapshots at the same model time, not a time "
                     "sequence. Higher resistance lowers current, so the charge is less far along."
+                ),
+                "responds": (
+                    "Parameter-ordered frames must show a causal static actor response. The held "
+                    "frame must preserve that state; stability is correct and fake drift fails."
                 ),
             }.get(
                 understanding["action"],
@@ -557,8 +583,10 @@ class MockCodexBackend:
                 "scene_depth": True,
                 "physical_light": True,
                 "idle_motion": True,
+                "paused_phenomenon_motion": True,
                 "reactive_feedback": True,
                 "readable_overlays": True,
+                "overlay_safe_band": True,
             },
         }
 
@@ -575,7 +603,9 @@ class MockCodexBackend:
         return {
             "actor_visible": True,
             "action_performed": True,
+            "paused_action_performed": True,
             "physically_consistent": True,
+            "labels_obscure_subject": False,
             "defects": [],
         }
 

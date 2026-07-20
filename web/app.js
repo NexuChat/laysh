@@ -32,6 +32,8 @@
 
     const byId = (id) => document.getElementById(id);
     const views = [...document.querySelectorAll("[data-view]")];
+    const MIN_ARTIFACT_HEIGHT = 480;
+    const MAX_ARTIFACT_HEIGHT = 12000;
     let number = new Intl.NumberFormat(state.locale, { maximumFractionDigits: 0 });
     const failureSymbols = {
     not_simulatable: "?",
@@ -215,7 +217,7 @@
     setView("failure", { push: true });
   }
 
-  function displayResult(result, { push = true } = {}) {
+    function displayResult(result, { push = true } = {}) {
     if (result.status !== "complete" || !result.simulation) {
       const reason = normalizedReason(result.fallback?.reason_code, result.status);
       showFailure(reason, result.fallback?.suggestions || []);
@@ -230,8 +232,11 @@
     byId("result-title").textContent = simulation.title;
     byId("result-answer").textContent = state.answer || result.answer?.tldr || "";
     byId("simulation-alternative").textContent = state.answer || t("simulation_text_fallback");
-    byId("simulation-frame").hidden = false;
-    byId("simulation-frame").src = `${simulation.artifact_url}?inline=1`;
+    const simulationFrame = byId("simulation-frame");
+    simulationFrame.hidden = false;
+    simulationFrame.style.height = `${MIN_ARTIFACT_HEIGHT}px`;
+    delete simulationFrame.dataset.contentHeight;
+    simulationFrame.src = `${simulation.artifact_url}?inline=1`;
     byId("download").href = simulation.artifact_url;
     const shareActions = byId("share-actions");
     const nativeShare = byId("native-share");
@@ -563,6 +568,8 @@
   }
   byId("replay-result").addEventListener("click", () => {
     const frame = byId("simulation-frame");
+    frame.style.height = `${MIN_ARTIFACT_HEIGHT}px`;
+    delete frame.dataset.contentHeight;
     frame.src = frame.src;
     frame.focus();
   });
@@ -575,6 +582,11 @@
       frame.scrollIntoView({ block: "center" });
       frame.focus();
     }
+  });
+  document.addEventListener("fullscreenchange", () => {
+    const frame = byId("simulation-frame");
+    if (document.fullscreenElement || !frame.dataset.contentHeight) return;
+    frame.style.height = `${frame.dataset.contentHeight}px`;
   });
   byId("copy-share").addEventListener("click", copyShareLink);
   byId("native-share").addEventListener("click", async () => {
@@ -603,6 +615,26 @@
     if (event.source !== frame.contentWindow || event.origin !== "null") return;
     const payload = event.data;
     if (!payload || payload.source !== "laysh-artifact") return;
+    if (payload.type === "content-height" && payload.version === 1) {
+      const measured = Math.ceil(Number(payload.height));
+      if (!Number.isFinite(measured) || measured <= 0) return;
+      const height = Math.max(
+        MIN_ARTIFACT_HEIGHT,
+        Math.min(MAX_ARTIFACT_HEIGHT, measured),
+      );
+      frame.dataset.contentHeight = String(height);
+      for (const [name, value] of Object.entries({
+        scrollHeight: payload.scrollHeight,
+        clientHeight: payload.clientHeight,
+        interactiveUnitBottom: payload.interactiveUnitBottom,
+        canvasWidth: payload.canvasWidth,
+        canvasHeight: payload.canvasHeight,
+      })) {
+        if (Number.isFinite(Number(value))) frame.dataset[name] = String(Math.ceil(Number(value)));
+      }
+      if (document.fullscreenElement !== frame) frame.style.height = `${height}px`;
+      return;
+    }
     if (payload.type === "runtime-error" && payload.code === "SIM_RUNTIME_ERROR") {
       frame.hidden = true;
       showFailure("simulation_runtime_error");

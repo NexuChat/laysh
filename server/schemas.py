@@ -51,6 +51,55 @@ def validate_understanding(document: dict[str, Any]) -> dict[str, Any]:
     return document
 
 
+def action_contract_report(document: dict[str, Any]) -> list[dict[str, Any]]:
+    """Reject taxonomy matches that the deterministic actor adapters cannot measure honestly."""
+    if not document.get("simulatable"):
+        return []
+    action = document.get("action")
+    actor = document.get("actor") or {}
+    tracking_output = actor.get("tracking_output")
+    parameter = document.get("primary_parameter") or {}
+    failures: list[dict[str, Any]] = []
+    if action in {"oscillates", "propagates"}:
+        time_tokens = ("period", "duration", "travel_time", "cycle_time")
+        if not isinstance(tracking_output, str) or not any(
+            token in tracking_output for token in time_tokens
+        ):
+            failures.append(
+                {
+                    "gate": "action_contract",
+                    "code": "dynamic_action_tracking_output_not_time",
+                    "expected": {
+                        "action": action,
+                        "tracking_output_semantics": "positive period or duration",
+                    },
+                    "actual": {"tracking_output": tracking_output},
+                }
+            )
+    if action in {"rotates", "orbits", "phases"}:
+        parameter_id = str(parameter.get("id", ""))
+        unit = str(parameter.get("unit", ""))
+        if not ("angle" in parameter_id or "°" in unit or unit.lower() in {"deg", "rad"}):
+            failures.append(
+                {
+                    "gate": "action_contract",
+                    "code": "angular_action_parameter_not_angle",
+                    "expected": {"action": action, "primary_parameter_semantics": "angle"},
+                    "actual": {"parameter_id": parameter_id, "unit": unit},
+                }
+            )
+    if action in {"flows", "floats_sinks", "responds"} and tracking_output is None:
+        failures.append(
+            {
+                "gate": "action_contract",
+                "code": "action_tracking_output_missing",
+                "expected": {"action": action, "tracking_output_declared": True},
+                "actual": {"tracking_output": None},
+            }
+        )
+    return failures
+
+
 def validate_module_output(document: dict[str, Any]) -> dict[str, Any]:
     return validate_document(document, load_schema("module.schema.json"))
 

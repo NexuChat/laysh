@@ -118,6 +118,8 @@ def test_g4_mock_journeys_accessibility_and_accepted_screenshots(tmp_path):
     assert evidence["responsive"]["overflow320"] is False
     assert evidence["responsive"]["overflowAt200Percent"] is False
     assert evidence["responsive"]["reducedMotion"] is True
+    assert evidence["artifactLayout"]["innerScrollbar"] is False
+    assert evidence["artifactLayout"]["canvasSliderPauseInFirstViewport"] is True
     assert evidence["consoleErrors"] == []
     assert evidence["networkFailures"] == []
     assert (screenshots / "g4-result-mobile-390x844.png").stat().st_size > 20_000

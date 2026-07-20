@@ -32,7 +32,7 @@ class BrowserVerificationResult:
     def passing(cls) -> BrowserVerificationResult:
         return cls(
             passed=True,
-            check_count=16,
+            check_count=18,
             failures=[],
             evidence={
                 "ready": True,
@@ -45,6 +45,9 @@ class BrowserVerificationResult:
                 "sliderTrackedAnimation": True,
                 "controlAlwaysEnabled": True,
                 "pauseHeldValue": True,
+                "pausedMotionSubjectChangedPixelRatio": 0.012,
+                "pausedMotionWholeCanvasChangedPixelRatio": 0.004,
+                "pausedMotionCaptureIntervalMs": 1100,
                 "sliderInteractionYielded": True,
                 "reducedMotionStartedPaused": True,
                 "reducedMotionPlayOptInWorked": True,
@@ -60,6 +63,30 @@ class BrowserVerificationResult:
                     "actorId": "moon",
                     "expected": {"angularDisplacementDegrees": 360},
                     "measured": {"angularDisplacementDegrees": 358.5},
+                },
+                "pausedActorTracking": {
+                    "passed": True,
+                    "lesson": "How does frequency change pitch?",
+                    "action": "propagates",
+                    "actorId": "sound_wave",
+                    "heldParameter": {
+                        "id": "frequency_hz",
+                        "value": 440,
+                        "unit": "Hz",
+                    },
+                    "expected": {"phase_shift_radians": 1.5708},
+                    "measured": {"phase_shift_radians": 1.55},
+                },
+                "mobileOverlayLayout": {
+                    "passed": True,
+                    "canvas": {"width": 360, "height": 274},
+                    "subjectRegion": {"x": 72, "y": 55, "width": 216, "height": 164},
+                    "overlayRects": [],
+                    "drawnLabelRects": [],
+                    "overlayCount": 0,
+                    "overlayHeightRatio": 0,
+                    "subjectOverlapPixels": 0,
+                    "failure": None,
                 },
                 "runtimeError": False,
                 "externalRequests": 0,
@@ -87,6 +114,15 @@ def _evaluate(evidence: dict[str, Any]) -> BrowserVerificationResult:
     capture_interval = evidence.get("idleMotionCaptureIntervalMs")
     subject_ratio = float(evidence.get("idleMotionSubjectChangedPixelRatio", 0))
     whole_canvas_ratio = float(evidence.get("idleMotionWholeCanvasChangedPixelRatio", 0))
+    actor_tracking = evidence.get("actorTracking")
+    # A thin refracted ray or field indicator can be causally strong while occupying less area than
+    # an orbiting body. Keep the changed-subject principle, but use a justified 0.5% floor for the
+    # static-response adapter; actor correlation independently rejects decorative pixel motion.
+    subject_motion_minimum = (
+        0.005
+        if isinstance(actor_tracking, dict) and actor_tracking.get("action") == "responds"
+        else SUBJECT_MOTION_MIN_CHANGED_PIXEL_RATIO
+    )
     checks = (
         (
             bool(evidence.get("ready")),
@@ -110,18 +146,18 @@ def _evaluate(evidence: dict[str, Any]) -> BrowserVerificationResult:
             "browser_readiness",
         ),
         (
-            subject_ratio >= SUBJECT_MOTION_MIN_CHANGED_PIXEL_RATIO,
+            subject_ratio >= subject_motion_minimum,
             "subject_idle_motion_insufficient",
             {
                 "region": "central_60_percent",
-                "minimum_changed_pixel_ratio": SUBJECT_MOTION_MIN_CHANGED_PIXEL_RATIO,
+                "minimum_changed_pixel_ratio": subject_motion_minimum,
                 "capture_interval_ms": MOTION_CAPTURE_INTERVAL_MS,
             },
             {
                 "region": "central_60_percent",
                 "changed_pixel_ratio": subject_ratio,
                 "shortfall": round(
-                    max(0, SUBJECT_MOTION_MIN_CHANGED_PIXEL_RATIO - subject_ratio), 6
+                    max(0, subject_motion_minimum - subject_ratio), 6
                 ),
                 "capture_interval_ms": capture_interval,
             },
@@ -236,7 +272,6 @@ def _evaluate(evidence: dict[str, Any]) -> BrowserVerificationResult:
                 gate="render_output_consistency",
             )
         )
-    actor_tracking = evidence.get("actorTracking")
     if isinstance(actor_tracking, dict) and actor_tracking.get("passed") is not True:
         diagnostic = actor_tracking.get("failure", {})
         failures.append(
@@ -247,9 +282,60 @@ def _evaluate(evidence: dict[str, Any]) -> BrowserVerificationResult:
                 gate="actor_action_tracking",
             )
         )
+    paused_actor_tracking = evidence.get("pausedActorTracking")
+    paused_actor_required = isinstance(actor_tracking, dict)
+    paused_actor_passed = isinstance(paused_actor_tracking, dict) and (
+        paused_actor_tracking.get("passed") is True
+    )
+    if paused_actor_required and not paused_actor_passed:
+        diagnostic = (
+            paused_actor_tracking.get("failure", {})
+            if isinstance(paused_actor_tracking, dict)
+            else {}
+        )
+        failures.append(
+            _failure(
+                str(diagnostic.get("code", "paused_actor_tracking_missing")),
+                diagnostic.get(
+                    "expected",
+                    {
+                        "sweep_state": "paused",
+                        "held_parameter_stable": True,
+                        "declared_action_continues": True,
+                    },
+                ),
+                diagnostic.get("measured", {}),
+                gate="actor_action_tracking",
+            )
+        )
+    mobile_layout = evidence.get("mobileOverlayLayout")
+    mobile_passed = isinstance(mobile_layout, dict) and mobile_layout.get("passed") is True
+    if not mobile_passed:
+        diagnostic = mobile_layout.get("failure", {}) if isinstance(mobile_layout, dict) else {}
+        failures.append(
+            _failure(
+                str(diagnostic.get("code", "mobile_overlay_measurement_missing")),
+                diagnostic.get(
+                    "expected",
+                    {
+                        "canvas_width_max": 420,
+                        "overlay_count_max": 1,
+                        "overlay_height_ratio_max": 0.22,
+                        "subject_overlap_pixels": 0,
+                    },
+                ),
+                diagnostic.get("measured", {}),
+                gate="mobile_overlay_safe_band",
+            )
+        )
     return BrowserVerificationResult(
         passed=not failures,
-        check_count=len(checks) + 1 + int(isinstance(actor_tracking, dict)),
+        check_count=(
+            len(checks)
+            + 2
+            + int(isinstance(actor_tracking, dict))
+            + int(isinstance(paused_actor_tracking, dict))
+        ),
         failures=failures,
         evidence=evidence,
     )

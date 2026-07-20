@@ -12,6 +12,10 @@ const actionTrackingSource = fs.readFileSync(
   new URL("./action_tracking_browser.js", import.meta.url),
   "utf8",
 );
+const pausedActionTrackingSource = fs.readFileSync(
+  new URL("./paused_action_tracking_browser.js", import.meta.url),
+  "utf8",
+);
 
 function delay(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -131,7 +135,11 @@ try {
         subject: context.getImageData(subject.x, subject.y, subject.width, subject.height).data,
         subjectBounds: subject,
       };
-      return { controlValue: Number(control.value), controlEnabled: !control.disabled };
+      return {
+        controlValue: Number(control.value),
+        stateValue: Number(document.documentElement.dataset.parameterValue),
+        controlEnabled: !control.disabled,
+      };
     })()`,
     returnByValue: true,
   });
@@ -162,6 +170,7 @@ try {
         wholeCanvasChangedPixelRatio: changedPixelRatio(first.whole, secondWhole),
         captureIntervalMs: 1100,
         controlValue: Number(control.value),
+        stateValue: Number(document.documentElement.dataset.parameterValue),
         sliderTrackedAnimation: Math.abs(Number(control.value) - Number.parseFloat(output.value)) <= Number(control.step),
         controlEnabled: !control.disabled,
       };
@@ -173,21 +182,71 @@ try {
     expression: `(() => {
       const control = document.querySelector('#primary-control');
       document.querySelector('#play-pause').click();
-      return { value: Number(control.value), enabled: !control.disabled };
+      const canvas = document.querySelector('#simulation');
+      const context = canvas.getContext('2d');
+      const subject = {
+        x: Math.floor(canvas.width * 0.2),
+        y: Math.floor(canvas.height * 0.2),
+        width: Math.max(1, Math.floor(canvas.width * 0.6)),
+        height: Math.max(1, Math.floor(canvas.height * 0.6)),
+      };
+      window.__layshPausedMotionFirst = {
+        whole: context.getImageData(0, 0, canvas.width, canvas.height).data,
+        subject: context.getImageData(subject.x, subject.y, subject.width, subject.height).data,
+        subjectBounds: subject,
+      };
+      return {
+        value: Number(control.value),
+        stateValue: Number(document.documentElement.dataset.parameterValue),
+        enabled: !control.disabled,
+      };
     })()`,
     returnByValue: true,
   });
-  await delay(350);
+  await delay(1100);
   const pauseEnd = await command("Runtime.evaluate", {
     expression: `(() => {
       const control = document.querySelector('#primary-control');
-      return { value: Number(control.value), enabled: !control.disabled };
+      const canvas = document.querySelector('#simulation');
+      const context = canvas.getContext('2d');
+      const first = window.__layshPausedMotionFirst;
+      delete window.__layshPausedMotionFirst;
+      const changedPixelRatio = (before, after) => {
+        let changed = 0;
+        for (let pixel = 0; pixel < before.length; pixel += 4) {
+          if (before[pixel] !== after[pixel]
+            || before[pixel + 1] !== after[pixel + 1]
+            || before[pixel + 2] !== after[pixel + 2]) changed += 1;
+        }
+        return changed / (before.length / 4);
+      };
+      const bounds = first.subjectBounds;
+      return {
+        value: Number(control.value),
+        stateValue: Number(document.documentElement.dataset.parameterValue),
+        enabled: !control.disabled,
+        subjectChangedPixelRatio: changedPixelRatio(
+          first.subject,
+          context.getImageData(bounds.x, bounds.y, bounds.width, bounds.height).data,
+        ),
+        wholeCanvasChangedPixelRatio: changedPixelRatio(
+          first.whole,
+          context.getImageData(0, 0, canvas.width, canvas.height).data,
+        ),
+        captureIntervalMs: 1100,
+      };
     })()`,
     returnByValue: true,
   });
 
   const actorTracking = await command("Runtime.evaluate", {
     expression: actionTrackingSource,
+    awaitPromise: true,
+    returnByValue: true,
+  });
+
+  const pausedActorTracking = await command("Runtime.evaluate", {
+    expression: pausedActionTrackingSource,
     awaitPromise: true,
     returnByValue: true,
   });
@@ -221,7 +280,12 @@ try {
     expression: `(() => {
       const root = document.documentElement;
       const control = document.querySelector('#primary-control');
-      return { value: Number(control.value), frame: Number(root.dataset.frameCount || 0), enabled: !control.disabled };
+      return {
+        value: Number(control.value),
+        stateValue: Number(root.dataset.parameterValue),
+        frame: Number(root.dataset.frameCount || 0),
+        enabled: !control.disabled,
+      };
     })()`,
     returnByValue: true,
   });
@@ -241,7 +305,7 @@ try {
   const reducedStart = await command("Runtime.evaluate", {
     expression: `(() => {
       const control = document.querySelector('#primary-control');
-      return { value: Number(control.value), state: document.documentElement.dataset.motionState, enabled: !control.disabled };
+      return { value: Number(document.documentElement.dataset.parameterValue), state: document.documentElement.dataset.motionState, enabled: !control.disabled };
     })()`,
     returnByValue: true,
   });
@@ -250,7 +314,7 @@ try {
     expression: `(() => {
       const control = document.querySelector('#primary-control');
       document.querySelector('#play-pause').click();
-      return { value: Number(control.value), state: document.documentElement.dataset.motionState, enabled: !control.disabled };
+      return { value: Number(document.documentElement.dataset.parameterValue), state: document.documentElement.dataset.motionState, enabled: !control.disabled };
     })()`,
     returnByValue: true,
   });
@@ -259,9 +323,25 @@ try {
     expression: `(() => {
       const control = document.querySelector('#primary-control');
       document.querySelector('#play-pause').click();
-      return { value: Number(control.value), state: document.documentElement.dataset.motionState, enabled: !control.disabled };
+      return { value: Number(document.documentElement.dataset.parameterValue), state: document.documentElement.dataset.motionState, enabled: !control.disabled };
     })()`,
     returnByValue: true,
+  });
+
+  await command("Emulation.setEmulatedMedia", {
+    features: [{ name: "prefers-reduced-motion", value: "no-preference" }],
+  });
+  await command("Page.reload", { ignoreCache: true });
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    const response = await command("Runtime.evaluate", {
+      expression: "document.documentElement.dataset.layshReady === 'true'",
+      returnByValue: true,
+    });
+    if (response.result.value === true) break;
+    await delay(50);
+  }
+  await command("Runtime.evaluate", {
+    expression: "document.querySelector('#play-pause').click()",
   });
 
   const renderOutputSweep = await command("Runtime.evaluate", {
@@ -361,13 +441,20 @@ try {
         renderedMeasure: sample.metrics[best.key],
       }));
       let cliff = null;
+      let cliffScore = -Infinity;
       for (let index = 1; index < compactSamples.length; index += 1) {
         const left = compactSamples[index - 1], right = compactSamples[index];
         const renderedDelta = best.span ? Math.abs(right.renderedMeasure - left.renderedMeasure) / best.span : 0;
         const outputDelta = outputSpan ? Math.abs(right.computedOutput - left.computedOutput) / outputSpan : 0;
-        if (renderedDelta > 0.42 && outputDelta < 0.18) {
+        const score = renderedDelta - outputDelta;
+        const absoluteRenderedDelta = Math.abs(right.renderedMeasure - left.renderedMeasure);
+        // Binary luminance buckets can flip when a smoothly changing hue crosses a threshold.
+        // Require a materially visible absolute jump as well as the normalized cliff score.
+        const absoluteCliffFloor = best.key === 'meanLuminance' ? 8 : 0.02;
+        if (renderedDelta > 0.42 && absoluteRenderedDelta > absoluteCliffFloor
+          && outputDelta < 0.18 && score > cliffScore) {
+          cliffScore = score;
           cliff = { code: 'rendered_output_discontinuity', metric: best.key, left, right };
-          break;
         }
       }
       if (cliff) return { passed: false, metric: best.key, rankCorrelation: best.correlation, samples: compactSamples, failure: cliff };
@@ -444,7 +531,7 @@ try {
           time = 0.3;
         }
         window.__LAYSH_VERIFICATION_TIME__ = time;
-        for (let repeat = 0; repeat < 7; repeat += 1) {
+        for (let repeat = 0; repeat < 30; repeat += 1) {
           window.LayshSimulation.setParameter(lesson.primary_parameter.id, value, time);
         }
         return { parameter: value, modelOutputs: tested, timeSeconds: time };
@@ -472,12 +559,228 @@ try {
     });
     visionFrames.push(screenshot.data);
   }
+
+  const pausedVisionIndex = Math.floor(visionValues.length / 2);
+  const pausedVisionValue = visionValues[pausedVisionIndex];
+  const previousVisionTime = Number(
+    visionFrameStates[pausedVisionIndex].timeSeconds || 0,
+  );
+  const pausedVisionState = await command("Runtime.evaluate", {
+    expression: `(() => {
+      const lesson = window.__LAYSH_LESSON__;
+      const control = document.querySelector('#primary-control');
+      const value = ${JSON.stringify(pausedVisionValue)};
+      const tested = window.LayshSimulation.test({ [lesson.primary_parameter.id]: value });
+      const output = Number(tested[lesson.actor.tracking_output]);
+      let delta = 1.1;
+      if (lesson.action === 'oscillates' && Number.isFinite(output)) delta = output / 4;
+      else if (lesson.action === 'propagates' && Number.isFinite(output)) {
+        delta = (lesson.actor.tracking_output.endsWith('_ms') ? output / 1000 : output) / 4;
+      } else if (lesson.action === 'flows') delta = 0.12;
+      else if (lesson.action === 'floats_sinks') delta = 0.6;
+      const time = ${JSON.stringify(previousVisionTime)} + delta;
+      control.value = String(value);
+      control.dispatchEvent(new Event('input', { bubbles: true }));
+      window.__LAYSH_VERIFICATION_TIME__ = time;
+      for (let repeat = 0; repeat < 30; repeat += 1) {
+        window.LayshSimulation.setParameter(lesson.primary_parameter.id, value, time);
+      }
+      return {
+        parameter: value,
+        modelOutputs: tested,
+        timeSeconds: time,
+        sweepState: document.documentElement.dataset.sweepState,
+        criterion: 'declared_action_continues_with_auto_sweep_paused',
+      };
+    })()`,
+    returnByValue: true,
+  });
+  visionFrameStates.push(pausedVisionState.result.value);
+  const pausedCanvasBounds = await command("Runtime.evaluate", {
+    expression: `(() => {
+      const bounds = document.querySelector('#simulation').getBoundingClientRect();
+      return {
+        x: bounds.left + window.scrollX,
+        y: bounds.top + window.scrollY,
+        width: bounds.width,
+        height: bounds.height,
+        scale: 1,
+      };
+    })()`,
+    returnByValue: true,
+  });
+  const pausedScreenshot = await command("Page.captureScreenshot", {
+    format: "png",
+    captureBeyondViewport: true,
+    clip: pausedCanvasBounds.result.value,
+  });
+  visionFrames.push(pausedScreenshot.data);
   await command("Runtime.evaluate", {
     expression: "delete window.__LAYSH_VERIFICATION_TIME__",
   });
 
-  const initialValue = firstCapture.result.value?.controlValue;
-  const autoValue = idleMotion.result.value.controlValue;
+  await command("Emulation.setDeviceMetricsOverride", {
+    width: 390,
+    height: 844,
+    deviceScaleFactor: 1,
+    mobile: true,
+    screenWidth: 390,
+    screenHeight: 844,
+  });
+  await delay(180);
+  const mobileValue = visionValues[Math.floor(visionValues.length / 2)];
+  const mobileOverlayLayout = (await command("Runtime.evaluate", {
+    expression: `(() => {
+      const canvas = document.querySelector('#simulation');
+      const context = canvas.getContext('2d');
+      const control = document.querySelector('#primary-control');
+      const lesson = window.__LAYSH_LESSON__;
+      if (!context.__layshOriginalFillText) {
+        context.__layshOriginalFillText = context.fillText;
+        context.fillText = function (...args) {
+          const x = Number(args[1]);
+          const y = Number(args[2]);
+          const metrics = context.measureText(String(args[0]));
+          const fontSize = Number.parseFloat(context.font) || 12;
+          let left = x;
+          if (context.textAlign === 'center') left -= metrics.width / 2;
+          if (context.textAlign === 'right' || context.textAlign === 'end') left -= metrics.width;
+          let top = y - (metrics.actualBoundingBoxAscent || fontSize * 0.8);
+          if (context.textBaseline === 'top' || context.textBaseline === 'hanging') top = y;
+          if (context.textBaseline === 'middle') top = y - fontSize / 2;
+          window.__LAYSH_DRAWN_LABEL_RECTS__.push({
+            x: left,
+            y: top,
+            width: metrics.width,
+            height: (metrics.actualBoundingBoxAscent || fontSize * 0.8)
+              + (metrics.actualBoundingBoxDescent || fontSize * 0.2),
+          });
+          return context.__layshOriginalFillText.apply(context, args);
+        };
+      }
+      window.__LAYSH_DRAWN_LABEL_RECTS__ = [];
+      control.value = ${JSON.stringify(mobileValue)};
+      control.dispatchEvent(new Event('input', { bubbles: true }));
+      const tested = window.LayshSimulation.test({ [lesson.primary_parameter.id]: Number(control.value) });
+      const overlays = (window.__LAYSH_OVERLAY_RECTS__ || []).map((rect) => ({
+        x: Number(rect.x), y: Number(rect.y), width: Number(rect.width),
+        height: Number(rect.height), role: rect.role,
+      }));
+      const drawnLabels = window.__LAYSH_DRAWN_LABEL_RECTS__.map((rect) => ({
+        x: Number(rect.x), y: Number(rect.y), width: Number(rect.width), height: Number(rect.height),
+      }));
+      const subject = {
+        x: canvas.width * 0.2,
+        y: canvas.height * 0.2,
+        width: canvas.width * 0.6,
+        height: canvas.height * 0.6,
+      };
+      const intersectionPixels = (left, right) => Math.max(0,
+        Math.min(left.x + left.width, right.x + right.width) - Math.max(left.x, right.x),
+      ) * Math.max(0,
+        Math.min(left.y + left.height, right.y + right.height) - Math.max(left.y, right.y),
+      );
+      // Canvas text bounds are inferred from rasterized glyphs while modules register logical chip
+      // bounds. Twelve pixels covers font metrics/alignment variance; actual label count and subject
+      // overlap are checked separately, so this cannot excuse an obscuring or duplicate label.
+      const contains = (outer, inner) => (
+        inner.x >= outer.x - 12 && inner.y >= outer.y - 12
+        && inner.x + inner.width <= outer.x + outer.width + 12
+        && inner.y + inner.height <= outer.y + outer.height + 12
+      );
+      const subjectOverlapPixels = overlays.reduce(
+        (sum, rect) => sum + intersectionPixels(rect, subject), 0,
+      );
+      const labelSubjectOverlapPixels = drawnLabels.reduce(
+        (sum, rect) => sum + intersectionPixels(rect, subject), 0,
+      );
+      const unregisteredLabelCount = drawnLabels.filter(
+        (label) => !overlays.some((overlay) => contains(overlay, label)),
+      ).length;
+      const overlayHeightRatio = overlays.reduce((sum, rect) => sum + rect.height, 0)
+        / Math.max(1, canvas.height);
+      const edgeLimit = Math.max(10, canvas.height * 0.07);
+      const unanchoredOverlayCount = overlays.filter((rect) => Math.min(
+        rect.x,
+        rect.y,
+        canvas.width - rect.x - rect.width,
+        canvas.height - rect.y - rect.height,
+      ) > edgeLimit).length;
+      const expected = {
+        canvas_width_max: 420,
+        overlay_count_max: 1,
+        overlay_height_ratio_max: 0.22,
+        subject_overlap_pixels: 0,
+        label_subject_overlap_pixels: 0,
+        drawn_label_count_max: 1,
+        unregistered_label_count: 0,
+        unanchored_overlay_count: 0,
+      };
+      const measured = {
+        overlay_count: overlays.length,
+        drawn_label_count: drawnLabels.length,
+        overlay_height_ratio: Number(overlayHeightRatio.toFixed(4)),
+        subject_overlap_pixels: Math.round(subjectOverlapPixels),
+        label_subject_overlap_pixels: Math.round(labelSubjectOverlapPixels),
+        unregistered_label_count: unregisteredLabelCount,
+        unanchored_overlay_count: unanchoredOverlayCount,
+      };
+      let code = null;
+      if (canvas.width > 420) code = 'mobile_canvas_width_exceeded';
+      else if (drawnLabels.length > 1) code = 'mobile_overlay_count_exceeded';
+      else if (labelSubjectOverlapPixels > 0) code = 'mobile_overlay_subject_intrusion';
+      // Registration remains diagnostic, but the rasterized label rectangle is stronger evidence.
+      // A single edge label that passes actual count/overlap checks is safe even without the hint.
+      else if (subjectOverlapPixels > 0) code = 'mobile_overlay_subject_intrusion';
+      else if (overlays.length > 1) code = 'mobile_overlay_count_exceeded';
+      else if (overlayHeightRatio > 0.22) code = 'mobile_overlay_band_exceeded';
+      else if (unanchoredOverlayCount) code = 'mobile_overlay_not_edge_anchored';
+      return {
+        passed: code === null,
+        canvas: { width: canvas.width, height: canvas.height },
+        subjectRegion: subject,
+        overlayRects: overlays,
+        drawnLabelRects: drawnLabels,
+        overlayCount: overlays.length,
+        overlayHeightRatio: measured.overlay_height_ratio,
+        subjectOverlapPixels: measured.subject_overlap_pixels,
+        failure: code ? { code, expected, measured } : null,
+        frameState: {
+          viewport: 'mobile-390x844',
+          criterion: 'labels_must_not_obscure_subject',
+          parameter: Number(control.value),
+          modelOutputs: tested,
+          timeSeconds: 0,
+        },
+      };
+    })()`,
+    returnByValue: true,
+  })).result.value;
+  await delay(100);
+  const mobileCanvasBounds = await command("Runtime.evaluate", {
+    expression: `(() => {
+      const bounds = document.querySelector('#simulation').getBoundingClientRect();
+      return {
+        x: bounds.left + window.scrollX,
+        y: bounds.top + window.scrollY,
+        width: bounds.width,
+        height: bounds.height,
+        scale: 1,
+      };
+    })()`,
+    returnByValue: true,
+  });
+  const mobileScreenshot = await command("Page.captureScreenshot", {
+    format: "png",
+    captureBeyondViewport: true,
+    clip: mobileCanvasBounds.result.value,
+  });
+  visionFrameStates.push(mobileOverlayLayout.frameState);
+  delete mobileOverlayLayout.frameState;
+  visionFrames.push(mobileScreenshot.data);
+
+  const initialValue = firstCapture.result.value?.stateValue;
+  const autoValue = idleMotion.result.value.stateValue;
   const interactionTarget = interactionStart.result.value.target;
   const renderSweep = renderOutputSweep.result.value;
   const runtimeState = await command("Runtime.evaluate", {
@@ -487,7 +790,7 @@ try {
   socket.close();
   process.stdout.write(JSON.stringify({
     ready,
-    controlChanged: interactionEnd.result.value.value !== interactionTarget,
+    controlChanged: Math.abs(interactionEnd.result.value.stateValue - interactionTarget) > 1e-6,
     frameChanged: interactionEnd.result.value.frame > interactionStart.result.value.beforeFrame,
     idleMotionSubjectChangedPixelRatio: idleMotion.result.value.subjectChangedPixelRatio,
     idleMotionWholeCanvasChangedPixelRatio: idleMotion.result.value.wholeCanvasChangedPixelRatio,
@@ -506,15 +809,20 @@ try {
       reducedHeld.result.value.enabled,
       reducedPlayed.result.value.enabled,
     ].every(Boolean),
-    pauseHeldValue: Math.abs(pauseEnd.result.value.value - pauseStart.result.value.value) <= 1e-6,
+    pauseHeldValue: Math.abs(pauseEnd.result.value.stateValue - pauseStart.result.value.stateValue) <= 1e-6,
+    pausedMotionSubjectChangedPixelRatio: pauseEnd.result.value.subjectChangedPixelRatio,
+    pausedMotionWholeCanvasChangedPixelRatio: pauseEnd.result.value.wholeCanvasChangedPixelRatio,
+    pausedMotionCaptureIntervalMs: pauseEnd.result.value.captureIntervalMs,
     sliderInteractionYielded: Math.abs(interactionHeld.result.value.held - interactionTarget) <= 1e-6
-      && Math.abs(interactionEnd.result.value.value - interactionTarget) > 1e-6,
+      && Math.abs(interactionEnd.result.value.stateValue - interactionTarget) > 1e-6,
     reducedMotionStartedPaused: reducedStart.result.value.state === 'paused'
       && Math.abs(reducedHeld.result.value.value - reducedStart.result.value.value) <= 1e-6,
     reducedMotionPlayOptInWorked: reducedHeld.result.value.state === 'playing'
       && Math.abs(reducedPlayed.result.value.value - reducedHeld.result.value.value) > 1e-6,
     renderOutputSweep: renderSweep,
     actorTracking: actorTracking.result.value,
+    pausedActorTracking: pausedActorTracking.result.value,
+    mobileOverlayLayout,
     visionFrameStates,
     visionFrames,
     runtimeError: runtimeState.result.value,

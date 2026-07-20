@@ -11,12 +11,19 @@ from server.codex_backend import RuntimeContext
 from server.codex_runtime import CodexRuntimeError, StageExecution
 from server.schemas import (
     AnswerPayload,
+    ContractError,
     FallbackResult,
     SimulationMetadata,
+    action_contract_report,
     validate_module_output,
     validate_understanding,
 )
-from server.verify import VerificationResult, formula_presentation_report, verify_candidate
+from server.verify import (
+    VerificationResult,
+    formula_presentation_report,
+    misconception_report,
+    verify_candidate,
+)
 from server.vision_verify import evaluate_vision_verdict
 
 
@@ -183,16 +190,42 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         _localized(record, "صياغة جواب وعقد تعليمي", "Drafting an answer and lesson contract"),
         emit_event=False,
     )
-    understanding = validate_understanding(
-        stage_data(
-            await manager.backend.understand(
-                question,
-                record.locale,
-                runtime_context=runtime_context,
-            ),
-            "understand",
-        )
+    initial_understanding = stage_data(
+        await manager.backend.understand(
+            question,
+            record.locale,
+            runtime_context=runtime_context,
+        ),
+        "understand",
     )
+    try:
+        understanding = validate_understanding(initial_understanding)
+    except ContractError:
+        if not record.public:
+            raise
+        manager.emit(
+            record,
+            "stage",
+            {
+                "stage": "understanding_retry",
+                "detail": _localized(
+                    record,
+                    "إعادة ضبط عقد القياس مرة واحدة",
+                    "Rebuilding the measurement contract once",
+                ),
+                "elapsed_ms": manager.elapsed_ms(record),
+            },
+        )
+        understanding = validate_understanding(
+            stage_data(
+                await manager.backend.understand(
+                    question,
+                    record.locale,
+                    runtime_context=runtime_context,
+                ),
+                "understand_retry",
+            )
+        )
 
     if not understanding["safe"]:
         _reject(
@@ -201,6 +234,40 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             understanding["reason_code"],
             understanding["suggestions"],
         )
+
+    misconception_failures, _ = misconception_report(understanding)
+    if misconception_failures and record.public:
+        manager.emit(
+            record,
+            "stage",
+            {
+                "stage": "understanding_retry",
+                "detail": _localized(
+                    record,
+                    "إعادة ضبط التصحيح المفاهيمي مرة واحدة",
+                    "Rebuilding the corrective explanation once",
+                ),
+                "elapsed_ms": manager.elapsed_ms(record),
+            },
+        )
+        understanding = validate_understanding(
+            stage_data(
+                await manager.backend.understand(
+                    question,
+                    record.locale,
+                    runtime_context=runtime_context,
+                ),
+                "understand_retry",
+            )
+        )
+        if not understanding["safe"]:
+            _reject(
+                manager,
+                record,
+                understanding["reason_code"],
+                understanding["suggestions"],
+            )
+        misconception_failures, _ = misconception_report(understanding)
 
     formula_failures, _ = formula_presentation_report(understanding)
     if formula_failures and not record.public:
@@ -274,6 +341,29 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         )
         return
 
+    if misconception_failures:
+        _fallback(
+            manager,
+            record,
+            "corrective_misconception_unresolved",
+            understanding["suggestions"] or _default_suggestions(record),
+        )
+        return
+
+    action_failures = action_contract_report(understanding)
+    if action_failures:
+        if not record.public:
+            record.builder_diagnostics.append(
+                {"type": "action_contract_failure", "failures": action_failures}
+            )
+        _fallback(
+            manager,
+            record,
+            "action_contract_unrepresentable",
+            understanding["suggestions"] or _default_suggestions(record),
+        )
+        return
+
     manager.transition(
         record,
         "cache_lookup",
@@ -294,11 +384,17 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         "generating",
         _localized(record, "بناء وحدة المحاكاة", "Building the simulation module"),
     )
-    generated = await manager.backend.generate(
-        understanding,
-        scenario,
-        runtime_context=runtime_context,
-    )
+    try:
+        generated = await manager.backend.generate(
+            understanding,
+            scenario,
+            runtime_context=runtime_context,
+        )
+    except CodexRuntimeError as error:
+        if error.code != "stage_timeout" or not record.public:
+            raise
+        _fallback(manager, record, "generation_timeout", _default_suggestions(record))
+        return
     module_output = validate_module_output(stage_data(generated, "generate"))
     if scenario == "exhausted_heal":
         module_output = manager.backend.mark_exhausted(module_output)
@@ -330,7 +426,8 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             browser_evidence = browser_result.evidence
             if browser_result.passed:
                 vision_result = None
-                for vision_attempt in (1, 2):
+                vision_attempts = (1,) if record.public else (1, 2)
+                for vision_attempt in vision_attempts:
                     try:
                         with tempfile.TemporaryDirectory(prefix="laysh-vision-") as temporary:
                             frame_paths: list[Path] = []
@@ -361,7 +458,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                                     ).hexdigest(),
                                 }
                             )
-                        if vision_attempt == 1:
+                        if vision_attempt < vision_attempts[-1]:
                             continue
                         _fallback(
                             manager,
@@ -404,6 +501,14 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             for failure in verification.failures
             if failure["gate"] == "fixture_integrity"
         ]
+        if suspect_fixtures and record.public:
+            _fallback(
+                manager,
+                record,
+                "fixture_integrity_unresolved",
+                _default_suggestions(record),
+            )
+            return
         if suspect_fixtures and not record.public:
             if fixture_refresh_count >= 1:
                 _fallback(
@@ -453,7 +558,8 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 )
                 return
             continue
-        if heal_count >= 2:
+        maximum_heal_attempts = 1 if record.public else 2
+        if heal_count >= maximum_heal_attempts:
             _fallback(
                 manager,
                 record,
@@ -471,18 +577,20 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 "Repairing a specific verification failure",
             ),
         )
-        module_output = validate_module_output(
-            stage_data(
-                await manager.backend.heal(
-                    module_output,
-                    understanding,
-                    verification.failures,
-                    heal_count,
-                    runtime_context=runtime_context,
-                ),
-                f"heal_{heal_count}",
+        try:
+            healed = await manager.backend.heal(
+                module_output,
+                understanding,
+                verification.failures,
+                heal_count,
+                runtime_context=runtime_context,
             )
-        )
+        except CodexRuntimeError as error:
+            if error.code != "stage_timeout" or not record.public:
+                raise
+            _fallback(manager, record, "healing_timeout", _default_suggestions(record))
+            return
+        module_output = validate_module_output(stage_data(healed, f"heal_{heal_count}"))
 
     qa_outcome: dict[str, Any] | None = None
     if heal_count or record.promote_golden:
@@ -506,16 +614,22 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             "check_count": verification.check_count,
             "gate_names": [
                 "assembly",
+                "actor_action_tracking",
+                "browser_readiness",
                 "interface",
                 "invariant",
+                "mobile_overlay_safe_band",
+                "render_output_consistency",
                 "runtime_init",
+                "semantic_vision",
                 "security",
                 "source_size",
                 "syntax_runtime",
             ],
         }
         qa_result = None
-        for qa_attempt in (1, 2):
+        qa_attempts = (1,) if record.public else (1, 2)
+        for qa_attempt in qa_attempts:
             try:
                 qa_result = stage_data(
                     await manager.backend.qa(
@@ -549,7 +663,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                             "gate_outcome": gate_outcome,
                         }
                     )
-                if qa_attempt == 1:
+                if qa_attempt < qa_attempts[-1]:
                     manager.emit(
                         record,
                         "stage",

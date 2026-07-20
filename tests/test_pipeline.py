@@ -255,8 +255,10 @@ async def test_qa_timeout_retries_once_with_same_slim_input_then_completes():
                     "scene_depth": True,
                     "physical_light": True,
                     "idle_motion": True,
+                    "paused_phenomenon_motion": True,
                     "reactive_feedback": True,
                     "readable_overlays": True,
+                    "overlay_safe_band": True,
                 },
             }
 
@@ -315,7 +317,7 @@ async def test_double_qa_timeout_withholds_curated_artifact_as_inconclusive():
 
 
 @pytest.mark.asyncio
-async def test_double_qa_timeout_public_job_falls_back_to_answer_only():
+async def test_public_qa_timeout_falls_back_without_a_second_slow_review():
     from server.browser_verify import BrowserVerificationResult
     from server.codex_backend import MockCodexBackend
     from server.codex_runtime import CodexRuntimeError
@@ -336,7 +338,7 @@ async def test_double_qa_timeout_public_job_falls_back_to_answer_only():
     await record.task
 
     assert record.status == "answer_only"
-    assert backend.qa_calls == 2
+    assert backend.qa_calls == 1
     assert record.fallback is not None
     assert record.fallback.reason_code == "qa_inconclusive"
     assert record.artifact is None
@@ -360,8 +362,10 @@ async def test_curated_qa_rejection_retains_candidate_and_actionable_visual_revi
                     "scene_depth": False,
                     "physical_light": True,
                     "idle_motion": False,
+                    "paused_phenomenon_motion": False,
                     "reactive_feedback": True,
                     "readable_overlays": True,
+                    "overlay_safe_band": True,
                 },
             }
 
@@ -513,7 +517,7 @@ def test_exhausted_heal_preserves_answer_and_never_exposes_artifact(client, back
     assert result["answer"]["tldr"]
     assert result["simulation"] is None
     assert result["fallback"]["reason_code"] == "verification_exhausted"
-    assert backend.heal_calls == 2
+    assert backend.heal_calls == 1
     assert backend.qa_calls == 0
 
 
@@ -527,6 +531,159 @@ def test_timeout_reaches_truthful_terminal_state_and_discards_question(backend):
         result = wait_for_terminal(test_client, job_id)
         assert result["status"] == "timed_out"
         assert test_client.app.state.jobs.get(job_id).question is None
+
+
+@pytest.mark.asyncio
+async def test_public_invalid_cross_field_understanding_retries_once_before_generation():
+    from copy import deepcopy
+
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend
+    from server.jobs import JobManager
+
+    class RepairingUnderstandingBackend(MockCodexBackend):
+        async def understand(self, *args, **kwargs):
+            result = deepcopy(await super().understand(*args, **kwargs))
+            if self.understand_calls == 1:
+                result["actor"]["tracking_output"] = "undeclared_output"
+            return result
+
+    backend = RepairingUnderstandingBackend()
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+    )
+
+    record = manager.start("success", "ar")
+    await record.task
+
+    assert record.status == "complete"
+    assert backend.understand_calls == 2
+    assert backend.generate_calls == 1
+
+
+@pytest.mark.asyncio
+async def test_public_noncorrective_misconception_refreshes_before_generation():
+    from copy import deepcopy
+
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend
+    from server.jobs import JobManager
+
+    class RepairingPedagogyBackend(MockCodexBackend):
+        async def understand(self, *args, **kwargs):
+            result = deepcopy(await super().understand(*args, **kwargs))
+            if self.understand_calls == 1:
+                result["misconception"] = "A longer lever creates extra energy."
+            return result
+
+    backend = RepairingPedagogyBackend()
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+    )
+
+    record = manager.start("success", "en")
+    await record.task
+
+    assert record.status == "complete"
+    assert backend.understand_calls == 2
+    assert backend.generate_calls == 1
+    assert backend.heal_calls == 0
+
+
+@pytest.mark.asyncio
+async def test_public_immutable_fixture_failure_falls_back_without_module_heal():
+    from copy import deepcopy
+
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend
+    from server.jobs import JobManager
+
+    class BadFixtureBackend(MockCodexBackend):
+        async def understand(self, *args, **kwargs):
+            result = deepcopy(await super().understand(*args, **kwargs))
+            result["checks"].append(
+                {
+                    "id": "contradictory_relation",
+                    "kind": "relation",
+                    "left_inputs": [{"name": "angle_deg", "value": 90}],
+                    "right_inputs": [{"name": "angle_deg", "value": 45}],
+                    "output": "lit_fraction",
+                    "relation": "right_gt_left",
+                    "minimum_ratio": 1.5,
+                }
+            )
+            return result
+
+    backend = BadFixtureBackend()
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+    )
+
+    record = manager.start("success", "ar")
+    await record.task
+
+    assert record.status == "answer_only"
+    assert record.fallback is not None
+    assert record.fallback.reason_code == "fixture_integrity_unresolved"
+    assert backend.heal_calls == 0
+
+
+@pytest.mark.asyncio
+async def test_public_generate_timeout_preserves_answer_as_fast_answer_only_outcome():
+    from server.codex_backend import MockCodexBackend
+    from server.codex_runtime import CodexRuntimeError
+    from server.jobs import JobManager
+
+    class TimedOutGenerateBackend(MockCodexBackend):
+        async def generate(self, *args, **kwargs):
+            self.generate_calls += 1
+            raise CodexRuntimeError("stage_timeout")
+
+    backend = TimedOutGenerateBackend()
+    manager = JobManager(backend, public_job_timeout_seconds=2)
+
+    record = manager.start("success", "ar")
+    await record.task
+
+    assert record.status == "answer_only"
+    assert record.answer is not None
+    assert record.fallback is not None
+    assert record.fallback.reason_code == "generation_timeout"
+
+
+@pytest.mark.asyncio
+async def test_public_heal_timeout_preserves_answer_without_a_second_attempt():
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend
+    from server.codex_runtime import CodexRuntimeError
+    from server.jobs import JobManager
+
+    class TimedOutHealBackend(MockCodexBackend):
+        async def heal(self, *args, **kwargs):
+            self.heal_calls += 1
+            raise CodexRuntimeError("stage_timeout")
+
+    backend = TimedOutHealBackend()
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+    )
+
+    record = manager.start("broken first draft", "ar")
+    await record.task
+
+    assert record.status == "answer_only"
+    assert record.answer is not None
+    assert record.fallback is not None
+    assert record.fallback.reason_code == "healing_timeout"
+    assert backend.heal_calls == 1
 
 
 @pytest.mark.asyncio

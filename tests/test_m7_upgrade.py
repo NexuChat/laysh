@@ -68,7 +68,8 @@ def test_shell_scheduler_advances_physics_and_is_reduced_motion_aware():
 
     assert "requestAnimationFrame" in source
     assert "cancelAnimationFrame" in source
-    assert "paused: reducedMotion" in source
+    assert "sweepPaused: reducedMotion" in source
+    assert "phenomenonElapsedTime" in source
     assert "state.value" in source
     assert "advanceParameter" in source
     assert "control.value = String" in source
@@ -76,15 +77,15 @@ def test_shell_scheduler_advances_physics_and_is_reduced_motion_aware():
     assert "setInterval" not in source
 
 
-def test_module_budget_is_96_kib_and_prompt_matches_it():
+def test_module_budget_is_40_kib_and_prompt_matches_it():
     from server.verify import MAX_SOURCE_BYTES, verify_module_source
 
     prompt = (ROOT / "server" / "prompts" / "generate_module.md").read_text(
         encoding="utf-8"
     )
-    assert MAX_SOURCE_BYTES == 96 * 1024
-    assert "96 KiB" in prompt
-    source = "window.LayshSimulation = {};/*" + ("x" * (95 * 1024)) + "*/"
+    assert MAX_SOURCE_BYTES == 40 * 1024
+    assert "40 KiB" in prompt
+    source = "window.LayshSimulation = {};/*" + ("x" * (39 * 1024)) + "*/"
     assert verify_module_source(source)["source_size_bytes"] < MAX_SOURCE_BYTES
 
 
@@ -99,7 +100,8 @@ def test_generation_prompt_enforces_the_living_instrument_bar():
     for requirement in (
         "layered scene depth",
         "physically consistent",
-        "shell-driven parameter motion",
+        "PHENOMENON clock",
+        "continue at a held value",
         "reactive feedback",
         "readout chips",
         "advancing value",
@@ -110,7 +112,7 @@ def test_generation_prompt_enforces_the_living_instrument_bar():
     assert "at least three visible depth layers" in prompt
     assert "curved terminator" in prompt
     assert "visual quality is part of the fixed contract" in heal_prompt
-    assert "advancing parameter" in heal_prompt
+    assert "independent of auto-sweep" in heal_prompt
 
 
 def test_qa_contract_contains_a_closed_visual_richness_review():
@@ -121,8 +123,10 @@ def test_qa_contract_contains_a_closed_visual_richness_review():
         "scene_depth": True,
         "physical_light": True,
         "idle_motion": True,
+        "paused_phenomenon_motion": True,
         "reactive_feedback": True,
         "readable_overlays": True,
+        "overlay_safe_band": True,
     }
     valid = {
         "approved": True,

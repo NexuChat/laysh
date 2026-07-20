@@ -311,6 +311,76 @@
     return { passed: true, action, actorId: actor.id, expected, measured };
   }
 
+  if (action === "responds") {
+    const samples = [];
+    for (let index = 0; index <= 8; index += 1) {
+      const value = minimum + (maximum - minimum) * index / 8;
+      const point = render(value);
+      samples.push({
+        value,
+        output: outputAt(value),
+        count: point.count,
+        x: point.x,
+        y: point.y,
+        width: point.count ? point.maxX - point.minX + 1 : 0,
+        height: point.count ? point.maxY - point.minY + 1 : 0,
+      });
+    }
+    const correlation = (left, right) => {
+      const leftMean = left.reduce((sum, value) => sum + value, 0) / left.length;
+      const rightMean = right.reduce((sum, value) => sum + value, 0) / right.length;
+      let numerator = 0;
+      let leftSquare = 0;
+      let rightSquare = 0;
+      for (let index = 0; index < left.length; index += 1) {
+        const a = left[index] - leftMean;
+        const b = right[index] - rightMean;
+        numerator += a * b;
+        leftSquare += a * a;
+        rightSquare += b * b;
+      }
+      return leftSquare && rightSquare ? numerator / Math.sqrt(leftSquare * rightSquare) : 0;
+    };
+    const outputs = samples.map((sample) => sample.output);
+    const candidates = ["count", "x", "y", "width", "height"].map((key) => {
+      const values = samples.map((sample) => sample[key]);
+      return {
+        key,
+        correlation: Math.abs(correlation(outputs, values)),
+        span: Math.max(...values) - Math.min(...values),
+      };
+    });
+    candidates.sort((left, right) => right.correlation - left.correlation);
+    const best = candidates[0];
+    const visibleSamples = samples.filter((sample) => sample.count >= 8).length;
+    const scale = best.key === "count"
+      ? Math.max(16, Math.min(...samples.map((sample) => sample.count)))
+      : 1;
+    const normalizedSpan = best.span / scale;
+    // Six pixels rejects label-only jitter; count may instead change by 15% for an actor that grows,
+    // brightens, or gains field lines without translating. Correlation keeps the response causal.
+    const minimumSpan = best.key === "count" ? 0.15 : 6;
+    const expected = {
+      // Seven samples cover the causal sweep while allowing a thin ray/field edge to clip at the
+      // two extrema. The correlation and response-span checks still require a trackable actor.
+      visibleSamplesAtLeast: 7,
+      minimumAbsoluteCorrelation: 0.7,
+      minimumActorResponseSpan: minimumSpan,
+      heldStateMotionExpected: false,
+    };
+    const measured = {
+      visibleSamples,
+      responseMetric: best.key,
+      absoluteCorrelation: compact(best.correlation),
+      actorResponseSpan: compact(normalizedSpan),
+    };
+    if (visibleSamples < 7) return fail("response_actor_visibility_missing", expected, measured);
+    if (best.correlation < 0.7 || normalizedSpan < minimumSpan) {
+      return fail("actor_response_not_output_consistent", expected, measured);
+    }
+    return { passed: true, action, actorId: actor.id, expected, measured };
+  }
+
   if (action === "propagates") {
     let period = outputAt(defaultValue);
     if (actor.tracking_output.endsWith("_ms")) period /= 1000;

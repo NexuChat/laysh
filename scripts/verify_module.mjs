@@ -28,6 +28,10 @@ function drawOperation() {
   drawOperations += 1;
 }
 
+function createGradient() {
+  return { addColorStop() {} };
+}
+
 const context2d = {
   clearRect: drawOperation,
   fillRect: drawOperation,
@@ -38,11 +42,16 @@ const context2d = {
   lineTo: drawOperation,
   quadraticCurveTo: drawOperation,
   bezierCurveTo: drawOperation,
+  arcTo: drawOperation,
   arc: drawOperation,
   ellipse: drawOperation,
   rect: drawOperation,
+  roundRect: drawOperation,
   fill: drawOperation,
   stroke: drawOperation,
+  createLinearGradient: createGradient,
+  createRadialGradient: createGradient,
+  createConicGradient: createGradient,
   fillText: drawOperation,
   strokeText: drawOperation,
   save() {},
@@ -67,6 +76,7 @@ const context2d = {
   set lineJoin(_value) {},
 };
 const canvas = { width: 720, height: 400 };
+context2d.canvas = canvas;
 const sandbox = { window: {}, Math, Number, Object, Array, JSON };
 vm.createContext(sandbox, { codeGeneration: { strings: false, wasm: false } });
 
@@ -120,6 +130,7 @@ if (simulation) {
       locale: understanding.lang,
       reducedMotion: true,
       emitFrame: () => { frames += 1; },
+      registerOverlayRect: () => {},
     };
     try {
       new vm.Script("window.LayshSimulation.init(options)")
@@ -130,6 +141,7 @@ if (simulation) {
         "init_failed",
         { accepts_trusted_options: [
           "canvas", "context", "width", "height", "locale", "reducedMotion", "emitFrame",
+          "registerOverlayRect",
         ] },
         { error_type: error?.name || "Error" },
       );
@@ -229,13 +241,23 @@ if (simulation) {
           continue;
         }
         const rightValue = right?.[fixture.output];
-        const relationPassed =
-          Number.isFinite(rightValue)
-          && (
-            (fixture.relation === "right_gt_left" && rightValue / leftValue >= fixture.minimum_ratio)
-            || (fixture.relation === "right_lt_left" && leftValue / rightValue >= fixture.minimum_ratio)
-            || (fixture.relation === "right_eq_left" && rightValue === leftValue)
-          );
+        const ordered = (
+          (fixture.relation === "right_gt_left" && rightValue > leftValue)
+          || (fixture.relation === "right_lt_left" && rightValue < leftValue)
+          || (fixture.relation === "right_eq_left" && rightValue === leftValue)
+        );
+        const crossesOrTouchesZero = leftValue === 0
+          || rightValue === 0
+          || Math.sign(leftValue) !== Math.sign(rightValue);
+        // A multiplicative ratio has no coherent directional meaning across zero. Preserve the
+        // ordered relation there; for same-sign values still require the declared magnitude gap.
+        const smallerMagnitude = Math.min(Math.abs(leftValue), Math.abs(rightValue));
+        const magnitudeRatio = Math.max(Math.abs(leftValue), Math.abs(rightValue))
+          / Math.max(Number.EPSILON, smallerMagnitude);
+        const separationPassed = fixture.relation === "right_eq_left"
+          || crossesOrTouchesZero
+          || magnitudeRatio >= fixture.minimum_ratio;
+        const relationPassed = Number.isFinite(rightValue) && ordered && separationPassed;
         if (!relationPassed) {
           addFailure(
             "invariant",

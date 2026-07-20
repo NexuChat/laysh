@@ -15,7 +15,9 @@ def evaluate_vision_verdict(verdict: dict[str, Any]) -> VisionVerificationResult
     expected = {
         "actor_visible": True,
         "action_performed": True,
+        "paused_action_performed": True,
         "physically_consistent": True,
+        "labels_obscure_subject": False,
     }
     passed = all(verdict.get(field) is value for field, value in expected.items())
     if passed:
@@ -24,6 +26,10 @@ def evaluate_vision_verdict(verdict: dict[str, Any]) -> VisionVerificationResult
         code = "semantic_actor_not_visible"
     elif verdict.get("action_performed") is not True:
         code = "semantic_action_not_performed"
+    elif verdict.get("paused_action_performed") is not True:
+        code = "semantic_paused_action_not_performed"
+    elif verdict.get("labels_obscure_subject") is not False:
+        code = "semantic_labels_obscure_subject"
     else:
         code = "semantic_physics_inconsistent"
     return VisionVerificationResult(

@@ -1,0 +1,679 @@
+{
+  "schema_version": "1.0",
+  "phase": "before",
+  "runtime_mode": "public_ephemeral",
+  "job_timeout_seconds": 420.0,
+  "case_count": 5,
+  "success_count": 0,
+  "success_rate": 0.0,
+  "results": [
+    {
+      "case_id": "rainbow_refraction_ar",
+      "locale": "ar",
+      "status": "failed",
+      "fallback_reason": null,
+      "total_elapsed_ms": 19142,
+      "first_answer_ms": null,
+      "heal_count": 0,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "safe_science_explanation",
+        "domain": "optics",
+        "canonical_intent": "explaining_rainbow_formation_after_rain",
+        "actor_id": "sunlight_ray",
+        "action": "propagates",
+        "fixture_count": 3
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 19141,
+          "model": "gpt-5.6-luna"
+        }
+      ],
+      "verification_attempts": []
+    },
+    {
+      "case_id": "seasons_tilt_en",
+      "locale": "en",
+      "status": "failed",
+      "fallback_reason": null,
+      "total_elapsed_ms": 33872,
+      "first_answer_ms": null,
+      "heal_count": 0,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "educational_science",
+        "domain": "earth_science",
+        "canonical_intent": "explain_seasonal_change_from_earths_axial_tilt_and_orbit",
+        "actor_id": "earth",
+        "action": "orbits",
+        "fixture_count": 3
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 33868,
+          "model": "gpt-5.6-luna"
+        }
+      ],
+      "verification_attempts": []
+    },
+    {
+      "case_id": "lever_torque_en",
+      "locale": "en",
+      "status": "answer_only",
+      "fallback_reason": "verification_exhausted",
+      "total_elapsed_ms": 293827,
+      "first_answer_ms": 27468,
+      "heal_count": 2,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "safe_physics_explanation",
+        "domain": "physics",
+        "canonical_intent": "understand_how_lever_arm_length_changes_required_lifting_force",
+        "actor_id": "lever",
+        "action": "rotates",
+        "fixture_count": 3
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 27466,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 78880,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 55
+        },
+        {
+          "stage": "heal_1",
+          "elapsed_ms": 82181,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 53
+        },
+        {
+          "stage": "heal_2",
+          "elapsed_ms": 75772,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 50
+        },
+        {
+          "stage": "browser_verify",
+          "elapsed_ms": 10220
+        }
+      ],
+      "verification_attempts": [
+        {
+          "attempt": 0,
+          "gate_phase": "deterministic",
+          "passed": false,
+          "check_count": 13,
+          "failures": [
+            {
+              "gate": "runtime_init",
+              "code": "init_failed",
+              "expected": {
+                "accepts_trusted_options": [
+                  "canvas",
+                  "context",
+                  "width",
+                  "height",
+                  "locale",
+                  "reducedMotion",
+                  "emitFrame"
+                ]
+              },
+              "actual": {
+                "error_type": "TypeError"
+              }
+            },
+            {
+              "gate": "runtime_init",
+              "code": "first_frame_missing",
+              "expected": {
+                "minimum_emit_frame_calls": 1
+              },
+              "actual": {
+                "emit_frame_calls": 0
+              }
+            }
+          ]
+        },
+        {
+          "attempt": 1,
+          "gate_phase": "deterministic",
+          "passed": false,
+          "check_count": 13,
+          "failures": [
+            {
+              "gate": "runtime_init",
+              "code": "init_failed",
+              "expected": {
+                "accepts_trusted_options": [
+                  "canvas",
+                  "context",
+                  "width",
+                  "height",
+                  "locale",
+                  "reducedMotion",
+                  "emitFrame"
+                ]
+              },
+              "actual": {
+                "error_type": "TypeError"
+              }
+            },
+            {
+              "gate": "runtime_init",
+              "code": "first_frame_missing",
+              "expected": {
+                "minimum_emit_frame_calls": 1
+              },
+              "actual": {
+                "emit_frame_calls": 0
+              }
+            }
+          ]
+        },
+        {
+          "attempt": 2,
+          "gate_phase": "deterministic",
+          "passed": true,
+          "check_count": 24,
+          "failures": []
+        },
+        {
+          "attempt": 2,
+          "gate_phase": "browser",
+          "passed": false,
+          "check_count": 18,
+          "failures": [
+            {
+              "gate": "browser_readiness",
+              "code": "primary_control_unchanged",
+              "expected": {
+                "control_changed": true
+              },
+              "actual": {
+                "control_changed": false
+              }
+            },
+            {
+              "gate": "motion_control",
+              "code": "slider_interaction_did_not_yield_motion",
+              "expected": {
+                "auto_advance_yields_during_slider_interaction": true
+              },
+              "actual": {
+                "auto_advance_yields_during_slider_interaction": false
+              }
+            },
+            {
+              "gate": "reduced_motion",
+              "code": "reduced_motion_play_opt_in_failed",
+              "expected": {
+                "reduced_motion_play_control_works": true
+              },
+              "actual": {
+                "reduced_motion_play_control_works": false
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "evaporation_ar",
+      "locale": "ar",
+      "status": "answer_only",
+      "fallback_reason": "verification_exhausted",
+      "total_elapsed_ms": 290512,
+      "first_answer_ms": 45015,
+      "heal_count": 2,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "safe_science_explanation",
+        "domain": "physics",
+        "canonical_intent": "evaporation_increases_with_temperature",
+        "actor_id": "water_surface",
+        "action": "flows",
+        "fixture_count": 3
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 45012,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 95610,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 45
+        },
+        {
+          "stage": "heal_1",
+          "elapsed_ms": 37648,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 42
+        },
+        {
+          "stage": "heal_2",
+          "elapsed_ms": 68169,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 52
+        },
+        {
+          "stage": "browser_verify",
+          "elapsed_ms": 10052
+        }
+      ],
+      "verification_attempts": [
+        {
+          "attempt": 0,
+          "gate_phase": "deterministic",
+          "passed": false,
+          "check_count": 13,
+          "failures": [
+            {
+              "gate": "runtime_init",
+              "code": "init_failed",
+              "expected": {
+                "accepts_trusted_options": [
+                  "canvas",
+                  "context",
+                  "width",
+                  "height",
+                  "locale",
+                  "reducedMotion",
+                  "emitFrame"
+                ]
+              },
+              "actual": {
+                "error_type": "TypeError"
+              }
+            },
+            {
+              "gate": "runtime_init",
+              "code": "first_frame_missing",
+              "expected": {
+                "minimum_emit_frame_calls": 1
+              },
+              "actual": {
+                "emit_frame_calls": 0
+              }
+            }
+          ]
+        },
+        {
+          "attempt": 1,
+          "gate_phase": "deterministic",
+          "passed": false,
+          "check_count": 13,
+          "failures": [
+            {
+              "gate": "runtime_init",
+              "code": "init_failed",
+              "expected": {
+                "accepts_trusted_options": [
+                  "canvas",
+                  "context",
+                  "width",
+                  "height",
+                  "locale",
+                  "reducedMotion",
+                  "emitFrame"
+                ]
+              },
+              "actual": {
+                "error_type": "TypeError"
+              }
+            },
+            {
+              "gate": "runtime_init",
+              "code": "first_frame_missing",
+              "expected": {
+                "minimum_emit_frame_calls": 1
+              },
+              "actual": {
+                "emit_frame_calls": 0
+              }
+            }
+          ]
+        },
+        {
+          "attempt": 2,
+          "gate_phase": "deterministic",
+          "passed": true,
+          "check_count": 24,
+          "failures": []
+        },
+        {
+          "attempt": 2,
+          "gate_phase": "browser",
+          "passed": false,
+          "check_count": 18,
+          "failures": [
+            {
+              "gate": "actor_action_tracking",
+              "code": "actor_trajectory_static",
+              "expected": {
+                "rateRatio": 5.6667,
+                "maximumRatioError": 0.35
+              },
+              "actual": {
+                "displacementRatio": 5.8648,
+                "ratioError": 0.035,
+                "lowDisplacementPixels": 0.0223,
+                "highDisplacementPixels": 0.1305
+              }
+            },
+            {
+              "gate": "actor_action_tracking",
+              "code": "paused_phenomenon_actor_static",
+              "expected": {
+                "lesson": "لماذا يتبخر الماء أسرع عند ارتفاع الحرارة؟",
+                "held_parameter": {
+                  "id": "temperature_c",
+                  "value": 29,
+                  "unit": "°C"
+                },
+                "action": "flows",
+                "minimum_trajectory_span_pixels": 6,
+                "sample_duration_seconds": 0.08
+              },
+              "actual": {
+                "lesson": "لماذا يتبخر الماء أسرع عند ارتفاع الحرارة؟",
+                "held_parameter": {
+                  "id": "temperature_c",
+                  "value": 29,
+                  "unit": "°C"
+                },
+                "action": "flows",
+                "trajectory_span_pixels": 0.0555,
+                "horizontal_span_pixels": 0.0525,
+                "vertical_span_pixels": 0.0179,
+                "sample_count": 7
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "magnetism_en",
+      "locale": "en",
+      "status": "answer_only",
+      "fallback_reason": "verification_exhausted",
+      "total_elapsed_ms": 619895,
+      "first_answer_ms": 13765,
+      "heal_count": 2,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "safe_science_explanation",
+        "domain": "physics",
+        "canonical_intent": "understand_how_magnetic_force_changes_with_distance",
+        "actor_id": "magnet_field",
+        "action": "propagates",
+        "fixture_count": 4
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 13764,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 81692,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 61
+        },
+        {
+          "stage": "heal_1",
+          "elapsed_ms": 79976,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 59
+        },
+        {
+          "stage": "browser_verify",
+          "elapsed_ms": 10140
+        },
+        {
+          "stage": "heal_2",
+          "elapsed_ms": 133466,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 55
+        },
+        {
+          "stage": "browser_verify",
+          "elapsed_ms": 10159
+        }
+      ],
+      "verification_attempts": [
+        {
+          "attempt": 0,
+          "gate_phase": "deterministic",
+          "passed": false,
+          "check_count": 14,
+          "failures": [
+            {
+              "gate": "runtime_init",
+              "code": "init_failed",
+              "expected": {
+                "accepts_trusted_options": [
+                  "canvas",
+                  "context",
+                  "width",
+                  "height",
+                  "locale",
+                  "reducedMotion",
+                  "emitFrame"
+                ]
+              },
+              "actual": {
+                "error_type": "TypeError"
+              }
+            },
+            {
+              "gate": "runtime_init",
+              "code": "first_frame_missing",
+              "expected": {
+                "minimum_emit_frame_calls": 1
+              },
+              "actual": {
+                "emit_frame_calls": 0
+              }
+            }
+          ]
+        },
+        {
+          "attempt": 1,
+          "gate_phase": "deterministic",
+          "passed": true,
+          "check_count": 25,
+          "failures": []
+        },
+        {
+          "attempt": 1,
+          "gate_phase": "browser",
+          "passed": false,
+          "check_count": 18,
+          "failures": [
+            {
+              "gate": "actor_action_tracking",
+              "code": "propagation_phase_shift_mismatch",
+              "expected": {
+                "phaseShiftRadians": 1.5708,
+                "maximumErrorRadians": 0.6
+              },
+              "actual": {
+                "phaseShiftRadians": 0.0719,
+                "phaseErrorRadians": 1.4989,
+                "dominantSpatialCycles": 16,
+                "matchedColumns": 14
+              }
+            },
+            {
+              "gate": "actor_action_tracking",
+              "code": "paused_propagation_phase_static",
+              "expected": {
+                "lesson": "How Distance Changes Magnetic Force",
+                "held_parameter": {
+                  "id": "distance",
+                  "value": 1.3,
+                  "unit": "m"
+                },
+                "action": "propagates",
+                "phase_shift_radians": 1.5708,
+                "maximum_error_radians": 0.6,
+                "minimum_matched_columns": 40
+              },
+              "actual": {
+                "lesson": "How Distance Changes Magnetic Force",
+                "held_parameter": {
+                  "id": "distance",
+                  "value": 1.3,
+                  "unit": "m"
+                },
+                "action": "propagates",
+                "phase_shift_radians": 1.1339,
+                "phase_error_radians": 0.4369,
+                "matched_columns": 14,
+                "dominant_spatial_cycles": 20
+              }
+            },
+            {
+              "gate": "mobile_overlay_safe_band",
+              "code": "mobile_overlay_registration_missing",
+              "expected": {
+                "canvas_width_max": 420,
+                "overlay_count_max": 1,
+                "overlay_height_ratio_max": 0.22,
+                "subject_overlap_pixels": 0,
+                "unregistered_label_count": 0,
+                "unanchored_overlay_count": 0
+              },
+              "actual": {
+                "overlay_count": 0,
+                "drawn_label_count": 3,
+                "overlay_height_ratio": 0,
+                "subject_overlap_pixels": 0,
+                "unregistered_label_count": 3,
+                "unanchored_overlay_count": 0
+              }
+            }
+          ]
+        },
+        {
+          "attempt": 2,
+          "gate_phase": "deterministic",
+          "passed": true,
+          "check_count": 25,
+          "failures": []
+        },
+        {
+          "attempt": 2,
+          "gate_phase": "browser",
+          "passed": false,
+          "check_count": 18,
+          "failures": [
+            {
+              "gate": "actor_action_tracking",
+              "code": "propagation_phase_shift_mismatch",
+              "expected": {
+                "phaseShiftRadians": 1.5708,
+                "maximumErrorRadians": 0.6
+              },
+              "actual": {
+                "phaseShiftRadians": 0.281,
+                "phaseErrorRadians": 1.2898,
+                "dominantSpatialCycles": 9,
+                "matchedColumns": 111
+              }
+            },
+            {
+              "gate": "actor_action_tracking",
+              "code": "paused_propagation_phase_static",
+              "expected": {
+                "lesson": "How Distance Changes Magnetic Force",
+                "held_parameter": {
+                  "id": "distance",
+                  "value": 1.3,
+                  "unit": "m"
+                },
+                "action": "propagates",
+                "phase_shift_radians": 1.5708,
+                "maximum_error_radians": 0.6,
+                "minimum_matched_columns": 40
+              },
+              "actual": {
+                "lesson": "How Distance Changes Magnetic Force",
+                "held_parameter": {
+                  "id": "distance",
+                  "value": 1.3,
+                  "unit": "m"
+                },
+                "action": "propagates",
+                "phase_shift_radians": 0.1917,
+                "phase_error_radians": 1.3791,
+                "matched_columns": 116,
+                "dominant_spatial_cycles": 9
+              }
+            },
+            {
+              "gate": "mobile_overlay_safe_band",
+              "code": "mobile_overlay_registration_missing",
+              "expected": {
+                "canvas_width_max": 420,
+                "overlay_count_max": 1,
+                "overlay_height_ratio_max": 0.22,
+                "subject_overlap_pixels": 0,
+                "unregistered_label_count": 0,
+                "unanchored_overlay_count": 0
+              },
+              "actual": {
+                "overlay_count": 0,
+                "drawn_label_count": 1,
+                "overlay_height_ratio": 0,
+                "subject_overlap_pixels": 0,
+                "unregistered_label_count": 1,
+                "unanchored_overlay_count": 0
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

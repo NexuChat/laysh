@@ -85,6 +85,48 @@ def test_simulatable_understanding_requires_closed_actor_action_contract():
         validate_understanding(null_actor)
 
 
+def test_action_taxonomy_includes_honest_static_parameter_response():
+    from server.schemas import load_schema, validate_understanding
+
+    candidate = deepcopy(VALID_UNDERSTANDING)
+    candidate["action"] = "responds"
+
+    assert validate_understanding(candidate) == candidate
+    actions = load_schema("understand.schema.json")["properties"]["action"]
+    assert "responds" in actions["anyOf"][0]["enum"]
+
+
+def test_action_adapter_contract_rejects_a_static_quantity_for_dynamic_motion():
+    from server.schemas import action_contract_report
+
+    candidate = deepcopy(VALID_UNDERSTANDING)
+    candidate["action"] = "propagates"
+    candidate["actor"]["tracking_output"] = "lit_fraction"
+
+    failures = action_contract_report(candidate)
+
+    assert failures == [
+        {
+            "gate": "action_contract",
+            "code": "dynamic_action_tracking_output_not_time",
+            "expected": {
+                "action": "propagates",
+                "tracking_output_semantics": "positive period or duration",
+            },
+            "actual": {"tracking_output": "lit_fraction"},
+        }
+    ]
+
+
+def test_action_adapter_contract_accepts_static_response_and_orbital_angle():
+    from server.schemas import action_contract_report
+
+    response = deepcopy(VALID_UNDERSTANDING)
+    response["action"] = "responds"
+    assert action_contract_report(response) == []
+    assert action_contract_report(VALID_UNDERSTANDING) == []
+
+
 def test_non_simulatable_understanding_must_not_claim_an_actor_action():
     from server.schemas import ContractError, validate_understanding
 
@@ -121,14 +163,14 @@ def test_current_frozen_contract_manifest_strictly_matches_repository():
     from scripts.freeze_contracts import build_manifest
 
     expected = json.loads(
-        (ROOT / "contracts" / "contracts-frozen-r4.json").read_text(encoding="utf-8")
+        (ROOT / "contracts" / "contracts-frozen-r7.json").read_text(encoding="utf-8")
     )
     historical = json.loads(
         (ROOT / "out" / "evidence" / "contracts-frozen.json").read_text(encoding="utf-8")
     )
 
     assert historical["contract_version"] == expected["contract_version"] == "1.0"
-    assert expected["freeze_revision"] == 4
+    assert expected["freeze_revision"] == 7
     assert build_manifest() == expected
 
 
