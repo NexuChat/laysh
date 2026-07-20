@@ -59,6 +59,21 @@ def test_shell_owns_bilingual_teaching_and_accessibility_states():
     assert "dir === \"rtl\"" in shell_js
 
 
+def test_prediction_invites_without_locking_and_compares_only_after_exploration():
+    shell = (ROOT / "sim_shell" / "shell.html").read_text(encoding="utf-8")
+    shell_js = (ROOT / "sim_shell" / "shell.js").read_text(encoding="utf-8")
+    shell_css = (ROOT / "sim_shell" / "shell.css").read_text(encoding="utf-8")
+
+    assert '<input id="primary-control" type="range">' in shell
+    assert 'id="prediction-comparison"' in shell
+    assert 'id="prediction-hint"' not in shell
+    assert "control.disabled" not in shell_js
+    assert "hasExplored" in shell_js and "selectedPrediction" in shell_js
+    assert "بعد الاستكشاف يعرض النموذج" in shell_js
+    assert "prediction-hint" not in shell_css
+    assert "is-unlocked" not in shell_css
+
+
 @pytest.mark.parametrize(
     "source",
     [
@@ -141,9 +156,12 @@ def test_portable_artifact_plays_from_file_without_network(tmp_path):
         "runtimeError": False,
         "externalRequests": 0,
     }
-    assert evidence["idleMotionChangedPixelRatio"] >= 0.005
+    assert evidence["idleMotionSubjectChangedPixelRatio"] >= 0.01
+    assert evidence["idleMotionWholeCanvasChangedPixelRatio"] >= 0.001
     assert evidence["idleMotionCaptureIntervalMs"] >= 1000
-    assert evidence["predictionHintBehavior"] is True
+    assert evidence["controlEnabledBeforePrediction"] is True
+    assert evidence["predictionComparisonAbsentWithoutChoice"] is True
+    assert evidence["predictionComparisonVisibleAfterChoice"] is True
 
 
 @pytest.mark.browser
@@ -175,4 +193,4 @@ def test_browser_control_gate_accepts_range_value_sanitized_to_step_grid(tmp_pat
     assert completed.returncode == 0, completed.stderr
     evidence = json.loads(completed.stdout)
     assert evidence["controlChanged"] is True
-    assert evidence["predictionHintBehavior"] is True
+    assert evidence["controlEnabledBeforePrediction"] is True

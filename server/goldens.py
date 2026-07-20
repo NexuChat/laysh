@@ -228,6 +228,7 @@ def load_pinned_golden(
         artifact = document["artifact"]
         valid = (
             document["golden_id"] == golden_id
+            and document["contract_version"] == "1.0"
             and document["pinned"] is True
             and document["tier"] == "A"
             and receipt["deterministic_passed"] is True

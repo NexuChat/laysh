@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import secrets
 import unicodedata
 from collections.abc import Callable
@@ -18,7 +19,14 @@ from server.codex_runtime import CodexExecutor
 from server.goldens import GOLDEN_FIXTURE_IDS, GOLDEN_ROOT, list_pinned_goldens, load_pinned_golden
 from server.jobs import TERMINAL_STATES, JobManager
 from server.ratelimit import GenerationLimiter
-from server.schemas import AskAccepted, AskRequest, PublicResult
+from server.schemas import (
+    AnswerPayload,
+    AskAccepted,
+    AskRequest,
+    PublicResult,
+    SharedSimulation,
+    SimulationMetadata,
+)
 from server.settings import Settings
 
 ROOT = Path(__file__).parents[1]
@@ -79,8 +87,7 @@ def create_app(
         global_per_day=settings.global_generations_per_day,
     )
 
-    @app.get("/", response_class=HTMLResponse)
-    async def index() -> HTMLResponse:
+    def index_response() -> HTMLResponse:
         content = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
         return HTMLResponse(
             content,
@@ -89,6 +96,79 @@ def create_app(
                 "Referrer-Policy": "no-referrer",
             },
         )
+
+    def resolve_shareable(sim_id: str) -> tuple[str, SharedSimulation] | None:
+        if not re.fullmatch(r"(?:golden_[a-z0-9_]+|[a-f0-9]{24})", sim_id):
+            return None
+        if sim_id.startswith("golden_"):
+            golden_id = sim_id.removeprefix("golden_")
+            document = load_pinned_golden(golden_id)
+            if document is not None and document.get("cache_id") == sim_id:
+                try:
+                    answer = AnswerPayload.model_validate(document["answer"])
+                except (KeyError, ValueError):
+                    return None
+                return (
+                    document["artifact"],
+                    SharedSimulation(
+                        answer=answer,
+                        simulation=SimulationMetadata(
+                            sim_id=sim_id,
+                            title=document["title"],
+                            lang=document["locale"],
+                            direction=document["direction"],
+                            artifact_url=f"/api/sims/{sim_id}/download",
+                            share_url=f"/sims/{sim_id}",
+                            tier="A",
+                            effective_model="verified/golden",
+                            elapsed_ms=0,
+                            check_count=document["receipt"]["check_count"],
+                            heal_count=document["evidence"].get("heal_count", 0),
+                        ),
+                    ),
+                )
+        if verified_cache is None:
+            return None
+        entry = verified_cache.inspect(sim_id)
+        if entry is None or entry.pinned:
+            return None
+        try:
+            answer = (
+                AnswerPayload.model_validate(entry.answer)
+                if entry.answer is not None
+                else None
+            )
+        except ValueError:
+            return None
+        return (
+            entry.artifact,
+            SharedSimulation(
+                answer=answer,
+                simulation=SimulationMetadata(
+                    sim_id=entry.cache_id,
+                    title=entry.title,
+                    lang=entry.locale,
+                    direction=entry.direction,
+                    artifact_url=f"/api/sims/{entry.cache_id}/download",
+                    share_url=f"/sims/{entry.cache_id}",
+                    tier=entry.tier,
+                    effective_model="verified/cache",
+                    elapsed_ms=0,
+                    check_count=entry.receipt.check_count,
+                    heal_count=0,
+                ),
+            ),
+        )
+
+    @app.get("/", response_class=HTMLResponse)
+    async def index() -> HTMLResponse:
+        return index_response()
+
+    @app.get("/sims/{sim_id}", response_class=HTMLResponse)
+    async def shared_lesson(sim_id: str) -> HTMLResponse:
+        if resolve_shareable(sim_id) is None:
+            raise HTTPException(status_code=404, detail="shared simulation not found")
+        return index_response()
 
     @app.post("/api/ask", response_model=AskAccepted, status_code=status.HTTP_202_ACCEPTED)
     async def ask(payload: AskRequest, request: Request) -> AskAccepted:
@@ -181,7 +261,7 @@ def create_app(
         document = load_pinned_golden(golden_id)
         if document is None:
             raise HTTPException(status_code=404, detail="golden lesson not found")
-        sim_id = "golden_" + document["artifact_sha256"][:16]
+        sim_id = document["cache_id"]
         app.state.jobs.artifacts[sim_id] = document["artifact"]
         return {
             "contract_version": "1.0",
@@ -193,6 +273,7 @@ def create_app(
                 "lang": document["locale"],
                 "direction": document["direction"],
                 "artifact_url": f"/api/sims/{sim_id}/download",
+                "share_url": f"/sims/{sim_id}",
                 "tier": "A",
                 "effective_model": "verified/golden",
                 "elapsed_ms": 0,
@@ -201,11 +282,21 @@ def create_app(
             },
         }
 
+    @app.get("/api/sims/{sim_id}", response_model=SharedSimulation)
+    async def shared_simulation(sim_id: str) -> SharedSimulation:
+        resolved = resolve_shareable(sim_id)
+        if resolved is None:
+            raise HTTPException(status_code=404, detail="shared simulation not found")
+        return resolved[1]
+
     @app.get("/api/sims/{sim_id}/download")
     async def download_sim(sim_id: str, inline: bool = Query(default=False)) -> Response:
         artifact = app.state.jobs.artifacts.get(sim_id)
         if artifact is None:
-            raise HTTPException(status_code=404, detail="simulation not found")
+            resolved = resolve_shareable(sim_id)
+            if resolved is None:
+                raise HTTPException(status_code=404, detail="simulation not found")
+            artifact = resolved[0]
         disposition = "inline" if inline else "attachment"
         return HTMLResponse(
             artifact,

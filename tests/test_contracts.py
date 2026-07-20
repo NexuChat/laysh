@@ -1,10 +1,14 @@
+import json
 from copy import deepcopy
+from pathlib import Path
 
 import pytest
 from jsonschema import ValidationError
 from pydantic import ValidationError as PydanticValidationError
 
 from tests.golden_cases import VALID_MODULE_OUTPUT, VALID_UNDERSTANDING
+
+ROOT = Path(__file__).parents[1]
 
 
 def test_valid_understanding_matches_closed_schema():
@@ -53,6 +57,21 @@ def test_misconception_gate_accepts_corrective_copy_and_rejects_a_bare_myth():
     assert check_count == 1
     assert failures[0]["gate"] == "pedagogy"
     assert failures[0]["code"] == "misconception_not_corrective"
+
+
+def test_current_frozen_contract_manifest_strictly_matches_repository():
+    from scripts.freeze_contracts import build_manifest
+
+    expected = json.loads(
+        (ROOT / "contracts" / "contracts-frozen-r2.json").read_text(encoding="utf-8")
+    )
+    historical = json.loads(
+        (ROOT / "out" / "evidence" / "contracts-frozen.json").read_text(encoding="utf-8")
+    )
+
+    assert historical["contract_version"] == expected["contract_version"] == "1.0"
+    assert expected["freeze_revision"] == 2
+    assert build_manifest() == expected
 
 
 def test_valid_module_output_matches_closed_schema():
@@ -104,6 +123,35 @@ def test_public_result_rejects_unknown_contract_version():
             simulation=None,
             fallback=None,
         )
+
+
+def test_shared_simulation_contract_contains_no_question_or_cache_secret_fields():
+    from server.schemas import SharedSimulation
+
+    shared = SharedSimulation(
+        status="complete",
+        answer={"tldr": "answer", "key_formula": None},
+        simulation={
+            "sim_id": "golden_moon_phases",
+            "title": "Moon phases",
+            "lang": "en",
+            "direction": "ltr",
+            "artifact_url": "/api/sims/golden_moon_phases/download",
+            "share_url": "/sims/golden_moon_phases",
+            "tier": "A",
+            "effective_model": "verified/golden",
+            "elapsed_ms": 0,
+            "check_count": 31,
+            "heal_count": 0,
+        },
+    )
+
+    payload = shared.model_dump()
+    assert payload["contract_version"] == "1.0"
+    assert "question" not in payload
+    assert "key" not in payload
+    with pytest.raises(PydanticValidationError):
+        SharedSimulation(**payload, question="private learner text")
 
 
 @pytest.mark.parametrize(

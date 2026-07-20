@@ -193,6 +193,11 @@ async def test_pipeline_writes_cache_only_after_browser_pass(tmp_path):
     assert hit is not None
     assert hit.receipt.failed_gate_count == 0
     assert hit.receipt.browser_passed is True
+    assert record.simulation is not None
+    assert record.simulation.sim_id == hit.cache_id
+    assert record.simulation.share_url == f"/sims/{hit.cache_id}"
+    assert "success" not in record.simulation.share_url
+    assert "test-cache-secret" not in record.simulation.share_url
 
 
 @pytest.mark.asyncio

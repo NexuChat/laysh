@@ -98,6 +98,13 @@ def test_g4_mock_journeys_accessibility_and_accepted_screenshots(tmp_path):
     assert evidence["buildStates"]["reconnecting"] is True
     assert evidence["buildStates"]["stillTesting"] is True
     assert evidence["historyBack"] is True
+    assert evidence["sharedColdLoad"] == {
+        "copyConfirmed": True,
+        "resultVisible": True,
+        "shareControlsVisible": True,
+        "stablePath": True,
+        "titlePresent": True,
+    }
     assert evidence["accessibility"]["unnamedInteractiveNodes"] == 0
     assert evidence["accessibility"]["duplicateIds"] == []
     assert evidence["accessibility"]["focusVisible"] is True

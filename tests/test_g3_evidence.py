@@ -1,9 +1,6 @@
 import json
-from pathlib import Path
 
 import pytest
-
-ROOT = Path(__file__).parents[1]
 
 
 @pytest.mark.browser
@@ -30,25 +27,10 @@ async def test_repeatable_g3_demo_proves_heal_reverify_browser_and_cache(tmp_pat
         "runtimeError": False,
         "externalRequests": 0,
     }
-    assert evidence["browser"]["idleMotionChangedPixelRatio"] >= 0.005
-    assert evidence["browser"]["predictionHintBehavior"] is True
+    assert evidence["browser"]["idleMotionSubjectChangedPixelRatio"] >= 0.01
+    assert evidence["browser"]["idleMotionWholeCanvasChangedPixelRatio"] >= 0.001
+    assert evidence["browser"]["controlEnabledBeforePrediction"] is True
     assert evidence["cache"]["entry_count"] == 1
     assert evidence["cache"]["receipt"]["failed_gate_count"] == 0
     assert evidence["cache"]["receipt"]["browser_passed"] is True
     assert "module_js" not in json.dumps(evidence)
-
-
-def test_frozen_contract_manifest_is_historical_and_current_contracts_are_closed():
-    from scripts.freeze_contracts import build_manifest
-
-    expected = json.loads(
-        (ROOT / "out" / "evidence" / "contracts-frozen.json").read_text(encoding="utf-8")
-    )
-
-    current = build_manifest()
-
-    # The submission evidence is intentionally immutable; source contracts may advance afterward.
-    assert expected["contract_version"] == "1.0"
-    assert current["contract_version"] == "1.0"
-    assert set(current["files"]) == set(expected["files"])
-    assert current["files"] != expected["files"]

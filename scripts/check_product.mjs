@@ -182,6 +182,19 @@ try {
   await waitFor("document.querySelector('#simulation-frame').src.includes('/api/sims/')", 5000);
   await delay(300);
   await capture(`${evidencePrefix}-golden-mobile-390x844.png`);
+  const goldenShareUrl = await evaluate("document.querySelector('#share-actions').dataset.shareUrl");
+  await navigate(goldenShareUrl);
+  await waitFor("!document.querySelector('#result-view').hidden", 5000);
+  await waitFor("document.querySelector('#simulation-frame').src.includes('/api/sims/')", 5000);
+  await evaluate("document.querySelector('#copy-share').click()");
+  await waitFor("document.querySelector('#share-status').textContent.includes('تم نسخ الرابط')", 3000);
+  const sharedColdLoad = await evaluate(`({
+    resultVisible: !document.querySelector('#result-view').hidden,
+    shareControlsVisible: !document.querySelector('#share-actions').hidden,
+    stablePath: location.pathname === '/sims/golden_moon_phases',
+    titlePresent: Boolean(document.querySelector('#result-title').textContent.trim()),
+    copyConfirmed: document.querySelector('#share-status').textContent.includes('تم نسخ الرابط'),
+  })`);
   await navigate();
   const initialSubmit = await submit("success");
   await waitFor("!document.querySelector('#build-view').hidden", 3000);
@@ -375,6 +388,7 @@ try {
       stillTesting,
     },
     historyBack,
+    sharedColdLoad,
     accessibility: {
       unnamedInteractiveNodes,
       duplicateIds: accessibilityDom.duplicateIds,

@@ -115,7 +115,17 @@ try {
       const canvas = document.querySelector('#simulation');
       const context = canvas && canvas.getContext('2d');
       if (!canvas || !context) return false;
-      window.__layshMotionFirst = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      const subject = {
+        x: Math.floor(canvas.width * 0.2),
+        y: Math.floor(canvas.height * 0.2),
+        width: Math.max(1, Math.floor(canvas.width * 0.6)),
+        height: Math.max(1, Math.floor(canvas.height * 0.6)),
+      };
+      window.__layshMotionFirst = {
+        whole: context.getImageData(0, 0, canvas.width, canvas.height).data,
+        subject: context.getImageData(subject.x, subject.y, subject.width, subject.height).data,
+        subjectBounds: subject,
+      };
       return true;
     })()`,
     returnByValue: true,
@@ -127,13 +137,24 @@ try {
       const context = canvas && canvas.getContext('2d');
       const first = window.__layshMotionFirst;
       delete window.__layshMotionFirst;
-      if (!canvas || !context || !first) return { changedPixelRatio: 0, captureIntervalMs: 1100 };
-      const second = context.getImageData(0, 0, canvas.width, canvas.height).data;
-      let changed = 0;
-      for (let pixel = 0; pixel < first.length; pixel += 4) {
-        if (first[pixel] !== second[pixel] || first[pixel + 1] !== second[pixel + 1] || first[pixel + 2] !== second[pixel + 2]) changed += 1;
+      if (!canvas || !context || !first) {
+        return { subjectChangedPixelRatio: 0, wholeCanvasChangedPixelRatio: 0, captureIntervalMs: 1100 };
       }
-      return { changedPixelRatio: changed / (first.length / 4), captureIntervalMs: 1100 };
+      const changedPixelRatio = (before, after) => {
+        let changed = 0;
+        for (let pixel = 0; pixel < before.length; pixel += 4) {
+          if (before[pixel] !== after[pixel] || before[pixel + 1] !== after[pixel + 1] || before[pixel + 2] !== after[pixel + 2]) changed += 1;
+        }
+        return changed / (before.length / 4);
+      };
+      const bounds = first.subjectBounds;
+      const secondWhole = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      const secondSubject = context.getImageData(bounds.x, bounds.y, bounds.width, bounds.height).data;
+      return {
+        subjectChangedPixelRatio: changedPixelRatio(first.subject, secondSubject),
+        wholeCanvasChangedPixelRatio: changedPixelRatio(first.whole, secondWhole),
+        captureIntervalMs: 1100,
+      };
     })()`,
     returnByValue: true,
   });
@@ -143,11 +164,9 @@ try {
       const root = document.documentElement;
       const before = Number(root.dataset.frameCount || 0);
       const choice = document.querySelector('#prediction-choices button');
-      const hint = document.querySelector('#prediction-hint');
-      const prediction = document.querySelector('#prediction');
-      const hintVisibleBefore = !hint.hidden && prediction.classList.contains('awaiting-prediction');
-      choice.click();
       const control = document.querySelector('#primary-control');
+      const comparison = document.querySelector('#prediction-comparison');
+      const controlEnabledBeforePrediction = !control.disabled;
       const beforeControlValue = Number(control.value);
       const target = Math.abs(beforeControlValue - Number(control.min))
         <= Math.abs(beforeControlValue - Number(control.max))
@@ -155,10 +174,16 @@ try {
         : control.min;
       control.value = target;
       control.dispatchEvent(new Event('input', { bubbles: true }));
+      const predictionComparisonAbsentWithoutChoice = comparison.hidden && !comparison.textContent;
+      choice.click();
+      control.value = target === control.max ? control.min : control.max;
+      control.dispatchEvent(new Event('input', { bubbles: true }));
       return {
-        controlChanged: !control.disabled && Number(control.value) !== beforeControlValue,
+        controlChanged: controlEnabledBeforePrediction && Number(target) !== beforeControlValue,
         frameChanged: Number(root.dataset.frameCount || 0) > before,
-        predictionHintBehavior: hintVisibleBefore && hint.hidden && !prediction.classList.contains('awaiting-prediction') && control.classList.contains('is-unlocked'),
+        controlEnabledBeforePrediction,
+        predictionComparisonAbsentWithoutChoice,
+        predictionComparisonVisibleAfterChoice: !comparison.hidden && comparison.textContent.includes(choice.textContent),
         runtimeError: Boolean(root.dataset.runtimeError),
       };
     })()`,
@@ -169,9 +194,12 @@ try {
     ready,
     controlChanged: interaction.result.value.controlChanged,
     frameChanged: interaction.result.value.frameChanged,
-    idleMotionChangedPixelRatio: idleMotion.result.value.changedPixelRatio,
+    idleMotionSubjectChangedPixelRatio: idleMotion.result.value.subjectChangedPixelRatio,
+    idleMotionWholeCanvasChangedPixelRatio: idleMotion.result.value.wholeCanvasChangedPixelRatio,
     idleMotionCaptureIntervalMs: idleMotion.result.value.captureIntervalMs,
-    predictionHintBehavior: interaction.result.value.predictionHintBehavior,
+    controlEnabledBeforePrediction: interaction.result.value.controlEnabledBeforePrediction,
+    predictionComparisonAbsentWithoutChoice: interaction.result.value.predictionComparisonAbsentWithoutChoice,
+    predictionComparisonVisibleAfterChoice: interaction.result.value.predictionComparisonVisibleAfterChoice,
     runtimeError: interaction.result.value.runtimeError,
     externalRequests,
   }));

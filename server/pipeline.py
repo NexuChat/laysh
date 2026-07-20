@@ -210,7 +210,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                     "evidence": ["verified_cache", "artifact_hash", "browser_readiness"],
                 },
             )
-            sim_id = "sim_" + cached.artifact_sha256[:16]
+            sim_id = cached.cache_id
             manager.artifacts[sim_id] = cached.artifact
             record.artifact = cached.artifact
             record.simulation = SimulationMetadata(
@@ -219,6 +219,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 lang=cached.locale,
                 direction=cached.direction,
                 artifact_url=f"/api/sims/{sim_id}/download",
+                share_url=f"/sims/{sim_id}",
                 tier=cached.tier,
                 effective_model="verified/cache",
                 elapsed_ms=manager.elapsed_ms(record),
@@ -490,9 +491,10 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             ],
         },
     )
+    cached_entry = None
     if cache is not None:
         try:
-            cache.write_verified(
+            cached_entry = cache.write_verified(
                 question=question,
                 locale=understanding["lang"],
                 domain=understanding["domain"],
@@ -501,6 +503,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 title=understanding["title"],
                 direction="rtl" if understanding["lang"] == "ar" else "ltr",
                 tier="B",
+                answer=record.answer.model_dump(mode="json") if record.answer else None,
                 receipt=VerificationReceipt(
                     deterministic_passed=True,
                     browser_passed=bool(browser_evidence),
@@ -513,7 +516,11 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 record.builder_diagnostics.append(
                     {"type": "cache_write_failed", "error_type": type(error).__name__}
                 )
-    sim_id = "sim_" + hashlib.sha256(artifact.encode("utf-8")).hexdigest()[:16]
+    sim_id = (
+        cached_entry.cache_id
+        if cached_entry is not None
+        else "sim_" + hashlib.sha256(artifact.encode("utf-8")).hexdigest()[:16]
+    )
     manager.artifacts[sim_id] = artifact
     record.artifact = artifact
     if not record.public:
@@ -546,6 +553,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         lang=understanding["lang"],
         direction="rtl" if understanding["lang"] == "ar" else "ltr",
         artifact_url=f"/api/sims/{sim_id}/download",
+        share_url=f"/sims/{sim_id}" if cached_entry is not None else None,
         tier="B",
         effective_model=effective_model,
         elapsed_ms=manager.elapsed_ms(record),

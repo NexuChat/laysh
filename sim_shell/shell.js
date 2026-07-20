@@ -16,7 +16,6 @@
         answerDetails: "اقرأ الجواب الكامل",
         runtimeTitle: "تعذّر تشغيل المحاكاة",
         runtimeCopy: "يمكنك الاحتفاظ بالجواب والمحاولة مرة أخرى من Laysh.",
-        predictionHint: "اختر توقعك أولًا لفتح التحكم ←",
         misconceptionLabel: "⚠ خرافة شائعة",
       }
     : {
@@ -31,7 +30,6 @@
         answerDetails: "Read the full answer",
         runtimeTitle: "The simulation could not run",
         runtimeCopy: "Keep the answer and try again from Laysh.",
-        predictionHint: "Choose a prediction first to unlock the control.",
         misconceptionLabel: "⚠ Common myth",
       };
 
@@ -46,6 +44,8 @@
   let frameCount = 0;
   let idleFrameId = 0;
   let previousIdleAt = 0;
+  let selectedPrediction = null;
+  let hasExplored = false;
 
   document.body.dataset.direction = dir === "rtl" ? "rtl" : "ltr";
   byId("lesson-label").textContent = labels.lesson;
@@ -60,7 +60,6 @@
   byId("explanation-prompt").textContent = lesson.explanation_prompt;
   byId("misconception-label").textContent = labels.misconceptionLabel;
   byId("misconception-copy").textContent = lesson.misconception;
-  byId("prediction-hint").textContent = labels.predictionHint;
   byId("transfer").textContent = lesson.transfer_prompt || "";
   byId("reset").textContent = labels.reset;
   byId("replay").textContent = labels.replay;
@@ -106,15 +105,25 @@
     description.textContent = formatState(value);
   }
 
+  function updatePredictionComparison() {
+    const comparison = byId("prediction-comparison");
+    if (!selectedPrediction || !hasExplored) {
+      comparison.hidden = true;
+      comparison.textContent = "";
+      return;
+    }
+    comparison.textContent = ar
+      ? `توقّعت: «${selectedPrediction}». بعد الاستكشاف يعرض النموذج: ${description.textContent}`
+      : `You predicted “${selectedPrediction}”. After exploring, the model shows: ${description.textContent}`;
+    comparison.hidden = false;
+  }
+
   function selectPrediction(button) {
     for (const choice of byId("prediction-choices").querySelectorAll("button")) {
       choice.setAttribute("aria-pressed", String(choice === button));
     }
-    control.disabled = false;
-    control.classList.add("is-unlocked");
-    byId("prediction-hint").hidden = true;
-    byId("prediction").classList.remove("awaiting-prediction");
-    control.focus();
+    selectedPrediction = button.textContent;
+    updatePredictionComparison();
   }
 
   for (const choice of lesson.prediction.choices) {
@@ -125,10 +134,11 @@
     button.addEventListener("click", () => selectPrediction(button));
     byId("prediction-choices").append(button);
   }
-  byId("prediction").classList.add("awaiting-prediction");
 
   control.addEventListener("input", () => {
+    hasExplored = true;
     update(control.value);
+    updatePredictionComparison();
     byId("explain").hidden = false;
   });
 
@@ -140,7 +150,9 @@
   byId("replay").addEventListener("click", () => {
     const replayValue = Number(control.value) === parameter.max ? parameter.min : parameter.max;
     control.value = String(replayValue);
+    hasExplored = true;
     update(control.value);
+    updatePredictionComparison();
     byId("explain").hidden = false;
   });
 

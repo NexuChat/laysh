@@ -196,6 +196,11 @@ textarea[aria-invalid="true"] { border-color: var(--danger); }
 .projector-button { min-height: 38px; padding: .4rem .65rem; font-size: .8rem; }
 iframe { display: block; width: 100%; height: min(74vh, 760px); min-height: 560px; border: 0; background: #05080b; }
 .result-actions, .failure-actions { display: flex; flex-wrap: wrap; gap: .7rem; margin-block: 1rem; }
+.share-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .7rem 1rem; margin-block: 1rem; padding: .8rem 1rem; border: 1px solid rgb(88 183 255 / 20%); border-radius: 1rem; background: rgb(88 183 255 / 6%); }
+.share-actions[hidden] { display: none; }
+.share-actions > div { display: flex; flex-wrap: wrap; gap: .55rem; }
+.share-label { margin: 0; color: #c9dfed; font-weight: 700; }
+.share-status { min-height: 1.4rem; margin: 0; color: #98efcd; font-weight: 700; }
 .receipt { padding: 1rem; border-radius: 1rem; box-shadow: none; }
 .receipt summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 700; }
 .receipt-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .7rem; }
@@ -260,7 +265,8 @@ iframe { display: block; width: 100%; height: min(74vh, 760px); min-height: 560p
   .simulation-tools { width: 100%; justify-content: space-between; }
   .receipt-grid { grid-template-columns: 1fr; }
   iframe { min-height: 590px; height: 72vh; }
-  .result-actions .button, .failure-actions .button { width: 100%; }
+  .result-actions .button, .failure-actions .button, .share-actions .button { width: 100%; }
+  .share-actions, .share-actions > div { align-items: stretch; flex-direction: column; width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {

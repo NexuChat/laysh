@@ -51,6 +51,32 @@ def test_generate_prompt_requires_light_occlusion_labels_and_smooth_shading():
     assert "golf-ball dot patterns" in prompt
 
 
+def test_codegen_contract_requires_model_driven_subject_motion_not_decoration():
+    from server.codex_backend import CodexBackend
+    from tests.golden_cases import VALID_UNDERSTANDING
+
+    generate = CodexBackend._render_prompt("generate_module.md", VALID_UNDERSTANDING)
+    heal = CodexBackend._render_prompt(
+        "heal_module.md",
+        {
+            "understanding": VALID_UNDERSTANDING,
+            "candidate": {"module_js": "window.LayshSimulation = {};"},
+            "failures": [],
+        },
+    )
+
+    for prompt in (generate, heal):
+        normalized = " ".join(prompt.split())
+        assert "pendulum swings at the period the model computes" in normalized
+        assert "Earth rotates about its axis" in normalized
+        assert "moon advances along its orbit" in normalized
+        assert "boat bobs on the water line" in normalized
+        assert "wave travels at a speed tied to frequency" in normalized
+        assert "current particles flow at a speed tied to I" in normalized
+        assert "Decorative shimmer or twinkle alone" in normalized
+        assert "central 60%" in normalized and "1.0%" in normalized
+
+
 def test_builder_reference_review_rechecks_three_independent_moon_values():
     from server.goldens import load_golden_fixtures, review_golden_candidate
     from tests.golden_cases import VALID_MODULE_OUTPUT, VALID_UNDERSTANDING

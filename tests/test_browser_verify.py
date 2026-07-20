@@ -11,7 +11,8 @@ def test_browser_gate_returns_actionable_structured_failures(monkeypatch):
         "ready": True,
         "controlChanged": False,
         "frameChanged": True,
-        "idleMotionChangedPixelRatio": 0.01,
+        "idleMotionSubjectChangedPixelRatio": 0.011,
+        "idleMotionWholeCanvasChangedPixelRatio": 0.004,
         "idleMotionCaptureIntervalMs": 1100,
         "runtimeError": False,
         "externalRequests": 0,
@@ -29,7 +30,7 @@ def test_browser_gate_returns_actionable_structured_failures(monkeypatch):
     result = verify_artifact_in_browser("<!doctype html><title>fixture</title>")
 
     assert result.passed is False
-    assert result.check_count == 6
+    assert result.check_count == 7
     assert result.evidence == observed
     assert result.failures == [
         {
@@ -41,7 +42,7 @@ def test_browser_gate_returns_actionable_structured_failures(monkeypatch):
     ]
 
 
-def test_browser_gate_rejects_a_static_scene_with_a_visual_richness_diagnostic():
+def test_browser_gate_rejects_backdrop_only_motion_with_a_subject_region_diagnostic():
     from server.browser_verify import _evaluate
 
     result = _evaluate(
@@ -49,7 +50,8 @@ def test_browser_gate_rejects_a_static_scene_with_a_visual_richness_diagnostic()
             "ready": True,
             "controlChanged": True,
             "frameChanged": True,
-            "idleMotionChangedPixelRatio": 0.0,
+            "idleMotionSubjectChangedPixelRatio": 0.004,
+            "idleMotionWholeCanvasChangedPixelRatio": 0.014,
             "idleMotionCaptureIntervalMs": 1100,
             "runtimeError": False,
             "externalRequests": 0,
@@ -60,14 +62,23 @@ def test_browser_gate_rejects_a_static_scene_with_a_visual_richness_diagnostic()
     assert result.failures == [
         {
             "gate": "visual_richness",
-            "code": "idle_motion_insufficient",
-            "expected": {"minimum_changed_pixel_ratio": 0.005, "capture_interval_ms": 1000},
-            "actual": {"changed_pixel_ratio": 0.0, "capture_interval_ms": 1100},
+            "code": "subject_idle_motion_insufficient",
+            "expected": {
+                "region": "central_60_percent",
+                "minimum_changed_pixel_ratio": 0.01,
+                "capture_interval_ms": 1000,
+            },
+            "actual": {
+                "region": "central_60_percent",
+                "changed_pixel_ratio": 0.004,
+                "shortfall": 0.006,
+                "capture_interval_ms": 1100,
+            },
         }
     ]
 
 
-def test_browser_gate_accepts_motion_above_the_scene_threshold():
+def test_browser_gate_reports_a_whole_canvas_freeze_separately():
     from server.browser_verify import _evaluate
 
     result = _evaluate(
@@ -75,7 +86,44 @@ def test_browser_gate_accepts_motion_above_the_scene_threshold():
             "ready": True,
             "controlChanged": True,
             "frameChanged": True,
-            "idleMotionChangedPixelRatio": 0.0051,
+            "idleMotionSubjectChangedPixelRatio": 0.012,
+            "idleMotionWholeCanvasChangedPixelRatio": 0.0,
+            "idleMotionCaptureIntervalMs": 1100,
+            "runtimeError": False,
+            "externalRequests": 0,
+        }
+    )
+
+    assert result.passed is False
+    assert result.failures == [
+        {
+            "gate": "visual_richness",
+            "code": "whole_canvas_idle_motion_insufficient",
+            "expected": {
+                "region": "whole_canvas",
+                "minimum_changed_pixel_ratio": 0.001,
+                "capture_interval_ms": 1000,
+            },
+            "actual": {
+                "region": "whole_canvas",
+                "changed_pixel_ratio": 0.0,
+                "shortfall": 0.001,
+                "capture_interval_ms": 1100,
+            },
+        }
+    ]
+
+
+def test_browser_gate_accepts_motion_above_both_region_thresholds():
+    from server.browser_verify import _evaluate
+
+    result = _evaluate(
+        {
+            "ready": True,
+            "controlChanged": True,
+            "frameChanged": True,
+            "idleMotionSubjectChangedPixelRatio": 0.0101,
+            "idleMotionWholeCanvasChangedPixelRatio": 0.0011,
             "idleMotionCaptureIntervalMs": 1100,
             "runtimeError": False,
             "externalRequests": 0,
@@ -149,12 +197,21 @@ async def test_idle_motion_failure_enters_the_existing_bounded_heal_loop():
 
     motion_failure = {
         "gate": "visual_richness",
-        "code": "idle_motion_insufficient",
-        "expected": {"minimum_changed_pixel_ratio": 0.005, "capture_interval_ms": 1000},
-        "actual": {"changed_pixel_ratio": 0.0, "capture_interval_ms": 1100},
+        "code": "subject_idle_motion_insufficient",
+        "expected": {
+            "region": "central_60_percent",
+            "minimum_changed_pixel_ratio": 0.01,
+            "capture_interval_ms": 1000,
+        },
+        "actual": {
+            "region": "central_60_percent",
+            "changed_pixel_ratio": 0.0,
+            "shortfall": 0.01,
+            "capture_interval_ms": 1100,
+        },
     }
     reports = [
-        BrowserVerificationResult(False, 6, [motion_failure], {}),
+        BrowserVerificationResult(False, 7, [motion_failure], {}),
         BrowserVerificationResult.passing(),
     ]
     backend = MockCodexBackend()

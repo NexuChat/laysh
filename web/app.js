@@ -116,7 +116,10 @@
   function setView(name, { push = false } = {}) {
     state.view = name;
     for (const view of views) view.hidden = view.dataset.view !== name;
-    if (push) history.pushState({ view: name }, "", `#${name}`);
+    if (push) {
+      const destination = name === "ask" ? "/#ask" : `#${name}`;
+      history.pushState({ view: name }, "", destination);
+    }
     const target = document.querySelector(`[data-view="${name}"] h1, [data-view="${name}"] h2`);
     requestAnimationFrame(() => (target || byId("main-content")).focus?.({ preventScroll: true }));
     window.scrollTo({ top: 0, behavior: "auto" });
@@ -224,7 +227,7 @@
     setView("failure", { push: true });
   }
 
-  function displayResult(result) {
+  function displayResult(result, { push = true } = {}) {
     if (result.status !== "complete" || !result.simulation) {
       const reason = normalizedReason(result.fallback?.reason_code, result.status);
       showFailure(reason, result.fallback?.suggestions || []);
@@ -242,13 +245,25 @@
     byId("simulation-frame").hidden = false;
     byId("simulation-frame").src = `${simulation.artifact_url}?inline=1`;
     byId("download").href = simulation.artifact_url;
+    const shareActions = byId("share-actions");
+    const nativeShare = byId("native-share");
+    byId("share-status").textContent = "";
+    if (simulation.share_url) {
+      shareActions.dataset.shareUrl = new URL(simulation.share_url, window.location.origin).href;
+      shareActions.hidden = false;
+      nativeShare.hidden = typeof navigator.share !== "function";
+    } else {
+      delete shareActions.dataset.shareUrl;
+      shareActions.hidden = true;
+      nativeShare.hidden = true;
+    }
     byId("receipt-tier").textContent = simulation.tier === "A" ? "فئة أ — مراجعة بشرية" : "فئة ب — فحص آلي";
     byId("tier-badge").textContent = simulation.tier === "A" ? "مراجعة بشرية مثبتة" : "فحص آلي مكتمل";
     byId("check-count").textContent = number.format(simulation.check_count);
     byId("heal-count").textContent = number.format(simulation.heal_count);
     byId("result-elapsed").textContent = `${number.format(simulation.elapsed_ms / 1000)} ثانية`;
     byId("effective-model").textContent = simulation.effective_model;
-    setView("result", { push: true });
+    setView("result", { push });
   }
 
   async function loadResult() {
@@ -265,6 +280,33 @@
     const golden = await response.json();
     pinAnswer(golden.answer);
     displayResult({ status: "complete", answer: golden.answer, simulation: golden.simulation });
+  }
+
+  async function loadSharedSimulation(simId) {
+    const response = await fetch(`/api/sims/${encodeURIComponent(simId)}`, {
+      headers: { accept: "application/json" },
+    });
+    if (!response.ok) throw new Error("shared_simulation_unavailable");
+    displayResult(await response.json(), { push: false });
+  }
+
+  async function copyShareLink() {
+    const shareUrl = byId("share-actions").dataset.shareUrl;
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+    } catch {
+      const fallback = document.createElement("textarea");
+      fallback.value = shareUrl;
+      fallback.setAttribute("readonly", "");
+      fallback.style.position = "fixed";
+      fallback.style.opacity = "0";
+      document.body.append(fallback);
+      fallback.select();
+      document.execCommand("copy");
+      fallback.remove();
+    }
+    byId("share-status").textContent = "تم نسخ الرابط";
   }
 
   async function hydrateGallery() {
@@ -467,6 +509,16 @@
       frame.focus();
     }
   });
+  byId("copy-share").addEventListener("click", copyShareLink);
+  byId("native-share").addEventListener("click", async () => {
+    const url = byId("share-actions").dataset.shareUrl;
+    if (!url || typeof navigator.share !== "function") return;
+    try {
+      await navigator.share({ title: byId("result-title").textContent, url });
+    } catch (error) {
+      if (error.name !== "AbortError") await copyShareLink();
+    }
+  });
 
   window.addEventListener("popstate", (event) => setView(event.state?.view || "ask"));
   window.addEventListener("offline", () => {
@@ -490,6 +542,14 @@
     }
   });
 
-  history.replaceState({ view: "ask" }, "", "#ask");
-  hydrateGallery();
+  const sharedPath = window.location.pathname.match(/^\/sims\/([^/]+)$/);
+  if (sharedPath) {
+    history.replaceState({ view: "result" }, "", window.location.href);
+    loadSharedSimulation(decodeURIComponent(sharedPath[1])).catch(() => {
+      showFailure("backend_unavailable");
+    });
+  } else {
+    history.replaceState({ view: "ask" }, "", "#ask");
+    hydrateGallery();
+  }
 })();

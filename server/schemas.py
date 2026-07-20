@@ -107,6 +107,7 @@ class SimulationMetadata(ClosedModel):
     lang: Literal["ar", "en"]
     direction: Literal["rtl", "ltr"]
     artifact_url: str
+    share_url: str | None = None
     tier: Literal["A", "B"]
     effective_model: str
     elapsed_ms: int = Field(ge=0)
@@ -143,6 +144,13 @@ class PublicResult(ClosedModel):
     answer: AnswerPayload | None
     simulation: SimulationMetadata | None
     fallback: FallbackResult | None
+
+
+class SharedSimulation(ClosedModel):
+    contract_version: Literal["1.0"] = CONTRACT_VERSION
+    status: Literal["complete"] = "complete"
+    answer: AnswerPayload | None
+    simulation: SimulationMetadata
 
 
 class AskRequest(ClosedModel):

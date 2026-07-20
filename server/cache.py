@@ -43,6 +43,7 @@ class CacheEntry:
     tier: Literal["A", "B"]
     receipt: VerificationReceipt
     pinned: bool
+    answer: dict[str, Any] | None
 
 
 def _normalize(value: str) -> str:
@@ -95,6 +96,7 @@ class VerifiedCache:
                 tier=document["tier"],
                 receipt=receipt,
                 pinned=bool(document.get("pinned", False)),
+                answer=document.get("answer") if isinstance(document.get("answer"), dict) else None,
             )
         except (KeyError, OSError, TypeError, ValueError, json.JSONDecodeError):
             return None
@@ -140,6 +142,7 @@ class VerifiedCache:
         direction: Literal["rtl", "ltr"],
         tier: str,
         receipt: VerificationReceipt | None,
+        answer: dict[str, Any] | None = None,
     ) -> CacheEntry:
         if receipt is None or not receipt.verified or tier not in {"A", "B"}:
             raise ValueError("only verified Tier A or Tier B artifacts may be cached")
@@ -168,6 +171,7 @@ class VerifiedCache:
             tier=tier,
             receipt=receipt,
             pinned=False,
+            answer=answer,
         )
         document: dict[str, Any] = asdict(entry)
         destination = self.root / f"{cache_id}.json"
@@ -247,6 +251,7 @@ class VerifiedCache:
             tier="A",
             receipt=receipt,
             pinned=True,
+            answer=answer,
         )
         document: dict[str, Any] = {
             **asdict(entry),

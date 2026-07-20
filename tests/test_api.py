@@ -60,6 +60,42 @@ def test_result_artifact_can_be_rendered_inline_or_downloaded(client):
     assert download.text.startswith("<!doctype html>")
 
 
+def test_share_route_resolves_a_verified_golden_and_rejects_non_shareable_ids(client):
+    known_id = "golden_moon_phases"
+
+    page = client.get(f"/sims/{known_id}")
+    shared = client.get(f"/api/sims/{known_id}")
+    cold_download = client.get(f"/api/sims/{known_id}/download?inline=1")
+
+    assert page.status_code == shared.status_code == cold_download.status_code == 200
+    assert 'id="result-view"' in page.text
+    assert shared.json()["status"] == "complete"
+    assert shared.json()["simulation"]["sim_id"] == known_id
+    assert shared.json()["simulation"]["share_url"] == f"/sims/{known_id}"
+    assert shared.json()["simulation"]["artifact_url"] == (
+        f"/api/sims/{known_id}/download"
+    )
+    assert cold_download.text.startswith("<!doctype html>")
+
+    client.app.state.jobs.artifacts["sim_unverified"] = "<!doctype html><p>candidate</p>"
+    assert client.get("/sims/not_known").status_code == 404
+    assert client.get("/sims/sim_unverified").status_code == 404
+    assert client.get("/api/sims/sim_unverified").status_code == 404
+
+
+def test_result_view_has_arabic_copy_and_native_share_affordances(client):
+    html = client.get("/").text
+    source = client.get("/static/app.js").text
+
+    assert 'id="copy-share"' in html and "نسخ رابط الدرس" in html
+    assert 'id="native-share"' in html and "مشاركة" in html
+    assert 'id="share-status"' in html and 'aria-live="polite"' in html
+    assert "تم نسخ الرابط" in source
+    assert "navigator.share" in source
+    assert "navigator.clipboard.writeText" in source
+    assert "/api/sims/${encodeURIComponent(simId)}" in source
+
+
 def test_gallery_contract_is_available_offline(client):
     response = client.get("/api/gallery")
     assert response.status_code == 200

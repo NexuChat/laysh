@@ -10,6 +10,14 @@ from typing import Any
 
 ROOT = Path(__file__).parents[1]
 
+# The central 60% occupies 36% of the canvas. Requiring 1% change there is large
+# enough to demand motion from a lesson-scale body or trajectory while rejecting
+# a few twinkling background pixels. The 0.1% whole-canvas floor is intentionally
+# lower: it is only a total-freeze tripwire and can never substitute for subject motion.
+SUBJECT_MOTION_MIN_CHANGED_PIXEL_RATIO = 0.01
+WHOLE_CANVAS_MOTION_MIN_CHANGED_PIXEL_RATIO = 0.001
+MOTION_CAPTURE_INTERVAL_MS = 1000
+
 
 @dataclass(frozen=True, slots=True)
 class BrowserVerificationResult:
@@ -22,13 +30,16 @@ class BrowserVerificationResult:
     def passing(cls) -> BrowserVerificationResult:
         return cls(
             passed=True,
-            check_count=6,
+            check_count=7,
             failures=[],
             evidence={
                 "ready": True,
                 "controlChanged": True,
                 "frameChanged": True,
-                "idleMotionChangedPixelRatio": 0.01,
+                "idleMotionSubjectChangedPixelRatio": 0.011,
+                "idleMotionWholeCanvasChangedPixelRatio": 0.004,
+                "idleMotionCaptureIntervalMs": 1100,
+                "controlEnabledBeforePrediction": True,
                 "runtimeError": False,
                 "externalRequests": 0,
             },
@@ -52,57 +63,85 @@ def _failure(
 
 def _evaluate(evidence: dict[str, Any]) -> BrowserVerificationResult:
     failures = []
+    capture_interval = evidence.get("idleMotionCaptureIntervalMs")
+    subject_ratio = float(evidence.get("idleMotionSubjectChangedPixelRatio", 0))
+    whole_canvas_ratio = float(evidence.get("idleMotionWholeCanvasChangedPixelRatio", 0))
     checks = (
         (
             bool(evidence.get("ready")),
             "first_frame_missing",
             {"first_frame_ready": True},
             {"first_frame_ready": bool(evidence.get("ready"))},
+            "browser_readiness",
         ),
         (
             bool(evidence.get("controlChanged")),
             "primary_control_unchanged",
             {"control_changed": True},
             {"control_changed": bool(evidence.get("controlChanged"))},
+            "browser_readiness",
         ),
         (
             bool(evidence.get("frameChanged")),
             "visible_frame_unchanged",
             {"frame_changed": True},
             {"frame_changed": bool(evidence.get("frameChanged"))},
+            "browser_readiness",
         ),
         (
-            float(evidence.get("idleMotionChangedPixelRatio", 0)) >= 0.005,
-            "idle_motion_insufficient",
-            {"minimum_changed_pixel_ratio": 0.005, "capture_interval_ms": 1000},
+            subject_ratio >= SUBJECT_MOTION_MIN_CHANGED_PIXEL_RATIO,
+            "subject_idle_motion_insufficient",
             {
-                "changed_pixel_ratio": float(evidence.get("idleMotionChangedPixelRatio", 0)),
-                "capture_interval_ms": evidence.get("idleMotionCaptureIntervalMs"),
+                "region": "central_60_percent",
+                "minimum_changed_pixel_ratio": SUBJECT_MOTION_MIN_CHANGED_PIXEL_RATIO,
+                "capture_interval_ms": MOTION_CAPTURE_INTERVAL_MS,
             },
+            {
+                "region": "central_60_percent",
+                "changed_pixel_ratio": subject_ratio,
+                "shortfall": round(
+                    max(0, SUBJECT_MOTION_MIN_CHANGED_PIXEL_RATIO - subject_ratio), 6
+                ),
+                "capture_interval_ms": capture_interval,
+            },
+            "visual_richness",
+        ),
+        (
+            whole_canvas_ratio >= WHOLE_CANVAS_MOTION_MIN_CHANGED_PIXEL_RATIO,
+            "whole_canvas_idle_motion_insufficient",
+            {
+                "region": "whole_canvas",
+                "minimum_changed_pixel_ratio": WHOLE_CANVAS_MOTION_MIN_CHANGED_PIXEL_RATIO,
+                "capture_interval_ms": MOTION_CAPTURE_INTERVAL_MS,
+            },
+            {
+                "region": "whole_canvas",
+                "changed_pixel_ratio": whole_canvas_ratio,
+                "shortfall": round(
+                    max(0, WHOLE_CANVAS_MOTION_MIN_CHANGED_PIXEL_RATIO - whole_canvas_ratio), 6
+                ),
+                "capture_interval_ms": capture_interval,
+            },
+            "visual_richness",
         ),
         (
             not bool(evidence.get("runtimeError")),
             "runtime_error_beacon",
             {"runtime_error": False},
             {"runtime_error": bool(evidence.get("runtimeError"))},
+            "browser_readiness",
         ),
         (
             evidence.get("externalRequests") == 0,
             "external_request_observed",
             {"external_requests": 0},
             {"external_requests": evidence.get("externalRequests")},
+            "browser_readiness",
         ),
     )
-    for index, (passed, code, expected, actual) in enumerate(checks):
+    for passed, code, expected, actual, gate in checks:
         if not passed:
-            failures.append(
-                _failure(
-                    code,
-                    expected,
-                    actual,
-                    gate="visual_richness" if index == 3 else "browser_readiness",
-                )
-            )
+            failures.append(_failure(code, expected, actual, gate=gate))
     return BrowserVerificationResult(
         passed=not failures,
         check_count=len(checks),
