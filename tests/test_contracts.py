@@ -39,6 +39,22 @@ def test_simulatable_understanding_requires_two_independent_checks():
         validate_understanding(candidate)
 
 
+def test_misconception_gate_accepts_corrective_copy_and_rejects_a_bare_myth():
+    from server.schemas import load_schema
+    from server.verify import misconception_report
+
+    misconception_schema = load_schema("understand.schema.json")["properties"]["misconception"]
+    assert "corrective learner copy" in misconception_schema["description"]
+    assert misconception_report(VALID_UNDERSTANDING) == ([], 1)
+    bare_myth = deepcopy(VALID_UNDERSTANDING)
+    bare_myth["misconception"] = "زيادة طول البندول تجعله أسرع."
+    failures, check_count = misconception_report(bare_myth)
+
+    assert check_count == 1
+    assert failures[0]["gate"] == "pedagogy"
+    assert failures[0]["code"] == "misconception_not_corrective"
+
+
 def test_valid_module_output_matches_closed_schema():
     from server.schemas import validate_module_output
 

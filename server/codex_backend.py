@@ -231,9 +231,12 @@ def _success_understanding(locale: str) -> dict[str, Any]:
             "choices": ["نعم", "لا"] if arabic else ["Yes", "No"],
         },
         "misconception": (
-            "ظل الأرض هو سبب أطوار القمر"
+            "ليست أطوار القمر ظل الأرض، بل تتغير بسبب موضعه بالنسبة إلى الأرض والشمس."
             if arabic
-            else "Earth's shadow causes the Moon's phases"
+            else (
+                "The Moon's phases are not caused by Earth's shadow, but by its position "
+                "relative to Earth and the Sun."
+            )
         ),
         "explanation_prompt": (
             "تغيّر الجزء المضيء لأن…" if arabic else "The lit part changed because…"

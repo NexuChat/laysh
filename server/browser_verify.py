@@ -22,21 +22,28 @@ class BrowserVerificationResult:
     def passing(cls) -> BrowserVerificationResult:
         return cls(
             passed=True,
-            check_count=5,
+            check_count=6,
             failures=[],
             evidence={
                 "ready": True,
                 "controlChanged": True,
                 "frameChanged": True,
+                "idleMotionChangedPixelRatio": 0.01,
                 "runtimeError": False,
                 "externalRequests": 0,
             },
         )
 
 
-def _failure(code: str, expected: dict[str, Any], actual: dict[str, Any]) -> dict[str, Any]:
+def _failure(
+    code: str,
+    expected: dict[str, Any],
+    actual: dict[str, Any],
+    *,
+    gate: str = "browser_readiness",
+) -> dict[str, Any]:
     return {
-        "gate": "browser_readiness",
+        "gate": gate,
         "code": code,
         "expected": expected,
         "actual": actual,
@@ -65,6 +72,15 @@ def _evaluate(evidence: dict[str, Any]) -> BrowserVerificationResult:
             {"frame_changed": bool(evidence.get("frameChanged"))},
         ),
         (
+            float(evidence.get("idleMotionChangedPixelRatio", 0)) >= 0.005,
+            "idle_motion_insufficient",
+            {"minimum_changed_pixel_ratio": 0.005, "capture_interval_ms": 1000},
+            {
+                "changed_pixel_ratio": float(evidence.get("idleMotionChangedPixelRatio", 0)),
+                "capture_interval_ms": evidence.get("idleMotionCaptureIntervalMs"),
+            },
+        ),
+        (
             not bool(evidence.get("runtimeError")),
             "runtime_error_beacon",
             {"runtime_error": False},
@@ -77,9 +93,16 @@ def _evaluate(evidence: dict[str, Any]) -> BrowserVerificationResult:
             {"external_requests": evidence.get("externalRequests")},
         ),
     )
-    for passed, code, expected, actual in checks:
+    for index, (passed, code, expected, actual) in enumerate(checks):
         if not passed:
-            failures.append(_failure(code, expected, actual))
+            failures.append(
+                _failure(
+                    code,
+                    expected,
+                    actual,
+                    gate="visual_richness" if index == 3 else "browser_readiness",
+                )
+            )
     return BrowserVerificationResult(
         passed=not failures,
         check_count=len(checks),

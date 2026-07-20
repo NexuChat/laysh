@@ -22,9 +22,13 @@ Visual contract:
   bodies, and restrained ambient particles or texture. Never use a flat canvas.
 - Make physical light beautiful and physically consistent using controlled glow, soft shadow, and
   true occlusion; never draw light through an opaque body. Show its subtle shadow cone.
-- Include subtle idle motion. The shell issues same-value redraw calls near 12 fps: advance a private
-  `visualPhase` only on those calls when reduced motion is off. It must visibly affect a restrained
-  coordinate, opacity, shimmer, or trail without changing `test(inputs)` or physics.
+- Provide continuous, observable idle motion before any learner interaction; it must teach the actual
+  physics, not merely decorate it (for example: a pendulum swings at its modeled period, waves
+  propagate, orbital bodies rotate, current particles flow at a speed tied to `I`, or water ripples).
+  The shell issues same-value redraw calls near 12 fps: advance a private `visualPhase` only on those
+  calls when reduced motion is off. Across two settled frames at least one second apart, motion must
+  visibly change more than 0.5% of scene pixels. Freeze this visual phase under reduced motion without
+  changing `test(inputs)` or physics.
 - Add smooth reactive feedback tied to parameter changes—eased geometry, a fading trail, ripples, or
   quantity-linked particles. Preserve the previous display value locally; changing a parameter must
   alter more than text.

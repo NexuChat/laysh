@@ -132,13 +132,18 @@ def test_portable_artifact_plays_from_file_without_network(tmp_path):
     )
     assert completed.returncode == 0, completed.stderr
     evidence = json.loads(completed.stdout)
-    assert evidence == {
+    assert {key: evidence[key] for key in (
+        "ready", "controlChanged", "frameChanged", "runtimeError", "externalRequests"
+    )} == {
         "ready": True,
         "controlChanged": True,
         "frameChanged": True,
         "runtimeError": False,
         "externalRequests": 0,
     }
+    assert evidence["idleMotionChangedPixelRatio"] >= 0.005
+    assert evidence["idleMotionCaptureIntervalMs"] >= 1000
+    assert evidence["predictionHintBehavior"] is True
 
 
 @pytest.mark.browser
@@ -170,3 +175,4 @@ def test_browser_control_gate_accepts_range_value_sanitized_to_step_grid(tmp_pat
     assert completed.returncode == 0, completed.stderr
     evidence = json.loads(completed.stdout)
     assert evidence["controlChanged"] is True
+    assert evidence["predictionHintBehavior"] is True

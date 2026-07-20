@@ -24,6 +24,10 @@ Rules:
   `f = (1 − cos θ) / 2`, not `illuminated_fraction = (1 - cos(2π * lunar_day / 29.53)) / 2`.
 - Keep implementation identifiers in `module_spec` and fixture inputs only. Define any display symbol
   needed for comprehension in `tldr` using natural language.
+- `misconception` is corrective learner copy, never a bare false sentence. Explicitly negate the myth
+  and state the truth in one sentence: Arabic must use the form `ليست/ليس/لا … بل …`; English must use
+  `not/is not/does not … but/rather …`. For example: `ليست أطوار القمر ظل الأرض، بل تتغير بسبب موضعه
+  بالنسبة إلى الأرض والشمس.`
 - When `builder_reference_contract` is present, it is a builder-reviewed curated constraint: preserve
   its scientific formula, primary parameter ID/range/default/step/unit, units, assumptions,
   misconception target, output names, and all reference input/output values. Convert every reference

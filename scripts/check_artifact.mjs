@@ -95,6 +95,10 @@ try {
 
   await command("Runtime.enable");
   await command("Network.enable");
+  await command("Emulation.setEmulatedMedia", {
+    features: [{ name: "prefers-reduced-motion", value: "no-preference" }],
+  });
+  await command("Page.reload", { ignoreCache: true });
   let ready = false;
   for (let attempt = 0; attempt < 100; attempt += 1) {
     const response = await command("Runtime.evaluate", {
@@ -106,11 +110,42 @@ try {
     await delay(50);
   }
 
+  await command("Runtime.evaluate", {
+    expression: `(() => {
+      const canvas = document.querySelector('#simulation');
+      const context = canvas && canvas.getContext('2d');
+      if (!canvas || !context) return false;
+      window.__layshMotionFirst = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      return true;
+    })()`,
+    returnByValue: true,
+  });
+  await delay(1100);
+  const idleMotion = await command("Runtime.evaluate", {
+    expression: `(() => {
+      const canvas = document.querySelector('#simulation');
+      const context = canvas && canvas.getContext('2d');
+      const first = window.__layshMotionFirst;
+      delete window.__layshMotionFirst;
+      if (!canvas || !context || !first) return { changedPixelRatio: 0, captureIntervalMs: 1100 };
+      const second = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      let changed = 0;
+      for (let pixel = 0; pixel < first.length; pixel += 4) {
+        if (first[pixel] !== second[pixel] || first[pixel + 1] !== second[pixel + 1] || first[pixel + 2] !== second[pixel + 2]) changed += 1;
+      }
+      return { changedPixelRatio: changed / (first.length / 4), captureIntervalMs: 1100 };
+    })()`,
+    returnByValue: true,
+  });
+
   const interaction = await command("Runtime.evaluate", {
     expression: `(() => {
       const root = document.documentElement;
       const before = Number(root.dataset.frameCount || 0);
       const choice = document.querySelector('#prediction-choices button');
+      const hint = document.querySelector('#prediction-hint');
+      const prediction = document.querySelector('#prediction');
+      const hintVisibleBefore = !hint.hidden && prediction.classList.contains('awaiting-prediction');
       choice.click();
       const control = document.querySelector('#primary-control');
       const beforeControlValue = Number(control.value);
@@ -123,6 +158,7 @@ try {
       return {
         controlChanged: !control.disabled && Number(control.value) !== beforeControlValue,
         frameChanged: Number(root.dataset.frameCount || 0) > before,
+        predictionHintBehavior: hintVisibleBefore && hint.hidden && !prediction.classList.contains('awaiting-prediction') && control.classList.contains('is-unlocked'),
         runtimeError: Boolean(root.dataset.runtimeError),
       };
     })()`,
@@ -133,6 +169,9 @@ try {
     ready,
     controlChanged: interaction.result.value.controlChanged,
     frameChanged: interaction.result.value.frameChanged,
+    idleMotionChangedPixelRatio: idleMotion.result.value.changedPixelRatio,
+    idleMotionCaptureIntervalMs: idleMotion.result.value.captureIntervalMs,
+    predictionHintBehavior: interaction.result.value.predictionHintBehavior,
     runtimeError: interaction.result.value.runtimeError,
     externalRequests,
   }));

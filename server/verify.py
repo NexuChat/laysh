@@ -40,6 +40,11 @@ FORBIDDEN_CAPABILITIES = (
 )
 FORBIDDEN_PATTERNS = [pattern for _, pattern in FORBIDDEN_CAPABILITIES]
 CODE_IDENTIFIER_PATTERN = re.compile(r"\b[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)+\b")
+CORRECTIVE_MISCONCEPTION_PATTERN = re.compile(
+    r"(?:ليست|ليس|لا)\b.*\bبل\b|"
+    r"(?:not|is not|isn't|does not|doesn't)\b.*\b(?:but|rather|instead)\b",
+    flags=re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -120,6 +125,25 @@ def formula_presentation_report(understanding: dict[str, Any]) -> tuple[list[dic
                 "code_identifiers": identifiers,
                 "uses_ascii_hyphen_minus": uses_ascii_hyphen_minus,
             },
+        }
+    ], 1
+
+
+def misconception_report(understanding: dict[str, Any]) -> tuple[list[dict[str, Any]], int]:
+    """Require corrective teaching copy before an artifact can be verified."""
+    misconception = understanding.get("misconception")
+    if not understanding.get("simulatable") or not isinstance(misconception, str):
+        return [], 1
+    if CORRECTIVE_MISCONCEPTION_PATTERN.search(misconception):
+        return [], 1
+    return [
+        {
+            "gate": "pedagogy",
+            "code": "misconception_not_corrective",
+            "expected": {
+                "corrective_form": "explicit negation plus correction (ليست/ليس/لا … بل …)",
+            },
+            "actual": {"has_corrective_marker": False},
         }
     ], 1
 
@@ -326,6 +350,9 @@ def verify_candidate(
 
     source = module_output["module_js"]
     failures, check_count = formula_presentation_report(understanding)
+    misconception_failures, misconception_checks = misconception_report(understanding)
+    failures.extend(misconception_failures)
+    check_count += misconception_checks
     source_failures, source_checks = _source_report(source)
     failures.extend(source_failures)
     check_count += source_checks

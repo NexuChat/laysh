@@ -16,6 +16,8 @@
         answerDetails: "اقرأ الجواب الكامل",
         runtimeTitle: "تعذّر تشغيل المحاكاة",
         runtimeCopy: "يمكنك الاحتفاظ بالجواب والمحاولة مرة أخرى من Laysh.",
+        predictionHint: "اختر توقعك أولًا لفتح التحكم ←",
+        misconceptionLabel: "⚠ خرافة شائعة",
       }
     : {
         lesson: "Interactive answer",
@@ -29,6 +31,8 @@
         answerDetails: "Read the full answer",
         runtimeTitle: "The simulation could not run",
         runtimeCopy: "Keep the answer and try again from Laysh.",
+        predictionHint: "Choose a prediction first to unlock the control.",
+        misconceptionLabel: "⚠ Common myth",
       };
 
   const byId = (id) => document.getElementById(id);
@@ -54,7 +58,9 @@
   byId("observe-title").textContent = labels.observe;
   byId("explain-title").textContent = labels.explain;
   byId("explanation-prompt").textContent = lesson.explanation_prompt;
-  byId("misconception").textContent = lesson.misconception;
+  byId("misconception-label").textContent = labels.misconceptionLabel;
+  byId("misconception-copy").textContent = lesson.misconception;
+  byId("prediction-hint").textContent = labels.predictionHint;
   byId("transfer").textContent = lesson.transfer_prompt || "";
   byId("reset").textContent = labels.reset;
   byId("replay").textContent = labels.replay;
@@ -105,6 +111,9 @@
       choice.setAttribute("aria-pressed", String(choice === button));
     }
     control.disabled = false;
+    control.classList.add("is-unlocked");
+    byId("prediction-hint").hidden = true;
+    byId("prediction").classList.remove("awaiting-prediction");
     control.focus();
   }
 
@@ -116,6 +125,7 @@
     button.addEventListener("click", () => selectPrediction(button));
     byId("prediction-choices").append(button);
   }
+  byId("prediction").classList.add("awaiting-prediction");
 
   control.addEventListener("input", () => {
     update(control.value);

@@ -100,6 +100,7 @@
     },
     "misconception": {
       "type": ["string", "null"],
+      "description": "For a simulatable lesson, corrective learner copy: explicitly negate the myth and state the truth (Arabic: ليست/ليس/لا … بل …; English: not … but/rather …). Never a bare false claim.",
       "anyOf": [{"type": "string", "maxLength": 180}, {"type": "null"}]
     },
     "explanation_prompt": {

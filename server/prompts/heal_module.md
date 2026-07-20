@@ -8,10 +8,13 @@ JavaScript, never full HTML. Preserve the restricted interface and capabilities.
 failure, then provide safe summary and assumptions fields. Do not include reasoning or extra fields.
 
 The v1.1 visual quality is part of the fixed contract and must survive every repair: preserve or add
-at least three scene-depth layers, physically consistent curved illumination and occlusion, a private
-visual phase advanced by the trusted shell's same-value redraw when reduced motion is off, smooth
-parameter-linked reactive feedback, and rounded translucent readout chips. The module still owns no
-timers or animation APIs. Fixing a deterministic gate must never flatten or visually regress the scene.
+at least three scene-depth layers, physically consistent curved illumination and occlusion, and
+continuous physics-serving idle motion that is visibly changing before interaction. Advance a private
+visual phase through the trusted shell's same-value redraw when reduced motion is off; it must freeze
+under reduced motion and change more than 0.5% of scene pixels across two settled frames at least one
+second apart. Preserve smooth parameter-linked reactive feedback and rounded translucent readout
+chips. The module still owns no timers or animation APIs. Fixing a deterministic gate must never
+flatten or visually regress the scene.
 
 HEAL_INPUT_JSON_WITH_EXACT_GATE_FAILURES:
 @@INPUT_JSON@@
