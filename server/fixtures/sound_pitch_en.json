@@ -1,0 +1,31 @@
+{
+  "fixture_id": "sound_pitch_en",
+  "source_fixture": "sound_pitch_ar",
+  "source_golden": "sound_pitch",
+  "locale": "en",
+  "question": "How does frequency change sound pitch?",
+  "metadata": {
+    "ar": {"title": "التردد وحدّة الصوت", "domain": "الصوت والموجات", "summary": "غيّر التردد وقارن عدد دورات الموجة وطولها الموجي دون تشغيل صوت."},
+    "en": {"title": "Frequency and sound pitch", "domain": "Sound and waves", "summary": "Change frequency and compare wave cycles and wavelength without playing audio."}
+  },
+  "copy": {
+    "title": "How does frequency change sound pitch?",
+    "tldr": "Pitch sounds higher as the number of wave vibrations per second increases. Here f is frequency, λ is wavelength, v is the fixed sound speed of 343 m/s, and T is period; wavelength and period both decrease as frequency rises, but that does not mean the sound becomes louder.",
+    "key_formula": "λ = v / f; T = 1 / f",
+    "learning_objective": "Explain causally how increasing sound-wave frequency creates a higher pitch while distinguishing pitch from loudness.",
+    "primary_parameter_label": "Sound-wave frequency",
+    "misconception": "A higher-frequency sound is not necessarily louder, but frequency determines pitch while amplitude determines loudness.",
+    "explanation_prompt": "Move the frequency and compare pitch with wavelength and period. Explain why both quantities decrease as pitch rises.",
+    "transfer_prompt": "Compare two equally loud sounds with different frequencies: which has the higher pitch, and how do their periods differ?",
+    "suggestions": ["Explore how frequency affects wavelength.", "Compare pitch with loudness.", "Observe how period changes with frequency."],
+    "brief_summary": "Shows how frequency changes pitch, wavelength, and period without playing audio.",
+    "assumptions": ["Sound speed is 343 m/s", "Fixed air medium", "Pitch does not mean loudness"]
+  },
+  "review_localization": {"assumptions": ["Sound speed is 343 m/s", "Fixed air medium", "Pitch does not mean loudness"]},
+  "module_replacements": {
+    "التردد · حدّة النغمة": "Frequency · pitch",
+    "الطول الموجي λ": "Wavelength λ",
+    "زمن الدورة T": "Period T",
+    "سرعة الصوت ثابتة: 343 m/s  ·  التردد يغيّر الحدّة لا الشدة": "Sound speed is fixed: 343 m/s  ·  frequency changes pitch, not loudness"
+  }
+}

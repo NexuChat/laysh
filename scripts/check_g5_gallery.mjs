@@ -53,7 +53,7 @@ try {
   }
   if (!version) throw new Error("Chrome debugging endpoint did not start");
   const target = await fetchJson(
-    `http://127.0.0.1:${port}/json/new?${encodeURIComponent(baseUrl)}`,
+    `http://127.0.0.1:${port}/json/new?${encodeURIComponent("about:blank")}`,
     { method: "PUT" },
   );
   const socket = new WebSocket(target.webSocketDebuggerUrl);
@@ -97,8 +97,11 @@ try {
   await command("Runtime.enable");
   await command("Network.enable");
   await command("Page.enable");
+  await command("Page.addScriptToEvaluateOnNewDocument", {
+    source: "try { localStorage.setItem('laysh.locale', 'ar'); } catch {}",
+  });
   await command("Page.navigate", { url: `${baseUrl}/` });
-  for (let attempt = 0; attempt < 100; attempt += 1) {
+  for (let attempt = 0; attempt < 300; attempt += 1) {
     if (await evaluate("document.readyState === 'complete'")) break;
     await delay(50);
   }
@@ -111,6 +114,9 @@ try {
     }))`);
     if (cards.length === 6 && cards.every((card) => card.enabled)) break;
     await delay(50);
+  }
+  if (cards.length !== 6 || cards.some((card) => !card.enabled)) {
+    throw new Error(`Verified gallery did not hydrate: ${JSON.stringify(cards)}`);
   }
   const journeys = [];
   for (const card of cards) {

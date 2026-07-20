@@ -1,0 +1,32 @@
+{
+  "cases": [
+    {
+      "value": 0,
+      "frameChanged": true,
+      "visualSignature": 2167781058
+    },
+    {
+      "value": 60,
+      "frameChanged": true,
+      "visualSignature": 2301064852
+    },
+    {
+      "value": 360,
+      "frameChanged": true,
+      "visualSignature": 3503722372
+    }
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "ready": true,
+  "runtimeError": false,
+  "alternative": "Earth rotation angle: 60 ° — calculated outcome: 0.50",
+  "idleFrameChanged": true,
+  "reactiveFrameVariants": 3,
+  "externalRequests": 0,
+  "consoleErrors": [],
+  "screenshots": [
+    "day_night_en-mobile-390x844.png",
+    "day_night_en-desktop-1440x900.png"
+  ]
+}

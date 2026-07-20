@@ -1,13 +1,11 @@
 (() => {
   "use strict";
 
-  const safeExamples = [
-    "لماذا يتغير شكل القمر خلال الشهر؟",
-    "كيف تطفو السفن الثقيلة فوق الماء؟",
-    "لماذا تتكوّن ألوان قوس المطر؟",
-    "كيف تنتقل الحرارة بين الأجسام؟",
-  ];
+  const catalogs = window.LayshTranslations;
+  const localeState = window.LayshLocale;
+  if (!catalogs || !localeState) return;
   const state = {
+    locale: localeState.initial,
     view: "ask",
     jobId: null,
     streamUrl: null,
@@ -24,94 +22,55 @@
     formula: null,
     lastQuestion: "",
     result: null,
+    failureReason: null,
   };
 
   const byId = (id) => document.getElementById(id);
   const views = [...document.querySelectorAll("[data-view]")];
-  const number = new Intl.NumberFormat("ar", { maximumFractionDigits: 0 });
-  const stageLabels = {
-    filtering: "حماية السؤال",
-    understanding: "فهم الفكرة",
-    cache_lookup: "البحث في المرصد",
-    generating: "رسم الأداة",
-    verifying: "اختبار القوانين",
-    healing: "إصلاح ذاتي",
-    qa: "مراجعة الجودة",
-    qa_retry: "إعادة مراجعة الجودة",
-    browser_check: "اختبار المشهد",
-    complete: "التجربة جاهزة",
-  };
-  const gateLabels = {
-    closed_schema: "العقد المغلق",
-    restricted_source: "المصدر الآمن",
-    node_runtime: "وقت التشغيل",
-    fixtures: "القيم المرجعية",
-    browser_readiness: "جاهزية المتصفح",
-    verified_cache: "نسخة مثبتة",
-    artifact_hash: "بصمة الأثر",
-    interface: "واجهة الوحدة",
-    security: "الأمان",
-    invariant: "ثبات النموذج",
-    formula_presentation: "صياغة المعادلة",
-    fixture_integrity: "سلامة القيم",
+  let number = new Intl.NumberFormat(state.locale, { maximumFractionDigits: 0 });
+  const failureSymbols = {
+    not_simulatable: "?",
+    qa_inconclusive: "…",
+    verification_exhausted: "×",
+    generation_failed: "↺",
+    simulation_runtime_error: "!",
+    backend_unavailable: "⌁",
+    cancelled: "■",
+    timed_out: "⌛",
+    unsafe_redirect: "↗",
   };
 
-  const failureCopy = {
-    not_simulatable: {
-      eyebrow: "الجواب متاح",
-      title: "احتفظنا بالجواب",
-      copy: "لا يمكن بناء محاكاة صادقة لهذا السؤال الآن. يمكنك تعديل السؤال أو اختيار تجربة مراجعة.",
-      symbol: "؟",
-    },
-    qa_inconclusive: {
-      eyebrow: "الفحص غير حاسم",
-      title: "احتفظنا بالجواب",
-      copy: "لم يكتمل فحص المرشح في الوقت المحدد، لذلك لم نعرض المحاكاة.",
-      symbol: "…",
-    },
-    verification_exhausted: {
-      eyebrow: "أوقفنا مرشحًا غير موثوق",
-      title: "احتفظنا بالجواب",
-      copy: "لم تجتز المحاكاة كل الفحوصات بعد محاولتي إصلاح، لذلك لن نعرضها أو نخزنها.",
-      symbol: "×",
-    },
-    generation_failed: {
-      eyebrow: "تعذّر إكمال البناء",
-      title: "الجواب ما زال هنا",
-      copy: "تعطّل البناء قبل تجهيز تجربة موثوقة. جرّب البناء مرة أخرى أو عد إلى المكتبة.",
-      symbol: "↺",
-    },
-    simulation_runtime_error: {
-      eyebrow: "حماية وقت التشغيل",
-      title: "حدث خطأ داخل المحاكاة",
-      copy: "أخفينا الإطار المتعطل ولم نسجل تفاصيله. يمكنك إعادة البناء أو اختيار تجربة أخرى.",
-      symbol: "!",
-    },
-    backend_unavailable: {
-      eyebrow: "وضع المكتبة فقط",
-      title: "تعذّر الاتصال بالخادم",
-      copy: "لا نستطيع بدء بناء جديد الآن. ما زالت بطاقات المكتبة متاحة للمعاينة.",
-      symbol: "⌁",
-    },
-    cancelled: {
-      eyebrow: "أُلغي البناء",
-      title: "توقفنا بهدوء",
-      copy: "لم نكمل المحاكاة. يمكنك العودة إلى السؤال أو بدء محاولة جديدة.",
-      symbol: "■",
-    },
-    timed_out: {
-      eyebrow: "انتهت مهلة البناء",
-      title: "احتفظنا بالجواب",
-      copy: "توقف البناء بعد المهلة القصوى بدل إبقائك في انتظار غير محدد.",
-      symbol: "⌛",
-    },
-    unsafe_redirect: {
-      eyebrow: "لنحافظ على مساحة آمنة",
-      title: "لا يمكننا متابعة هذا السؤال",
-      copy: "يمكننا بدلًا منه استكشاف سؤال علمي آمن من المقترحات أدناه.",
-      symbol: "↗",
-    },
-  };
+  function t(key, replacements = {}) {
+    let value = catalogs[state.locale][key] || catalogs.ar[key] || key;
+    for (const [name, replacement] of Object.entries(replacements)) {
+      value = value.replaceAll(`{${name}}`, String(replacement));
+    }
+    return value;
+  }
+
+  function hasTranslation(key) {
+    return Object.hasOwn(catalogs[state.locale], key) || Object.hasOwn(catalogs.ar, key);
+  }
+
+  function applyTranslations() {
+    document.title = t("document_title");
+    document.documentElement.lang = state.locale;
+    document.documentElement.dir = state.locale === "ar" ? "rtl" : "ltr";
+    document.documentElement.dataset.locale = state.locale;
+    for (const node of document.querySelectorAll("[data-i18n]")) {
+      node.textContent = t(node.dataset.i18n);
+    }
+    for (const attribute of ["aria-label", "placeholder", "title"]) {
+      const dataName = `i18n${attribute.split("-").map((part) => part[0].toUpperCase() + part.slice(1)).join("")}`;
+      for (const node of document.querySelectorAll(`[data-i18n-${attribute}]`)) {
+        node.setAttribute(attribute, t(node.dataset[dataName]));
+      }
+    }
+    for (const button of document.querySelectorAll("[data-locale]")) {
+      button.setAttribute("aria-pressed", String(button.dataset.locale === state.locale));
+    }
+    number = new Intl.NumberFormat(state.locale, { maximumFractionDigits: 0 });
+  }
 
   function setView(name, { push = false } = {}) {
     state.view = name;
@@ -129,7 +88,8 @@
     const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = String(totalSeconds % 60).padStart(2, "0");
-    return `${number.format(minutes)}:${number.format(Number(seconds)).padStart(2, "٠")}`;
+    const zero = state.locale === "ar" ? "٠" : "0";
+    return `${number.format(minutes)}:${number.format(Number(seconds)).padStart(2, zero)}`;
   }
 
   function setConnection(copy, mode = "working") {
@@ -149,7 +109,7 @@
         state.streamController?.abort();
         showFailure("timed_out");
       } else if (elapsed >= 90_000) {
-        setConnection("ما زلنا نفحص المرشح بعناية؛ لم ننتهِ بعد.", "still-testing");
+        setConnection(t("connection.still_testing"), "still-testing");
       }
     }, 1000);
   }
@@ -162,14 +122,18 @@
     item.dataset.stage = payload.stage;
     item.dataset.elapsedMs = String(payload.elapsed_ms);
     name.className = "stage-name";
-    name.textContent = stageLabels[payload.stage] || "خطوة بناء";
-    detail.textContent = payload.detail;
+    const stageKey = `stage.${payload.stage}`;
+    const detailKey = `stage_detail.${payload.stage}`;
+    name.textContent = t(hasTranslation(stageKey) ? stageKey : "stage.unknown");
+    detail.textContent = payload.detail || t(
+      hasTranslation(detailKey) ? detailKey : "stage_detail.unknown",
+    );
     time.className = "stage-time";
-    time.textContent = `${number.format(payload.elapsed_ms / 1000)} ث`;
+    time.textContent = t("seconds", { value: number.format(payload.elapsed_ms / 1000) });
     item.append(name, detail, time);
     byId("stage-list").append(item);
     if (payload.stage === "healing") byId("heal-act").hidden = false;
-    setConnection("تقدّم البناء إلى خطوة جديدة", "working");
+    setConnection(t("connection.progress"), "working");
   }
 
   function pinAnswer(payload) {
@@ -186,14 +150,18 @@
   function showVerification(payload) {
     const box = byId("verification-summary");
     box.hidden = false;
-    byId("verification-title").textContent = payload.passed ? "اجتاز المرشح الفحص" : "وجد الفحص نقاطًا تحتاج إصلاحًا";
-    byId("verification-copy").textContent = `${number.format(payload.check_count)} فحصًا · ${number.format(payload.heal_count)} محاولة إصلاح`;
+    byId("verification-title").textContent = t(payload.passed ? "verification.passed" : "verification.failed");
+    byId("verification-copy").textContent = t("verification.summary", {
+      checks: number.format(payload.check_count),
+      heals: number.format(payload.heal_count),
+    });
     const grid = byId("verification-grid");
     grid.replaceChildren();
     for (const [index, gate] of payload.evidence.entries()) {
       const chip = document.createElement("span");
       chip.className = `verification-chip ${payload.passed ? "passed" : "failed"}`;
-      chip.textContent = `${payload.passed ? "✓" : "!"} ${gateLabels[gate] || gate}`;
+      const gateKey = `gate.${gate}`;
+      chip.textContent = `${payload.passed ? "✓" : "!"} ${hasTranslation(gateKey) ? t(gateKey) : gate}`;
       grid.append(chip);
       setTimeout(() => chip.classList.add("visible"), Math.min(index * 90, 720));
     }
@@ -201,8 +169,8 @@
 
   function normalizedReason(reason, status) {
     if (status === "rejected") return "unsafe_redirect";
-    if (["failed", "answer_only"].includes(status) && !failureCopy[reason]) return "generation_failed";
-    return failureCopy[reason] ? reason : "generation_failed";
+    if (["failed", "answer_only"].includes(status) && !failureSymbols[reason]) return "generation_failed";
+    return failureSymbols[reason] ? reason : "generation_failed";
   }
 
   function showFailure(reason, suggestions = []) {
@@ -210,11 +178,11 @@
     state.streamController?.abort();
     clearInterval(state.timer);
     clearInterval(state.watchdog);
-    const selected = failureCopy[reason] || failureCopy.generation_failed;
-    byId("failure-eyebrow").textContent = selected.eyebrow;
-    byId("failure-title").textContent = selected.title;
-    byId("failure-copy").textContent = selected.copy;
-    byId("failure-symbol").textContent = selected.symbol;
+    state.failureReason = failureSymbols[reason] ? reason : "generation_failed";
+    byId("failure-eyebrow").textContent = t(`failure.${state.failureReason}.eyebrow`);
+    byId("failure-title").textContent = t(`failure.${state.failureReason}.title`);
+    byId("failure-copy").textContent = t(`failure.${state.failureReason}.copy`);
+    byId("failure-symbol").textContent = failureSymbols[state.failureReason];
     byId("preserved-answer").hidden = !state.answer;
     byId("preserved-answer").textContent = state.answer || "";
     const list = byId("suggestion-list");
@@ -241,7 +209,7 @@
     const simulation = result.simulation;
     byId("result-title").textContent = simulation.title;
     byId("result-answer").textContent = state.answer || result.answer?.tldr || "";
-    byId("simulation-alternative").textContent = state.answer || "وصف نصي للحالة متاح داخل المحاكاة.";
+    byId("simulation-alternative").textContent = state.answer || t("simulation_text_fallback");
     byId("simulation-frame").hidden = false;
     byId("simulation-frame").src = `${simulation.artifact_url}?inline=1`;
     byId("download").href = simulation.artifact_url;
@@ -257,11 +225,11 @@
       shareActions.hidden = true;
       nativeShare.hidden = true;
     }
-    byId("receipt-tier").textContent = simulation.tier === "A" ? "فئة أ — مراجعة بشرية" : "فئة ب — فحص آلي";
-    byId("tier-badge").textContent = simulation.tier === "A" ? "مراجعة بشرية مثبتة" : "فحص آلي مكتمل";
+    byId("receipt-tier").textContent = t(simulation.tier === "A" ? "tier.a.receipt" : "tier.b.receipt");
+    byId("tier-badge").textContent = t(simulation.tier === "A" ? "tier.a.badge" : "tier.b.badge");
     byId("check-count").textContent = number.format(simulation.check_count);
     byId("heal-count").textContent = number.format(simulation.heal_count);
-    byId("result-elapsed").textContent = `${number.format(simulation.elapsed_ms / 1000)} ثانية`;
+    byId("result-elapsed").textContent = t("seconds", { value: number.format(simulation.elapsed_ms / 1000) });
     byId("effective-model").textContent = simulation.effective_model;
     setView("result", { push });
   }
@@ -287,7 +255,11 @@
       headers: { accept: "application/json" },
     });
     if (!response.ok) throw new Error("shared_simulation_unavailable");
-    displayResult(await response.json(), { push: false });
+    const result = await response.json();
+    if (result.simulation?.lang && result.simulation.lang !== state.locale) {
+      setLocale(result.simulation.lang, { persist: false, reset: false });
+    }
+    displayResult(result, { push: false });
   }
 
   async function copyShareLink() {
@@ -306,25 +278,42 @@
       document.execCommand("copy");
       fallback.remove();
     }
-    byId("share-status").textContent = "تم نسخ الرابط";
+    byId("share-status").textContent = t("share_copied");
   }
 
   async function hydrateGallery() {
+    const requestedLocale = state.locale;
+    document.documentElement.dataset.galleryState = "loading";
+    for (const card of document.querySelectorAll('[data-dynamic-card="true"]')) card.remove();
+    for (const card of document.querySelectorAll(".gallery-card")) {
+      card.dataset.lessonId = "";
+      const badge = card.querySelector(".instant-badge, .coming-badge");
+      badge.className = "coming-badge";
+      badge.textContent = t("coming_soon");
+      const launch = card.querySelector(".golden-launch");
+      launch.disabled = true;
+      launch.textContent = t("launch_lesson");
+      launch.onclick = null;
+      card.querySelector(".card-summary")?.remove();
+    }
     try {
-      const response = await fetch("/api/gallery?locale=ar", {
+      const response = await fetch(`/api/gallery?locale=${encodeURIComponent(requestedLocale)}`, {
         headers: { accept: "application/json" },
       });
       if (!response.ok) return;
       const gallery = await response.json();
+      if (requestedLocale !== state.locale) return;
       for (const lesson of gallery.lessons) {
         if (!lesson.instant) continue;
+        const conceptId = lesson.id.endsWith("_en") ? lesson.id.slice(0, -3) : lesson.id;
         let card = [...document.querySelectorAll(".gallery-card")].find(
-          (candidate) => (candidate.dataset.lessonId || candidate.dataset.goldenId) === lesson.id,
+          (candidate) => candidate.dataset.goldenId === conceptId,
         );
         if (!card) {
           card = document.createElement("article");
           card.className = "gallery-card";
           card.dataset.lessonId = lesson.id;
+          card.dataset.dynamicCard = "true";
           const icon = document.createElement("span");
           icon.className = "gallery-icon";
           icon.setAttribute("aria-hidden", "true");
@@ -337,10 +326,11 @@
           const launch = document.createElement("button");
           launch.className = "golden-launch";
           launch.type = "button";
-          launch.textContent = "شغّل التجربة";
+          launch.textContent = t("launch_lesson");
           card.append(icon, domain, title, badge, launch);
           document.querySelector(".gallery-grid").append(card);
         }
+        card.dataset.lessonId = lesson.id;
         card.querySelector("h3").textContent = lesson.title;
         card.querySelector(".card-domain").textContent = lesson.domain;
         let summary = card.querySelector(".card-summary");
@@ -352,16 +342,66 @@
         summary.textContent = lesson.summary;
         const badge = card.querySelector(".coming-badge");
         badge.className = "instant-badge";
-        badge.textContent = "فوري";
+        badge.textContent = t("instant");
         const launch = card.querySelector(".golden-launch");
         launch.disabled = false;
-        launch.addEventListener("click", () => {
+        launch.onclick = () => {
           loadLesson(lesson.id).catch(() => showFailure("backend_unavailable"));
-        });
+        };
       }
-    } catch {
+      document.documentElement.dataset.galleryState = "ready";
+    } catch (error) {
       // Honest placeholders remain visible when the gallery endpoint is unavailable.
+      document.documentElement.dataset.galleryState = "unavailable";
+      document.documentElement.dataset.galleryError = error?.name || "Error";
     }
+  }
+
+  function setLocale(locale, { persist = true, reset = true } = {}) {
+    if (locale !== "ar" && locale !== "en") return;
+    if (persist) {
+      try {
+        localStorage.setItem(localeState.storageKey, locale);
+      } catch {
+        // The in-memory choice still applies when storage is unavailable.
+      }
+    }
+    if (locale === state.locale) {
+      applyTranslations();
+      return;
+    }
+    if (reset && state.result?.simulation?.sim_id?.startsWith("golden_")) {
+      const currentId = state.result.simulation.sim_id;
+      const targetId = locale === "en"
+        ? (currentId.endsWith("_en") ? currentId : `${currentId}_en`)
+        : currentId.replace(/_en$/, "");
+      if (targetId !== currentId) {
+        window.location.assign(`/sims/${targetId}`);
+        return;
+      }
+    }
+    state.locale = locale;
+    applyTranslations();
+    exampleIndex = 0;
+    byId("safe-example").textContent = t("example.0");
+    if (reset && state.view !== "ask") {
+      const activeJobId = state.jobId;
+      state.terminal = true;
+      state.streamController?.abort();
+      clearInterval(state.timer);
+      clearInterval(state.watchdog);
+      if (activeJobId) {
+        fetch(`/api/jobs/${activeJobId}/cancel`, { method: "POST" }).catch(() => {});
+      }
+      state.jobId = null;
+      state.answer = null;
+      state.formula = null;
+      state.result = null;
+      state.failureReason = null;
+      byId("preserved-answer").textContent = "";
+      setView("ask", { push: true });
+    }
+    if (state.view === "ask") hydrateGallery();
   }
 
   function parseSseBlock(block) {
@@ -381,7 +421,7 @@
     const message = JSON.parse(event.data);
     if (event.type === "answer") pinAnswer(message.payload);
     if (event.type === "stage") addStage(message.payload);
-    if (event.type === "heartbeat") setConnection("الاتصال مستقر، والبناء مستمر", "working");
+    if (event.type === "heartbeat") setConnection(t("connection.stable"), "working");
     if (event.type === "verification") showVerification(message.payload);
     if (event.type === "fallback") showFailure(normalizedReason(message.payload.reason_code, "answer_only"), message.payload.suggestions);
     if (event.type === "terminal") showFailure(normalizedReason(message.payload.reason_code, message.payload.status));
@@ -398,7 +438,7 @@
     try {
       const response = await fetch(state.streamUrl, { headers, signal: controller.signal });
       if (!response.ok || !response.body) throw new Error("stream_unavailable");
-      setConnection("الاتصال مستقر، والبناء مستمر", "working");
+      setConnection(t("connection.stable"), "working");
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
@@ -426,7 +466,7 @@
       showFailure("backend_unavailable");
       return;
     }
-    setConnection("انقطع الاتصال مؤقتًا؛ نحاول إعادة الاتصال واستعادة ما فات.", "reconnecting");
+    setConnection(t("connection.reconnecting"), "reconnecting");
     const delays = [1200, 2500, 5000];
     setTimeout(connectStream, delays[state.reconnectAttempt - 1]);
   }
@@ -457,15 +497,15 @@
     byId("verification-grid").replaceChildren();
     byId("domain-fact").hidden = true;
     byId("heal-act").hidden = true;
-    byId("elapsed").textContent = "٠:٠٠";
-    setConnection("في قائمة البناء", "queued");
+    byId("elapsed").textContent = formatElapsed(0);
+    setConnection(t("connection.queued"), "queued");
     setView("build", { push: true });
     startClock();
     try {
       const response = await fetch("/api/ask", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ question, locale: "ar" }),
+        body: JSON.stringify({ question, locale: state.locale }),
       });
       if (!response.ok) throw new Error("ask_unavailable");
       const accepted = await response.json();
@@ -484,7 +524,7 @@
     const question = byId("question").value.trim();
     if (!question) {
       byId("question-error").hidden = false;
-      byId("question-error").textContent = "اكتب سؤالًا واحدًا على الأقل.";
+      byId("question-error").textContent = t("question_required");
       byId("question").setAttribute("aria-invalid", "true");
       byId("question").focus();
       return;
@@ -501,13 +541,13 @@
   });
   if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
     setInterval(() => {
-      exampleIndex = (exampleIndex + 1) % safeExamples.length;
-      byId("safe-example").textContent = safeExamples[exampleIndex];
+      exampleIndex = (exampleIndex + 1) % 4;
+      byId("safe-example").textContent = t(`example.${exampleIndex}`);
     }, 5000);
   }
 
   byId("cancel-action").addEventListener("click", async () => {
-    setConnection("جارٍ إلغاء البناء بهدوء", "cancelling");
+    setConnection(t("connection.cancelling"), "cancelling");
     if (state.jobId) await fetch(`/api/jobs/${state.jobId}/cancel`, { method: "POST" }).catch(() => {});
     showFailure("cancelled");
   });
@@ -553,7 +593,7 @@
   window.addEventListener("offline", () => {
     if (state.terminal || !state.streamUrl) return;
     state.streamController?.abort();
-    setConnection("انقطع الاتصال مؤقتًا؛ نحاول إعادة الاتصال واستعادة ما فات.", "reconnecting");
+    setConnection(t("connection.reconnecting"), "reconnecting");
   });
   window.addEventListener("online", () => {
     if (state.terminal || !state.streamUrl) return;
@@ -571,6 +611,11 @@
     }
   });
 
+  for (const button of document.querySelectorAll("[data-locale]")) {
+    button.addEventListener("click", () => setLocale(button.dataset.locale));
+  }
+
+  applyTranslations();
   const sharedPath = window.location.pathname.match(/^\/sims\/([^/]+)$/);
   if (sharedPath) {
     history.replaceState({ view: "result" }, "", window.location.href);

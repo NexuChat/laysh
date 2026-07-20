@@ -187,6 +187,7 @@ def build_manifest() -> dict[str, Any]:
         lessons.append(
             {
                 "id": document["golden_id"],
+                "locale": document["locale"],
                 "aliases": document["aliases"],
                 "instant": True,
                 "tier": "A",

@@ -59,6 +59,31 @@ def test_exact_and_semantic_cache_without_raw_question(tmp_path):
     assert not list((tmp_path / "live").glob("*.tmp"))
 
 
+def test_explicit_locale_never_replays_the_other_language(tmp_path):
+    from server.cache import VerifiedCache
+
+    cache = VerifiedCache(
+        root=tmp_path / "live",
+        golden_root=tmp_path / "golden",
+        secret=b"test-cache-secret",
+        contract_version="1.0",
+    )
+    arabic = cache.write_verified(
+        question="shared spelling",
+        locale="ar",
+        domain="science",
+        canonical_intent="shared_intent",
+        artifact="<!doctype html><html lang='ar' dir='rtl'></html>",
+        title="درس عربي",
+        direction="rtl",
+        tier="B",
+        receipt=verified_receipt(),
+    )
+
+    assert cache.lookup_exact(question="shared spelling", locale="ar") == arabic
+    assert cache.lookup_exact(question="shared spelling", locale="en") is None
+
+
 def test_verified_live_entry_reloads_from_disk_after_process_restart(tmp_path):
     from server.cache import VerifiedCache
 

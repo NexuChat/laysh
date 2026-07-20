@@ -1,0 +1,25 @@
+{
+  "fixture_id": "moon_phases_en",
+  "source_fixture": "moon_phases_ar",
+  "source_golden": "moon_phases",
+  "locale": "en",
+  "question": "Why does the Moon appear to change shape during the month?",
+  "metadata": {
+    "ar": {"title": "أطوار القمر", "domain": "الأرض والفضاء", "summary": "حرّك القمر في مداره وقارن الجزء المضاء بما نراه من الأرض."},
+    "en": {"title": "Moon phases", "domain": "Earth and space", "summary": "Move the Moon around its orbit and compare its lit half with the view from Earth."}
+  },
+  "copy": {
+    "title": "How do Moon phases change?",
+    "tldr": "The illuminated part of the Moon that we see changes as its position shifts relative to Earth and the Sun. In this simplified circular-orbit model, θ is the phase angle and f is the visible illuminated fraction from zero to one; sunlight is parallel and orbital tilt and eclipses are omitted.",
+    "learning_objective": "Connect the Moon's phase angle causally to its visible illuminated fraction.",
+    "primary_parameter_label": "Moon phase angle",
+    "misconception": "Moon phases are not caused by Earth's shadow, but by the Moon's position relative to Earth and the Sun.",
+    "explanation_prompt": "Move the phase angle, observe the visible illuminated fraction, and explain why it reaches zero at 0° and one at 180°.",
+    "transfer_prompt": "Use the relationship to find the visible illuminated fraction at 270°, then compare it with 90°.",
+    "suggestions": ["Explore how the angle of light changes shadow length.", "Explore seasons as Earth's axial tilt changes.", "Model solar and lunar eclipses by aligning the bodies."],
+    "brief_summary": "Shows how phase angle changes the Moon's visible illuminated fraction.",
+    "assumptions": ["Simplified circular orbit", "Parallel sunlight", "Orbital tilt and eclipses omitted"]
+  },
+  "review_localization": {"assumptions": ["Simplified circular orbit", "Parallel sunlight", "Orbital tilt and eclipses omitted"]},
+  "module_replacements": {}
+}

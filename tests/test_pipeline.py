@@ -40,7 +40,10 @@ def test_success_pipeline_answers_first_and_returns_playable_artifact(client, ba
 
 
 @pytest.mark.asyncio
-async def test_second_identical_question_replays_with_zero_additional_model_calls(tmp_path):
+@pytest.mark.parametrize("locale", ["ar", "en"])
+async def test_second_identical_question_replays_with_zero_additional_model_calls(
+    tmp_path, locale
+):
     from server.browser_verify import BrowserVerificationResult
     from server.cache import VerifiedCache
     from server.codex_backend import MockCodexBackend
@@ -60,7 +63,7 @@ async def test_second_identical_question_replays_with_zero_additional_model_call
         cache=cache,
     )
 
-    first = manager.start("success replay canary", "ar")
+    first = manager.start("success replay canary", locale)
     await first.task
     calls_after_first = (
         backend.understand_calls,
@@ -68,7 +71,7 @@ async def test_second_identical_question_replays_with_zero_additional_model_call
         backend.heal_calls,
         backend.qa_calls,
     )
-    second = manager.start("success replay canary", "ar")
+    second = manager.start("success replay canary", locale)
     await second.task
 
     assert first.status == second.status == "complete"
@@ -81,6 +84,23 @@ async def test_second_identical_question_replays_with_zero_additional_model_call
         backend.heal_calls,
         backend.qa_calls,
     ) == calls_after_first
+
+
+def test_english_job_events_expose_only_english_stage_copy(client):
+    import re
+
+    job_id = ask(client, "success", "en")
+    result = wait_for_terminal(client, job_id)
+    record = client.app.state.jobs.get(job_id)
+    details = [
+        event.payload.detail
+        for event in record.events
+        if event.type == "stage"
+    ]
+
+    assert result["status"] == "complete"
+    assert details
+    assert not re.search(r"[\u0600-\u06ff]", " ".join(details))
 
 
 @pytest.mark.asyncio

@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.0",
+  "method": "normal_pipeline_localized_from_verified_counterpart",
+  "all_passed": true,
+  "lessons": [
+    {
+      "id": "buoyancy_en",
+      "cache_id": "golden_buoyancy_en",
+      "artifact_sha256": "6a87ebde348bf25a2d51105d48acd58939dc30b69602a007c04e5084cb658c23",
+      "attempts": 1,
+      "heals": 0,
+      "qa_calls": 1,
+      "check_count": 42,
+      "subject_motion_ratio": 0.38558063271604937,
+      "whole_canvas_motion_ratio": 0.17785069444444446,
+      "render_metric": "meanLuminance",
+      "render_correlation": 0.9783188862212846
+    },
+    {
+      "id": "day_night_en",
+      "cache_id": "golden_day_night_en",
+      "artifact_sha256": "abf2bdc8040782930d95d7213039970207de13ee9078ff918ea4788fca0b9fa4",
+      "attempts": 1,
+      "heals": 0,
+      "qa_calls": 1,
+      "check_count": 42,
+      "subject_motion_ratio": 0.014091435185185186,
+      "whole_canvas_motion_ratio": 0.0050729166666666665,
+      "render_metric": "bright128",
+      "render_correlation": 0.9036220241589027
+    },
+    {
+      "id": "moon_phases_en",
+      "cache_id": "golden_moon_phases_en",
+      "artifact_sha256": "6382f295eb213fc4a3ddf037ebaf5c0b8c9f30bcaed4d755ebef7f747a820140",
+      "attempts": 1,
+      "heals": 0,
+      "qa_calls": 1,
+      "check_count": 39,
+      "subject_motion_ratio": 0.07367862654320988,
+      "whole_canvas_motion_ratio": 0.03349652777777778,
+      "render_metric": "meanLuminance",
+      "render_correlation": 0.9944753255009663
+    },
+    {
+      "id": "pendulum_en",
+      "cache_id": "golden_pendulum_en",
+      "artifact_sha256": "d0faba22227f1cc8b7e7bdd01cd8f781f30893fda2b3d5abd47e15b73c513a8d",
+      "attempts": 1,
+      "heals": 0,
+      "qa_calls": 1,
+      "check_count": 39,
+      "subject_motion_ratio": 0.22115162037037037,
+      "whole_canvas_motion_ratio": 0.08248958333333334,
+      "render_metric": "bright192",
+      "render_correlation": 0.9975490196078431
+    },
+    {
+      "id": "simple_circuit_en",
+      "cache_id": "golden_simple_circuit_en",
+      "artifact_sha256": "8fb55623f8cdc715866070a342c6b1a98d29bac2e577da84e1a70f474e743201",
+      "attempts": 1,
+      "heals": 0,
+      "qa_calls": 1,
+      "check_count": 42,
+      "subject_motion_ratio": 0.2160300925925926,
+      "whole_canvas_motion_ratio": 0.13572916666666668,
+      "render_metric": "meanLuminance",
+      "render_correlation": 1
+    },
+    {
+      "id": "sound_pitch_en",
+      "cache_id": "golden_sound_pitch_en",
+      "artifact_sha256": "1c33abe2a5dada3912ebce43546d9d8822fd311ba3c2ba10af55634e99e19bfc",
+      "attempts": 1,
+      "heals": 0,
+      "qa_calls": 1,
+      "check_count": 42,
+      "subject_motion_ratio": 0.3763117283950617,
+      "whole_canvas_motion_ratio": 0.14536805555555554,
+      "render_metric": "centroidY",
+      "render_correlation": 1
+    }
+  ]
+}

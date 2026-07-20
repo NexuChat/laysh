@@ -1,0 +1,32 @@
+{
+  "cases": [
+    {
+      "value": 200,
+      "frameChanged": true,
+      "visualSignature": 3927587809
+    },
+    {
+      "value": 750,
+      "frameChanged": true,
+      "visualSignature": 3961715824
+    },
+    {
+      "value": 1400,
+      "frameChanged": true,
+      "visualSignature": 3850346453
+    }
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "ready": true,
+  "runtimeError": false,
+  "alternative": "Object density: 750 kg/m³ — calculated outcome: 0.75",
+  "idleFrameChanged": true,
+  "reactiveFrameVariants": 3,
+  "externalRequests": 0,
+  "consoleErrors": [],
+  "screenshots": [
+    "buoyancy_en-mobile-390x844.png",
+    "buoyancy_en-desktop-1440x900.png"
+  ]
+}

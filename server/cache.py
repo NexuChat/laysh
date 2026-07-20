@@ -184,8 +184,7 @@ class VerifiedCache:
             self._live_entries.pop(victim.cache_id, None)
 
     def lookup_exact(self, *, question: str, locale: str | None) -> CacheEntry | None:
-        locales = [locale] if locale in {"ar", "en"} else []
-        locales.extend(candidate for candidate in ("ar", "en") if candidate not in locales)
+        locales = [locale] if locale in {"ar", "en"} else ["ar", "en"]
         exact_keys = {self.exact_key(question, candidate) for candidate in locales}
         entry = next(
             (candidate for candidate in self._entries() if candidate.exact_key in exact_keys),

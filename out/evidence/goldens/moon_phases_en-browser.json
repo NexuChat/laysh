@@ -1,0 +1,32 @@
+{
+  "cases": [
+    {
+      "value": 0,
+      "frameChanged": true,
+      "visualSignature": 2087740367
+    },
+    {
+      "value": 90,
+      "frameChanged": true,
+      "visualSignature": 3059046917
+    },
+    {
+      "value": 360,
+      "frameChanged": true,
+      "visualSignature": 2087740367
+    }
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "ready": true,
+  "runtimeError": false,
+  "alternative": "Moon phase angle: 90 ° — calculated outcome: 0.50",
+  "idleFrameChanged": true,
+  "reactiveFrameVariants": 2,
+  "externalRequests": 0,
+  "consoleErrors": [],
+  "screenshots": [
+    "moon_phases_en-mobile-390x844.png",
+    "moon_phases_en-desktop-1440x900.png"
+  ]
+}

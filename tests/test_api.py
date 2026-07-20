@@ -96,11 +96,12 @@ def test_share_route_resolves_a_verified_golden_and_rejects_non_shareable_ids(cl
 def test_result_view_has_arabic_copy_and_native_share_affordances(client):
     html = client.get("/").text
     source = client.get("/static/app.js").text
+    translations = client.get("/static/translations.js").text
 
     assert 'id="copy-share"' in html and "نسخ رابط الدرس" in html
     assert 'id="native-share"' in html and "مشاركة" in html
     assert 'id="share-status"' in html and 'aria-live="polite"' in html
-    assert "تم نسخ الرابط" in source
+    assert "تم نسخ الرابط" in translations and "Link copied" in translations
     assert "navigator.share" in source
     assert "navigator.clipboard.writeText" in source
     assert "/api/sims/${encodeURIComponent(simId)}" in source

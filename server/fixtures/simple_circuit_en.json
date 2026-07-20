@@ -1,0 +1,26 @@
+{
+  "fixture_id": "simple_circuit_en",
+  "source_fixture": "simple_circuit_ar",
+  "source_golden": "simple_circuit",
+  "locale": "en",
+  "question": "How does resistance affect current and bulb brightness at constant voltage?",
+  "metadata": {
+    "ar": {"title": "المقاومة وسطوع المصباح", "domain": "الكهرباء", "summary": "غيّر المقاومة في دارة مبسطة ذات جهد ثابت ولاحظ التيار والقدرة."},
+    "en": {"title": "Resistance and bulb brightness", "domain": "Electric circuits", "summary": "Change resistance in a simplified constant-voltage circuit and observe current and power."}
+  },
+  "copy": {
+    "title": "How resistance affects current and bulb brightness",
+    "tldr": "At constant voltage, increasing resistance lowers current and dissipated power, so the bulb dims. I is current, V is voltage, R is resistance, and P is power used here to represent brightness.",
+    "key_formula": "I = V / R; P = V² / R",
+    "learning_objective": "Explain causally how increasing resistance at a constant 6 V lowers current and dissipated power, dimming the bulb.",
+    "primary_parameter_label": "Resistance",
+    "misconception": "Increasing resistance does not allow more current to flow, but reduces current when voltage stays constant.",
+    "explanation_prompt": "Use Ohm's law to explain why the bulb dims as resistance increases while voltage stays constant.",
+    "transfer_prompt": "Predict what happens to circuit current and bulb brightness if a smaller resistor replaces the current one while voltage remains constant.",
+    "suggestions": ["Explore how changing voltage affects current.", "Compare series and parallel resistor connections.", "Test how electrical energy becomes heat."],
+    "brief_summary": "Shows how resistance controls current, power, and bulb brightness at constant voltage.",
+    "assumptions": ["Ideal 6 V source", "Ohmic resistance", "Brightness represented by dissipated power"]
+  },
+  "review_localization": {"assumptions": ["Ideal 6 V source", "Ohmic resistance", "Brightness represented by dissipated power"]},
+  "module_replacements": {}
+}

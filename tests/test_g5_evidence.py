@@ -29,7 +29,9 @@ def test_g5_evidence_has_six_reviewed_pinned_goldens_and_two_live_smokes():
     assert len(gallery["cards"]) == len(gallery["journeys"]) == 6
     assert gallery["askPosts"] == gallery["externalRequests"] == 0
     assert gallery["consoleErrors"] == []
-    for fixture_id in GOLDEN_FIXTURE_IDS:
+    for fixture_id in (
+        candidate for candidate in GOLDEN_FIXTURE_IDS if candidate.endswith("_ar")
+    ):
         golden_id = golden_id_for_fixture(fixture_id)
         pinned = json.loads(
             (ROOT / "out" / "cache" / "golden" / f"{golden_id}.json").read_text(

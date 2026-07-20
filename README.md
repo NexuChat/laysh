@@ -4,8 +4,8 @@
 
 ### اسأل ليش، والعب الجواب · Ask why. Play the answer.
 
-An Arabic-first learning experience that answers a learner's question, then builds a
-small verified simulation for self-playing observation, explanation, and transfer.
+An Arabic-rooted, fully bilingual learning experience that answers a learner's question,
+then builds a small verified simulation for observation, explanation, and transfer.
 
 **Live demo:** `https://<FINAL-DEMO-URL>` **(owner placeholder; replace before submission)**  
 **Public repository:** `https://<FINAL-REPOSITORY-URL>` **(owner placeholder; replace after push)**
@@ -16,15 +16,16 @@ small verified simulation for self-playing observation, explanation, and transfe
 
 ## Why Laysh
 
-Arabic-speaking secondary-school learners often find a correct explanation but still
-cannot *see* the causal relationship. Laysh turns a short “why?” question into two useful
+Secondary-school learners often find a correct explanation but still cannot *see* the
+causal relationship. Laysh turns a short “why?” question in Arabic or English into two useful
 outcomes: an answer arrives first, then a focused interactive lesson when the concept is
 safe and meaningfully simulatable. The core flow is designed for learners aged 13+ on a
 phone and for teachers who want a downloadable lesson to project or share.
 
-The six builder-reviewed lessons—Moon phases, buoyancy, pendulum period, a simple
-circuit, sound pitch, and day/night—open instantly. A new question uses Codex to create
-only the phenomenon-specific module; Laysh supplies the trusted, accessible lesson shell.
+The six builder-reviewed lesson concepts—Moon phases, buoyancy, pendulum period, a simple
+circuit, sound pitch, and day/night—open instantly in Arabic or English. Each locale has
+its own immutable verified artifact and share URL. A new question uses Codex to create only
+the phenomenon-specific module; Laysh supplies the trusted, accessible lesson shell.
 
 ## Try it
 
@@ -39,7 +40,8 @@ npm install
 LAYSH_CODEX_BACKEND=mock .venv/bin/uvicorn server.app:create_app --factory --port 8765
 ```
 
-Open <http://127.0.0.1:8765>, choose **أطوار القمر** for a quota-free instant path, move
+Open <http://127.0.0.1:8765>, use the always-visible **AR / EN** switch, choose **Moon
+phases** or **أطوار القمر** for a quota-free instant path, move
 the main control, inspect the causal text alternative and verification receipt, then use
 the download action to open the network-dead HTML outside the hosting origin. The mock
 backend exercises the full product without an OpenAI login or model spend. The owner-run
@@ -119,7 +121,7 @@ The matched Arabic force–acceleration smoke generated in 63.7 s versus 58.0 s 
 one matched observation, not a new p95 claim; the full measurements live in
 `out/evidence/g7-latency.json`.
 
-The Arabic UI says that a new experience may take up to three minutes. During that wait it
+The localized UI says that a new experience may take up to three minutes. During that wait it
 shows only real answer, stage, heartbeat, verification, and self-heal events. Instant
 goldens remain the dependable fast path, while every public job retains its 180-second hard
 terminal and every evidence build retains its 600-second budget.
@@ -143,8 +145,15 @@ Every newly generated Tier B lesson enters the public library only after determi
 browser verification succeed. Runtime lessons persist as atomic JSON documents in
 `out/cache/live/` by default; `LAYSH_LIVE_CACHE_ROOT` can point deployments at a persistent
 volume. The service reloads and hash-validates those documents at startup. The six curated
-Tier A goldens are listed first, followed by live lessons newest first, so the stable reviewed
-set never moves while recent learner-derived lessons remain easy to find.
+concepts have twelve Tier A artifacts—one RTL Arabic and one LTR English variant each. The
+active locale's six goldens are listed first, followed only by live lessons from that locale,
+so the stable reviewed set never moves while recent learner-derived lessons remain easy to find.
+
+On a first visit, Laysh selects Arabic when any browser-preferred language starts with `ar`
+and English otherwise. The explicit header choice is stored under `laysh.locale` in browser
+local storage and always wins over later detection. Changing locale updates `lang`, `dir`, all
+application copy, status and recovery messages, and the locale-filtered library. Exact cache
+keys include locale, so a repeat can replay before any model call without crossing languages.
 
 The live library retains at most 100 lessons by default (`LAYSH_MAX_LIVE_LESSONS`). On the
 next successful write, it evicts the least recently accessed live lesson until the limit is
@@ -253,8 +262,8 @@ procedure, and [`docs/submission/`](docs/submission/) for the owner-ready Devpos
 ## Roadmap—not part of this release
 
 P1, only after every P0 gate: four more goldens, presenter/projector deep links, Arabic
-voice input with visible interim text, a second static gallery origin, a one-line English
-gloss under Arabic results, presenter queue controls, learner-reported repair, and curated
+voice input with visible interim text, a second static gallery origin, presenter queue
+controls, learner-reported repair, and curated
 domain adapters.
 
 P2, post-submission: a judge-only sanitized code view, WhatsApp share cards, a first-draft

@@ -1,0 +1,32 @@
+{
+  "cases": [
+    {
+      "value": 0.25,
+      "frameChanged": true,
+      "visualSignature": 669704428
+    },
+    {
+      "value": 1,
+      "frameChanged": true,
+      "visualSignature": 2633797533
+    },
+    {
+      "value": 2,
+      "frameChanged": true,
+      "visualSignature": 2995062528
+    }
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "ready": true,
+  "runtimeError": false,
+  "alternative": "Pendulum length: 1.00 m — calculated outcome: 2.01",
+  "idleFrameChanged": true,
+  "reactiveFrameVariants": 3,
+  "externalRequests": 0,
+  "consoleErrors": [],
+  "screenshots": [
+    "pendulum_en-mobile-390x844.png",
+    "pendulum_en-desktop-1440x900.png"
+  ]
+}

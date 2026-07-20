@@ -1,0 +1,25 @@
+{
+  "fixture_id": "pendulum_en",
+  "source_fixture": "pendulum_ar",
+  "source_golden": "pendulum",
+  "locale": "en",
+  "question": "How does a pendulum's length affect its period?",
+  "metadata": {
+    "ar": {"title": "طول البندول وزمنه", "domain": "الحركة الدورية", "summary": "غيّر طول بندول صغير الزاوية وقارن زمن دورته."},
+    "en": {"title": "Pendulum length and period", "domain": "Periodic motion", "summary": "Change the length of a small-angle pendulum and compare its period."}
+  },
+  "copy": {
+    "title": "Pendulum length and period",
+    "tldr": "A pendulum's period T increases with its length L according to a square-root relationship, where g is Earth's gravitational acceleration at 9.81 m/s². The model assumes a small angle and a massless string, and ignores air resistance.",
+    "learning_objective": "Explain causally why increasing a small-angle pendulum's length increases its period.",
+    "primary_parameter_label": "Pendulum length",
+    "misconception": "Increasing pendulum length does not make it faster, but increases the time for each cycle.",
+    "explanation_prompt": "Change the pendulum length and compare its periods. How does the square-root relationship explain the pattern?",
+    "transfer_prompt": "If a pendulum becomes four times as long, how does its period change?",
+    "suggestions": ["Explore how length affects pendulum period.", "Compare pendulums of different lengths.", "Test the square-root relationship between length and period."],
+    "brief_summary": "Shows how pendulum length changes its small-angle period.",
+    "assumptions": ["Small angle", "Massless string", "g = 9.81 m/s²", "Air resistance omitted"]
+  },
+  "review_localization": {"assumptions": ["Small angle", "Massless string", "g = 9.81 m/s²", "Air resistance omitted"]},
+  "module_replacements": {}
+}

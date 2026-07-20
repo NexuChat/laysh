@@ -284,7 +284,11 @@ def _non_simulatable(locale: str) -> dict[str, Any]:
                 )
             ),
             "key_formula": None,
-            "learning_objective": "تمييز الشرح عن النموذج القابل للقياس",
+            "learning_objective": (
+                "تمييز الشرح عن النموذج القابل للقياس"
+                if arabic
+                else "Distinguish an explanation from a measurable model"
+            ),
             "primary_parameter": None,
             "secondary_parameter": None,
             "misconception": None,
@@ -292,11 +296,19 @@ def _non_simulatable(locale: str) -> dict[str, Any]:
             "transfer_prompt": None,
             "module_spec": {"outputs": []},
             "checks": [],
-            "suggestions": [
-                "لماذا يتغير شكل القمر؟",
-                "كيف يؤثر طول البندول في زمنه؟",
-                "لماذا تطفو بعض الأجسام؟",
-            ],
+            "suggestions": (
+                [
+                    "لماذا يتغير شكل القمر؟",
+                    "كيف يؤثر طول البندول في زمنه؟",
+                    "لماذا تطفو بعض الأجسام؟",
+                ]
+                if arabic
+                else [
+                    "Why does the Moon change shape?",
+                    "How does pendulum length affect its period?",
+                    "Why do some objects float?",
+                ]
+            ),
         }
     )
 
@@ -319,7 +331,11 @@ def _unsafe(locale: str) -> dict[str, Any]:
             ),
             "tldr": "",
             "key_formula": None,
-            "learning_objective": "الانتقال إلى استكشاف علمي آمن",
+            "learning_objective": (
+                "الانتقال إلى استكشاف علمي آمن"
+                if arabic
+                else "Move to a safe science exploration"
+            ),
             "primary_parameter": None,
             "secondary_parameter": None,
             "misconception": None,
@@ -327,11 +343,19 @@ def _unsafe(locale: str) -> dict[str, Any]:
             "transfer_prompt": None,
             "module_spec": {"outputs": []},
             "checks": [],
-            "suggestions": [
-                "لماذا يتغير شكل القمر؟",
-                "كيف تعمل الدائرة الكهربائية البسيطة؟",
-                "لماذا يتغير ارتفاع الصوت؟",
-            ],
+            "suggestions": (
+                [
+                    "لماذا يتغير شكل القمر؟",
+                    "كيف تعمل الدائرة الكهربائية البسيطة؟",
+                    "لماذا يتغير ارتفاع الصوت؟",
+                ]
+                if arabic
+                else [
+                    "Why does the Moon change shape?",
+                    "How does a simple electric circuit work?",
+                    "Why does sound pitch change?",
+                ]
+            ),
         }
     )
 

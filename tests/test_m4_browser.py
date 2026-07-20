@@ -109,9 +109,9 @@ def test_g4_mock_journeys_accessibility_and_accepted_screenshots(tmp_path):
     assert evidence["accessibility"]["duplicateIds"] == []
     assert evidence["accessibility"]["focusVisible"] is True
     assert evidence["accessibility"]["keyboardSequence"][:3] == [
+        "locale-ar",
+        "locale-en",
         "question",
-        "safe-example",
-        "ask-submit",
     ]
     assert evidence["accessibility"]["smallTargets"] == []
     assert evidence["accessibility"]["strayEnglish"] == []

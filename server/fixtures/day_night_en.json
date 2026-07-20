@@ -1,0 +1,25 @@
+{
+  "fixture_id": "day_night_en",
+  "source_fixture": "day_night_ar",
+  "source_golden": "day_night",
+  "locale": "en",
+  "question": "How does Earth's rotation create day and night?",
+  "metadata": {
+    "ar": {"title": "دوران الأرض والنهار والليل", "domain": "الأرض والفضاء", "summary": "دوّر الأرض ولاحظ اتجاه موضع ثابت بالنسبة إلى ضوء الشمس."},
+    "en": {"title": "Earth's rotation and day/night", "domain": "Earth and space", "summary": "Rotate Earth and observe a fixed location's direction relative to sunlight."}
+  },
+  "copy": {
+    "title": "How does Earth's rotation create day and night?",
+    "tldr": "Earth's rotation turns a fixed location toward the Sun and then away from it. Here θ is rotation angle and c measures the location's alignment with sunlight; it is daytime when c > 0 and night otherwise. The model assumes parallel sunlight and a simplified axis with no seasons.",
+    "learning_objective": "Explain causally how Earth's rotation changes a fixed location's direction relative to sunlight, moving it between day and night.",
+    "primary_parameter_label": "Earth rotation angle",
+    "misconception": "Night does not happen because the Sun switches off or hides behind the Moon, but because Earth's rotation turns our location away from it.",
+    "explanation_prompt": "Explain how changing a location's direction relative to sunlight moves it from day to night.",
+    "transfer_prompt": "Predict the lighting state at 270° and explain it using the location's direction relative to the Sun.",
+    "suggestions": ["Explore how shadow length changes with the Sun's altitude.", "Model Moon phases as it orbits Earth.", "Compare day length at different latitudes."],
+    "brief_summary": "Shows how Earth's rotation turns a fixed location into and out of sunlight.",
+    "assumptions": ["Parallel sunlight", "Simplified axis with no seasons", "Daytime when c > 0"]
+  },
+  "review_localization": {"assumptions": ["Parallel sunlight", "Simplified axis with no seasons", "Daytime when c > 0"]},
+  "module_replacements": {}
+}

@@ -17,6 +17,8 @@
         runtimeTitle: "تعذّر تشغيل المحاكاة",
         runtimeCopy: "يمكنك الاحتفاظ بالجواب والمحاولة مرة أخرى من Laysh.",
         misconceptionLabel: "⚠ خرافة شائعة",
+        instrumentNav: "أدوات العرض",
+        brandLabel: "ليش",
       }
     : {
         lesson: "Interactive answer",
@@ -31,6 +33,8 @@
         runtimeTitle: "The simulation could not run",
         runtimeCopy: "Keep the answer and try again from Laysh.",
         misconceptionLabel: "⚠ Common myth",
+        instrumentNav: "Display tools",
+        brandLabel: "Laysh",
       };
 
   const SWEEP_CYCLE_SECONDS = 24;
@@ -59,6 +63,8 @@
 
   document.body.dataset.direction = dir === "rtl" ? "rtl" : "ltr";
   byId("lesson-label").textContent = labels.lesson;
+  byId("instrument-bar").setAttribute("aria-label", labels.instrumentNav);
+  byId("instrument-brand").setAttribute("aria-label", labels.brandLabel);
   byId("lesson-title").textContent = lesson.title;
   byId("answer").textContent = lesson.tldr;
   byId("answer-summary").textContent = labels.answerDetails;

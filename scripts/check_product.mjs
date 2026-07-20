@@ -169,6 +169,9 @@ try {
 
   await command("Runtime.enable");
   await command("Page.enable");
+  await command("Page.addScriptToEvaluateOnNewDocument", {
+    source: "try { localStorage.setItem('laysh.locale', 'ar'); } catch {}",
+  });
   await command("Network.enable");
   await command("Log.enable");
   await command("Accessibility.enable");
@@ -342,7 +345,7 @@ try {
     while (walker.nextNode()) {
       const node = walker.currentNode;
       const parent = node.parentElement;
-      if (!parent || !visible(parent) || parent.closest('script, style, bdi[dir="ltr"]')) continue;
+      if (!parent || !visible(parent) || parent.closest('script, style, bdi[dir="ltr"], .locale-switch')) continue;
       const words = node.textContent.match(/[A-Za-z]{2,}/g) || [];
       strayEnglish.push(...words);
     }

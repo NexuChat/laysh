@@ -17,6 +17,12 @@ GOLDEN_FIXTURE_IDS = (
     "simple_circuit_ar",
     "sound_pitch_ar",
     "day_night_ar",
+    "moon_phases_en",
+    "buoyancy_en",
+    "pendulum_en",
+    "simple_circuit_en",
+    "sound_pitch_en",
+    "day_night_en",
 )
 
 
@@ -27,6 +33,16 @@ def load_golden_fixtures() -> dict[str, dict[str, Any]]:
         document = json.loads(path.read_text(encoding="utf-8"))
         if document.get("fixture_id") != fixture_id:
             raise ValueError(f"golden fixture identity mismatch: {fixture_id}")
+        source_fixture_id = document.get("source_fixture")
+        if source_fixture_id:
+            source = fixtures.get(source_fixture_id)
+            if source is None:
+                raise ValueError(f"golden source fixture missing: {source_fixture_id}")
+            review_contract = deepcopy(source["review_contract"])
+            localization = document.pop("review_localization")
+            review_contract["assumptions"] = localization["assumptions"]
+            review_contract["misconception"] = document["copy"]["misconception"]
+            document["review_contract"] = review_contract
         fixtures[fixture_id] = document
     return fixtures
 

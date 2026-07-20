@@ -13,15 +13,21 @@ def test_p0_fixture_registry_is_allowlisted_bilingual_and_builder_reviewable():
 
     assert set(fixtures) == set(GOLDEN_FIXTURE_IDS) == {
         "buoyancy_ar",
+        "buoyancy_en",
         "day_night_ar",
+        "day_night_en",
         "moon_phases_ar",
+        "moon_phases_en",
         "pendulum_ar",
+        "pendulum_en",
         "simple_circuit_ar",
+        "simple_circuit_en",
         "sound_pitch_ar",
+        "sound_pitch_en",
     }
     for fixture_id, fixture in fixtures.items():
         assert fixture["fixture_id"] == fixture_id
-        assert fixture["locale"] == "ar"
+        assert fixture["locale"] == fixture_id.rsplit("_", 1)[1]
         assert fixture["question"]
         assert set(fixture["metadata"]) == {"ar", "en"}
         for locale in ("ar", "en"):
@@ -267,9 +273,9 @@ def test_committed_gallery_serves_six_bilingual_tier_a_lessons_instantly(client)
 def test_gallery_controller_enables_only_server_confirmed_verified_lessons(client):
     source = client.get("/static/app.js").text
 
-    assert 'fetch("/api/gallery?locale=ar"' in source
+    assert "`/api/gallery?locale=${encodeURIComponent(requestedLocale)}`" in source
     assert "/api/gallery/${encodeURIComponent(lessonId)}" in source
-    assert 'badge.textContent = "فوري"' in source
+    assert 'badge.textContent = t("instant")' in source
     assert "launch.disabled = false" in source
     assert "verified/golden" not in client.get("/").text
 

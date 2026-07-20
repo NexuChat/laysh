@@ -1,0 +1,32 @@
+{
+  "cases": [
+    {
+      "value": 110,
+      "frameChanged": true,
+      "visualSignature": 3814805925
+    },
+    {
+      "value": 440,
+      "frameChanged": true,
+      "visualSignature": 3292209999
+    },
+    {
+      "value": 880,
+      "frameChanged": true,
+      "visualSignature": 3745578534
+    }
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "ready": true,
+  "runtimeError": false,
+  "alternative": "Sound-wave frequency: 440 Hz — calculated outcome: 0.78",
+  "idleFrameChanged": true,
+  "reactiveFrameVariants": 3,
+  "externalRequests": 0,
+  "consoleErrors": [],
+  "screenshots": [
+    "sound_pitch_en-mobile-390x844.png",
+    "sound_pitch_en-desktop-1440x900.png"
+  ]
+}

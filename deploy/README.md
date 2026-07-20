@@ -28,8 +28,8 @@ python -c 'import secrets; print("LAYSH_CACHE_KEY_SECRET=" + secrets.token_hex(3
 Verified live lessons persist under `%h/laysh/out/cache/live` by default. A deployment that
 replaces the checkout should set `LAYSH_LIVE_CACHE_ROOT` to a persistent writable volume and
 add that path to the unit's `ReadWritePaths`. `LAYSH_MAX_LIVE_LESSONS` defaults to 100; the
-least recently accessed live lesson is evicted first, while the six reviewed goldens are
-never evicted and remain available when Codex is unavailable.
+least recently accessed live lesson is evicted first, while the twelve reviewed language
+variants for six concepts are never evicted and remain available when Codex is unavailable.
 
 For a temporary owner-run Cloudflare quick tunnel:
 

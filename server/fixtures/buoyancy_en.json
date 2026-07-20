@@ -1,0 +1,25 @@
+{
+  "fixture_id": "buoyancy_en",
+  "source_fixture": "buoyancy_ar",
+  "source_golden": "buoyancy",
+  "locale": "en",
+  "question": "Why do some objects float while others sink?",
+  "metadata": {
+    "ar": {"title": "لماذا تطفو بعض الأجسام؟", "domain": "الطفو والكثافة", "summary": "غيّر كثافة الجسم ولاحظ مقدار غمره أو غوصه في ماء ساكن."},
+    "en": {"title": "Why do some objects float?", "domain": "Buoyancy and density", "summary": "Change an object's density and observe how much submerges or whether it sinks in still water."}
+  },
+  "copy": {
+    "title": "Density and buoyancy in water",
+    "tldr": "An object floats when its density is lower than water's and sinks when its density is higher. The buoyant force Fᵦ equals the weight of displaced water, where ρ𝒻 is fluid density, V is displaced-fluid volume, and g is gravitational acceleration. The model uses still water at 1000 kg/m³ and a uniform object, ignores surface tension, and starts at 750 kg/m³.",
+    "learning_objective": "Explain causally how an object's density relative to water determines its submerged fraction and whether it floats or sinks.",
+    "primary_parameter_label": "Object density",
+    "misconception": "Floating does not depend on an object's absolute lightness, but on its density relative to the fluid.",
+    "explanation_prompt": "Explain how comparing object density with water density changes the submerged fraction and leads to floating or sinking.",
+    "transfer_prompt": "Predict what happens when an object of density 900 kg/m³ moves from water into a fluid of density 800 kg/m³, and explain why.",
+    "suggestions": ["Explore how fluid density affects buoyancy.", "Compare floating in fresh water and salt water.", "Test the relationship between displaced volume and buoyant force."],
+    "brief_summary": "Shows how density relative to water controls submersion, floating, and sinking.",
+    "assumptions": ["Still water at 1000 kg/m³", "Uniform object", "Surface tension omitted"]
+  },
+  "review_localization": {"assumptions": ["Still water at 1000 kg/m³", "Uniform object", "Surface tension omitted"]},
+  "module_replacements": {}
+}

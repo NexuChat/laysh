@@ -267,6 +267,8 @@ def create_app(
     async def gallery(locale: str = Query(default="ar", pattern="^(ar|en)$")) -> dict:
         lessons = []
         for document in list_pinned_goldens():
+            if document["locale"] != locale:
+                continue
             selected = document["metadata"][locale]
             lessons.append(
                 {
@@ -279,7 +281,7 @@ def create_app(
                 }
             )
         if verified_cache is not None:
-            for entry in verified_cache.list_live_entries():
+            for entry in verified_cache.list_live_entries(locale=locale):
                 lessons.append(
                     {
                         "id": entry.cache_id,

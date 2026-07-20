@@ -1,0 +1,32 @@
+{
+  "cases": [
+    {
+      "value": 2,
+      "frameChanged": true,
+      "visualSignature": 3370048539
+    },
+    {
+      "value": 6,
+      "frameChanged": true,
+      "visualSignature": 1401968913
+    },
+    {
+      "value": 20,
+      "frameChanged": true,
+      "visualSignature": 3810768673
+    }
+  ],
+  "lang": "en",
+  "dir": "ltr",
+  "ready": true,
+  "runtimeError": false,
+  "alternative": "Resistance: 6 Ω — calculated outcome: 1.00",
+  "idleFrameChanged": true,
+  "reactiveFrameVariants": 3,
+  "externalRequests": 0,
+  "consoleErrors": [],
+  "screenshots": [
+    "simple_circuit_en-mobile-390x844.png",
+    "simple_circuit_en-desktop-1440x900.png"
+  ]
+}

@@ -21,6 +21,16 @@ class PipelineCancelled(Exception):
     pass
 
 
+def _localized(record: Any, arabic: str, english: str) -> str:
+    return english if record.locale == "en" else arabic
+
+
+def _default_suggestions(record: Any) -> list[str]:
+    if record.locale == "en":
+        return ["Why does the Moon change shape?", "Why do some objects float?"]
+    return ["لماذا يتغير شكل القمر؟", "لماذا تطفو بعض الأجسام؟"]
+
+
 async def cancellable_sleep(seconds: float) -> None:
     try:
         await asyncio.sleep(seconds)
@@ -50,7 +60,11 @@ def _reject(manager: Any, record: Any, reason_code: str, suggestions: list[str])
 
 
 def _complete_from_cache(manager: Any, record: Any, cached: Any) -> None:
-    manager.transition(record, "browser_check", "استخدام إيصال تحقق مخزّن")
+    manager.transition(
+        record,
+        "browser_check",
+        _localized(record, "استخدام إيصال تحقق مخزّن", "Using a stored verification receipt"),
+    )
     manager.emit(
         record,
         "verification",
@@ -141,20 +155,29 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             )
 
     cache = manager.cache
-    manager.transition(record, "filtering", "فحص أولي محدود", emit_event=False)
+    manager.transition(
+        record,
+        "filtering",
+        _localized(record, "فحص أولي محدود", "Running a limited precheck"),
+        emit_event=False,
+    )
     await asyncio.sleep(0)
     if cache is not None:
         exact = cache.lookup_exact(question=question, locale=record.locale)
         if exact is not None and exact.answer is not None:
             record.answer = AnswerPayload.model_validate(exact.answer)
             manager.emit(record, "answer", record.answer.model_dump(mode="json"))
-            manager.transition(record, "cache_lookup", "فحص النتائج الموثقة")
+            manager.transition(
+                record,
+                "cache_lookup",
+                _localized(record, "فحص النتائج الموثقة", "Checking verified results"),
+            )
             _complete_from_cache(manager, record, exact)
             return
     manager.transition(
         record,
         "understanding",
-        "صياغة جواب وعقد تعليمي",
+        _localized(record, "صياغة جواب وعقد تعليمي", "Drafting an answer and lesson contract"),
         emit_event=False,
     )
     understanding = validate_understanding(
@@ -218,14 +241,23 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         tldr=understanding["tldr"],
         key_formula=answer_formula,
     )
-    manager.transition(record, "answered", "الجواب جاهز", emit_event=False)
+    manager.transition(
+        record,
+        "answered",
+        _localized(record, "الجواب جاهز", "The answer is ready"),
+        emit_event=False,
+    )
     manager.emit(record, "answer", record.answer.model_dump(mode="json"))
     manager.emit(
         record,
         "stage",
         {
             "stage": "understanding",
-            "detail": "اكتمل فهم السؤال وصياغة الجواب",
+            "detail": _localized(
+                record,
+                "اكتمل فهم السؤال وصياغة الجواب",
+                "The question is understood and the answer is ready",
+            ),
             "elapsed_ms": manager.elapsed_ms(record),
         },
     )
@@ -239,7 +271,11 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         )
         return
 
-    manager.transition(record, "cache_lookup", "فحص النتائج الموثقة")
+    manager.transition(
+        record,
+        "cache_lookup",
+        _localized(record, "فحص النتائج الموثقة", "Checking verified results"),
+    )
     if cache is not None:
         cached = cache.lookup(
             question=question,
@@ -250,7 +286,11 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         if cached is not None:
             _complete_from_cache(manager, record, cached)
             return
-    manager.transition(record, "generating", "بناء وحدة المحاكاة")
+    manager.transition(
+        record,
+        "generating",
+        _localized(record, "بناء وحدة المحاكاة", "Building the simulation module"),
+    )
     generated = await manager.backend.generate(
         understanding,
         scenario,
@@ -266,7 +306,15 @@ async def run_pipeline(manager: Any, record: Any) -> None:
     browser_evidence: dict[str, Any] | None = None
     while True:
         if record.status != "verifying":
-            manager.transition(record, "verifying", "فحص العقد والنتائج الحتمية")
+            manager.transition(
+                record,
+                "verifying",
+                _localized(
+                    record,
+                    "فحص العقد والنتائج الحتمية",
+                    "Checking the contract and deterministic results",
+                ),
+            )
         verification = verify_candidate(module_output, understanding)
         if verification.passed:
             if verification.artifact is None:
@@ -304,7 +352,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                     manager,
                     record,
                     "fixture_integrity_unresolved",
-                    ["لماذا يتغير شكل القمر؟", "لماذا تطفو بعض الأجسام؟"],
+                    _default_suggestions(record),
                 )
                 return
             fixture_refresh_count += 1
@@ -320,7 +368,11 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 "stage",
                 {
                     "stage": "fixture_refresh",
-                    "detail": "إعادة تدقيق عقد القياس المرجعي",
+                    "detail": _localized(
+                        record,
+                        "إعادة تدقيق عقد القياس المرجعي",
+                        "Rechecking the reference measurement contract",
+                    ),
                     "elapsed_ms": manager.elapsed_ms(record),
                 },
             )
@@ -348,11 +400,19 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 manager,
                 record,
                 "verification_exhausted",
-                ["لماذا يتغير شكل القمر؟", "لماذا تطفو بعض الأجسام؟"],
+                _default_suggestions(record),
             )
             return
         heal_count += 1
-        manager.transition(record, "healing", "إصلاح فشل تحقق محدد")
+        manager.transition(
+            record,
+            "healing",
+            _localized(
+                record,
+                "إصلاح فشل تحقق محدد",
+                "Repairing a specific verification failure",
+            ),
+        )
         module_output = validate_module_output(
             stage_data(
                 await manager.backend.heal(
@@ -373,7 +433,11 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             "stage",
             {
                 "stage": "qa",
-                "detail": "مراجعة المرشح المُصلح",
+                "detail": _localized(
+                    record,
+                    "مراجعة المرشح المُصلح",
+                    "Reviewing the repaired candidate",
+                ),
                 "elapsed_ms": manager.elapsed_ms(record),
             },
         )
@@ -433,7 +497,11 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                         "stage",
                         {
                             "stage": "qa_retry",
-                            "detail": "إعادة مراجعة QA المختصرة مرة واحدة",
+                            "detail": _localized(
+                                record,
+                                "إعادة مراجعة QA المختصرة مرة واحدة",
+                                "Repeating the concise QA review once",
+                            ),
                             "elapsed_ms": manager.elapsed_ms(record),
                         },
                     )
@@ -443,7 +511,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                         manager,
                         record,
                         "qa_inconclusive",
-                        ["لماذا يتغير شكل القمر؟", "لماذا تطفو بعض الأجسام؟"],
+                        _default_suggestions(record),
                     )
                 else:
                     manager.terminal(record, "qa_inconclusive", "qa_inconclusive")
@@ -477,12 +545,20 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 manager,
                 record,
                 "qa_rejected",
-                ["لماذا يتغير شكل القمر؟", "لماذا تطفو بعض الأجسام؟"],
+                _default_suggestions(record),
             )
             return
         qa_outcome = qa_result
 
-    manager.transition(record, "browser_check", "تأكيد جاهزية الغلاف الموثوق")
+    manager.transition(
+        record,
+        "browser_check",
+        _localized(
+            record,
+            "تأكيد جاهزية الغلاف الموثوق",
+            "Confirming trusted-shell readiness",
+        ),
+    )
     if verification is None or verification.artifact is None:
         raise RuntimeError("verified candidate missing artifact")
     artifact = verification.artifact

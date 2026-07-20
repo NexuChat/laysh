@@ -229,6 +229,11 @@ def apply_results(results: list[dict[str, Any]]) -> None:
         "lessons": [
             {
                 "id": result["golden_id"],
+                "locale": json.loads(
+                    (GOLDEN_ROOT / f"{result['golden_id']}.json").read_text(
+                        encoding="utf-8"
+                    )
+                )["locale"],
                 "aliases": result["candidate"].get(
                     "aliases",
                     json.loads(
@@ -259,7 +264,10 @@ def main() -> int:
     )
     parser.add_argument("--apply", action="store_true")
     options = parser.parse_args()
-    results = [verify_lesson(fixture_id) for fixture_id in GOLDEN_FIXTURE_IDS]
+    arabic_fixture_ids = tuple(
+        fixture_id for fixture_id in GOLDEN_FIXTURE_IDS if fixture_id.endswith("_ar")
+    )
+    results = [verify_lesson(fixture_id) for fixture_id in arabic_fixture_ids]
     report = [public_result(result) for result in results]
     print(json.dumps(report, ensure_ascii=False, indent=2))
     if options.apply:
