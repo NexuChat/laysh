@@ -13,7 +13,7 @@ the declared finite outputs.
 
 Use only the supplied canvas/context, Math, Number, arrays, and plain objects. No document, network,
 storage, navigation, dynamic code, workers, timers, sensors, audio, clipboard, console, external URLs,
-or `requestAnimationFrame`. Keep source under 96 KiB. Physics, fixtures, units, assumptions, security,
+or `requestAnimationFrame`. Keep source at or below 96 KiB measured in UTF-8 bytes. Physics, fixtures, units, assumptions, security,
 and the fixed spec are immutable.
 
 Visual contract:
