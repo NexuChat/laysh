@@ -20,6 +20,11 @@ Simulation decision and generation inputs:
 - Simulate only one honest causal variable with one `primary_parameter`, at most one secondary,
   `module_spec.outputs`, and at least two independent numeric or relational `checks`. Otherwise return
   non-simulatable answer-only output with null actor/action/parameters, no checks, and three suggestions.
+- Do not require the whole phenomenon to have only one cause. A complex or multi-stage topic is
+  simulatable when the lesson can isolate one honest parameter-to-output slice with explicit simplifying
+  assumptions, such as wavelength to ray deviation, arm length to required force, or distance to force.
+- A static actor is not a reason to reject a measurable causal relation. Use `responds` with a
+  signed indicator or actor geometry whose position, size, or extent visibly follows the declared output.
 - Declare one physical `actor` with a distinct high-contrast solid RGB `tracking_signature` that is
   not decoration. Set `tracking_output` to an item in `module_spec.outputs`. Reference RGB fields are
   both present only for `floats_sinks`; otherwise both are null.

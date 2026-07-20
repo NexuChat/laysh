@@ -153,6 +153,17 @@ def test_understand_prompt_is_compact_but_keeps_generation_inputs_and_safety():
         assert requirement in prompt
 
 
+def test_understand_prompt_does_not_reject_an_honest_single_slice_of_a_complex_topic():
+    prompt = (ROOT / "server" / "prompts" / "understand.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert "Do not require the whole phenomenon to have only one cause" in prompt
+    assert "one honest parameter-to-output slice" in prompt
+    assert "A static actor is not a reason to reject" in prompt
+    assert "signed indicator" in prompt
+
+
 def test_qa_contract_contains_a_closed_visual_richness_review():
     from server.schemas import load_schema, validate_document
 
