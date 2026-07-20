@@ -11,7 +11,7 @@
     "primary_parameter": {"id": "resistance_ohm", "min": 2, "max": 20, "default": 6, "step": 1, "unit": "Ω"},
     "units": ["V", "Ω", "A", "W"],
     "assumptions": ["مصدر مثالي جهده 6 V", "مقاومة أومية", "السطوع يمثله تبديد القدرة"],
-    "misconception": "زيادة المقاومة تسمح بمرور تيار أكبر",
+    "misconception": "تصحيح: زيادة المقاومة تخفّض التيار عند ثبات الجهد، لا تزيده.",
     "reference_fixtures": [
       {"inputs": {"resistance_ohm": 2}, "expected": {"current_a": 3.0, "power_w": 18.0}, "tolerance": {"current_a": 0.01, "power_w": 0.02}},
       {"inputs": {"resistance_ohm": 6}, "expected": {"current_a": 1.0, "power_w": 6.0}, "tolerance": {"current_a": 0.01, "power_w": 0.02}},

@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 CONTRACT_VERSION = "1.0"
 SCHEMA_DIR = Path(__file__).parent / "schemas"
+MISCONCEPTION_PREFIX = {"ar": "تصحيح:", "en": "Correction:"}
 
 
 class ContractError(ValueError):
@@ -30,7 +31,22 @@ def validate_understanding(document: dict[str, Any]) -> dict[str, Any]:
     validate_document(document, load_schema("understand.schema.json"))
     if document["simulatable"] and len(document["checks"]) < 2:
         raise ContractError("a simulatable lesson requires at least two independent checks")
+    misconception = document["misconception"]
+    if misconception and not has_explicit_misconception_correction(
+        document["lang"], misconception
+    ):
+        raise ContractError("a misconception requires an explicit correction")
     return document
+
+
+def has_explicit_misconception_correction(language: str, value: str) -> bool:
+    prefix = MISCONCEPTION_PREFIX[language]
+    if not value.startswith(prefix):
+        return False
+    correction = value.removeprefix(prefix).strip()
+    if language == "ar":
+        return len(correction) >= 12 and (" لا " in correction or "ليس " in correction)
+    return len(correction) >= 12 and "not " in correction.lower()
 
 
 def validate_module_output(document: dict[str, Any]) -> dict[str, Any]:

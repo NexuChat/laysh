@@ -16,6 +16,9 @@ Rules:
   teaching prompt must be meaningful natural language in `lang`. Never substitute hashes, UUIDs,
   opaque IDs, redaction tokens, or placeholder strings for learner-facing copy. Zero-echo applies to
   unsafe input and private identifiers; it does not permit unreadable placeholders in a safe lesson.
+- Every non-null misconception must be a corrected teaching statement, never a standalone false claim.
+  Use exactly `تصحيح: [الآلية الصحيحة]، لا [الفكرة الخاطئة].` in Arabic or
+  `Correction: [the correct mechanism], not [the false claim].` in English.
 - A simulatable result has one primary parameter, no more than one secondary parameter, and at least
   two independent numeric or relational fixtures.
 - Write `key_formula` as short, student-facing display-grade math, never as source code. Use concise

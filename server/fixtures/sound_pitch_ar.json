@@ -11,7 +11,7 @@
     "primary_parameter": {"id": "frequency_hz", "min": 110, "max": 880, "default": 440, "step": 10, "unit": "Hz"},
     "units": ["Hz", "m", "ms"],
     "assumptions": ["سرعة الصوت 343 m/s", "وسط هوائي ثابت", "الحدّة لا تعني شدة الصوت"],
-    "misconception": "الصوت الأعلى ترددًا هو بالضرورة أعلى شدة",
+    "misconception": "تصحيح: التردد يحدد الحدة، لا شدة الصوت بالضرورة.",
     "reference_fixtures": [
       {"inputs": {"frequency_hz": 110}, "expected": {"wavelength_m": 3.118, "period_ms": 9.091}, "tolerance": {"wavelength_m": 0.02, "period_ms": 0.02}},
       {"inputs": {"frequency_hz": 440}, "expected": {"wavelength_m": 0.78, "period_ms": 2.273}, "tolerance": {"wavelength_m": 0.02, "period_ms": 0.02}},

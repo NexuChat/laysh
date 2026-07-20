@@ -92,6 +92,8 @@ input[type="range"]::-webkit-slider-thumb { width: 22px; height: 22px; margin-bl
 input[type="range"]::-moz-range-track { height: 7px; border-radius: 999px; background: linear-gradient(90deg, rgb(88 183 255 / 22%), rgb(246 169 74 / 35%)); }
 input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border: 3px solid #09131e; border-radius: 50%; background: var(--amber); }
 .misconception { padding: .8rem; border-inline-start: 4px solid var(--amber); border-radius: .4rem; background: rgb(246 169 74 / 7%); color: #d8c9b7; }
+.misconception-label { display: flex; gap: .45rem; align-items: center; margin: 0 0 .35rem; color: #ffd49b; font-weight: 700; }
+.misconception > #misconception { margin: 0; }
 #runtime-error { border-color: rgb(255 133 133 / 55%); }
 
 body.projector-mode .lesson { width: 100%; max-width: none; padding: .45rem; }

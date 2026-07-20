@@ -11,7 +11,7 @@
     "primary_parameter": {"id": "angle_deg", "min": 0, "max": 360, "default": 90, "step": 1, "unit": "°"},
     "units": ["°", "ratio"],
     "assumptions": ["مدار دائري مبسط", "أشعة شمس متوازية", "إهمال ميل المدار والكسوف"],
-    "misconception": "أطوار القمر سببها ظل الأرض",
+    "misconception": "تصحيح: أطوار القمر تنتج من زاوية الشمس والأرض والقمر، لا من ظل الأرض.",
     "reference_fixtures": [
       {"inputs": {"angle_deg": 0}, "expected": {"lit_fraction": 0.0}, "tolerance": {"lit_fraction": 0.01}},
       {"inputs": {"angle_deg": 90}, "expected": {"lit_fraction": 0.5}, "tolerance": {"lit_fraction": 0.01}},

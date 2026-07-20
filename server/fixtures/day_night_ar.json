@@ -11,7 +11,7 @@
     "primary_parameter": {"id": "rotation_deg", "min": 0, "max": 360, "default": 60, "step": 1, "unit": "°"},
     "units": ["°", "ratio"],
     "assumptions": ["أشعة شمس متوازية", "محور مبسط دون فصول", "نهار عندما c > 0"],
-    "misconception": "الليل يحدث لأن الشمس تنطفئ أو تختفي خلف القمر",
+    "misconception": "تصحيح: الليل يحدث لأن موقعك يدور بعيدًا عن ضوء الشمس، لا لأن الشمس تنطفئ أو يحجبها القمر.",
     "reference_fixtures": [
       {"inputs": {"rotation_deg": 0}, "expected": {"light_alignment": 1.0, "daylight": 1}, "tolerance": {"light_alignment": 0.01, "daylight": 0.001}},
       {"inputs": {"rotation_deg": 90}, "expected": {"light_alignment": 0.0, "daylight": 0}, "tolerance": {"light_alignment": 0.01, "daylight": 0.001}},

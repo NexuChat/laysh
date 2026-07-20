@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "batch": "A",
+  "recorded_at_utc": "2026-07-20T22:28:45Z",
+  "model_calls": 0,
+  "refresh": {
+    "command": ".venv/bin/python scripts/refresh_pinned_goldens.py",
+    "runs_ms": [14967, 15446],
+    "deterministic": true,
+    "browser_verified": true,
+    "goldens": [
+      {"id": "buoyancy", "sha256": "8ecb401d46d645f1b2352352f5522ac3acd393d417a26801ee89acfc0ca0b6e5", "deterministic_check_count": 26, "browser_check_count": 5},
+      {"id": "day_night", "sha256": "3e8f24896ebf3b80b0b66568e9e8e6f64729cc07bdfd86daf1f8307c7afb0291", "deterministic_check_count": 26, "browser_check_count": 5},
+      {"id": "moon_phases", "sha256": "fa2422ec36b524aae7f327ba9203cf6eecfb3d3c536b7fadb8ce469e2b7bf7d9", "deterministic_check_count": 23, "browser_check_count": 5},
+      {"id": "pendulum", "sha256": "64cc22185c02ca7415fd02b04e13b5894f03e2d33ef2f4c936fda87d8c9a5e90", "deterministic_check_count": 23, "browser_check_count": 5},
+      {"id": "simple_circuit", "sha256": "ec32a3f627647e2155d9ceb811d8fa9c806af299637f25b1bfecd5278c9168d2", "deterministic_check_count": 26, "browser_check_count": 5},
+      {"id": "sound_pitch", "sha256": "4159eb2ee918fac76638898054812c3c40d6bc2f99f7e368bcf7fbdfb4ad19e8", "deterministic_check_count": 26, "browser_check_count": 5}
+    ]
+  },
+  "verification": {
+    "focused_pytest": "6 passed",
+    "affected_pytest": "76 passed",
+    "full_pytest": "206 passed, 1 skipped in 86.49s",
+    "non_browser_coverage": "200 passed, 7 deselected, 90%",
+    "browser_pytest": "6 passed, 1 skipped, 200 deselected in 80.56s",
+    "ruff": "all checks passed"
+  }
+}

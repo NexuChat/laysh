@@ -11,7 +11,7 @@
     "primary_parameter": {"id": "length_m", "min": 0.25, "max": 2.0, "default": 1.0, "step": 0.05, "unit": "m"},
     "units": ["m", "s"],
     "assumptions": ["زاوية صغيرة", "خيط عديم الكتلة", "g = 9.81 m/s²", "إهمال مقاومة الهواء"],
-    "misconception": "زيادة طول البندول تجعله أسرع",
+    "misconception": "تصحيح: زيادة طول البندول تزيد زمن دورته، لا تجعله أسرع.",
     "reference_fixtures": [
       {"inputs": {"length_m": 0.25}, "expected": {"period_s": 1.003}, "tolerance": {"period_s": 0.02}},
       {"inputs": {"length_m": 1.0}, "expected": {"period_s": 2.006}, "tolerance": {"period_s": 0.02}},

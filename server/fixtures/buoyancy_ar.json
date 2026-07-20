@@ -11,7 +11,7 @@
     "primary_parameter": {"id": "density_kg_m3", "min": 200, "max": 1400, "default": 750, "step": 10, "unit": "kg/m³"},
     "units": ["kg/m³", "N", "ratio"],
     "assumptions": ["ماء ساكن كثافته 1000 kg/m³", "جسم متجانس", "إهمال التوتر السطحي"],
-    "misconception": "الطفو يعتمد على خفة الجسم المطلقة لا على كثافته مقارنة بالسائل",
+    "misconception": "تصحيح: الطفو يعتمد على كثافة الجسم مقارنة بالسائل، لا على خفته المطلقة.",
     "reference_fixtures": [
       {"inputs": {"density_kg_m3": 250}, "expected": {"submerged_fraction": 0.25, "floats": 1}, "tolerance": {"submerged_fraction": 0.01, "floats": 0.001}},
       {"inputs": {"density_kg_m3": 750}, "expected": {"submerged_fraction": 0.75, "floats": 1}, "tolerance": {"submerged_fraction": 0.01, "floats": 0.001}},

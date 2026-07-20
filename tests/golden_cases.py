@@ -24,7 +24,7 @@ VALID_UNDERSTANDING = {
         "prompt": "عند زيادة الزاوية، هل يكبر الجزء المضيء أولًا؟",
         "choices": ["نعم", "لا"],
     },
-    "misconception": "ظل الأرض هو سبب أطوار القمر",
+    "misconception": "تصحيح: أطوار القمر تنتج من زاوية الشمس والأرض والقمر، لا من ظل الأرض.",
     "explanation_prompt": "تغيّر الجزء المضيء لأن…",
     "transfer_prompt": "ماذا تتوقع عند زاوية 180°؟",
     "module_spec": {"outputs": ["lit_fraction"]},

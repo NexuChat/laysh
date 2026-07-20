@@ -9,6 +9,7 @@
         predict: "توقّع أولًا",
         observe: "لاحظ ما يتغيّر",
         explain: "فسّر ما رأيت",
+        misconception: "فكرة شائعة تحتاج إلى تصحيح",
         reset: "إعادة الضبط",
         replay: "إعادة العرض",
         projector: "وضع العرض",
@@ -22,6 +23,7 @@
         predict: "Predict first",
         observe: "Observe what changes",
         explain: "Explain what you saw",
+        misconception: "Common misconception",
         reset: "Reset",
         replay: "Replay",
         projector: "Projector mode",
@@ -54,6 +56,7 @@
   byId("observe-title").textContent = labels.observe;
   byId("explain-title").textContent = labels.explain;
   byId("explanation-prompt").textContent = lesson.explanation_prompt;
+  byId("misconception-label").textContent = labels.misconception;
   byId("misconception").textContent = lesson.misconception;
   byId("transfer").textContent = lesson.transfer_prompt || "";
   byId("reset").textContent = labels.reset;
@@ -104,8 +107,6 @@
     for (const choice of byId("prediction-choices").querySelectorAll("button")) {
       choice.setAttribute("aria-pressed", String(choice === button));
     }
-    control.disabled = false;
-    control.focus();
   }
 
   for (const choice of lesson.prediction.choices) {

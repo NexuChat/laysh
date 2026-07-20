@@ -41,7 +41,7 @@
         <p id="state-description" class="state readout-chip" aria-live="polite"></p>
         <div class="control-row">
           <label for="primary-control" id="primary-label"></label>
-          <input id="primary-control" type="range" disabled>
+          <input id="primary-control" type="range">
           <output id="primary-output" for="primary-control" dir="auto"></output>
         </div>
         <div class="actions">
@@ -56,7 +56,10 @@
       <div>
         <h2 id="explain-title"></h2>
         <p id="explanation-prompt"></p>
-        <p id="misconception" class="misconception"></p>
+        <div class="misconception" role="note">
+          <p class="misconception-label"><span aria-hidden="true">⚠</span> <span id="misconception-label"></span></p>
+          <p id="misconception"></p>
+        </div>
         <p id="transfer"></p>
       </div>
     </section>

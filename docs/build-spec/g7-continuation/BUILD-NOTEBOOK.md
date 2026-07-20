@@ -32,10 +32,9 @@ opt-in live skip, six browser passes plus its live skip, and coverage above the
 ## Acceptance ledger at initialization
 
 - **Rows total:** 30
-- **Passing:** BASE-01, BASE-02
+- **Passing:** BASE-01, BASE-02, TEST-01, CONTRACT-01, TEACH-01, TEACH-02
 - **Failing:** none
-- **Not started:** TEST-01, EVID-01, EVID-02, CONTRACT-01, TEACH-01, TEACH-02,
-  MOTION-01, MOTION-02, MOTION-03, MOTION-04, VQA-01, VISUAL-01, SHARE-01,
+-- **Not started:** EVID-01, EVID-02, MOTION-01, MOTION-02, MOTION-03, MOTION-04, VQA-01, VISUAL-01, SHARE-01,
   SHARE-02, LIB-01, I18N-01, I18N-02, UI-01, UI-02, ASSET-01, REL-01, REL-02,
   GEN-01, EXP-01, GOLD-01, ROUTE-01, ROUTE-02, RELEASE-01
 - **Blocked:** none
@@ -52,7 +51,24 @@ valid for this continuation.
 
 ### Batch A — pedagogy contracts
 
-Not started.
+Completed locally; source changes and this evidence record are committed together.
+
+- Reconciled the 96 KiB UTF-8 source limit in the schema, generation prompt,
+  verifier, quality checklist, boundary tests, and frozen-contract manifest.
+- Added a deterministic AR/EN misconception correction shape. The trusted shell
+  now displays a localized warning-label and never disables the primary control
+  before a prediction.
+- Added a deterministic refresh for the six pinned artifacts. It uses only the
+  allowlisted cache, fixture contracts, deterministic verification, and browser
+  verification; `CodexBackend` construction is forbidden by its unit test.
+  The refresh is idempotent and stages all writes until every artifact passes.
+- `scripts/refresh_pinned_goldens.py` refreshed the six cached artifacts twice
+  (14,967 ms and 15,446 ms, zero model calls). The final artifacts record the
+  explicit-correction automated review and deterministic/browser check counts.
+  See `out/evidence/batch-a-pedagogy-refresh.json`.
+- Focused: 6 passed. Affected: 76 passed. Full: 206 passed, 1 skipped in
+  86.49s. Non-browser coverage: 200 passed, 7 deselected, 90%. Browser/a11y:
+  6 passed, 1 skipped, 200 deselected in 80.56s. Ruff: clean.
 
 ### Batch B — actor motion and visual QA
 
