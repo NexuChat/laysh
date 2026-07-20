@@ -45,7 +45,14 @@ ALLOWED_TRANSITIONS = {
         "timed_out",
         "failed",
     },
-    "healing": {"verifying", "answer_only", "cancelled", "timed_out", "failed"},
+    "healing": {
+        "verifying",
+        "browser_check",
+        "answer_only",
+        "cancelled",
+        "timed_out",
+        "failed",
+    },
     "browser_check": {"complete", "answer_only", "cancelled", "timed_out", "failed"},
 }
 
@@ -196,6 +203,7 @@ class JobManager:
                 elapsed_ms=0,
                 check_count=entry.receipt.check_count,
                 heal_count=0,
+                missed_strictness_checks=list(entry.receipt.missed_strictness_checks),
             ),
             artifact=entry.artifact,
         )
@@ -206,10 +214,19 @@ class JobManager:
             record,
             "verification",
             {
-                "passed": True,
+                "passed": entry.tier == "A",
                 "check_count": entry.receipt.check_count,
                 "heal_count": 0,
-                "evidence": ["verified_cache", "artifact_hash", "browser_readiness"],
+                "evidence": (
+                    ["verified_cache", "artifact_hash", "browser_readiness"]
+                    if entry.tier == "A"
+                    else sorted(
+                        {
+                            check.partition(".")[0]
+                            for check in entry.receipt.missed_strictness_checks
+                        }
+                    )
+                ),
             },
         )
         self.emit(

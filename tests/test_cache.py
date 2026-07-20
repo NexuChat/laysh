@@ -16,6 +16,122 @@ def verified_receipt():
     )
 
 
+def experimental_receipt():
+    from server.cache import VerificationReceipt
+
+    return VerificationReceipt(
+        deterministic_passed=True,
+        browser_passed=False,
+        failed_gate_count=1,
+        check_count=18,
+        correctness_passed=True,
+        missed_strictness_checks=(
+            "mobile_overlay_safe_band.mobile_overlay_count_exceeded",
+        ),
+    )
+
+
+def test_experimental_cache_requires_and_round_trips_polish_receipt(tmp_path):
+    from server.cache import VerifiedCache
+
+    roots = {
+        "root": tmp_path / "live",
+        "golden_root": tmp_path / "golden",
+        "secret": b"test-cache-secret",
+        "contract_version": "1.0",
+    }
+    cache = VerifiedCache(**roots)
+    entry = cache.write_verified(
+        question="experimental overlay",
+        locale="en",
+        domain="physics",
+        canonical_intent="experimental_overlay",
+        artifact="artifact",
+        title="Experimental overlay",
+        summary="Correct science with a crowded mobile overlay.",
+        direction="ltr",
+        tier="B",
+        answer={"tldr": "Correct answer"},
+        receipt=experimental_receipt(),
+    )
+
+    reloaded = VerifiedCache(**roots).inspect(entry.cache_id)
+
+    assert reloaded is not None and reloaded.tier == "B"
+    assert reloaded.receipt.experimental is True
+    assert reloaded.receipt.missed_strictness_checks == (
+        "mobile_overlay_safe_band.mobile_overlay_count_exceeded",
+    )
+
+
+def test_legacy_all_pass_live_tier_b_is_not_mislabelled_experimental(tmp_path):
+    from server.cache import VerifiedCache
+
+    roots = {
+        "root": tmp_path / "live",
+        "golden_root": tmp_path / "golden",
+        "secret": b"test-cache-secret",
+        "contract_version": "1.0",
+    }
+    cache = VerifiedCache(**roots)
+    entry = cache.write_verified(
+        question="legacy verified",
+        locale="en",
+        domain="physics",
+        canonical_intent="legacy_verified",
+        artifact="artifact",
+        title="Legacy verified",
+        direction="ltr",
+        tier="A",
+        receipt=verified_receipt(),
+    )
+    path = roots["root"] / f"{entry.cache_id}.json"
+    document = json.loads(path.read_text(encoding="utf-8"))
+    document["tier"] = "B"
+    document["receipt"].pop("correctness_passed")
+    document["receipt"].pop("missed_strictness_checks")
+    path.write_text(json.dumps(document), encoding="utf-8")
+
+    reloaded = VerifiedCache(**roots).inspect(entry.cache_id)
+
+    assert reloaded is not None and reloaded.tier == "A"
+    assert reloaded.receipt.verified is True
+
+
+def test_cached_experimental_replay_keeps_failed_polish_event_honest(tmp_path):
+    from server.cache import VerifiedCache
+    from server.codex_backend import MockCodexBackend
+    from server.jobs import JobManager
+
+    cache = VerifiedCache(
+        root=tmp_path / "live",
+        golden_root=tmp_path / "golden",
+        secret=b"test-cache-secret",
+        contract_version="1.0",
+    )
+    entry = cache.write_verified(
+        question="experimental replay",
+        locale="en",
+        domain="physics",
+        canonical_intent="experimental_replay",
+        artifact="artifact",
+        title="Experimental replay",
+        summary="Correct science with a polish miss.",
+        direction="ltr",
+        tier="B",
+        answer={"tldr": "Correct answer"},
+        receipt=experimental_receipt(),
+    )
+    manager = JobManager(MockCodexBackend(), public_job_timeout_seconds=2, cache=cache)
+
+    record = manager.start_cached(entry)
+    verification = next(event for event in record.events if event.type == "verification")
+
+    assert record.simulation is not None and record.simulation.tier == "B"
+    assert verification.payload.passed is False
+    assert verification.payload.evidence == ["mobile_overlay_safe_band"]
+
+
 def test_exact_and_semantic_cache_without_raw_question(tmp_path):
     from server.cache import VerifiedCache
 
@@ -34,7 +150,7 @@ def test_exact_and_semantic_cache_without_raw_question(tmp_path):
         artifact="<!doctype html><title>verified</title>",
         title="أطوار القمر",
         direction="rtl",
-        tier="B",
+        tier="A",
         receipt=verified_receipt(),
     )
 
@@ -76,7 +192,7 @@ def test_explicit_locale_never_replays_the_other_language(tmp_path):
         artifact="<!doctype html><html lang='ar' dir='rtl'></html>",
         title="درس عربي",
         direction="rtl",
-        tier="B",
+        tier="A",
         receipt=verified_receipt(),
     )
 
@@ -103,7 +219,7 @@ def test_verified_live_entry_reloads_from_disk_after_process_restart(tmp_path):
         title="Why shadows move",
         summary="Earth's rotation changes the Sun's apparent position in the sky.",
         direction="ltr",
-        tier="B",
+        tier="A",
         answer={"tldr": "Shadows move as the apparent direction of sunlight changes."},
         receipt=verified_receipt(),
     )
@@ -141,7 +257,7 @@ def test_live_cache_evicts_least_recently_used_entry_at_count_limit(tmp_path):
             title=f"Lesson {name}",
             summary=f"Safe summary {name}",
             direction="ltr",
-            tier="B",
+            tier="A",
             answer={"tldr": f"Safe answer {name}"},
             receipt=verified_receipt(),
         )
@@ -221,7 +337,7 @@ def test_contract_version_invalidates_cache_and_golden_is_immutable(tmp_path):
         artifact="artifact-v1",
         title="Moon",
         direction="ltr",
-        tier="B",
+        tier="A",
         receipt=verified_receipt(),
     )
     runtime_path = tmp_path / "live" / f"{entry.cache_id}.json"
@@ -242,7 +358,7 @@ def test_contract_version_invalidates_cache_and_golden_is_immutable(tmp_path):
             artifact="overwrite",
             title="Moon",
             direction="ltr",
-            tier="B",
+            tier="A",
             receipt=verified_receipt(),
         )
 
@@ -347,7 +463,7 @@ def test_cache_admin_lists_inspects_and_purges_only_explicit_runtime_id(tmp_path
         artifact="artifact",
         title="Moon",
         direction="ltr",
-        tier="B",
+        tier="A",
         receipt=verified_receipt(),
     )
     common = [

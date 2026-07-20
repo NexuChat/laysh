@@ -1,0 +1,255 @@
+{
+  "schema_version": "1.0",
+  "phase": "after",
+  "runtime_mode": "public_ephemeral",
+  "job_timeout_seconds": 180.0,
+  "case_count": 5,
+  "success_count": 2,
+  "success_rate": 0.4,
+  "outcome_counts": {
+    "Tier A": 2,
+    "Tier B": 0,
+    "answer-only": 3
+  },
+  "results": [
+    {
+      "case_id": "rainbow_refraction_ar",
+      "locale": "ar",
+      "status": "answer_only",
+      "fallback_reason": "answer_only_multi_stage_phenomenon",
+      "total_elapsed_ms": 17702,
+      "first_answer_ms": 17702,
+      "heal_count": 0,
+      "understanding": {
+        "simulatable": false,
+        "reason_code": "answer_only_multi_stage_phenomenon",
+        "domain": "optics",
+        "canonical_intent": "explain_why_rainbows_form_after_rain",
+        "actor_id": null,
+        "action": null,
+        "fixture_count": 0,
+        "primary_parameter_id": null,
+        "tracking_output": null,
+        "contract_failures": []
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 17701,
+          "model": "gpt-5.6-luna"
+        }
+      ],
+      "verification_attempts": [],
+      "outcome": "answer-only",
+      "correctness_critical_failures": [],
+      "missed_strictness_checks": []
+    },
+    {
+      "case_id": "seasons_tilt_en",
+      "locale": "en",
+      "status": "complete",
+      "fallback_reason": null,
+      "total_elapsed_ms": 116617,
+      "first_answer_ms": 14584,
+      "heal_count": 0,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "single_causal_slice",
+        "domain": "astronomy",
+        "canonical_intent": "explain_seasonal_change_from_earths_axial_tilt_and_orbit",
+        "actor_id": "sun_ray_indicator",
+        "action": "responds",
+        "fixture_count": 3,
+        "primary_parameter_id": "orbital_phase",
+        "tracking_output": "solar_altitude",
+        "contract_failures": []
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 14581,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 85793,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 76
+        },
+        {
+          "stage": "browser_verify",
+          "elapsed_ms": 10067
+        },
+        {
+          "stage": "vision",
+          "elapsed_ms": 6091,
+          "model": "gpt-5.6-terra"
+        }
+      ],
+      "verification_attempts": [
+        {
+          "attempt": 0,
+          "gate_phase": "deterministic",
+          "passed": true,
+          "check_count": 24,
+          "failures": []
+        },
+        {
+          "attempt": 0,
+          "gate_phase": "browser",
+          "passed": true,
+          "check_count": 18,
+          "failures": []
+        }
+      ],
+      "outcome": "Tier A",
+      "correctness_critical_failures": [],
+      "missed_strictness_checks": []
+    },
+    {
+      "case_id": "lever_torque_en",
+      "locale": "en",
+      "status": "answer_only",
+      "fallback_reason": "generation_timeout",
+      "total_elapsed_ms": 114644,
+      "first_answer_ms": 24625,
+      "heal_count": 0,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "single_causal_relation",
+        "domain": "physics",
+        "canonical_intent": "understand_how_increasing_lever_arm_length_reduces_required_lifting_force",
+        "actor_id": "effort_force_indicator",
+        "action": "responds",
+        "fixture_count": 3,
+        "primary_parameter_id": "effort_arm_length",
+        "tracking_output": "required_effort_force",
+        "contract_failures": []
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 13361,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "understand_retry",
+          "elapsed_ms": 11261,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 90018
+        }
+      ],
+      "verification_attempts": [],
+      "outcome": "answer-only",
+      "correctness_critical_failures": [],
+      "missed_strictness_checks": []
+    },
+    {
+      "case_id": "evaporation_ar",
+      "locale": "ar",
+      "status": "complete",
+      "fallback_reason": null,
+      "total_elapsed_ms": 109581,
+      "first_answer_ms": 14853,
+      "heal_count": 0,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "single_causal_temperature_rate_slice",
+        "domain": "physics",
+        "canonical_intent": "water_evaporates_faster_at_higher_temperature",
+        "actor_id": "water_vapor_extent",
+        "action": "responds",
+        "fixture_count": 3,
+        "primary_parameter_id": "temperature",
+        "tracking_output": "evaporation_rate",
+        "contract_failures": []
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 14853,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 79469,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 58
+        },
+        {
+          "stage": "browser_verify",
+          "elapsed_ms": 10127
+        },
+        {
+          "stage": "vision",
+          "elapsed_ms": 5066,
+          "model": "gpt-5.6-terra"
+        }
+      ],
+      "verification_attempts": [
+        {
+          "attempt": 0,
+          "gate_phase": "deterministic",
+          "passed": true,
+          "check_count": 24,
+          "failures": []
+        },
+        {
+          "attempt": 0,
+          "gate_phase": "browser",
+          "passed": true,
+          "check_count": 18,
+          "failures": []
+        }
+      ],
+      "outcome": "Tier A",
+      "correctness_critical_failures": [],
+      "missed_strictness_checks": []
+    },
+    {
+      "case_id": "magnetism_en",
+      "locale": "en",
+      "status": "answer_only",
+      "fallback_reason": "generation_timeout",
+      "total_elapsed_ms": 103096,
+      "first_answer_ms": 13061,
+      "heal_count": 0,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "single_causal_slice",
+        "domain": "physics",
+        "canonical_intent": "distance_affects_magnetic_force_between_two_magnets",
+        "actor_id": "magnet_force_indicator",
+        "action": "responds",
+        "fixture_count": 3,
+        "primary_parameter_id": "distance",
+        "tracking_output": "force",
+        "contract_failures": []
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 13060,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 90034
+        }
+      ],
+      "verification_attempts": [],
+      "outcome": "answer-only",
+      "correctness_critical_failures": [],
+      "missed_strictness_checks": []
+    }
+  ]
+}

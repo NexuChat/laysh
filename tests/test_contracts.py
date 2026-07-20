@@ -163,14 +163,14 @@ def test_current_frozen_contract_manifest_strictly_matches_repository():
     from scripts.freeze_contracts import build_manifest
 
     expected = json.loads(
-        (ROOT / "contracts" / "contracts-frozen-r11.json").read_text(encoding="utf-8")
+        (ROOT / "contracts" / "contracts-frozen-r12.json").read_text(encoding="utf-8")
     )
     historical = json.loads(
         (ROOT / "out" / "evidence" / "contracts-frozen.json").read_text(encoding="utf-8")
     )
 
     assert historical["contract_version"] == expected["contract_version"] == "1.0"
-    assert expected["freeze_revision"] == 11
+    assert expected["freeze_revision"] == 12
     assert build_manifest() == expected
 
 
@@ -243,6 +243,7 @@ def test_shared_simulation_contract_contains_no_question_or_cache_secret_fields(
             "elapsed_ms": 0,
             "check_count": 31,
             "heal_count": 0,
+            "missed_strictness_checks": [],
         },
     )
 
@@ -275,7 +276,9 @@ def test_shared_simulation_contract_contains_no_question_or_cache_secret_fields(
             {
                 "contract_version": "1.0",
                 "passed": True,
-                "tier": "B",
+                "tier": "A",
+                "correctness_passed": True,
+                "missed_strictness_checks": [],
                 "check_count": 7,
                 "heal_count": 0,
                 "checks": [{"id": "schema", "passed": True, "evidence": "closed schema"}],
@@ -291,3 +294,28 @@ def test_supporting_contracts_are_closed(schema_name, document):
     assert validate_document(document, schema) == document
     with pytest.raises(ValidationError):
         validate_document({**document, "unexpected": True}, schema)
+
+
+def test_verification_report_requires_an_honest_experimental_receipt():
+    from server.schemas import load_schema, validate_document
+
+    schema = load_schema("verification_report.schema.json")
+    experimental = {
+        "contract_version": "1.0",
+        "passed": False,
+        "tier": "B",
+        "correctness_passed": True,
+        "missed_strictness_checks": [
+            "mobile_overlay_safe_band.mobile_overlay_count_exceeded"
+        ],
+        "check_count": 42,
+        "heal_count": 1,
+        "checks": [],
+        "assumptions": [],
+    }
+
+    assert validate_document(experimental, schema) == experimental
+    with pytest.raises(ValidationError):
+        validate_document({**experimental, "missed_strictness_checks": []}, schema)
+    with pytest.raises(ValidationError):
+        validate_document({**experimental, "correctness_passed": False}, schema)

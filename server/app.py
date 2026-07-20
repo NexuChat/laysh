@@ -176,6 +176,7 @@ def create_app(
                             elapsed_ms=0,
                             check_count=document["receipt"]["check_count"],
                             heal_count=document["evidence"].get("heal_count", 0),
+                            missed_strictness_checks=[],
                         ),
                     ),
                 )
@@ -208,6 +209,9 @@ def create_app(
                     elapsed_ms=0,
                     check_count=entry.receipt.check_count,
                     heal_count=0,
+                    missed_strictness_checks=list(
+                        entry.receipt.missed_strictness_checks
+                    ),
                 ),
             ),
         )
@@ -310,6 +314,7 @@ def create_app(
                     "summary": selected["summary"],
                     "instant": True,
                     "tier": "A",
+                    "missed_strictness_checks": [],
                 }
             )
         if verified_cache is not None:
@@ -322,6 +327,9 @@ def create_app(
                         "summary": entry.summary,
                         "instant": True,
                         "tier": entry.tier,
+                        "missed_strictness_checks": list(
+                            entry.receipt.missed_strictness_checks
+                        ),
                     }
                 )
         return {
@@ -351,6 +359,7 @@ def create_app(
                     "elapsed_ms": 0,
                     "check_count": document["receipt"]["check_count"],
                     "heal_count": document["evidence"].get("heal_count", 0),
+                    "missed_strictness_checks": [],
                 },
             }
         resolved = resolve_shareable(lesson_id)

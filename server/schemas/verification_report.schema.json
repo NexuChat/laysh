@@ -3,11 +3,18 @@
   "$id": "https://laysh.local/schemas/verification-report-1.0.json",
   "type": "object",
   "additionalProperties": false,
-  "required": ["contract_version", "passed", "tier", "check_count", "heal_count", "checks", "assumptions"],
+  "required": ["contract_version", "passed", "tier", "correctness_passed", "missed_strictness_checks", "check_count", "heal_count", "checks", "assumptions"],
   "properties": {
     "contract_version": {"const": "1.0"},
     "passed": {"type": "boolean"},
     "tier": {"enum": ["A", "B", "answer_only"]},
+    "correctness_passed": {"type": "boolean"},
+    "missed_strictness_checks": {
+      "type": "array",
+      "maxItems": 20,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$"}
+    },
     "check_count": {"type": "integer", "minimum": 0},
     "heal_count": {"type": "integer", "minimum": 0, "maximum": 2},
     "checks": {
@@ -25,5 +32,19 @@
       }
     },
     "assumptions": {"type": "array", "maxItems": 8, "items": {"type": "string", "maxLength": 180}}
-  }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"tier": {"const": "A"}}},
+      "then": {"properties": {"passed": {"const": true}, "correctness_passed": {"const": true}, "missed_strictness_checks": {"maxItems": 0}}}
+    },
+    {
+      "if": {"properties": {"tier": {"const": "B"}}},
+      "then": {"properties": {"passed": {"const": false}, "correctness_passed": {"const": true}, "missed_strictness_checks": {"minItems": 1}}}
+    },
+    {
+      "if": {"properties": {"tier": {"const": "answer_only"}}},
+      "then": {"properties": {"passed": {"const": false}, "correctness_passed": {"const": false}, "missed_strictness_checks": {"maxItems": 0}}}
+    }
+  ]
 }

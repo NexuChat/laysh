@@ -180,6 +180,7 @@ class SimulationMetadata(ClosedModel):
     elapsed_ms: int = Field(ge=0)
     check_count: int = Field(ge=0)
     heal_count: int = Field(ge=0)
+    missed_strictness_checks: list[str] = Field(default_factory=list, max_length=20)
 
 
 class FallbackResult(ClosedModel):

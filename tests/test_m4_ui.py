@@ -16,7 +16,8 @@ def test_arabic_ask_view_has_truthful_gallery_and_thumb_reachable_action(client)
     assert 'class="gallery-card"' in html
     assert len(re.findall(r'class="gallery-card"', html)) == 6
     assert html.count("قريبًا بعد المراجعة") == 6
-    assert "فوري" not in html
+    gallery_html = html.split('<section class="gallery"', 1)[1].split("</section>", 1)[0]
+    assert "فوري" not in gallery_html
     assert "data-pinned=\"true\"" not in html
 
 
@@ -117,6 +118,26 @@ def test_result_and_every_designed_failure_have_arabic_recovery_copy(client):
         "The simulation hit an error",
     ):
         assert english_copy in translations
+
+
+def test_experimental_badge_and_polish_disclosure_are_explicit_and_distinct(client):
+    html = client.get("/").text
+    css = client.get("/static/app.css").text
+    source = client.get("/static/app.js").text
+    translations = client.get("/static/translations.js").text
+
+    assert 'id="experimental-note"' in html
+    assert 'id="missed-strictness-checks"' in html
+    assert "experimental-badge" in css
+    assert 'simulation.tier === "B"' in source
+    assert "missed_strictness_checks" in source
+    assert 'tierBadge.dataset.i18n = isExperimental ? "tier.b.badge"' in source
+    assert "تجريبية" in translations
+    assert "صحيحة علميًا، ولم تجتز كل فحوص الصقل" in translations
+    assert "Experimental" in translations
+    assert "Scientifically correct; did not pass every polish check" in translations
+    assert "correctness-critical check" in translations
+    assert "فحصًا أساسيًا للصحة" in translations
 
 
 def test_m4_semantics_include_skip_link_status_and_text_alternative(client):

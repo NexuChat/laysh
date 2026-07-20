@@ -230,6 +230,7 @@
     clearInterval(state.timer);
     clearInterval(state.watchdog);
     const simulation = result.simulation;
+    const isExperimental = simulation.tier === "B";
     byId("result-title").textContent = simulation.title;
     byId("result-answer").textContent = state.answer || result.answer?.tldr || "";
     byId("simulation-alternative").textContent = state.answer || t("simulation_text_fallback");
@@ -253,8 +254,29 @@
       shareActions.hidden = true;
       nativeShare.hidden = true;
     }
-    byId("receipt-tier").textContent = t(simulation.tier === "A" ? "tier.a.receipt" : "tier.b.receipt");
-    byId("tier-badge").textContent = t(simulation.tier === "A" ? "tier.a.badge" : "tier.b.badge");
+    const tierBadge = byId("tier-badge");
+    tierBadge.className = isExperimental ? "experimental-badge" : "verified-badge";
+    tierBadge.dataset.i18n = isExperimental ? "tier.b.badge" : "tier.a.badge";
+    tierBadge.textContent = t(tierBadge.dataset.i18n);
+    const receiptTier = byId("receipt-tier");
+    receiptTier.dataset.i18n = isExperimental ? "tier.b.receipt" : "tier.a.receipt";
+    receiptTier.textContent = t(receiptTier.dataset.i18n);
+    byId("experimental-note").hidden = !isExperimental;
+    const shareLabel = byId("share-actions").querySelector(".share-label");
+    shareLabel.dataset.i18n = isExperimental ? "share_experimental" : "share_verified";
+    shareLabel.textContent = t(shareLabel.dataset.i18n);
+    const missedChecks = simulation.missed_strictness_checks || [];
+    const missedBox = byId("missed-strictness-checks");
+    const missedList = byId("missed-strictness-list");
+    missedList.replaceChildren();
+    for (const check of missedChecks) {
+      const item = document.createElement("li");
+      const key = `strictness.${check}`;
+      if (hasTranslation(key)) item.dataset.i18n = key;
+      item.textContent = hasTranslation(key) ? t(key) : check;
+      missedList.append(item);
+    }
+    missedBox.hidden = !isExperimental;
     byId("check-count").textContent = number.format(simulation.check_count);
     byId("heal-count").textContent = number.format(simulation.heal_count);
     byId("result-elapsed").textContent = t("seconds", { value: number.format(simulation.elapsed_ms / 1000) });
@@ -311,7 +333,7 @@
     for (const card of document.querySelectorAll('[data-dynamic-card="true"]')) card.remove();
     for (const card of document.querySelectorAll(".gallery-card")) {
       card.dataset.lessonId = "";
-      const badge = card.querySelector(".instant-badge, .coming-badge");
+      const badge = card.querySelector(".instant-badge, .coming-badge, .experimental-badge");
       badge.className = "coming-badge";
       badge.textContent = t("coming_soon");
       const launch = card.querySelector(".golden-launch");
@@ -365,8 +387,8 @@
         }
         summary.textContent = lesson.summary;
         const badge = card.querySelector(".coming-badge");
-        badge.className = "instant-badge";
-        badge.textContent = t("instant");
+        badge.className = lesson.tier === "B" ? "experimental-badge" : "instant-badge";
+        badge.textContent = t(lesson.tier === "B" ? "experimental" : "instant");
         const launch = card.querySelector(".golden-launch");
         launch.disabled = false;
         launch.onclick = () => {

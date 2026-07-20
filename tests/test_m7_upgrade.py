@@ -284,7 +284,7 @@ def test_explicit_release_revision_can_replace_a_pin_but_live_writes_remain_bloc
             artifact="live overwrite",
             title="live",
             direction="rtl",
-            tier="B",
+            tier="A",
             receipt=receipt,
         )
 

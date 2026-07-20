@@ -276,7 +276,7 @@ def test_gallery_controller_enables_only_server_confirmed_verified_lessons(clien
 
     assert "`/api/gallery?locale=${encodeURIComponent(requestedLocale)}`" in source
     assert "/api/gallery/${encodeURIComponent(lessonId)}" in source
-    assert 'badge.textContent = t("instant")' in source
+    assert 'lesson.tier === "B" ? "experimental" : "instant"' in source
     assert "launch.disabled = false" in source
     assert "verified/golden" not in client.get("/").text
 

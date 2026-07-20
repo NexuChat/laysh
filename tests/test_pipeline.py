@@ -20,7 +20,8 @@ def test_success_pipeline_answers_first_and_returns_playable_artifact(client, ba
 
     assert result["status"] == "complete"
     assert result["answer"]["tldr"]
-    assert result["simulation"]["tier"] == "B"
+    assert result["simulation"]["tier"] == "A"
+    assert result["simulation"]["missed_strictness_checks"] == []
     assert result["simulation"]["check_count"] >= 2
     assert result["simulation"]["heal_count"] == 0
     assert result["simulation"]["effective_model"] == "mock/offline"
@@ -346,6 +347,103 @@ async def test_public_qa_timeout_falls_back_without_a_second_slow_review():
 
 
 @pytest.mark.asyncio
+async def test_public_qa_timeout_after_heal_restores_the_verified_tier_b_candidate():
+    from dataclasses import replace
+
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend
+    from server.codex_runtime import CodexRuntimeError
+    from server.jobs import JobManager
+
+    class TimedOutQaBackend(MockCodexBackend):
+        async def qa(self, *args, **kwargs):
+            self.qa_calls += 1
+            raise CodexRuntimeError("stage_timeout")
+
+    passing = BrowserVerificationResult.passing()
+    polish = replace(
+        passing,
+        passed=False,
+        failures=[
+            {
+                "gate": "mobile_overlay_safe_band",
+                "code": "mobile_overlay_count_exceeded",
+                "expected": {"overlay_count_max": 1},
+                "actual": {"overlay_count": 2},
+            }
+        ],
+    )
+    browser_results = iter((polish, passing))
+    backend = TimedOutQaBackend()
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: next(browser_results),
+    )
+
+    record = manager.start("success polish then healed", "en")
+    await record.task
+
+    assert record.status == "complete"
+    assert record.simulation is not None and record.simulation.tier == "B"
+    assert record.simulation.missed_strictness_checks == [
+        "mobile_overlay_safe_band.mobile_overlay_count_exceeded"
+    ]
+    assert backend.heal_calls == backend.qa_calls == 1
+
+
+@pytest.mark.asyncio
+async def test_public_polish_heal_promotes_and_caches_clean_tier_a(tmp_path):
+    from dataclasses import replace
+
+    from server.browser_verify import BrowserVerificationResult
+    from server.cache import VerifiedCache
+    from server.codex_backend import MockCodexBackend
+    from server.jobs import JobManager
+
+    passing = BrowserVerificationResult.passing()
+    polish = replace(
+        passing,
+        passed=False,
+        failures=[
+            {
+                "gate": "mobile_overlay_safe_band",
+                "code": "mobile_overlay_count_exceeded",
+                "expected": {"overlay_count_max": 1},
+                "actual": {"overlay_count": 2},
+            }
+        ],
+    )
+    browser_results = iter((polish, passing))
+    cache = VerifiedCache(
+        root=tmp_path / "live",
+        golden_root=tmp_path / "golden",
+        secret=b"test-cache-secret",
+        contract_version="1.0",
+    )
+    backend = MockCodexBackend()
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: next(browser_results),
+        cache=cache,
+    )
+
+    record = manager.start("success polish then clean heal", "en")
+    await record.task
+
+    assert record.status == "complete"
+    assert record.simulation is not None and record.simulation.tier == "A"
+    assert record.simulation.missed_strictness_checks == []
+    assert record.simulation.share_url
+    stored = cache.inspect(record.simulation.sim_id)
+    assert stored is not None and stored.tier == "A"
+    assert stored.receipt.verified is True
+    assert stored.receipt.missed_strictness_checks == ()
+    assert backend.heal_calls == backend.qa_calls == 1
+
+
+@pytest.mark.asyncio
 async def test_curated_qa_rejection_retains_candidate_and_actionable_visual_review():
     from server.browser_verify import BrowserVerificationResult
     from server.codex_backend import MockCodexBackend
@@ -595,7 +693,7 @@ async def test_public_noncorrective_misconception_refreshes_before_generation():
 
 
 @pytest.mark.asyncio
-async def test_public_immutable_fixture_failure_falls_back_without_module_heal():
+async def test_public_fixture_presentation_failure_is_retained_as_tier_b():
     from copy import deepcopy
 
     from server.browser_verify import BrowserVerificationResult
@@ -628,10 +726,95 @@ async def test_public_immutable_fixture_failure_falls_back_without_module_heal()
     record = manager.start("success", "ar")
     await record.task
 
+    assert record.status == "complete"
+    assert record.fallback is None
+    assert record.simulation is not None
+    assert record.simulation.tier == "B"
+    assert record.simulation.missed_strictness_checks == [
+        "fixture_integrity.suspect_relation_fixture"
+    ]
+    assert backend.heal_calls == 1
+
+
+@pytest.mark.asyncio
+async def test_public_strictness_only_browser_failure_is_shown_as_tier_b(tmp_path):
+    from dataclasses import replace
+
+    from server.browser_verify import BrowserVerificationResult
+    from server.cache import VerifiedCache
+    from server.codex_backend import MockCodexBackend
+    from server.jobs import JobManager
+
+    passing = BrowserVerificationResult.passing()
+    polish_failure = {
+        "gate": "mobile_overlay_safe_band",
+        "code": "mobile_overlay_count_exceeded",
+        "expected": {"overlay_count_max": 1},
+        "actual": {"overlay_count": 2},
+    }
+    browser_result = replace(passing, passed=False, failures=[polish_failure])
+    cache = VerifiedCache(
+        root=tmp_path / "live",
+        golden_root=tmp_path / "golden",
+        secret=b"test-cache-secret",
+        contract_version="1.0",
+    )
+    backend = MockCodexBackend()
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: browser_result,
+        cache=cache,
+    )
+
+    record = manager.start("success strictness-only", "en")
+    await record.task
+
+    assert record.status == "complete"
+    assert record.simulation is not None
+    assert record.simulation.tier == "B"
+    assert record.simulation.share_url
+    assert record.simulation.missed_strictness_checks == [
+        "mobile_overlay_safe_band.mobile_overlay_count_exceeded"
+    ]
+    assert backend.heal_calls == 1
+    stored = cache.inspect(record.simulation.sim_id)
+    assert stored is not None and stored.tier == "B"
+    assert stored.receipt.correctness_passed is True
+    assert stored.receipt.missed_strictness_checks == (
+        "mobile_overlay_safe_band.mobile_overlay_count_exceeded",
+    )
+
+
+@pytest.mark.asyncio
+async def test_public_actor_trajectory_failure_remains_answer_only():
+    from dataclasses import replace
+
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend
+    from server.jobs import JobManager
+
+    passing = BrowserVerificationResult.passing()
+    actor_failure = {
+        "gate": "actor_action_tracking",
+        "code": "actor_trajectory_static",
+        "expected": {"declared_action_performed": True},
+        "actual": {"trajectory_span_pixels": 0},
+    }
+    browser_result = replace(passing, passed=False, failures=[actor_failure])
+    manager = JobManager(
+        MockCodexBackend(),
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: browser_result,
+    )
+
+    record = manager.start("success but static actor", "en")
+    await record.task
+
     assert record.status == "answer_only"
+    assert record.simulation is None
     assert record.fallback is not None
-    assert record.fallback.reason_code == "fixture_integrity_unresolved"
-    assert backend.heal_calls == 0
+    assert record.fallback.reason_code == "verification_exhausted"
 
 
 @pytest.mark.asyncio
@@ -705,6 +888,52 @@ async def test_public_heal_timeout_preserves_answer_without_a_second_attempt():
     assert record.answer is not None
     assert record.fallback is not None
     assert record.fallback.reason_code == "healing_timeout"
+    assert backend.heal_calls == 1
+
+
+@pytest.mark.asyncio
+async def test_public_heal_timeout_releases_saved_strictness_only_candidate():
+    from dataclasses import replace
+
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend
+    from server.codex_runtime import CodexRuntimeError
+    from server.jobs import JobManager
+
+    class TimedOutHealBackend(MockCodexBackend):
+        async def heal(self, *args, **kwargs):
+            self.heal_calls += 1
+            raise CodexRuntimeError("stage_timeout")
+
+    passing = BrowserVerificationResult.passing()
+    browser_result = replace(
+        passing,
+        passed=False,
+        failures=[
+            {
+                "gate": "visual_richness",
+                "code": "subject_idle_motion_insufficient",
+                "expected": {"minimum_changed_pixel_ratio": 0.01},
+                "actual": {"changed_pixel_ratio": 0.004},
+            }
+        ],
+    )
+    backend = TimedOutHealBackend()
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: browser_result,
+    )
+
+    record = manager.start("success correct at the buzzer", "en")
+    await record.task
+
+    assert record.status == "complete"
+    assert record.fallback is None
+    assert record.simulation is not None and record.simulation.tier == "B"
+    assert record.simulation.missed_strictness_checks == [
+        "visual_richness.subject_idle_motion_insufficient"
+    ]
     assert backend.heal_calls == 1
 
 

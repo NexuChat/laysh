@@ -9,6 +9,7 @@ from typing import Any, NoReturn
 from server.cache import VerificationReceipt
 from server.codex_backend import RuntimeContext
 from server.codex_runtime import CodexRuntimeError, StageExecution
+from server.retention_policy import classify_verification_failures
 from server.schemas import (
     AnswerPayload,
     ContractError,
@@ -79,10 +80,19 @@ def _complete_from_cache(manager: Any, record: Any, cached: Any) -> None:
         record,
         "verification",
         {
-            "passed": True,
+            "passed": cached.tier == "A",
             "check_count": cached.receipt.check_count,
             "heal_count": 0,
-            "evidence": ["verified_cache", "artifact_hash", "browser_readiness"],
+            "evidence": (
+                ["verified_cache", "artifact_hash", "browser_readiness"]
+                if cached.tier == "A"
+                else sorted(
+                    {
+                        check.partition(".")[0]
+                        for check in cached.receipt.missed_strictness_checks
+                    }
+                )
+            ),
         },
     )
     sim_id = cached.cache_id
@@ -100,6 +110,7 @@ def _complete_from_cache(manager: Any, record: Any, cached: Any) -> None:
         elapsed_ms=manager.elapsed_ms(record),
         check_count=cached.receipt.check_count,
         heal_count=0,
+        missed_strictness_checks=list(cached.receipt.missed_strictness_checks),
     )
     manager.emit(
         record,
@@ -183,6 +194,47 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 runtime_context=runtime_context,
             )
         return validate_understanding(stage_data(result, "understand_retry"))
+
+    async def run_vision_check(
+        browser_result: Any,
+        candidate: dict[str, Any],
+    ) -> tuple[dict[str, Any] | None, dict[str, Any] | None, str | None]:
+        vision_attempts = (1,) if record.public else (1, 2)
+        for vision_attempt in vision_attempts:
+            try:
+                with tempfile.TemporaryDirectory(prefix="laysh-vision-") as temporary:
+                    frame_paths: list[Path] = []
+                    for index, frame in enumerate(browser_result.vision_frames, start=1):
+                        path = Path(temporary) / f"frame-{index}.png"
+                        path.write_bytes(frame)
+                        frame_paths.append(path)
+                    vision_stage = await manager.backend.vision(
+                        understanding,
+                        frame_paths,
+                        browser_result.evidence.get("visionFrameStates", []),
+                        runtime_context=runtime_context,
+                    )
+                verdict = stage_data(vision_stage, "vision")
+                result = evaluate_vision_verdict(verdict)
+                return verdict, result.failure, None
+            except CodexRuntimeError as error:
+                if error.code != "stage_timeout" and not record.public:
+                    raise
+                if not record.public:
+                    record.builder_diagnostics.append(
+                        {
+                            "type": "vision_timeout",
+                            "attempt": vision_attempt,
+                            "code": error.code,
+                            "candidate_sha256": hashlib.sha256(
+                                candidate["module_js"].encode("utf-8")
+                            ).hexdigest(),
+                        }
+                    )
+                if error.code == "stage_timeout" and vision_attempt < vision_attempts[-1]:
+                    continue
+                return None, None, "vision_inconclusive"
+        raise RuntimeError("vision retry loop completed without an outcome")
 
     cache = manager.cache
     manager.transition(
@@ -415,11 +467,34 @@ async def run_pipeline(manager: Any, record: Any) -> None:
     if scenario == "exhausted_heal":
         module_output = manager.backend.mark_exhausted(module_output)
 
-    verification = None
+    verification: VerificationResult | None = None
     heal_count = 0
     fixture_refresh_count = 0
     browser_evidence: dict[str, Any] | None = None
     vision_verdict: dict[str, Any] | None = None
+    release_tier: str | None = None
+    missed_strictness_checks: tuple[str, ...] = ()
+    released_deterministic_passed = False
+    released_browser_passed = False
+    best_candidate: dict[str, Any] | None = None
+    stop_with_best = False
+
+    def restore_best_candidate() -> None:
+        nonlocal module_output
+        nonlocal verification, browser_evidence, vision_verdict
+        nonlocal missed_strictness_checks, release_tier
+        nonlocal released_deterministic_passed, released_browser_passed
+        if best_candidate is None:
+            raise RuntimeError("best-candidate restore requested without a candidate")
+        module_output = best_candidate["module_output"]
+        verification = best_candidate["verification"]
+        browser_evidence = best_candidate["browser_evidence"]
+        vision_verdict = best_candidate["vision_verdict"]
+        missed_strictness_checks = best_candidate["missed_strictness_checks"]
+        released_deterministic_passed = best_candidate["deterministic_passed"]
+        released_browser_passed = best_candidate["browser_passed"]
+        release_tier = "B"
+
     while True:
         if record.status != "verifying":
             manager.transition(
@@ -431,108 +506,74 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                     "Checking the contract and deterministic results",
                 ),
             )
-        verification = verify_candidate(module_output, understanding)
-        if verification.passed:
+        deterministic_result = verify_candidate(module_output, understanding)
+        deterministic_passed = deterministic_result.passed
+        verification = deterministic_result
+        decision = classify_verification_failures(verification.failures)
+        browser_passed = False
+        if decision.correctness_passed:
             if verification.artifact is None:
-                raise RuntimeError("deterministic verification omitted its artifact")
+                raise RuntimeError("correctness-passing verification omitted its artifact")
             browser_result = await asyncio.to_thread(
                 manager.browser_verifier,
                 verification.artifact,
             )
             browser_evidence = browser_result.evidence
-            if browser_result.passed:
-                vision_result = None
-                vision_attempts = (1,) if record.public else (1, 2)
-                for vision_attempt in vision_attempts:
-                    try:
-                        with tempfile.TemporaryDirectory(prefix="laysh-vision-") as temporary:
-                            frame_paths: list[Path] = []
-                            for index, frame in enumerate(browser_result.vision_frames, start=1):
-                                path = Path(temporary) / f"frame-{index}.png"
-                                path.write_bytes(frame)
-                                frame_paths.append(path)
-                            vision_stage = await manager.backend.vision(
-                                understanding,
-                                frame_paths,
-                                browser_result.evidence.get("visionFrameStates", []),
-                                runtime_context=runtime_context,
-                            )
-                        vision_verdict = stage_data(vision_stage, "vision")
-                        vision_result = evaluate_vision_verdict(vision_verdict)
+            browser_passed = browser_result.passed
+            combined_failures = [*verification.failures, *browser_result.failures]
+            combined_decision = classify_verification_failures(combined_failures)
+            check_count = verification.check_count + browser_result.check_count
+            if combined_decision.correctness_passed:
+                vision_verdict, vision_failure, vision_error = await run_vision_check(
+                    browser_result,
+                    module_output,
+                )
+                if vision_error is not None:
+                    if best_candidate is not None:
+                        stop_with_best = True
                         break
-                    except CodexRuntimeError as error:
-                        if error.code != "stage_timeout" and not record.public:
-                            raise
-                        if error.code != "stage_timeout":
-                            _fallback(
-                                manager,
-                                record,
-                                "vision_inconclusive",
-                                _default_suggestions(record),
-                            )
-                            return
-                        if not record.public:
-                            record.builder_diagnostics.append(
-                                {
-                                    "type": "vision_timeout",
-                                    "attempt": vision_attempt,
-                                    "code": error.code,
-                                    "candidate_sha256": hashlib.sha256(
-                                        module_output["module_js"].encode("utf-8")
-                                    ).hexdigest(),
-                                }
-                            )
-                        if vision_attempt < vision_attempts[-1]:
-                            continue
-                        _fallback(
-                            manager,
-                            record,
-                            "vision_inconclusive",
-                            _default_suggestions(record),
-                        )
-                        return
-                if vision_result is None:
-                    raise RuntimeError("vision retry loop completed without an outcome")
-                if vision_result.passed:
-                    verification = VerificationResult(
-                        passed=True,
-                        check_count=verification.check_count + browser_result.check_count + 1,
-                        failures=[],
-                        artifact=verification.artifact,
-                        node_report=verification.node_report,
+                    _fallback(
+                        manager,
+                        record,
+                        vision_error,
+                        _default_suggestions(record),
                     )
-                    break
-                if vision_result.failure is None:
-                    raise RuntimeError("failed vision verdict omitted its diagnostic")
-                verification = VerificationResult(
-                    passed=False,
-                    check_count=verification.check_count + browser_result.check_count + 1,
-                    failures=[vision_result.failure],
-                    artifact=None,
-                    node_report=verification.node_report,
-                )
-            else:
-                verification = VerificationResult(
-                    passed=False,
-                    check_count=verification.check_count + browser_result.check_count,
-                    failures=browser_result.failures,
-                    artifact=None,
-                    node_report=verification.node_report,
-                )
+                    return
+                check_count += 1
+                if vision_failure is not None:
+                    combined_failures.append(vision_failure)
+            decision = classify_verification_failures(combined_failures)
+            verification = VerificationResult(
+                passed=decision.tier == "A",
+                check_count=check_count,
+                failures=combined_failures,
+                artifact=(
+                    deterministic_result.artifact if decision.correctness_passed else None
+                ),
+                node_report=deterministic_result.node_report,
+            )
+        if decision.tier == "A":
+            release_tier = "A"
+            missed_strictness_checks = ()
+            released_deterministic_passed = deterministic_passed
+            released_browser_passed = browser_passed
+            break
+        if decision.tier == "B" and record.public and verification.artifact is not None:
+            best_candidate = {
+                "module_output": module_output,
+                "verification": verification,
+                "browser_evidence": browser_evidence,
+                "vision_verdict": vision_verdict,
+                "missed_strictness_checks": decision.missed_strictness_checks,
+                "deterministic_passed": deterministic_passed,
+                "browser_passed": browser_passed,
+            }
         record_verification_failure(verification, heal_count)
         suspect_fixtures = [
             failure
             for failure in verification.failures
             if failure["gate"] == "fixture_integrity"
         ]
-        if suspect_fixtures and record.public:
-            _fallback(
-                manager,
-                record,
-                "fixture_integrity_unresolved",
-                _default_suggestions(record),
-            )
-            return
         if suspect_fixtures and not record.public:
             if fixture_refresh_count >= 1:
                 _fallback(
@@ -584,6 +625,9 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             continue
         maximum_heal_attempts = 1 if record.public else 2
         if heal_count >= maximum_heal_attempts:
+            if best_candidate is not None:
+                stop_with_best = True
+                break
             _fallback(
                 manager,
                 record,
@@ -597,6 +641,9 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 - manager.elapsed_ms(record) / 1000
             )
             if remaining_seconds < manager.public_heal_cycle_reserve_seconds:
+                if best_candidate is not None:
+                    stop_with_best = True
+                    break
                 _fallback(
                     manager,
                     record,
@@ -625,13 +672,19 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         except CodexRuntimeError as error:
             if not record.public:
                 raise
+            if best_candidate is not None:
+                stop_with_best = True
+                break
             reason = "healing_timeout" if error.code == "stage_timeout" else "healing_failed"
             _fallback(manager, record, reason, _default_suggestions(record))
             return
         module_output = validate_module_output(stage_data(healed, f"heal_{heal_count}"))
 
+    if stop_with_best:
+        restore_best_candidate()
+
     qa_outcome: dict[str, Any] | None = None
-    if heal_count or record.promote_golden:
+    if release_tier == "A" and (heal_count or record.promote_golden):
         manager.emit(
             record,
             "stage",
@@ -666,6 +719,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             ],
         }
         qa_result = None
+        qa_abandoned_for_best = False
         qa_attempts = (1,) if record.public else (1, 2)
         for qa_attempt in qa_attempts:
             try:
@@ -683,6 +737,10 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 if error.code != "stage_timeout" and not record.public:
                     raise
                 if error.code != "stage_timeout":
+                    if best_candidate is not None:
+                        restore_best_candidate()
+                        qa_abandoned_for_best = True
+                        break
                     _fallback(
                         manager,
                         record,
@@ -725,6 +783,10 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                     )
                     continue
                 if record.public:
+                    if best_candidate is not None:
+                        restore_best_candidate()
+                        qa_abandoned_for_best = True
+                        break
                     _fallback(
                         manager,
                         record,
@@ -734,9 +796,11 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 else:
                     manager.terminal(record, "qa_inconclusive", "qa_inconclusive")
                 return
-        if qa_result is None:
+        if qa_abandoned_for_best:
+            qa_result = None
+        elif qa_result is None:
             raise RuntimeError("QA retry loop completed without an outcome")
-        if not record.public:
+        if qa_result is not None and not record.public:
             record.artifact = verification.artifact
             record.builder_outputs = {
                 "understanding": understanding,
@@ -751,23 +815,28 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 "vision": vision_verdict or {},
                 "qa": qa_result,
             }
-        if not qa_result["approved"]:
-            if not record.public:
-                record.builder_diagnostics.append(
-                    {
-                        "type": "qa_rejected",
-                        "issues": qa_result["issues"],
-                        "visual_richness": qa_result.get("visual_richness"),
-                    }
+        if qa_result is not None and not qa_result["approved"]:
+            if best_candidate is not None:
+                restore_best_candidate()
+                qa_result = None
+            else:
+                if not record.public:
+                    record.builder_diagnostics.append(
+                        {
+                            "type": "qa_rejected",
+                            "issues": qa_result["issues"],
+                            "visual_richness": qa_result.get("visual_richness"),
+                        }
+                    )
+                _fallback(
+                    manager,
+                    record,
+                    "qa_rejected",
+                    _default_suggestions(record),
                 )
-            _fallback(
-                manager,
-                record,
-                "qa_rejected",
-                _default_suggestions(record),
-            )
-            return
-        qa_outcome = qa_result
+                return
+        if qa_result is not None:
+            qa_outcome = qa_result
 
     manager.transition(
         record,
@@ -779,23 +848,29 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         ),
     )
     if verification is None or verification.artifact is None:
-        raise RuntimeError("verified candidate missing artifact")
+        raise RuntimeError("displayable candidate missing artifact")
+    if release_tier not in {"A", "B"}:
+        raise RuntimeError("displayable candidate missing its retention tier")
     artifact = verification.artifact
     check_count = verification.check_count
     manager.emit(
         record,
         "verification",
         {
-            "passed": True,
+            "passed": release_tier == "A",
             "check_count": check_count,
             "heal_count": heal_count,
-            "evidence": [
-                "closed_schema",
-                "restricted_source",
-                "node_runtime",
-                "fixtures",
-                "browser_readiness",
-            ],
+            "evidence": (
+                [
+                    "closed_schema",
+                    "restricted_source",
+                    "node_runtime",
+                    "fixtures",
+                    "browser_readiness",
+                ]
+                if release_tier == "A"
+                else sorted({failure["gate"] for failure in verification.failures})
+            ),
         },
     )
     cached_entry = None
@@ -810,13 +885,15 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 title=understanding["title"],
                 summary=understanding["tldr"],
                 direction="rtl" if understanding["lang"] == "ar" else "ltr",
-                tier="B",
+                tier=release_tier,
                 answer=record.answer.model_dump(mode="json") if record.answer else None,
                 receipt=VerificationReceipt(
-                    deterministic_passed=True,
-                    browser_passed=bool(browser_evidence),
-                    failed_gate_count=0,
+                    deterministic_passed=released_deterministic_passed,
+                    browser_passed=released_browser_passed,
+                    failed_gate_count=len(missed_strictness_checks),
                     check_count=check_count,
+                    correctness_passed=True,
+                    missed_strictness_checks=missed_strictness_checks,
                 ),
             )
         except (OSError, ValueError) as error:
@@ -862,11 +939,12 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         direction="rtl" if understanding["lang"] == "ar" else "ltr",
         artifact_url=f"/api/sims/{sim_id}/download",
         share_url=f"/sims/{sim_id}" if cached_entry is not None else None,
-        tier="B",
+        tier=release_tier,
         effective_model=effective_model,
         elapsed_ms=manager.elapsed_ms(record),
         check_count=check_count,
         heal_count=heal_count,
+        missed_strictness_checks=list(missed_strictness_checks),
     )
     manager.emit(
         record,
@@ -875,7 +953,11 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             "result_url": f"/api/jobs/{record.job_id}",
             "sim_id": sim_id,
             "title": understanding["title"],
-            "tier": "B",
+            "tier": release_tier,
         },
     )
-    manager.transition(record, "complete", "verified_mock_result")
+    manager.transition(
+        record,
+        "complete",
+        "verified_result" if release_tier == "A" else "experimental_result",
+    )

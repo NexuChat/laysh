@@ -133,7 +133,8 @@
           <p class="result-answer" id="result-answer" dir="auto"></p>
         </header>
         <section class="simulation-stage" aria-labelledby="simulation-heading">
-          <div class="simulation-bar"><h2 id="simulation-heading" data-i18n="try_it">جرّب بنفسك</h2><div class="simulation-tools"><span class="verified-badge" id="tier-badge" data-i18n="tier_b_badge">فحص آلي مكتمل</span><button class="projector-button" id="projector-result" type="button" aria-label="اعرض المحاكاة بملء الشاشة" data-i18n="projector_mode" data-i18n-aria-label="projector_label">وضع العرض</button></div></div>
+          <div class="simulation-bar"><h2 id="simulation-heading" data-i18n="try_it">جرّب بنفسك</h2><div class="simulation-tools"><span class="verified-badge" id="tier-badge" data-i18n="tier.a.badge"></span><button class="projector-button" id="projector-result" type="button" aria-label="اعرض المحاكاة بملء الشاشة" data-i18n="projector_mode" data-i18n-aria-label="projector_label">وضع العرض</button></div></div>
+          <p class="experimental-note" id="experimental-note" data-i18n="experimental_note" hidden>صحيحة علميًا، ولم تجتز كل فحوص الصقل.</p>
           <iframe id="simulation-frame" title="المحاكاة التفاعلية" data-i18n-title="simulation_title" sandbox="allow-scripts" scrolling="no"></iframe>
           <p class="sr-only" id="simulation-alternative" data-i18n="simulation_alternative">تعرض المحاكاة التغيّر الموصوف في الجواب، مع وصف نصي مباشر للحالة داخل الإطار.</p>
         </section>
@@ -153,11 +154,15 @@
         <details class="receipt" id="verification-receipt">
           <summary data-i18n="what_checked">ما الذي فحصناه؟</summary>
           <div class="receipt-grid">
-            <p><span data-i18n="verification_tier">درجة التحقق</span><strong id="receipt-tier" data-i18n="tier_b_receipt">فئة ب — فحص آلي</strong></p>
+            <p><span data-i18n="verification_tier">درجة التحقق</span><strong id="receipt-tier" data-i18n="tier.a.receipt">فئة أ — اجتازت كل الفحوص</strong></p>
             <p><span data-i18n="check_count">عدد الفحوصات</span><strong id="check-count" data-i18n="zero_number">٠</strong></p>
             <p><span data-i18n="heal_count">محاولات الإصلاح</span><strong id="heal-count" data-i18n="zero_number">٠</strong></p>
             <p><span data-i18n="build_time">زمن البناء</span><strong id="result-elapsed" data-i18n="seconds_zero">٠ ثانية</strong></p>
             <p><span data-i18n="build_model">نموذج البناء</span><bdi id="effective-model" dir="ltr"></bdi></p>
+          </div>
+          <div class="missed-strictness" id="missed-strictness-checks" hidden>
+            <strong data-i18n="missed_polish_checks">فحوص الصقل التي لم تجتزها</strong>
+            <ul id="missed-strictness-list"></ul>
           </div>
           <p class="receipt-note" data-i18n="receipt_note">هذا إيصال فحص آلي للعقد والسلوك، وليس ادعاءً بأن كل تفسير علمي معصوم من الخطأ.</p>
         </details>

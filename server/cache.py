@@ -8,7 +8,7 @@ import re
 import tempfile
 import time
 import unicodedata
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
@@ -19,6 +19,8 @@ class VerificationReceipt:
     browser_passed: bool
     failed_gate_count: int
     check_count: int
+    correctness_passed: bool = False
+    missed_strictness_checks: tuple[str, ...] = field(default_factory=tuple)
 
     @property
     def verified(self) -> bool:
@@ -26,8 +28,21 @@ class VerificationReceipt:
             self.deterministic_passed
             and self.browser_passed
             and self.failed_gate_count == 0
+            and not self.missed_strictness_checks
             and self.check_count > 0
         )
+
+    @property
+    def experimental(self) -> bool:
+        return (
+            self.correctness_passed
+            and bool(self.missed_strictness_checks)
+            and self.failed_gate_count == len(self.missed_strictness_checks)
+            and self.check_count > 0
+        )
+
+    def permits_tier(self, tier: str) -> bool:
+        return (tier == "A" and self.verified) or (tier == "B" and self.experimental)
 
 
 @dataclass(frozen=True, slots=True)
@@ -96,7 +111,22 @@ class VerifiedCache:
     def _load(path: Path) -> CacheEntry | None:
         try:
             document = json.loads(path.read_text(encoding="utf-8"))
-            receipt = VerificationReceipt(**document["receipt"])
+            receipt_document = {
+                **document["receipt"],
+                "missed_strictness_checks": tuple(
+                    document["receipt"].get("missed_strictness_checks", [])
+                ),
+            }
+            legacy_verified = (
+                "correctness_passed" not in receipt_document
+                and receipt_document.get("deterministic_passed") is True
+                and receipt_document.get("browser_passed") is True
+                and receipt_document.get("failed_gate_count") == 0
+            )
+            receipt = VerificationReceipt(
+                **receipt_document,
+                **({"correctness_passed": True} if legacy_verified else {}),
+            )
             locale = document["locale"]
             metadata = document.get("metadata", {}).get(locale, {})
             answer = document.get("answer") if isinstance(document.get("answer"), dict) else None
@@ -114,7 +144,7 @@ class VerifiedCache:
                 or (answer or {}).get("tldr", ""),
                 locale=locale,
                 direction=document["direction"],
-                tier=document["tier"],
+                tier="A" if legacy_verified and document["tier"] == "B" else document["tier"],
                 receipt=receipt,
                 pinned=bool(document.get("pinned", False)),
                 answer=answer,
@@ -127,7 +157,7 @@ class VerifiedCache:
         observed_hash = hashlib.sha256(entry.artifact.encode()).hexdigest()
         if (
             observed_hash != entry.artifact_sha256
-            or not entry.receipt.verified
+            or not entry.receipt.permits_tier(entry.tier)
             or entry.tier not in {"A", "B"}
         ):
             return None
@@ -229,8 +259,10 @@ class VerifiedCache:
         answer: dict[str, Any] | None = None,
         summary: str = "",
     ) -> CacheEntry:
-        if receipt is None or not receipt.verified or tier not in {"A", "B"}:
-            raise ValueError("only verified Tier A or Tier B artifacts may be cached")
+        if receipt is None or not receipt.permits_tier(tier):
+            raise ValueError(
+                "only verified correctness-passing Tier A or Tier B artifacts may be cached"
+            )
         self._reload()
         exact_key = self.exact_key(question, locale)
         semantic_key = self.semantic_key(locale, domain, canonical_intent)

@@ -15,6 +15,7 @@ from server.browser_verify import BrowserVerificationResult, verify_artifact_in_
 from server.codex_backend import CodexBackend
 from server.codex_runtime import CodexExecutor, StageExecution
 from server.jobs import JobManager
+from server.retention_policy import classify_verification_failures
 from server.settings import Settings
 from server.verify import VerificationResult
 from server.vision_verify import evaluate_vision_verdict
@@ -32,6 +33,32 @@ BENCHMARK_CASES = (
     ("evaporation_ar", "لماذا يتبخر الماء أسرع في الحرارة؟", "ar"),
     ("magnetism_en", "How does distance affect the force between two magnets?", "en"),
 )
+
+
+def _failure_id(failure: dict[str, Any]) -> str:
+    return f"{failure.get('gate', 'unknown')}.{failure.get('code', 'unknown')}"
+
+
+def _outcome_fields(record: Any, attempts: list[dict[str, Any]]) -> dict[str, Any]:
+    tier = record.simulation.tier if record.simulation is not None else None
+    outcome = f"Tier {tier}" if tier in {"A", "B"} else "answer-only"
+    critical: list[str] = []
+    for attempt in reversed(attempts):
+        decision = classify_verification_failures(list(attempt.get("failures", [])))
+        if decision.critical_failures:
+            critical = list(
+                dict.fromkeys(_failure_id(failure) for failure in decision.critical_failures)
+            )
+            break
+    return {
+        "outcome": outcome,
+        "correctness_critical_failures": critical,
+        "missed_strictness_checks": (
+            list(record.simulation.missed_strictness_checks)
+            if record.simulation is not None
+            else []
+        ),
+    }
 
 
 def _understanding_contract_failures(data: dict[str, Any]) -> list[dict[str, Any]]:
@@ -279,8 +306,17 @@ async def _run_case(
         "understanding": measurement.understanding_summary,
         "stage_timings": measurement.stage_timings,
         "verification_attempts": measurement.verification_attempts,
+        **_outcome_fields(record, measurement.verification_attempts),
     }
-    summary_keys = ("case_id", "status", "total_elapsed_ms", "heal_count")
+    summary_keys = (
+        "case_id",
+        "outcome",
+        "status",
+        "correctness_critical_failures",
+        "missed_strictness_checks",
+        "total_elapsed_ms",
+        "heal_count",
+    )
     print(json.dumps({key: result[key] for key in summary_keys}))
     return result
 
@@ -312,6 +348,10 @@ async def run(
     finally:
         pipeline_module.verify_candidate = ORIGINAL_VERIFY_CANDIDATE
     completed = [result for result in results if result["status"] == "complete"]
+    outcome_counts = {
+        outcome: sum(result["outcome"] == outcome for result in results)
+        for outcome in ("Tier A", "Tier B", "answer-only")
+    }
     report = {
         "schema_version": "1.0",
         "phase": phase,
@@ -320,6 +360,7 @@ async def run(
         "case_count": len(results),
         "success_count": len(completed),
         "success_rate": len(completed) / len(results),
+        "outcome_counts": outcome_counts,
         "results": results,
     }
     output.parent.mkdir(parents=True, exist_ok=True)

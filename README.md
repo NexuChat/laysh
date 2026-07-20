@@ -74,11 +74,14 @@ reasoning, paths, or traces.
 
 ## Verification receipts—not guarantees
 
-Tier A identifies a builder-reviewed pinned lesson. Tier B identifies a live module that
-passed the applicable machine gates. “Answer only” means no simulation was released.
-Receipts report the effective model, elapsed time, deterministic check count, browser
-outcome, and heal count from that run. They mean “these declared checks passed,” not that
-Laysh has proved a scientific claim universally or replaced a teacher's review.
+Tier A identifies a simulation that passed every applicable gate; the pinned reviewed
+lessons remain Tier A. Tier B identifies an experimental live module that passed every
+correctness-critical gate but missed one or more explicitly allowlisted polish checks.
+“Answer only” means no simulation was released because generation failed, the question was
+not honestly simulatable, or at least one correctness-critical gate failed. Receipts report
+the effective model, elapsed time, check and heal counts, and the exact missed polish checks.
+They mean “these declared checks ran with this result,” not that Laysh has proved a scientific
+claim universally or replaced a teacher's review.
 
 The portable artifact is a single HTML document with inline CSS, JavaScript, font, and
 favicon; its CSP disables network connections, navigation, objects, and forms. The
@@ -141,8 +144,11 @@ limits are in-memory for P0 and reset on service restart.
 
 ## Verified lesson library and retention
 
-Every newly generated Tier B lesson enters the public library only after deterministic and
-browser verification succeed. Runtime lessons persist as atomic JSON documents in
+Every newly generated Tier A or Tier B lesson enters the public library only after all
+correctness-critical deterministic, browser, actor-trajectory, render-consistency, security,
+and semantic checks pass. Tier B is retained only for polish misses such as a crowded mobile
+overlay or sub-threshold non-frozen idle motion, and its receipt records those misses. Runtime
+lessons persist as atomic JSON documents in
 `out/cache/live/` by default; `LAYSH_LIVE_CACHE_ROOT` can point deployments at a persistent
 volume. The service reloads and hash-validates those documents at startup. The six curated
 concepts have twelve Tier A artifacts—one RTL Arabic and one LTR English variant each. The

@@ -227,7 +227,8 @@ def test_gallery_includes_durable_verified_live_lesson_without_raw_question(
         "domain": "earth_science",
         "summary": "يتغير اتجاه الظل عندما يتغير اتجاه ضوء الشمس الظاهري.",
         "instant": True,
-        "tier": "B",
+        "tier": "A",
+        "missed_strictness_checks": [],
     }
     assert (
         lesson_response.status_code
@@ -249,6 +250,59 @@ def test_gallery_includes_durable_verified_live_lesson_without_raw_question(
     assert "PRIVATE-GALLERY-CANARY" not in next(live_root.glob("*.json")).read_text(
         encoding="utf-8"
     )
+
+
+def test_experimental_lesson_is_in_gallery_and_share_with_honest_receipt(
+    tmp_path, monkeypatch, backend
+):
+    from dataclasses import replace
+
+    from fastapi.testclient import TestClient
+
+    from server.app import create_app
+    from server.browser_verify import BrowserVerificationResult
+
+    live_root = tmp_path / "cache" / "live"
+    monkeypatch.setenv("LAYSH_CACHE_KEY_SECRET", "test-cache-secret")
+    monkeypatch.setenv("LAYSH_LIVE_CACHE_ROOT", str(live_root))
+    passing = BrowserVerificationResult.passing()
+    browser_result = replace(
+        passing,
+        passed=False,
+        failures=[
+            {
+                "gate": "mobile_overlay_safe_band",
+                "code": "mobile_overlay_count_exceeded",
+                "expected": {"overlay_count_max": 1},
+                "actual": {"overlay_count": 2},
+            }
+        ],
+    )
+    with TestClient(
+        create_app(
+            backend=backend,
+            job_timeout_seconds=2,
+            browser_verifier=lambda _: browser_result,
+        )
+    ) as test_client:
+        job_id = ask(test_client, "success experimental gallery", "en")
+        result = wait_for_terminal(test_client, job_id)
+        sim_id = result["simulation"]["sim_id"]
+        gallery = test_client.get("/api/gallery?locale=en").json()["lessons"]
+        detail = test_client.get(f"/api/gallery/{sim_id}")
+        shared = test_client.get(f"/api/sims/{sim_id}")
+        share_page = test_client.get(f"/sims/{sim_id}")
+
+    lesson = next(item for item in gallery if item["id"] == sim_id)
+    expected_misses = ["mobile_overlay_safe_band.mobile_overlay_count_exceeded"]
+    assert result["simulation"]["tier"] == "B"
+    assert result["simulation"]["missed_strictness_checks"] == expected_misses
+    assert lesson["tier"] == "B"
+    assert lesson["missed_strictness_checks"] == expected_misses
+    assert detail.status_code == shared.status_code == share_page.status_code == 200
+    assert detail.json()["simulation"]["tier"] == "B"
+    assert detail.json()["simulation"]["missed_strictness_checks"] == expected_misses
+    assert shared.json()["simulation"]["missed_strictness_checks"] == expected_misses
 
 
 def test_codex_backend_is_selected_only_by_explicit_configuration(monkeypatch, tmp_path):

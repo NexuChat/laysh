@@ -346,6 +346,7 @@ def verify_candidate(
     understanding: dict[str, Any],
 ) -> VerificationResult:
     from server.assemble import assemble_artifact
+    from server.retention_policy import classify_verification_failures
 
     source = module_output["module_js"]
     failures, check_count = formula_presentation_report(understanding)
@@ -387,7 +388,7 @@ def verify_candidate(
         check_count += int(node_report["check_count"])
 
     artifact = None
-    if not failures:
+    if classify_verification_failures(failures).correctness_passed:
         try:
             artifact = assemble_artifact(understanding, module_output)
             check_count += 1
@@ -399,7 +400,8 @@ def verify_candidate(
             check_count += artifact_checks
             if artifact_failures:
                 failures.extend(artifact_failures)
-                artifact = None
+                if not classify_verification_failures(failures).correctness_passed:
+                    artifact = None
         except (OSError, ValueError) as error:
             failures.append(
                 {
