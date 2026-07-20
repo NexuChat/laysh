@@ -88,6 +88,14 @@ def create_app(
     public_timeout = (
         settings.public_job_timeout_seconds if job_timeout_seconds is None else job_timeout_seconds
     )
+    public_heal_reserve = (
+        settings.public_heal_cycle_reserve_seconds
+        if job_timeout_seconds is None
+        else min(
+            settings.public_heal_cycle_reserve_seconds,
+            public_timeout * (70.0 / 180.0),
+        )
+    )
     app = FastAPI(title="Laysh", version="1.1.0")
     app.mount("/static", RevalidatingStaticFiles(directory=ROOT / "web"), name="static")
     live_cache_root = (
@@ -110,6 +118,7 @@ def create_app(
         selected_backend,
         public_job_timeout_seconds=public_timeout,
         evidence_job_timeout_seconds=settings.evidence_job_timeout_seconds,
+        public_heal_cycle_reserve_seconds=public_heal_reserve,
         browser_verifier=browser_verifier,
         cache=verified_cache,
         max_concurrent_jobs=settings.max_concurrent_jobs,

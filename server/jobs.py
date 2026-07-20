@@ -87,6 +87,7 @@ class JobManager:
         backend: Any,
         public_job_timeout_seconds: float,
         evidence_job_timeout_seconds: float | None = None,
+        public_heal_cycle_reserve_seconds: float | None = None,
         browser_verifier: Callable[[str], BrowserVerificationResult] = verify_artifact_in_browser,
         cache: VerifiedCache | None = None,
         heartbeat_interval_seconds: float = 5.0,
@@ -100,6 +101,13 @@ class JobManager:
             if evidence_job_timeout_seconds is None
             else evidence_job_timeout_seconds
         )
+        self.public_heal_cycle_reserve_seconds = (
+            min(70.0, public_job_timeout_seconds * (70.0 / 180.0))
+            if public_heal_cycle_reserve_seconds is None
+            else public_heal_cycle_reserve_seconds
+        )
+        if self.public_heal_cycle_reserve_seconds <= 0:
+            raise ValueError("public heal-cycle reserve must be positive")
         self.records: dict[str, JobRecord] = {}
         self.artifacts: dict[str, str] = {}
         self.browser_verifier = browser_verifier

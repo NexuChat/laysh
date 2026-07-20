@@ -54,6 +54,7 @@ async def run() -> int:
         CodexBackend(executor=executor, settings=settings),
         public_job_timeout_seconds=settings.public_job_timeout_seconds,
         evidence_job_timeout_seconds=settings.evidence_job_timeout_seconds,
+        public_heal_cycle_reserve_seconds=settings.public_heal_cycle_reserve_seconds,
     )
     results: list[dict[str, Any]] = []
     for smoke in SMOKES:

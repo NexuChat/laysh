@@ -1,0 +1,58 @@
+{
+  "positive_examples": [
+    {
+      "id": "lever_zero_heal",
+      "action": "responds",
+      "required_terms": [
+        "lever",
+        "required force",
+        "stable when held"
+      ]
+    },
+    {
+      "id": "magnetism_zero_heal",
+      "action": "responds",
+      "required_terms": [
+        "magnet",
+        "force indicator",
+        "stable when held"
+      ]
+    }
+  ],
+  "recorded_failures": [
+    {
+      "id": "rainbow_unregistered_labels",
+      "gate": "mobile_overlay_safe_band",
+      "required_terms": [
+        "at most one",
+        "registerOverlayRect",
+        "zero overlap"
+      ]
+    },
+    {
+      "id": "seasons_sweep_bound_motion",
+      "gate": "actor_action_tracking",
+      "required_terms": [
+        "independent of the parameter sweep",
+        "at least 6 px"
+      ]
+    },
+    {
+      "id": "render_false_cliff",
+      "gate": "render_output_consistency",
+      "required_terms": [
+        "rank correlation",
+        "0.65",
+        "no false visual cliff"
+      ]
+    },
+    {
+      "id": "constant_fixture_output",
+      "gate": "invariant",
+      "required_terms": [
+        "every supplied fixture",
+        "exactly one model function"
+      ]
+    }
+  ]
+}

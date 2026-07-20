@@ -164,6 +164,26 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 }
             )
 
+    async def repair_understanding_contract(
+        candidate: dict[str, Any],
+        failures: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        repair = getattr(manager.backend, "repair_understanding", None)
+        if repair is None:
+            result = await manager.backend.understand(
+                question,
+                record.locale,
+                runtime_context=runtime_context,
+            )
+        else:
+            result = await repair(
+                candidate,
+                failures,
+                record.locale,
+                runtime_context=runtime_context,
+            )
+        return validate_understanding(stage_data(result, "understand_retry"))
+
     cache = manager.cache
     manager.transition(
         record,
@@ -200,7 +220,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
     )
     try:
         understanding = validate_understanding(initial_understanding)
-    except ContractError:
+    except ContractError as error:
         if not record.public:
             raise
         manager.emit(
@@ -216,15 +236,16 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 "elapsed_ms": manager.elapsed_ms(record),
             },
         )
-        understanding = validate_understanding(
-            stage_data(
-                await manager.backend.understand(
-                    question,
-                    record.locale,
-                    runtime_context=runtime_context,
-                ),
-                "understand_retry",
-            )
+        understanding = await repair_understanding_contract(
+            initial_understanding,
+            [
+                {
+                    "gate": "understanding_contract",
+                    "code": "cross_field_invalid",
+                    "expected": {"cross_field_contract_valid": True},
+                    "actual": {"diagnostic": str(error)[:180]},
+                }
+            ],
         )
 
     if not understanding["safe"]:
@@ -250,15 +271,9 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 "elapsed_ms": manager.elapsed_ms(record),
             },
         )
-        understanding = validate_understanding(
-            stage_data(
-                await manager.backend.understand(
-                    question,
-                    record.locale,
-                    runtime_context=runtime_context,
-                ),
-                "understand_retry",
-            )
+        understanding = await repair_understanding_contract(
+            understanding,
+            misconception_failures,
         )
         if not understanding["safe"]:
             _reject(
@@ -567,6 +582,19 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 _default_suggestions(record),
             )
             return
+        if record.public:
+            remaining_seconds = (
+                manager.public_job_timeout_seconds
+                - manager.elapsed_ms(record) / 1000
+            )
+            if remaining_seconds < manager.public_heal_cycle_reserve_seconds:
+                _fallback(
+                    manager,
+                    record,
+                    "insufficient_heal_budget",
+                    _default_suggestions(record),
+                )
+                return
         heal_count += 1
         manager.transition(
             record,

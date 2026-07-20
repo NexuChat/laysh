@@ -22,6 +22,7 @@ def test_runtime_defaults_are_gpt_5_6_family_only():
     assert settings.public_qa_timeout_seconds == 25
     assert settings.evidence_qa_timeout_seconds == 120
     assert settings.public_heal_timeout_seconds == 55
+    assert settings.public_heal_cycle_reserve_seconds == 70
     assert settings.evidence_heal_timeout_seconds == 120
     assert settings.cache_key_secret == ""
     assert settings.live_cache_root == ""

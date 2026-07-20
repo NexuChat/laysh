@@ -24,6 +24,7 @@ class Settings:
     public_qa_timeout_seconds: float = 25.0
     evidence_qa_timeout_seconds: float = 120.0
     public_heal_timeout_seconds: float = 55.0
+    public_heal_cycle_reserve_seconds: float = 70.0
     evidence_heal_timeout_seconds: float = 120.0
     cache_key_secret: str = ""
     live_cache_root: str = ""
@@ -57,6 +58,7 @@ class Settings:
             self.public_qa_timeout_seconds,
             self.evidence_qa_timeout_seconds,
             self.public_heal_timeout_seconds,
+            self.public_heal_cycle_reserve_seconds,
             self.evidence_heal_timeout_seconds,
         )
         if any(value <= 0 for value in timeout_values):
@@ -125,6 +127,12 @@ class Settings:
                 os.getenv(
                     "LAYSH_PUBLIC_HEAL_TIMEOUT_SECONDS",
                     str(defaults.public_heal_timeout_seconds),
+                )
+            ),
+            public_heal_cycle_reserve_seconds=float(
+                os.getenv(
+                    "LAYSH_PUBLIC_HEAL_CYCLE_RESERVE_SECONDS",
+                    str(defaults.public_heal_cycle_reserve_seconds),
                 )
             ),
             evidence_heal_timeout_seconds=float(

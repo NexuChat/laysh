@@ -115,6 +115,44 @@ def test_generation_prompt_enforces_the_living_instrument_bar():
     assert "independent of auto-sweep" in heal_prompt
 
 
+def test_first_draft_prompt_covers_every_observed_public_failure_fixture():
+    prompt = (ROOT / "server" / "prompts" / "generate_module.md").read_text(
+        encoding="utf-8"
+    )
+    fixtures = json.loads(
+        (ROOT / "tests" / "fixtures" / "public_generation_prompt_contract.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert "FIRST-DRAFT ACCEPTANCE CONTRACT" in prompt
+    for fixture_group in fixtures.values():
+        for fixture in fixture_group:
+            for term in fixture["required_terms"]:
+                assert term in prompt, fixture["id"]
+
+
+def test_understand_prompt_is_compact_but_keeps_generation_inputs_and_safety():
+    prompt = (ROOT / "server" / "prompts" / "understand.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert len(prompt.split()) < 600
+    for requirement in (
+        "Never echo unsafe input",
+        "actor",
+        "action",
+        "tracking_signature",
+        "tracking_output",
+        "primary_parameter",
+        "module_spec.outputs",
+        "checks",
+        "misconception",
+        "builder_reference_contract",
+    ):
+        assert requirement in prompt
+
+
 def test_qa_contract_contains_a_closed_visual_richness_review():
     from server.schemas import load_schema, validate_document
 

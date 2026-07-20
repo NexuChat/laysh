@@ -149,6 +149,12 @@ class MeasuredBackend(CodexBackend):
         }
         return result
 
+    async def repair_understanding(self, *args: Any, **kwargs: Any) -> StageExecution:
+        return await self._timed(
+            "understand_retry",
+            lambda: CodexBackend.repair_understanding(self, *args, **kwargs),
+        )
+
     async def generate(self, *args: Any, **kwargs: Any) -> StageExecution:
         result = await self._timed(
             "generate", lambda: CodexBackend.generate(self, *args, **kwargs)
@@ -240,6 +246,7 @@ async def _run_case(
         backend,
         public_job_timeout_seconds=settings.public_job_timeout_seconds,
         evidence_job_timeout_seconds=settings.evidence_job_timeout_seconds,
+        public_heal_cycle_reserve_seconds=settings.public_heal_cycle_reserve_seconds,
         browser_verifier=browser,
         cache=None,
         max_concurrent_jobs=1,

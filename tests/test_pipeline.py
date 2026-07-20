@@ -687,6 +687,33 @@ async def test_public_heal_timeout_preserves_answer_without_a_second_attempt():
 
 
 @pytest.mark.asyncio
+async def test_public_failure_skips_heal_when_measured_cycle_cannot_fit():
+    import time
+
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend
+    from server.jobs import JobManager
+
+    backend = MockCodexBackend()
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=180,
+        public_heal_cycle_reserve_seconds=70,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+    )
+    record = manager.start("broken first draft", "ar")
+    record.started_at = time.monotonic() - 111
+    await record.task
+
+    assert record.status == "answer_only"
+    assert record.answer is not None
+    assert record.fallback is not None
+    assert record.fallback.reason_code == "insufficient_heal_budget"
+    assert backend.heal_calls == 0
+    assert "healing" not in record.state_history
+
+
+@pytest.mark.asyncio
 async def test_pipeline_cancellation_propagates():
     from server.pipeline import PipelineCancelled, cancellable_sleep
 

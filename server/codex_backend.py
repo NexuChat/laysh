@@ -56,27 +56,16 @@ class CodexBackend:
             "evidence_fixture_id": selected.evidence_fixture_id,
         }
 
-    async def understand(
+    async def _execute_understanding_prompt(
         self,
-        question: str,
-        locale: str | None,
-        *,
-        runtime_context: RuntimeContext | None = None,
+        prompt: str,
+        selected_context: RuntimeContext,
     ) -> StageExecution:
-        selected_context = runtime_context or RuntimeContext()
         model = (
             self.settings.understand_model
             if selected_context.public
             else self.settings.evidence_understand_model
         )
-        input_payload: dict[str, Any] = {"question": question, "locale": locale}
-        if not selected_context.public and selected_context.evidence_fixture_id:
-            from server.goldens import load_golden_fixtures
-
-            fixture = load_golden_fixtures().get(selected_context.evidence_fixture_id)
-            if fixture is not None:
-                input_payload["builder_reference_contract"] = fixture["review_contract"]
-        prompt = self._render_prompt("understand.md", input_payload)
         policy = self._execution_policy(selected_context)
         started = time.monotonic()
         try:
@@ -117,6 +106,47 @@ class CodexBackend:
             elapsed_ms=max(result.elapsed_ms, int((time.monotonic() - started) * 1000)),
             attempted_models=(model, fallback),
             prior_failure_codes=(failure_code,),
+        )
+
+    async def understand(
+        self,
+        question: str,
+        locale: str | None,
+        *,
+        runtime_context: RuntimeContext | None = None,
+    ) -> StageExecution:
+        selected_context = runtime_context or RuntimeContext()
+        input_payload: dict[str, Any] = {"question": question, "locale": locale}
+        if not selected_context.public and selected_context.evidence_fixture_id:
+            from server.goldens import load_golden_fixtures
+
+            fixture = load_golden_fixtures().get(selected_context.evidence_fixture_id)
+            if fixture is not None:
+                input_payload["builder_reference_contract"] = fixture["review_contract"]
+        return await self._execute_understanding_prompt(
+            self._render_prompt("understand.md", input_payload),
+            selected_context,
+        )
+
+    async def repair_understanding(
+        self,
+        candidate: dict[str, Any],
+        failures: list[dict[str, Any]],
+        locale: str | None,
+        *,
+        runtime_context: RuntimeContext | None = None,
+    ) -> StageExecution:
+        selected_context = runtime_context or RuntimeContext()
+        return await self._execute_understanding_prompt(
+            self._render_prompt(
+                "repair_understanding.md",
+                {
+                    "locale": locale,
+                    "candidate": candidate,
+                    "exact_contract_failures": failures,
+                },
+            ),
+            selected_context,
         )
 
     async def generate(
@@ -523,6 +553,18 @@ class MockCodexBackend:
             return _unsafe(locale or "ar")
         if scenario == "non_simulatable":
             return _non_simulatable(locale or "ar")
+        return deepcopy(_success_understanding(locale or "ar"))
+
+    async def repair_understanding(
+        self,
+        candidate: dict[str, Any],
+        failures: list[dict[str, Any]],
+        locale: str | None,
+        *,
+        runtime_context: RuntimeContext | None = None,
+    ) -> dict[str, Any]:
+        del candidate, failures, runtime_context
+        self.understand_calls += 1
         return deepcopy(_success_understanding(locale or "ar"))
 
     async def generate(

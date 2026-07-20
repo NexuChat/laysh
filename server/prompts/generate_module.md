@@ -1,51 +1,55 @@
 # Laysh module generation stage
 
-Return closed JSON only; no tools. Assign JavaScript once to
-`window.LayshSimulation`; no Markdown, full HTML, CSS, or shell UI.
-
-Export exactly `version`, `init`, `setParameter`, `test`, `resize`, `destroy`.
+Return JSON; no tools. Assign once to `window.LayshSimulation`; no Markdown, full HTML/CSS.
+Export exactly `version`, `init`, `setParameter`, `test`, `resize`, `destroy`;
 `version` must be the number `1`.
+
 `init(options)` receives `canvas`, `context`, `width`, `height`, `locale`, `reducedMotion`,
-`emitFrame`, and `registerOverlayRect`; capture them. Do not rename `context` to `ctx`; draw now.
-`setParameter(name, value, timeSeconds)` redraws synchronously. `timeSeconds` is the shell-owned
-PHENOMENON clock: it advances while auto-sweep is paused or the slider held, and freezes only for
-`reducedMotion`. Default it to zero; never create a clock. Both draw paths call
-`emitFrame`. `test(inputs)` is pure and returns exactly the declared finite outputs.
-Implement and mentally check every supplied fixture in `test(inputs)` before drawing anything.
+`emitFrame`, and `registerOverlayRect`; capture, draw, emit. Do not rename `context` to `ctx`.
+`setParameter(name,value,timeSeconds)` redraws and emits synchronously. `timeSeconds` defaults
+to zero and is the shell-owned PHENOMENON clock: it advances while auto-sweep is paused or the slider
+held, freezing only for reduced motion. `test(inputs)` is pure and returns exactly declared outputs.
 
-Use only canvas/context, Math, Number, arrays, and objects. No document, network, storage, navigation,
-dynamic code, workers, timers, sensors, audio, clipboard, console, URLs, or animation API.
-Target 12–20 KiB; 40 KiB is the hard cap. Fixed inputs/spec are immutable.
+Use only canvas/context, Math, Number, arrays, objects. No document/network/storage/navigation,
+dynamic code/workers/timers/sensors/audio/clipboard/console/URLs/animation API. Modules
+must not own animation clocks, timers, or `requestAnimationFrame`. Target 12–20 KiB; hard cap 40 KiB.
 
-Pass measurable gates before visual polish:
+## FIRST-DRAFT ACCEPTANCE CONTRACT
 
-- Draw the actor with its distinct solid RGB tracking signature and stable centroid; never reuse it.
-  Make intrinsic motion legible without a faster fake sweep. Rates obey `T = 2π√(L/g)`, `v = λf`,
-  and tested flow; state an honest visual time scale when needed.
-- Adapter: `rotates`/`orbits`/`phases` use the primary angle; `oscillates`/`propagates` use the
-  tracking period; `flows` uses its rate. `responds` binds actor position/size/extent to
-  `tracking_output`; when held, the held state stays stable without fake motion. `floats_sinks`
-  preserves equilibrium.
-- SINGLE-SOURCE RULE: angle, lit/submerged fraction, phase, and flow speed use the same model function
-  as `test(inputs)` and fixtures; no parallel painter formula.
-- Keep two motions distinct: parameter changes come only from the advancing value; intrinsic action
-  (`oscillates`, `propagates`, `rotates`, `orbits`/`phases`, `flows`) comes from `timeSeconds` and MUST
-  continue at a held value. Shimmer fails. Modules must not own animation clocks, timers, or
-  `requestAnimationFrame`.
-  One-second frames change 1.0% of the central 60% and clear the whole-canvas freeze floor.
-  Same-value redraws do not invent physics. Reduced motion freezes decoration.
-- The subject agrees with the first output across the full primary-parameter sweep, with no visual cliff;
-  curved illumination stays continuous across 180°.
-- Create layered scene depth with at least three visible depth layers: gradient, bodies, texture.
-- Keep physical light physically consistent; never draw light through an opaque body. Show its subtle shadow cone.
-- Add parameter-linked reactive feedback (eased geometry, trail, ripples, or particles); parameter
-  changes alter more than text.
-- At 420px or wider, readout chips use at most 22% height and never overlap the central 20%-80% subject. Call
-  `registerOverlayRect({x,y,width,height,role})`; role is `essential-state` or `readout`. Scale text
-  from canvas size without exceeding the band.
-- Below 420px, draw at most ONE edge `essential-state` label; no numeric or duplicate state.
-  Use smooth fills or gradients, never golf-ball dot patterns. Spheres need a curved terminator.
-- Dual views: `منظر علوي` / `كما يبدو من الأرض`.
+Every item is measured; pass on draft one.
+
+1. Model: implement every supplied fixture. Use exactly one model function per output; painter,
+`test`, geometry, feedback, and readout share it. This SINGLE-SOURCE RULE forbids tuned painter math.
+Across the full primary-parameter sweep a visible property follows output one with absolute rank correlation
+≥ 0.65 and no false visual cliff or jump.
+
+2. Actor: draw the declared actor—not label/glow/shadow/decoration—with its distinct solid RGB tracking signature.
+Keep ≥8 signed pixels visible in ≥7 samples, a measurable centroid/extent, and never reuse
+the RGB. Use only the declared action adapter:
+`rotates|oscillates|orbits|propagates|flows|floats_sinks|phases|responds`.
+
+3. Action: `responds` is the honest static-response action. Bind position/size/extent to
+`tracking_output`: correlation ≥0.70, span ≥6 px or 15% pixel count; the held state stays stable.
+Intrinsic actions use `timeSeconds`, independent of the parameter sweep, and continue at a held value:
+span is at least 6 px (flows 2 px/0.08 s); oscillation uses its period, propagation shifts ¼ cycle at period/4,
+and flow ratios match tested rates. The advancing value changes parameter state only. Shimmer/faster
+sweep fail. One-second frames change 1.0% of the central 60% and clear freeze.
+
+4. Mobile: at width ≤420 px draw at most one edge `essential-state` label, no numeric/duplicate state.
+Call `registerOverlayRect` with exact bounds; height ≤22%, edge anchored, zero overlap with central
+20%–80% subject or actor. Shell owns other readouts. Wide readout chips obey the same safe band.
+
+5. Scene: layered scene depth has at least three visible depth layers and reactive feedback beyond
+text. Keep physical light physically consistent: never draw light through an opaque body; use a
+subtle shadow cone, curved terminator, and smooth fills or gradients, never golf-ball dot patterns. Dual-view
+labels when needed: `منظر علوي` / `كما يبدو من الأرض`.
+
+Zero-heal examples:
+- lever `responds`: required force moves the signed actor >6 px, stable when held; one mobile label.
+- magnet `responds`: force indicator extent follows distance, stable when held; one mobile label.
+
+Avoid recorded failures: rainbow labels; seasons sweep/luminance; evaporation static surface plus
+particles; constant output; tuned painter; disappearing actor; binary threshold on smooth output.
 
 UNDERSTANDING_JSON:
 @@INPUT_JSON@@

@@ -94,6 +94,7 @@ def test_result_and_every_designed_failure_have_arabic_recovery_copy(client):
         "not_simulatable",
         "qa_inconclusive",
         "verification_exhausted",
+        "insufficient_heal_budget",
         "simulation_runtime_error",
         "backend_unavailable",
         "cancelled",
