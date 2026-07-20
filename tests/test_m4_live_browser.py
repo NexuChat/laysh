@@ -20,6 +20,9 @@ def free_port() -> int:
 @pytest.mark.browser
 @pytest.mark.skipif(os.getenv("LAYSH_RUN_LIVE_G4") != "1", reason="opt-in live G4 job")
 def test_one_real_arabic_result_reaches_mobile_and_desktop_ui():
+    assert os.getenv("LAYSH_CACHE_KEY_SECRET"), (
+        "LAYSH_CACHE_KEY_SECRET is required for durable live-test lessons"
+    )
     port = free_port()
     base_url = f"http://127.0.0.1:{port}"
     screenshots = ROOT / "out" / "evidence" / "screens"
@@ -28,7 +31,6 @@ def test_one_real_arabic_result_reaches_mobile_and_desktop_ui():
         "LAYSH_CODEX_BACKEND": "codex",
         "LAYSH_RECORD_RUNTIME": "0",
         "LAYSH_PUBLIC_JOB_TIMEOUT_SECONDS": "180",
-        "LAYSH_CACHE_KEY_SECRET": "",
         "LAYSH_UNDERSTAND_MODEL": "gpt-5.6-luna",
         "LAYSH_GENERATE_MODEL": "gpt-5.6-sol",
         "LAYSH_HEAL_MODEL": "gpt-5.6-sol",

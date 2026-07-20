@@ -22,6 +22,8 @@ class Settings:
     public_qa_timeout_seconds: float = 45.0
     evidence_qa_timeout_seconds: float = 120.0
     cache_key_secret: str = ""
+    live_cache_root: str = ""
+    max_live_lessons: int = 100
     rate_limit_key_secret: str = ""
     record_runtime: bool = False
     ip_generations_per_hour: int = 3
@@ -54,6 +56,8 @@ class Settings:
             raise ValueError("generation quota values must be positive")
         if self.max_concurrent_jobs <= 0 or self.max_queued_jobs < 0:
             raise ValueError("capacity values must allow at least one running job")
+        if self.max_live_lessons <= 0:
+            raise ValueError("live lesson capacity must be positive")
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -107,6 +111,10 @@ class Settings:
                 )
             ),
             cache_key_secret=os.getenv("LAYSH_CACHE_KEY_SECRET", defaults.cache_key_secret),
+            live_cache_root=os.getenv("LAYSH_LIVE_CACHE_ROOT", defaults.live_cache_root),
+            max_live_lessons=int(
+                os.getenv("LAYSH_MAX_LIVE_LESSONS", str(defaults.max_live_lessons))
+            ),
             rate_limit_key_secret=os.getenv(
                 "LAYSH_RATE_LIMIT_KEY_SECRET", defaults.rate_limit_key_secret
             ),

@@ -62,17 +62,25 @@ def create_app(
         )
     else:
         selected_backend = MockCodexBackend()
+    if isinstance(selected_backend, CodexBackend) and not settings.cache_key_secret:
+        raise ValueError("LAYSH_CACHE_KEY_SECRET is required for the live Codex backend")
     public_timeout = (
         settings.public_job_timeout_seconds if job_timeout_seconds is None else job_timeout_seconds
     )
     app = FastAPI(title="Laysh", version="1.1.0")
     app.mount("/static", RevalidatingStaticFiles(directory=ROOT / "web"), name="static")
+    live_cache_root = (
+        Path(settings.live_cache_root)
+        if settings.live_cache_root
+        else ROOT / "out" / "cache" / "live"
+    )
     verified_cache = (
         VerifiedCache(
-            root=ROOT / "out" / "cache" / "live",
+            root=live_cache_root,
             golden_root=GOLDEN_ROOT,
             secret=settings.cache_key_secret.encode(),
             contract_version="1.0",
+            max_live_entries=settings.max_live_lessons,
         )
         if settings.cache_key_secret
         else None
@@ -96,6 +104,7 @@ def create_app(
         per_ip_per_hour=settings.ip_generations_per_hour,
         global_per_day=settings.global_generations_per_day,
     )
+    app.state.verified_cache = verified_cache
 
     def index_response() -> HTMLResponse:
         content = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
@@ -186,7 +195,14 @@ def create_app(
         question = unicodedata.normalize("NFKC", payload.question).strip()
         if not question:
             raise HTTPException(status_code=422, detail="question must not be blank")
-        if not app.state.jobs.has_capacity():
+        cached = (
+            verified_cache.lookup_exact(question=question, locale=payload.locale)
+            if verified_cache is not None
+            else None
+        )
+        if cached is not None and cached.answer is not None:
+            record = app.state.jobs.start_cached(cached)
+        elif not app.state.jobs.has_capacity():
             record = app.state.jobs.start_capacity_fallback(payload.locale, "queue_full")
         else:
             client_ip = request.client.host if request.client else "unknown"
@@ -262,35 +278,56 @@ def create_app(
                     "tier": "A",
                 }
             )
+        if verified_cache is not None:
+            for entry in verified_cache.list_live_entries():
+                lessons.append(
+                    {
+                        "id": entry.cache_id,
+                        "title": entry.title,
+                        "domain": entry.domain,
+                        "summary": entry.summary,
+                        "instant": True,
+                        "tier": entry.tier,
+                    }
+                )
         return {
             "contract_version": "1.0",
             "lessons": lessons,
         }
 
-    @app.get("/api/gallery/{golden_id}")
-    async def gallery_lesson(golden_id: str) -> dict:
-        document = load_pinned_golden(golden_id)
-        if document is None:
-            raise HTTPException(status_code=404, detail="golden lesson not found")
-        sim_id = document["cache_id"]
-        app.state.jobs.artifacts[sim_id] = document["artifact"]
+    @app.get("/api/gallery/{lesson_id}")
+    async def gallery_lesson(lesson_id: str) -> dict:
+        document = load_pinned_golden(lesson_id)
+        if document is not None:
+            sim_id = document["cache_id"]
+            app.state.jobs.artifacts[sim_id] = document["artifact"]
+            return {
+                "contract_version": "1.0",
+                "id": lesson_id,
+                "answer": document["answer"],
+                "simulation": {
+                    "sim_id": sim_id,
+                    "title": document["title"],
+                    "lang": document["locale"],
+                    "direction": document["direction"],
+                    "artifact_url": f"/api/sims/{sim_id}/download",
+                    "share_url": f"/sims/{sim_id}",
+                    "tier": "A",
+                    "effective_model": "verified/golden",
+                    "elapsed_ms": 0,
+                    "check_count": document["receipt"]["check_count"],
+                    "heal_count": document["evidence"].get("heal_count", 0),
+                },
+            }
+        resolved = resolve_shareable(lesson_id)
+        if resolved is None or resolved[1].answer is None:
+            raise HTTPException(status_code=404, detail="gallery lesson not found")
+        shared = resolved[1]
         return {
             "contract_version": "1.0",
-            "id": golden_id,
-            "answer": document["answer"],
-            "simulation": {
-                "sim_id": sim_id,
-                "title": document["title"],
-                "lang": document["locale"],
-                "direction": document["direction"],
-                "artifact_url": f"/api/sims/{sim_id}/download",
-                "share_url": f"/sims/{sim_id}",
-                "tier": "A",
-                "effective_model": "verified/golden",
-                "elapsed_ms": 0,
-                "check_count": document["receipt"]["check_count"],
-                "heal_count": document["evidence"].get("heal_count", 0),
-            },
+            "id": lesson_id,
+            "answer": shared.answer.model_dump(mode="json"),
+            "simulation": shared.simulation.model_dump(mode="json"),
         }
 
     @app.get("/api/sims/{sim_id}", response_model=SharedSimulation)

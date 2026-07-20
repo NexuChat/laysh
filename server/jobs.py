@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from server.browser_verify import BrowserVerificationResult, verify_artifact_in_browser
-from server.cache import VerifiedCache
+from server.cache import CacheEntry, VerifiedCache
 from server.schemas import (
     AnswerPayload,
     FallbackResult,
@@ -31,7 +31,7 @@ TERMINAL_STATES = frozenset(
 
 ALLOWED_TRANSITIONS = {
     "queued": {"filtering", "cancelled", "timed_out", "failed"},
-    "filtering": {"understanding", "cancelled", "timed_out", "failed"},
+    "filtering": {"understanding", "cache_lookup", "cancelled", "timed_out", "failed"},
     "understanding": {"answered", "rejected", "cancelled", "timed_out", "failed"},
     "answered": {"cache_lookup", "answer_only", "cancelled", "timed_out", "failed"},
     "cache_lookup": {"generating", "browser_check", "cancelled", "timed_out", "failed"},
@@ -164,6 +164,56 @@ class JobManager:
         )
         self.records[job_id] = record
         record.task = asyncio.create_task(self._run(record))
+        return record
+
+    def start_cached(self, entry: CacheEntry) -> JobRecord:
+        if entry.answer is None:
+            raise ValueError("a cached replay requires its verified answer")
+        record = JobRecord(
+            job_id=f"job_{secrets.token_hex(8)}",
+            question=None,
+            locale=entry.locale,
+            status="complete",
+            state_history=["queued", "filtering", "cache_lookup", "browser_check", "complete"],
+            answer=AnswerPayload.model_validate(entry.answer),
+            simulation=SimulationMetadata(
+                sim_id=entry.cache_id,
+                title=entry.title,
+                lang=entry.locale,
+                direction=entry.direction,
+                artifact_url=f"/api/sims/{entry.cache_id}/download",
+                share_url=f"/sims/{entry.cache_id}",
+                tier=entry.tier,
+                effective_model="verified/cache",
+                elapsed_ms=0,
+                check_count=entry.receipt.check_count,
+                heal_count=0,
+            ),
+            artifact=entry.artifact,
+        )
+        self.records[record.job_id] = record
+        self.artifacts[entry.cache_id] = entry.artifact
+        self.emit(record, "answer", record.answer.model_dump(mode="json"))
+        self.emit(
+            record,
+            "verification",
+            {
+                "passed": True,
+                "check_count": entry.receipt.check_count,
+                "heal_count": 0,
+                "evidence": ["verified_cache", "artifact_hash", "browser_readiness"],
+            },
+        )
+        self.emit(
+            record,
+            "result",
+            {
+                "result_url": f"/api/jobs/{record.job_id}",
+                "sim_id": entry.cache_id,
+                "title": entry.title,
+                "tier": entry.tier,
+            },
+        )
         return record
 
     def start_evidence(

@@ -49,6 +49,47 @@ def _reject(manager: Any, record: Any, reason_code: str, suggestions: list[str])
     raise PipelineCancelled
 
 
+def _complete_from_cache(manager: Any, record: Any, cached: Any) -> None:
+    manager.transition(record, "browser_check", "استخدام إيصال تحقق مخزّن")
+    manager.emit(
+        record,
+        "verification",
+        {
+            "passed": True,
+            "check_count": cached.receipt.check_count,
+            "heal_count": 0,
+            "evidence": ["verified_cache", "artifact_hash", "browser_readiness"],
+        },
+    )
+    sim_id = cached.cache_id
+    manager.artifacts[sim_id] = cached.artifact
+    record.artifact = cached.artifact
+    record.simulation = SimulationMetadata(
+        sim_id=sim_id,
+        title=cached.title,
+        lang=cached.locale,
+        direction=cached.direction,
+        artifact_url=f"/api/sims/{sim_id}/download",
+        share_url=f"/sims/{sim_id}",
+        tier=cached.tier,
+        effective_model="verified/cache",
+        elapsed_ms=manager.elapsed_ms(record),
+        check_count=cached.receipt.check_count,
+        heal_count=0,
+    )
+    manager.emit(
+        record,
+        "result",
+        {
+            "result_url": f"/api/jobs/{record.job_id}",
+            "sim_id": sim_id,
+            "title": cached.title,
+            "tier": cached.tier,
+        },
+    )
+    manager.transition(record, "complete", "verified_cache_result")
+
+
 async def run_pipeline(manager: Any, record: Any) -> None:
     question = record.question or ""
     scenario_resolver = getattr(manager.backend, "scenario_for", None)
@@ -99,8 +140,17 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 }
             )
 
+    cache = manager.cache
     manager.transition(record, "filtering", "فحص أولي محدود", emit_event=False)
     await asyncio.sleep(0)
+    if cache is not None:
+        exact = cache.lookup_exact(question=question, locale=record.locale)
+        if exact is not None and exact.answer is not None:
+            record.answer = AnswerPayload.model_validate(exact.answer)
+            manager.emit(record, "answer", record.answer.model_dump(mode="json"))
+            manager.transition(record, "cache_lookup", "فحص النتائج الموثقة")
+            _complete_from_cache(manager, record, exact)
+            return
     manager.transition(
         record,
         "understanding",
@@ -190,7 +240,6 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         return
 
     manager.transition(record, "cache_lookup", "فحص النتائج الموثقة")
-    cache = manager.cache
     if cache is not None:
         cached = cache.lookup(
             question=question,
@@ -199,44 +248,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             canonical_intent=understanding["canonical_intent"],
         )
         if cached is not None:
-            manager.transition(record, "browser_check", "استخدام إيصال تحقق مخزّن")
-            manager.emit(
-                record,
-                "verification",
-                {
-                    "passed": True,
-                    "check_count": cached.receipt.check_count,
-                    "heal_count": 0,
-                    "evidence": ["verified_cache", "artifact_hash", "browser_readiness"],
-                },
-            )
-            sim_id = cached.cache_id
-            manager.artifacts[sim_id] = cached.artifact
-            record.artifact = cached.artifact
-            record.simulation = SimulationMetadata(
-                sim_id=sim_id,
-                title=cached.title,
-                lang=cached.locale,
-                direction=cached.direction,
-                artifact_url=f"/api/sims/{sim_id}/download",
-                share_url=f"/sims/{sim_id}",
-                tier=cached.tier,
-                effective_model="verified/cache",
-                elapsed_ms=manager.elapsed_ms(record),
-                check_count=cached.receipt.check_count,
-                heal_count=0,
-            )
-            manager.emit(
-                record,
-                "result",
-                {
-                    "result_url": f"/api/jobs/{record.job_id}",
-                    "sim_id": sim_id,
-                    "title": cached.title,
-                    "tier": cached.tier,
-                },
-            )
-            manager.transition(record, "complete", "verified_cache_result")
+            _complete_from_cache(manager, record, cached)
             return
     manager.transition(record, "generating", "بناء وحدة المحاكاة")
     generated = await manager.backend.generate(
@@ -501,6 +513,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 canonical_intent=understanding["canonical_intent"],
                 artifact=artifact,
                 title=understanding["title"],
+                summary=understanding["tldr"],
                 direction="rtl" if understanding["lang"] == "ar" else "ltr",
                 tier="B",
                 answer=record.answer.model_dump(mode="json") if record.answer else None,

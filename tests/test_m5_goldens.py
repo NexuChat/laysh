@@ -264,11 +264,11 @@ def test_committed_gallery_serves_six_bilingual_tier_a_lessons_instantly(client)
         assert "connect-src 'none'" in artifact.text
 
 
-def test_gallery_controller_enables_only_server_confirmed_pinned_lessons(client):
+def test_gallery_controller_enables_only_server_confirmed_verified_lessons(client):
     source = client.get("/static/app.js").text
 
     assert 'fetch("/api/gallery?locale=ar"' in source
-    assert "/api/gallery/${encodeURIComponent(goldenId)}" in source
+    assert "/api/gallery/${encodeURIComponent(lessonId)}" in source
     assert 'badge.textContent = "فوري"' in source
     assert "launch.disabled = false" in source
     assert "verified/golden" not in client.get("/").text

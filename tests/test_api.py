@@ -113,11 +113,114 @@ def test_gallery_contract_is_available_offline(client):
     assert isinstance(response.json()["lessons"], list)
 
 
-def test_codex_backend_is_selected_only_by_explicit_configuration(monkeypatch):
+def test_gallery_includes_durable_verified_live_lesson_without_raw_question(
+    tmp_path, monkeypatch, backend
+):
+    import json
+    from copy import deepcopy
+
+    from fastapi.testclient import TestClient
+
+    from server.app import create_app
+    from server.browser_verify import BrowserVerificationResult
+
+    raw_question = "PRIVATE-GALLERY-CANARY explain a changing shadow"
+    live_root = tmp_path / "cache" / "live"
+    monkeypatch.setenv("LAYSH_CACHE_KEY_SECRET", "test-cache-secret")
+    monkeypatch.setenv("LAYSH_LIVE_CACHE_ROOT", str(live_root))
+
+    original_understand = backend.understand
+
+    async def distinct_understanding(*args, **kwargs):
+        understanding = deepcopy(await original_understand(*args, **kwargs))
+        understanding["domain"] = "earth_science"
+        understanding["canonical_intent"] = "shadow_motion"
+        understanding["title"] = "حركة الظلال"
+        understanding["tldr"] = "يتغير اتجاه الظل عندما يتغير اتجاه ضوء الشمس الظاهري."
+        return understanding
+
+    backend.understand = distinct_understanding
+    with TestClient(
+        create_app(
+            backend=backend,
+            job_timeout_seconds=2,
+            browser_verifier=lambda _: BrowserVerificationResult.passing(),
+        )
+    ) as first_client:
+        job_id = ask(first_client, raw_question)
+        result = wait_for_terminal(first_client, job_id)
+        live_id = result["simulation"]["sim_id"]
+
+    with TestClient(
+        create_app(
+            backend=backend,
+            job_timeout_seconds=2,
+            browser_verifier=lambda _: BrowserVerificationResult.passing(),
+        )
+    ) as restarted_client:
+        calls_before_replay = (
+            backend.understand_calls,
+            backend.generate_calls,
+            backend.heal_calls,
+            backend.qa_calls,
+        )
+        replay_job = ask(restarted_client, raw_question)
+        replay_result = wait_for_terminal(restarted_client, replay_job)
+        gallery_response = restarted_client.get("/api/gallery?locale=ar")
+        lesson_response = restarted_client.get(f"/api/gallery/{live_id}")
+        shared_response = restarted_client.get(f"/api/sims/{live_id}")
+        share_page = restarted_client.get(f"/sims/{live_id}")
+
+    gallery = gallery_response.json()
+    public_surface = json.dumps(
+        {
+            "gallery": gallery,
+            "lesson": lesson_response.json(),
+            "shared": shared_response.json(),
+            "share_page": share_page.text,
+        },
+        ensure_ascii=False,
+    )
+    live_lesson = next(lesson for lesson in gallery["lessons"] if lesson["id"] == live_id)
+
+    assert [lesson["tier"] for lesson in gallery["lessons"][:6]] == ["A"] * 6
+    assert live_lesson == {
+        "id": live_id,
+        "title": "حركة الظلال",
+        "domain": "earth_science",
+        "summary": "يتغير اتجاه الظل عندما يتغير اتجاه ضوء الشمس الظاهري.",
+        "instant": True,
+        "tier": "B",
+    }
+    assert (
+        lesson_response.status_code
+        == shared_response.status_code
+        == share_page.status_code
+        == 200
+    )
+    assert lesson_response.json()["answer"] == result["answer"]
+    assert lesson_response.json()["simulation"]["share_url"] == f"/sims/{live_id}"
+    assert replay_result["status"] == "complete"
+    assert replay_result["simulation"]["sim_id"] == live_id
+    assert (
+        backend.understand_calls,
+        backend.generate_calls,
+        backend.heal_calls,
+        backend.qa_calls,
+    ) == calls_before_replay
+    assert raw_question not in public_surface
+    assert "PRIVATE-GALLERY-CANARY" not in next(live_root.glob("*.json")).read_text(
+        encoding="utf-8"
+    )
+
+
+def test_codex_backend_is_selected_only_by_explicit_configuration(monkeypatch, tmp_path):
     from server.app import create_app
     from server.codex_backend import CodexBackend
 
     monkeypatch.setenv("LAYSH_CODEX_BACKEND", "codex")
+    monkeypatch.setenv("LAYSH_CACHE_KEY_SECRET", "test-only-cache-key")
+    monkeypatch.setenv("LAYSH_LIVE_CACHE_ROOT", str(tmp_path / "live"))
     configured = create_app()
     assert isinstance(configured.state.jobs.backend, CodexBackend)
     assert configured.state.jobs.backend.settings.understand_model == "gpt-5.6-luna"

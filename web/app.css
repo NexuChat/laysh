@@ -140,6 +140,7 @@ textarea[aria-invalid="true"] { border-color: var(--danger); }
 .gallery-icon { position: relative; z-index: 1; display: grid; place-items: center; width: 2.7rem; aspect-ratio: 1; border-radius: 50%; background: rgb(88 183 255 / 10%); color: var(--moon); font-family: serif; font-size: 1.7rem; box-shadow: 0 0 24px rgb(88 183 255 / 14%); }
 .card-domain { margin: .7rem 0 .25rem; color: #92abc0; font-size: .8rem; }
 .gallery-card h3 { position: relative; z-index: 1; margin-block-end: 1rem; font-family: "Laysh FreeSans", sans-serif; font-size: 1.2rem; line-height: 1.55; }
+.card-summary { position: relative; z-index: 1; margin-block: -.5rem 1rem; color: var(--muted); line-height: 1.65; }
 .coming-badge, .instant-badge { margin-block-start: auto; padding: .28rem .65rem; border-radius: 999px; font-size: .74rem; }
 .coming-badge { border: 1px dashed rgb(246 169 74 / 50%); background: rgb(246 169 74 / 9%); color: #ffd18e; }
 .instant-badge { border: 1px solid rgb(101 223 177 / 55%); background: rgb(101 223 177 / 10%); color: #91f0c9; font-weight: 700; box-shadow: 0 0 18px rgb(101 223 177 / 9%); }

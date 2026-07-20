@@ -59,6 +59,81 @@ def test_exact_and_semantic_cache_without_raw_question(tmp_path):
     assert not list((tmp_path / "live").glob("*.tmp"))
 
 
+def test_verified_live_entry_reloads_from_disk_after_process_restart(tmp_path):
+    from server.cache import VerifiedCache
+
+    roots = {
+        "root": tmp_path / "cache" / "live",
+        "golden_root": tmp_path / "cache" / "golden",
+        "secret": b"test-cache-secret",
+        "contract_version": "1.0",
+    }
+    first_process = VerifiedCache(**roots)
+    written = first_process.write_verified(
+        question="PRIVATE-RESTART-CANARY why do shadows move?",
+        locale="en",
+        domain="earth_science",
+        canonical_intent="shadow_motion",
+        artifact="<!doctype html><title>verified shadow lesson</title>",
+        title="Why shadows move",
+        summary="Earth's rotation changes the Sun's apparent position in the sky.",
+        direction="ltr",
+        tier="B",
+        answer={"tldr": "Shadows move as the apparent direction of sunlight changes."},
+        receipt=verified_receipt(),
+    )
+
+    second_process = VerifiedCache(**roots)
+    reloaded = second_process.lookup_exact(
+        question="PRIVATE-RESTART-CANARY why do shadows move?",
+        locale="en",
+    )
+
+    assert reloaded == written
+    assert second_process.inspect(written.cache_id) == written
+    persisted = (roots["root"] / f"{written.cache_id}.json").read_text(encoding="utf-8")
+    assert "PRIVATE-RESTART-CANARY" not in persisted
+
+
+def test_live_cache_evicts_least_recently_used_entry_at_count_limit(tmp_path):
+    from server.cache import VerifiedCache
+
+    cache = VerifiedCache(
+        root=tmp_path / "live",
+        golden_root=tmp_path / "golden",
+        secret=b"test-cache-secret",
+        contract_version="1.0",
+        max_live_entries=2,
+    )
+
+    def write(name: str):
+        return cache.write_verified(
+            question=f"question {name}",
+            locale="en",
+            domain="physics",
+            canonical_intent=f"intent_{name}",
+            artifact=f"<!doctype html><title>{name}</title>",
+            title=f"Lesson {name}",
+            summary=f"Safe summary {name}",
+            direction="ltr",
+            tier="B",
+            answer={"tldr": f"Safe answer {name}"},
+            receipt=verified_receipt(),
+        )
+
+    oldest = write("oldest")
+    least_recent = write("least_recent")
+    assert cache.lookup_exact(question="question oldest", locale="en") == oldest
+    newest = write("newest")
+
+    assert cache.inspect(least_recent.cache_id) is None
+    assert [entry.cache_id for entry in cache.list_live_entries()] == [
+        newest.cache_id,
+        oldest.cache_id,
+    ]
+    assert len(list((tmp_path / "live").glob("*.json"))) == 2
+
+
 @pytest.mark.parametrize(
     "receipt,tier",
     [

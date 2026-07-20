@@ -137,6 +137,23 @@ terminal and every evidence build retains its 600-second budget.
 These controls protect a competition demo, not a high-scale production deployment. The
 limits are in-memory for P0 and reset on service restart.
 
+## Verified lesson library and retention
+
+Every newly generated Tier B lesson enters the public library only after deterministic and
+browser verification succeed. Runtime lessons persist as atomic JSON documents in
+`out/cache/live/` by default; `LAYSH_LIVE_CACHE_ROOT` can point deployments at a persistent
+volume. The service reloads and hash-validates those documents at startup. The six curated
+Tier A goldens are listed first, followed by live lessons newest first, so the stable reviewed
+set never moves while recent learner-derived lessons remain easy to find.
+
+The live library retains at most 100 lessons by default (`LAYSH_MAX_LIVE_LESSONS`). On the
+next successful write, it evicts the least recently accessed live lesson until the limit is
+met; pinned goldens are never candidates. Exact repeats are served before any model call and
+do not consume generation quota. A semantic alias still uses the understanding stage to
+derive its safe canonical intent, but reuses the verified artifact without generation or
+healing. Cache files and public library responses contain only HMAC keys, derived title,
+domain and summary metadata, the answer, and the verified artifact—never the raw question.
+
 ## Safety and privacy
 
 Questions on the live path are processed by OpenAI/Codex. Do not enter personal,

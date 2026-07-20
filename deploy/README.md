@@ -16,9 +16,20 @@ systemctl --user enable --now laysh.service laysh-healthcheck.timer
 curl --fail http://127.0.0.1:8765/healthz
 ```
 
-Optional non-secret overrides go in `~/.config/laysh/service.env`. A live-cache
-HMAC secret may be injected there by the owner, but must never be committed or
-printed. The six reviewed goldens remain available even when Codex is unavailable.
+Non-secret overrides and the required live-cache HMAC secret go in
+`~/.config/laysh/service.env`. Generate the secret directly into that owner-only file, keep
+the same value across restarts and deploys, and never commit or print it later:
+
+```bash
+umask 077
+python -c 'import secrets; print("LAYSH_CACHE_KEY_SECRET=" + secrets.token_hex(32))' >> ~/.config/laysh/service.env
+```
+
+Verified live lessons persist under `%h/laysh/out/cache/live` by default. A deployment that
+replaces the checkout should set `LAYSH_LIVE_CACHE_ROOT` to a persistent writable volume and
+add that path to the unit's `ReadWritePaths`. `LAYSH_MAX_LIVE_LESSONS` defaults to 100; the
+least recently accessed live lesson is evicted first, while the six reviewed goldens are
+never evicted and remain available when Codex is unavailable.
 
 For a temporary owner-run Cloudflare quick tunnel:
 

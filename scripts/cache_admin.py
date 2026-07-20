@@ -27,7 +27,7 @@ def _summary(entry: CacheEntry) -> dict:
 def parser() -> argparse.ArgumentParser:
     value = argparse.ArgumentParser(description="Inspect the local verified Laysh cache")
     value.add_argument("--root", type=Path, default=ROOT / "out" / "cache" / "live")
-    value.add_argument("--golden-root", type=Path, default=ROOT / "cache" / "golden")
+    value.add_argument("--golden-root", type=Path, default=ROOT / "out" / "cache" / "golden")
     value.add_argument("--secret", required=True)
     value.add_argument("--contract-version", default="1.0")
     commands = value.add_subparsers(dest="command", required=True)

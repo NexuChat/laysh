@@ -39,6 +39,83 @@ def test_success_pipeline_answers_first_and_returns_playable_artifact(client, ba
     assert "https://" not in download.text
 
 
+@pytest.mark.asyncio
+async def test_second_identical_question_replays_with_zero_additional_model_calls(tmp_path):
+    from server.browser_verify import BrowserVerificationResult
+    from server.cache import VerifiedCache
+    from server.codex_backend import MockCodexBackend
+    from server.jobs import JobManager
+
+    backend = MockCodexBackend()
+    cache = VerifiedCache(
+        root=tmp_path / "live",
+        golden_root=tmp_path / "golden",
+        secret=b"test-cache-secret",
+        contract_version="1.0",
+    )
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+        cache=cache,
+    )
+
+    first = manager.start("success replay canary", "ar")
+    await first.task
+    calls_after_first = (
+        backend.understand_calls,
+        backend.generate_calls,
+        backend.heal_calls,
+        backend.qa_calls,
+    )
+    second = manager.start("success replay canary", "ar")
+    await second.task
+
+    assert first.status == second.status == "complete"
+    assert second.simulation is not None and first.simulation is not None
+    assert second.simulation.sim_id == first.simulation.sim_id
+    assert second.simulation.effective_model == "verified/cache"
+    assert (
+        backend.understand_calls,
+        backend.generate_calls,
+        backend.heal_calls,
+        backend.qa_calls,
+    ) == calls_after_first
+
+
+@pytest.mark.asyncio
+async def test_semantic_alias_reuses_verified_artifact_without_regeneration(tmp_path):
+    from server.browser_verify import BrowserVerificationResult
+    from server.cache import VerifiedCache
+    from server.codex_backend import MockCodexBackend
+    from server.jobs import JobManager
+
+    backend = MockCodexBackend()
+    cache = VerifiedCache(
+        root=tmp_path / "live",
+        golden_root=tmp_path / "golden",
+        secret=b"test-cache-secret",
+        contract_version="1.0",
+    )
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+        cache=cache,
+    )
+
+    first = manager.start("success first phrasing", "ar")
+    await first.task
+    second = manager.start("success closely related phrasing", "ar")
+    await second.task
+
+    assert first.status == second.status == "complete"
+    assert first.simulation is not None and second.simulation is not None
+    assert second.simulation.sim_id == first.simulation.sim_id
+    assert backend.understand_calls == 2
+    assert backend.generate_calls == 1
+
+
 def test_non_simulatable_is_successful_answer_only_without_generation(client, backend):
     job_id = ask(client, "not simulatable", "en")
     result = wait_for_terminal(client, job_id)

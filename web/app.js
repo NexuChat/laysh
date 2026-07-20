@@ -272,14 +272,14 @@
     displayResult(await response.json());
   }
 
-  async function loadGolden(goldenId) {
-    const response = await fetch(`/api/gallery/${encodeURIComponent(goldenId)}`, {
+  async function loadLesson(lessonId) {
+    const response = await fetch(`/api/gallery/${encodeURIComponent(lessonId)}`, {
       headers: { accept: "application/json" },
     });
-    if (!response.ok) throw new Error("golden_unavailable");
-    const golden = await response.json();
-    pinAnswer(golden.answer);
-    displayResult({ status: "complete", answer: golden.answer, simulation: golden.simulation });
+    if (!response.ok) throw new Error("lesson_unavailable");
+    const lesson = await response.json();
+    pinAnswer(lesson.answer);
+    displayResult({ status: "complete", answer: lesson.answer, simulation: lesson.simulation });
   }
 
   async function loadSharedSimulation(simId) {
@@ -317,17 +317,46 @@
       if (!response.ok) return;
       const gallery = await response.json();
       for (const lesson of gallery.lessons) {
-        const card = document.querySelector(`[data-golden-id="${lesson.id}"]`);
-        if (!card || !lesson.instant) continue;
+        if (!lesson.instant) continue;
+        let card = [...document.querySelectorAll(".gallery-card")].find(
+          (candidate) => (candidate.dataset.lessonId || candidate.dataset.goldenId) === lesson.id,
+        );
+        if (!card) {
+          card = document.createElement("article");
+          card.className = "gallery-card";
+          card.dataset.lessonId = lesson.id;
+          const icon = document.createElement("span");
+          icon.className = "gallery-icon";
+          icon.setAttribute("aria-hidden", "true");
+          icon.textContent = "✦";
+          const domain = document.createElement("p");
+          domain.className = "card-domain";
+          const title = document.createElement("h3");
+          const badge = document.createElement("span");
+          badge.className = "coming-badge";
+          const launch = document.createElement("button");
+          launch.className = "golden-launch";
+          launch.type = "button";
+          launch.textContent = "شغّل التجربة";
+          card.append(icon, domain, title, badge, launch);
+          document.querySelector(".gallery-grid").append(card);
+        }
         card.querySelector("h3").textContent = lesson.title;
         card.querySelector(".card-domain").textContent = lesson.domain;
+        let summary = card.querySelector(".card-summary");
+        if (!summary) {
+          summary = document.createElement("p");
+          summary.className = "card-summary";
+          card.querySelector("h3").after(summary);
+        }
+        summary.textContent = lesson.summary;
         const badge = card.querySelector(".coming-badge");
         badge.className = "instant-badge";
         badge.textContent = "فوري";
         const launch = card.querySelector(".golden-launch");
         launch.disabled = false;
         launch.addEventListener("click", () => {
-          loadGolden(lesson.id).catch(() => showFailure("backend_unavailable"));
+          loadLesson(lesson.id).catch(() => showFailure("backend_unavailable"));
         });
       }
     } catch {
