@@ -242,6 +242,7 @@ async def test_public_stage_uses_stdin_argument_array_isolated_cwd_and_ephemeral
     assert ("--sandbox", "read-only") == args[sandbox_index : sandbox_index + 2]
     assert ("--model", "gpt-5.6-sol") == args[model_index : model_index + 2]
     assert 'model_reasoning_effort="medium"' in args
+    assert 'service_tier="fast"' in args
     assert kwargs["stdin"] == asyncio.subprocess.PIPE
     assert kwargs["stdout"] == asyncio.subprocess.PIPE
     assert kwargs["stderr"] == asyncio.subprocess.PIPE
@@ -253,6 +254,51 @@ async def test_public_stage_uses_stdin_argument_array_isolated_cwd_and_ephemeral
     assert result.thread_id == "thread-curated-123"
     assert result.model == "gpt-5.6-sol"
     assert result.elapsed_ms >= 0
+
+
+@pytest.mark.asyncio
+async def test_executor_omits_disabled_service_tier():
+    process = FakeProcess(success_jsonl(VALID_MODULE_OUTPUT))
+    captured = {}
+    executor = executor_with_process(process, captured, service_tier=None)
+
+    await executor.execute_stage(
+        prompt="bounded stage",
+        schema_path=Path("server/schemas/module.schema.json").resolve(),
+        model="gpt-5.6-sol",
+        effort="medium",
+    )
+
+    assert not any(str(argument).startswith("service_tier=") for argument in captured["args"])
+
+
+@pytest.mark.asyncio
+async def test_executor_attaches_three_runtime_images_without_exposing_source_paths(tmp_path):
+    process = FakeProcess(success_jsonl(VALID_MODULE_OUTPUT))
+    captured = {}
+    images = []
+    for index in range(3):
+        image = tmp_path / f"private-frame-{index}.png"
+        image.write_bytes(b"\x89PNG\r\n\x1a\n" + bytes([index]))
+        images.append(image)
+    executor = executor_with_process(process, captured)
+
+    await executor.execute_stage(
+        prompt="judge three frames",
+        schema_path=Path("server/schemas/module.schema.json").resolve(),
+        model="gpt-5.6-terra",
+        effort="low",
+        image_paths=images,
+    )
+
+    args = captured["args"]
+    image_index = args.index("--image")
+    attached = args[image_index + 1 : image_index + 4]
+    assert len(attached) == 3
+    assert all(Path(path).parent == Path(captured["kwargs"]["cwd"]) for path in attached)
+    assert all(Path(path).name == f"frame-{index + 1}.png" for index, path in enumerate(attached))
+    assert all("private-frame" not in str(path) for path in attached)
+    assert captured["cwd_was_empty"] is False
 
 
 @pytest.mark.asyncio

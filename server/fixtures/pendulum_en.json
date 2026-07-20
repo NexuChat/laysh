@@ -12,6 +12,7 @@
     "title": "Pendulum length and period",
     "tldr": "A pendulum's period T increases with its length L according to a square-root relationship, where g is Earth's gravitational acceleration at 9.81 m/s². The model assumes a small angle and a massless string, and ignores air resistance.",
     "learning_objective": "Explain causally why increasing a small-angle pendulum's length increases its period.",
+    "actor_label": "Pendulum bob",
     "primary_parameter_label": "Pendulum length",
     "misconception": "Increasing pendulum length does not make it faster, but increases the time for each cycle.",
     "explanation_prompt": "Change the pendulum length and compare its periods. How does the square-root relationship explain the pattern?",
@@ -20,6 +21,6 @@
     "brief_summary": "Shows how pendulum length changes its small-angle period.",
     "assumptions": ["Small angle", "Massless string", "g = 9.81 m/s²", "Air resistance omitted"]
   },
-  "review_localization": {"assumptions": ["Small angle", "Massless string", "g = 9.81 m/s²", "Air resistance omitted"]},
+  "review_localization": {"actor_label": "Pendulum bob", "assumptions": ["Small angle", "Massless string", "g = 9.81 m/s²", "Air resistance omitted"]},
   "module_replacements": {}
 }

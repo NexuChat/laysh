@@ -13,6 +13,7 @@
     "tldr": "At constant voltage, increasing resistance lowers current and dissipated power, so the bulb dims. I is current, V is voltage, R is resistance, and P is power used here to represent brightness.",
     "key_formula": "I = V / R; P = V² / R",
     "learning_objective": "Explain causally how increasing resistance at a constant 6 V lowers current and dissipated power, dimming the bulb.",
+    "actor_label": "Moving charge",
     "primary_parameter_label": "Resistance",
     "misconception": "Increasing resistance does not allow more current to flow, but reduces current when voltage stays constant.",
     "explanation_prompt": "Use Ohm's law to explain why the bulb dims as resistance increases while voltage stays constant.",
@@ -21,6 +22,6 @@
     "brief_summary": "Shows how resistance controls current, power, and bulb brightness at constant voltage.",
     "assumptions": ["Ideal 6 V source", "Ohmic resistance", "Brightness represented by dissipated power"]
   },
-  "review_localization": {"assumptions": ["Ideal 6 V source", "Ohmic resistance", "Brightness represented by dissipated power"]},
+  "review_localization": {"actor_label": "Moving charge", "assumptions": ["Ideal 6 V source", "Ohmic resistance", "Brightness represented by dissipated power"]},
   "module_replacements": {}
 }

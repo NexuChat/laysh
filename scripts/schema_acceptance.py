@@ -57,6 +57,7 @@ async def run(selected: tuple[str, ...], *, force: bool) -> int:
         evidence_stage_timeout_seconds=settings.evidence_stage_timeout_seconds,
         record_runtime=True,
         evidence_allowlist=frozenset({SCHEMA_ACCEPTANCE_FIXTURE_ID}),
+        service_tier=settings.service_tier,
     )
     outcomes = await run_schema_probes(executor, pending)
     diagnostics: dict[str, Any] = {"model": SCHEMA_ACCEPTANCE_MODEL, "schemas": {}}

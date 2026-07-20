@@ -1,52 +1,46 @@
 # Laysh module generation stage
 
-Return only closed-schema JSON and do not use tools. Generate only the phenomenon JavaScript,
-assigned once to `window.LayshSimulation`; never return Markdown, full HTML, CSS, or shell UI.
+Return only closed-schema JSON; do not use tools. Generate only phenomenon JavaScript assigned once
+to `window.LayshSimulation`, never Markdown, full HTML, CSS, or shell UI.
 
-Export exactly `version`, `init`, `setParameter`, `test`, `resize`, and `destroy`.
+Export exactly `version`, `init`, `setParameter`, `test`, `resize`, `destroy`.
 `version` must be the number `1`.
 `init(options)` receives `canvas`, `context`, `width`, `height`, `locale`, `reducedMotion`, and
-`emitFrame`; capture those exact names and draw immediately. Do not rename `context` to `ctx`.
-`setParameter(name, value)` redraws synchronously for the declared ID. Both draw paths call the
-captured `emitFrame`. `test(inputs)` is deterministic, visually side-effect free, and returns exactly
-the declared finite outputs.
+`emitFrame`; capture those exact names. Do not rename `context` to `ctx`; draw immediately.
+`setParameter(name, value, timeSeconds)` redraws synchronously. The shell owns `timeSeconds`; default
+an omitted value to zero and never create a module clock. Both draw paths call `emitFrame`.
+`test(inputs)` is deterministic, side-effect free, and returns exactly the declared finite outputs.
 
-Use only the supplied canvas/context, Math, Number, arrays, and plain objects. No document, network,
+Use only supplied canvas/context, Math, Number, arrays, and plain objects. No document, network,
 storage, navigation, dynamic code, workers, timers, sensors, audio, clipboard, console, external URLs,
-or `requestAnimationFrame`. Keep source under 96 KiB. Physics, fixtures, units, assumptions, security,
-and the fixed spec are immutable.
+or `requestAnimationFrame`. Keep source under 96 KiB. Fixed physics, fixtures, units, assumptions,
+security, parameters, actor, action, and spec are immutable.
 
 Visual contract:
 
-- Create layered scene depth with at least three visible depth layers: a domain gradient, near/far
-  bodies, and restrained ambient particles or texture. Never use a flat canvas.
-- Make physical light beautiful and physically consistent using controlled glow, soft shadow, and
-  true occlusion; never draw light through an opaque body. Show its subtle shadow cone.
-- The trusted shell owns shell-driven parameter motion and calls `setParameter` with an advancing
-  value. Render that value as the actual physical state so the subject visibly changes; decorative
-  shimmer or twinkle alone MUST NOT satisfy motion. Modules must not own animation clocks, timers, or
-  `requestAnimationFrame`. Across frames one second apart, the advancing value must change at least
-  1.0% of pixels in the central 60% of the canvas, plus enough whole-canvas pixels to prove the scene
-  is not frozen. A same-value redraw may settle reactive geometry but must not invent different
-  physics. Freeze only nonessential decorative phase under reduced motion.
-- Ensure the rendered subject agrees continuously with the first declared computed output across a
-  full primary-parameter sweep. Similar adjacent computed outputs must never produce a visual cliff;
-  in particular, curved illumination must draw the lit hemisphere on both sides of 180°.
-- Add smooth reactive feedback tied to parameter changes—eased geometry, a fading trail, ripples, or
-  quantity-linked particles. Preserve the previous display value locally; changing a parameter must
-  alter more than text.
-- Draw at least one rounded translucent readout chip beside the phenomenon with concise Arabic or
-  English labels; never leave raw corner numbers.
-- Shade continuous bodies with smooth fills or gradients, never golf-ball dot patterns. Illuminated spheres
-  need a curved terminator or equivalent physical mask, never a rectangular clip.
-- If schematic and observer views share a canvas, label them `منظر علوي` / `كما يبدو من الأرض` or
-  `Top view` / `View from Earth` according to locale.
-- Keep every label legible and inside the canvas. Motion adds atmosphere only, never unsupported
-  causal claims.
-
-Before returning, self-check the ABI, deterministic tests, immediate draw, three visible depth layers,
-physical light and occlusion, advancing value behavior, reactive feedback, readout chips,
-reduced motion, and the curved terminator rule where applicable.
+- Create layered scene depth with at least three visible depth layers: domain gradient, near/far
+  bodies, and restrained texture. Never use a flat canvas.
+- Make physical light beautiful and physically consistent with glow, soft shadow, and true
+  occlusion; never draw light through an opaque body. Show its subtle shadow cone.
+- shell-driven parameter motion supplies an advancing value. Render it as actual subject state;
+  shimmer alone fails. Modules must not own animation clocks, timers, or `requestAnimationFrame`.
+  One-second frames must change at least 1.0% of the central 60% plus the whole-canvas freeze floor.
+  Same-value redraws may settle geometry but not invent physics. Reduced motion freezes decoration.
+- Draw the actor/feature with its exact solid RGB tracking signature, large enough for a stable pixel
+  centroid; never reuse that color. The actor itself performs the declared action. For `oscillates`,
+  shell time continuously drives the tested period while the slow parameter sweep rides on top.
+- The subject agrees with the first computed output across the full primary-parameter sweep, with no
+  visual cliff; curved illumination remains continuous across 180°.
+- Add smooth parameter-linked reactive feedback (eased geometry, trail, ripples, or particles) and
+  preserve the prior display value. Parameter changes must alter more than text.
+- Draw rounded translucent readout chips with localized labels. Shade bodies with
+  smooth fills or gradients, never golf-ball dot patterns. Spheres need a curved terminator,
+  not rectangular clips.
+- If schematic and observer views coexist, label them `منظر علوي` / `كما يبدو من الأرض` or
+  `Top view` / `View from Earth`. Keep every label legible and inside the canvas.
+- SINGLE-SOURCE RULE: every physics-critical visual property (angle, lit fraction, submerged
+  fraction, phase, flow speed) comes from the same model function used by `test(inputs)` and fixtures.
+  Any parallel painter formula is a contract violation.
 
 UNDERSTANDING_JSON:
 @@INPUT_JSON@@

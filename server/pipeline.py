@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import tempfile
+from pathlib import Path
 from typing import Any, NoReturn
 
 from server.cache import VerificationReceipt
@@ -15,6 +17,7 @@ from server.schemas import (
     validate_understanding,
 )
 from server.verify import VerificationResult, formula_presentation_report, verify_candidate
+from server.vision_verify import evaluate_vision_verdict
 
 
 class PipelineCancelled(Exception):
@@ -304,6 +307,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
     heal_count = 0
     fixture_refresh_count = 0
     browser_evidence: dict[str, Any] | None = None
+    vision_verdict: dict[str, Any] | None = None
     while True:
         if record.status != "verifying":
             manager.transition(
@@ -325,21 +329,75 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             )
             browser_evidence = browser_result.evidence
             if browser_result.passed:
+                vision_result = None
+                for vision_attempt in (1, 2):
+                    try:
+                        with tempfile.TemporaryDirectory(prefix="laysh-vision-") as temporary:
+                            frame_paths: list[Path] = []
+                            for index, frame in enumerate(browser_result.vision_frames, start=1):
+                                path = Path(temporary) / f"frame-{index}.png"
+                                path.write_bytes(frame)
+                                frame_paths.append(path)
+                            vision_stage = await manager.backend.vision(
+                                understanding,
+                                frame_paths,
+                                browser_result.evidence.get("visionFrameStates", []),
+                                runtime_context=runtime_context,
+                            )
+                        vision_verdict = stage_data(vision_stage, "vision")
+                        vision_result = evaluate_vision_verdict(vision_verdict)
+                        break
+                    except CodexRuntimeError as error:
+                        if error.code != "stage_timeout":
+                            raise
+                        if not record.public:
+                            record.builder_diagnostics.append(
+                                {
+                                    "type": "vision_timeout",
+                                    "attempt": vision_attempt,
+                                    "code": error.code,
+                                    "candidate_sha256": hashlib.sha256(
+                                        module_output["module_js"].encode("utf-8")
+                                    ).hexdigest(),
+                                }
+                            )
+                        if vision_attempt == 1:
+                            continue
+                        _fallback(
+                            manager,
+                            record,
+                            "vision_inconclusive",
+                            _default_suggestions(record),
+                        )
+                        return
+                if vision_result is None:
+                    raise RuntimeError("vision retry loop completed without an outcome")
+                if vision_result.passed:
+                    verification = VerificationResult(
+                        passed=True,
+                        check_count=verification.check_count + browser_result.check_count + 1,
+                        failures=[],
+                        artifact=verification.artifact,
+                        node_report=verification.node_report,
+                    )
+                    break
+                if vision_result.failure is None:
+                    raise RuntimeError("failed vision verdict omitted its diagnostic")
                 verification = VerificationResult(
-                    passed=True,
-                    check_count=verification.check_count + browser_result.check_count,
-                    failures=[],
-                    artifact=verification.artifact,
+                    passed=False,
+                    check_count=verification.check_count + browser_result.check_count + 1,
+                    failures=[vision_result.failure],
+                    artifact=None,
                     node_report=verification.node_report,
                 )
-                break
-            verification = VerificationResult(
-                passed=False,
-                check_count=verification.check_count + browser_result.check_count,
-                failures=browser_result.failures,
-                artifact=None,
-                node_report=verification.node_report,
-            )
+            else:
+                verification = VerificationResult(
+                    passed=False,
+                    check_count=verification.check_count + browser_result.check_count,
+                    failures=browser_result.failures,
+                    artifact=None,
+                    node_report=verification.node_report,
+                )
         record_verification_failure(verification, heal_count)
         suspect_fixtures = [
             failure
@@ -530,6 +588,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                     "node_report": verification.node_report,
                 },
                 "browser": browser_evidence or {},
+                "vision": vision_verdict or {},
                 "qa": qa_result,
             }
         if not qa_result["approved"]:

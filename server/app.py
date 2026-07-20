@@ -57,6 +57,7 @@ def create_app(
                 evidence_stage_timeout_seconds=settings.evidence_stage_timeout_seconds,
                 record_runtime=settings.record_runtime,
                 evidence_allowlist=frozenset(GOLDEN_FIXTURE_IDS),
+                service_tier=settings.service_tier,
             ),
             settings=settings,
         )

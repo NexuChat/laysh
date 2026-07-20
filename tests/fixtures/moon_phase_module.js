@@ -23,6 +23,19 @@ window.LayshSimulation = (() => {
     context.arc(width / 2 + orbitOffset, height / 2, Math.min(width, height) * 0.27, 0, Math.PI * 2);
     context.fillStyle = `rgb(${Math.round(42 + fraction * 213)} ${Math.round(51 + fraction * 184)} ${Math.round(61 + fraction * 102)})`;
     context.fill();
+    const actorAngle = (angleDeg * Math.PI) / 180;
+    const actorRadiusX = Math.min(width, height) * 0.32;
+    const actorRadiusY = Math.min(width, height) * 0.2;
+    context.beginPath();
+    context.arc(
+      width / 2 + Math.cos(actorAngle) * actorRadiusX,
+      height / 2 + Math.sin(actorAngle) * actorRadiusY,
+      Math.max(7, Math.min(width, height) * 0.025),
+      0,
+      Math.PI * 2,
+    );
+    context.fillStyle = "rgb(255 118 92)";
+    context.fill();
     emitFrame();
   }
 

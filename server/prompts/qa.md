@@ -13,6 +13,9 @@ deterministic gates support approval. QA reviews; it does not implement.
   physical motion driven by the shell's advancing parameter, parameter-linked reactive feedback, and readable
   overlay chips. Mark each item independently; a flat scene cannot pass.
 - Do not rewrite or repair code. `replacement_module_js` must always be null.
+- Reject any parallel painter formula for a physics-critical property. Angle, lit fraction,
+  submerged fraction, phase, and flow speed must come from the same model function used by
+  `test(inputs)` and the fixtures (the generation contract's SINGLE-SOURCE RULE).
 - Never return reasoning, prompts, learner input, or extra fields.
 
 QA_INPUT_JSON:

@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://laysh.local/schemas/understand-1.1.json",
-  "title": "Laysh understanding output v1.1",
+  "$id": "https://laysh.local/schemas/understand-1.2.json",
+  "title": "Laysh understanding output v1.2",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "safe", "unsafe_category", "simulatable", "reason_code", "lang",
     "canonical_intent", "domain", "title", "tldr", "key_formula",
-    "learning_objective", "primary_parameter", "secondary_parameter",
+    "learning_objective", "actor", "action", "primary_parameter", "secondary_parameter",
     "misconception", "explanation_prompt", "transfer_prompt",
     "module_spec", "checks", "suggestions"
   ],
@@ -38,6 +38,76 @@
       "anyOf": [{"type": "string", "maxLength": 120}, {"type": "null"}]
     },
     "learning_objective": {"type": "string", "maxLength": 220},
+    "actor": {
+      "type": ["object", "null"],
+      "anyOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "label", "tracking_signature", "tracking_output"],
+          "properties": {
+            "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$", "maxLength": 64},
+            "label": {"type": "string", "maxLength": 80},
+            "tracking_signature": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "color_rgb", "tolerance", "reference_color_rgb", "reference_tolerance"
+              ],
+              "properties": {
+                "color_rgb": {
+                  "type": "array",
+                  "minItems": 3,
+                  "maxItems": 3,
+                  "items": {"type": "integer", "minimum": 0, "maximum": 255}
+                },
+                "tolerance": {"type": "integer", "minimum": 0, "maximum": 48},
+                "reference_color_rgb": {
+                  "type": ["array", "null"],
+                  "anyOf": [
+                    {"type": "null"},
+                    {
+                      "type": "array",
+                      "minItems": 3,
+                      "maxItems": 3,
+                      "items": {"type": "integer", "minimum": 0, "maximum": 255}
+                    }
+                  ]
+                },
+                "reference_tolerance": {
+                  "type": ["integer", "null"],
+                  "anyOf": [
+                    {"type": "integer", "minimum": 0, "maximum": 48},
+                    {"type": "null"}
+                  ]
+                }
+              }
+            },
+            "tracking_output": {
+              "type": ["string", "null"],
+              "anyOf": [
+                {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+                {"type": "null"}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "action": {
+      "type": ["string", "null"],
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "rotates", "oscillates", "orbits", "propagates", "flows",
+            "floats_sinks", "phases"
+          ]
+        },
+        {"type": "null"}
+      ]
+    },
     "primary_parameter": {
       "type": ["object", "null"],
       "anyOf": [

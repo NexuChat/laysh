@@ -12,6 +12,7 @@
     "title": "Density and buoyancy in water",
     "tldr": "An object floats when its density is lower than water's and sinks when its density is higher. The buoyant force Fᵦ equals the weight of displaced water, where ρ𝒻 is fluid density, V is displaced-fluid volume, and g is gravitational acceleration. The model uses still water at 1000 kg/m³ and a uniform object, ignores surface tension, and starts at 750 kg/m³.",
     "learning_objective": "Explain causally how an object's density relative to water determines its submerged fraction and whether it floats or sinks.",
+    "actor_label": "Object",
     "primary_parameter_label": "Object density",
     "misconception": "Floating does not depend on an object's absolute lightness, but on its density relative to the fluid.",
     "explanation_prompt": "Explain how comparing object density with water density changes the submerged fraction and leads to floating or sinking.",
@@ -20,6 +21,6 @@
     "brief_summary": "Shows how density relative to water controls submersion, floating, and sinking.",
     "assumptions": ["Still water at 1000 kg/m³", "Uniform object", "Surface tension omitted"]
   },
-  "review_localization": {"assumptions": ["Still water at 1000 kg/m³", "Uniform object", "Surface tension omitted"]},
+  "review_localization": {"actor_label": "Object", "assumptions": ["Still water at 1000 kg/m³", "Uniform object", "Surface tension omitted"]},
   "module_replacements": {}
 }

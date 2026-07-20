@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import json
 import shutil
 import subprocess
@@ -25,12 +26,13 @@ class BrowserVerificationResult:
     check_count: int
     failures: list[dict[str, Any]]
     evidence: dict[str, Any]
+    vision_frames: tuple[bytes, ...] = ()
 
     @classmethod
     def passing(cls) -> BrowserVerificationResult:
         return cls(
             passed=True,
-            check_count=15,
+            check_count=16,
             failures=[],
             evidence={
                 "ready": True,
@@ -51,6 +53,13 @@ class BrowserVerificationResult:
                     "metric": "meanLuminance",
                     "rankCorrelation": 0.9,
                     "samples": [{"parameter": 0, "computedOutput": 0, "renderedMeasure": 0}],
+                },
+                "actorTracking": {
+                    "passed": True,
+                    "action": "phases",
+                    "actorId": "moon",
+                    "expected": {"angularDisplacementDegrees": 360},
+                    "measured": {"angularDisplacementDegrees": 358.5},
                 },
                 "runtimeError": False,
                 "externalRequests": 0,
@@ -227,9 +236,20 @@ def _evaluate(evidence: dict[str, Any]) -> BrowserVerificationResult:
                 gate="render_output_consistency",
             )
         )
+    actor_tracking = evidence.get("actorTracking")
+    if isinstance(actor_tracking, dict) and actor_tracking.get("passed") is not True:
+        diagnostic = actor_tracking.get("failure", {})
+        failures.append(
+            _failure(
+                str(diagnostic.get("code", "actor_trajectory_mismatch")),
+                diagnostic.get("expected", {"declared_action_performed": True}),
+                diagnostic.get("measured", {}),
+                gate="actor_action_tracking",
+            )
+        )
     return BrowserVerificationResult(
         passed=not failures,
-        check_count=len(checks) + 1,
+        check_count=len(checks) + 1 + int(isinstance(actor_tracking, dict)),
         failures=failures,
         evidence=evidence,
     )
@@ -302,4 +322,16 @@ def verify_artifact_in_browser(artifact: str) -> BrowserVerificationResult:
             ],
             evidence={},
         )
-    return _evaluate(evidence)
+    encoded_frames = evidence.pop("visionFrames", [])
+    try:
+        vision_frames = tuple(base64.b64decode(value, validate=True) for value in encoded_frames)
+    except (ValueError, TypeError):
+        vision_frames = ()
+    evaluated = _evaluate(evidence)
+    return BrowserVerificationResult(
+        passed=evaluated.passed,
+        check_count=evaluated.check_count,
+        failures=evaluated.failures,
+        evidence=evaluated.evidence,
+        vision_frames=vision_frames,
+    )

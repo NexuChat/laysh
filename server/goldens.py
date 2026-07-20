@@ -42,6 +42,7 @@ def load_golden_fixtures() -> dict[str, dict[str, Any]]:
             localization = document.pop("review_localization")
             review_contract["assumptions"] = localization["assumptions"]
             review_contract["misconception"] = document["copy"]["misconception"]
+            review_contract["actor"]["label"] = localization["actor_label"]
             document["review_contract"] = review_contract
         fixtures[fixture_id] = document
     return fixtures
@@ -167,6 +168,10 @@ def review_golden_candidate(
             if not matching:
                 model_fixture_matches = False
     checks: dict[str, Any] = {
+        "actor_action_matches_reference": (
+            understanding.get("actor") == contract.get("actor")
+            and understanding.get("action") == contract.get("action")
+        ),
         "formula_matches_reference": _normalized_display_formula(
             understanding.get("key_formula")
         )
@@ -188,6 +193,8 @@ def review_golden_candidate(
         "units_present": bool(contract.get("units")),
     }
     failure_codes: list[str] = []
+    if not checks["actor_action_matches_reference"]:
+        failure_codes.append("actor_action_reference_mismatch")
     if not checks["formula_matches_reference"]:
         failure_codes.append("formula_reference_mismatch")
     if not checks["learner_copy_has_no_hash_placeholders"]:

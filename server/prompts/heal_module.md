@@ -7,6 +7,15 @@ change the answer, parameters, output names, fixtures, or teaching objective. Re
 JavaScript, never full HTML. Preserve the restricted interface and capabilities. Resolve every listed
 failure, then provide safe summary and assumptions fields. Do not include reasoning or extra fields.
 
+Preserve the declared actor, action, and exact tracking signature. The actor—not a shadow, glow,
+terminator, label, or decorative particle—must produce the expected trajectory in the supplied
+actor-tracking diagnostic. For continuous physical motion use the trusted shell's third
+`setParameter(name, value, timeSeconds)` argument; never add a module clock.
+
+SINGLE-SOURCE RULE: every physics-critical visual property—including angle, lit fraction, submerged
+fraction, phase, and flow speed—must come from the same model function used by `test(inputs)` and the
+fixtures. A parallel formula or independently tuned painter computation is a contract violation.
+
 The v1.1 visual quality is part of the fixed contract and must survive every repair: preserve or add
 at least three scene-depth layers, physically consistent curved illumination and occlusion, and
 continuous physics driven by the trusted shell's advancing parameter. Render that advancing parameter

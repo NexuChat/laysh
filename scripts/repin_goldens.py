@@ -29,12 +29,13 @@ def _migrated_understanding(
 ) -> dict[str, Any]:
     migrated = deepcopy(understanding)
     migrated.pop("prediction", None)
-    migrated["misconception"] = fixture["review_contract"]["misconception"]
+    contract = fixture["review_contract"]
+    migrated["misconception"] = contract["misconception"]
+    migrated["actor"] = deepcopy(contract["actor"])
+    migrated["action"] = contract["action"]
     parameter = migrated.get("primary_parameter")
     if isinstance(parameter, dict):
-        parameter["sweep_mode"] = fixture["review_contract"]["primary_parameter"][
-            "sweep_mode"
-        ]
+        parameter["sweep_mode"] = contract["primary_parameter"]["sweep_mode"]
     return migrated
 
 

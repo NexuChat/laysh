@@ -1,0 +1,403 @@
+{
+  "schema_version": "1.0",
+  "gate": "model_driven_v2_limited_adoption",
+  "vision_model": "gpt-5.6-terra",
+  "lessons": [
+    {
+      "id": "moon_phases",
+      "passed": true,
+      "artifact_sha256": "e90776b7e1c01326859fb3b67374ce1caa0e8375ba164fb803d837ba09b297e6",
+      "deterministic_check_count": 24,
+      "browser_check_count": 16,
+      "actor_tracking": {
+        "passed": true,
+        "action": "phases",
+        "actorId": "moon",
+        "expected": {
+          "angularDisplacementDegrees": 360,
+          "maximumAngularErrorDegrees": 20,
+          "minimumOrbitRadiusPixels": 6
+        },
+        "measured": {
+          "angularDisplacementDegrees": 360,
+          "maximumAngularErrorDegrees": 0.1593,
+          "orbitRadiusPixels": 83.7353,
+          "direction": 1
+        }
+      },
+      "vision": {
+        "actor_visible": true,
+        "action_performed": true,
+        "physically_consistent": true,
+        "defects": []
+      }
+    },
+    {
+      "id": "buoyancy",
+      "passed": true,
+      "artifact_sha256": "544771249d172e8d74e5684eaeb9baabf8a9cfa72c92c13064cb4c85cddfdf36",
+      "deterministic_check_count": 27,
+      "browser_check_count": 16,
+      "actor_tracking": {
+        "passed": true,
+        "action": "floats_sinks",
+        "actorId": "floating_body",
+        "expected": {
+          "maximumSubmergedFractionError": 0.15,
+          "sampleCount": 5
+        },
+        "measured": {
+          "maximumSubmergedFractionError": 0.1177,
+          "samples": [
+            {
+              "parameter": 200,
+              "expectedFraction": 0.2,
+              "measuredFraction": 0.3177
+            },
+            {
+              "parameter": 500,
+              "expectedFraction": 0.5,
+              "measuredFraction": 0.4691
+            },
+            {
+              "parameter": 800,
+              "expectedFraction": 0.8,
+              "measuredFraction": 0.7371
+            },
+            {
+              "parameter": 1100,
+              "expectedFraction": 1,
+              "measuredFraction": 1
+            },
+            {
+              "parameter": 1400,
+              "expectedFraction": 1,
+              "measuredFraction": 1
+            }
+          ]
+        }
+      },
+      "vision": {
+        "actor_visible": true,
+        "action_performed": true,
+        "physically_consistent": true,
+        "defects": []
+      }
+    },
+    {
+      "id": "pendulum",
+      "passed": true,
+      "artifact_sha256": "802633af58066dbf9120b4c44a20cbdf514fc579652af03d652c941d29dd38fb",
+      "deterministic_check_count": 24,
+      "browser_check_count": 16,
+      "actor_tracking": {
+        "passed": true,
+        "action": "oscillates",
+        "actorId": "pendulum_bob",
+        "expected": {
+          "signReversalsAtLeast": 3,
+          "periodSeconds": 2.0061,
+          "periodToleranceRatio": 0.15,
+          "minimumHorizontalSpanPixels": 6
+        },
+        "measured": {
+          "signReversals": 4,
+          "periodSeconds": 2.0509,
+          "periodErrorRatio": 0.0223,
+          "horizontalSpanPixels": 36.0615
+        }
+      },
+      "vision": {
+        "actor_visible": true,
+        "action_performed": true,
+        "physically_consistent": true,
+        "defects": []
+      }
+    },
+    {
+      "id": "simple_circuit",
+      "passed": true,
+      "artifact_sha256": "e1a5a15794d053ec3d67dfb68651cebe4e8144bd174ffac2456da53d3f126261",
+      "deterministic_check_count": 27,
+      "browser_check_count": 16,
+      "actor_tracking": {
+        "passed": true,
+        "action": "flows",
+        "actorId": "moving_charge",
+        "expected": {
+          "rateRatio": 3.6809,
+          "maximumRatioError": 0.35
+        },
+        "measured": {
+          "displacementRatio": 3.5167,
+          "ratioError": 0.0446,
+          "lowDisplacementPixels": 32.8014,
+          "highDisplacementPixels": 9.3274
+        }
+      },
+      "vision": {
+        "actor_visible": true,
+        "action_performed": true,
+        "physically_consistent": true,
+        "defects": []
+      }
+    },
+    {
+      "id": "sound_pitch",
+      "passed": true,
+      "artifact_sha256": "c2f0cef991576259e98cd43c08daae4089ae3fdb068e0b9e28a889061670e3d2",
+      "deterministic_check_count": 27,
+      "browser_check_count": 16,
+      "actor_tracking": {
+        "passed": true,
+        "action": "propagates",
+        "actorId": "sound_wave",
+        "expected": {
+          "phaseShiftRadians": 1.5708,
+          "maximumErrorRadians": 0.6
+        },
+        "measured": {
+          "phaseShiftRadians": 2.0309,
+          "phaseErrorRadians": 0.4601,
+          "dominantSpatialCycles": 7,
+          "matchedColumns": 548
+        }
+      },
+      "vision": {
+        "actor_visible": true,
+        "action_performed": true,
+        "physically_consistent": true,
+        "defects": []
+      }
+    },
+    {
+      "id": "day_night",
+      "passed": true,
+      "artifact_sha256": "ffb42675c348ac040a9c8c10e1a88102b552c527d00551f13207827ebb2c2539",
+      "deterministic_check_count": 27,
+      "browser_check_count": 16,
+      "actor_tracking": {
+        "passed": true,
+        "action": "rotates",
+        "actorId": "earth",
+        "expected": {
+          "angularDisplacementDegrees": 360,
+          "maximumTrajectoryErrorDegrees": 18,
+          "minimumSpanPixels": 6,
+          "featureCrossesLimb": true
+        },
+        "measured": {
+          "angularDisplacementDegrees": 360,
+          "horizontalSpanPixels": 111.9571,
+          "trajectoryErrorRatio": 0.0004,
+          "visibilityMatchRatio": 0.96,
+          "fittedFeatureLongitudeDegrees": 300
+        }
+      },
+      "vision": {
+        "actor_visible": true,
+        "action_performed": true,
+        "physically_consistent": true,
+        "defects": []
+      }
+    },
+    {
+      "id": "moon_phases_en",
+      "passed": true,
+      "artifact_sha256": "2635f3e3b94a1f708b1fb6f87a44296d83035a32e0900c183b7670866a80cab2",
+      "deterministic_check_count": 24,
+      "browser_check_count": 16,
+      "actor_tracking": {
+        "passed": true,
+        "action": "phases",
+        "actorId": "moon",
+        "expected": {
+          "angularDisplacementDegrees": 360,
+          "maximumAngularErrorDegrees": 20,
+          "minimumOrbitRadiusPixels": 6
+        },
+        "measured": {
+          "angularDisplacementDegrees": 360,
+          "maximumAngularErrorDegrees": 0.1593,
+          "orbitRadiusPixels": 83.7353,
+          "direction": 1
+        }
+      },
+      "vision": {
+        "actor_visible": true,
+        "action_performed": true,
+        "physically_consistent": true,
+        "defects": []
+      }
+    },
+    {
+      "id": "buoyancy_en",
+      "passed": true,
+      "artifact_sha256": "a8ce26d9ebe9924a02850b5b1645b2e68d61fbc609edda50fa522c1a1c53c63a",
+      "deterministic_check_count": 27,
+      "browser_check_count": 16,
+      "actor_tracking": {
+        "passed": true,
+        "action": "floats_sinks",
+        "actorId": "floating_body",
+        "expected": {
+          "maximumSubmergedFractionError": 0.15,
+          "sampleCount": 5
+        },
+        "measured": {
+          "maximumSubmergedFractionError": 0.1177,
+          "samples": [
+            {
+              "parameter": 200,
+              "expectedFraction": 0.2,
+              "measuredFraction": 0.3177
+            },
+            {
+              "parameter": 500,
+              "expectedFraction": 0.5,
+              "measuredFraction": 0.4691
+            },
+            {
+              "parameter": 800,
+              "expectedFraction": 0.8,
+              "measuredFraction": 0.7371
+            },
+            {
+              "parameter": 1100,
+              "expectedFraction": 1,
+              "measuredFraction": 1
+            },
+            {
+              "parameter": 1400,
+              "expectedFraction": 1,
+              "measuredFraction": 1
+            }
+          ]
+        }
+      },
+      "vision": {
+        "actor_visible": true,
+        "action_performed": true,
+        "physically_consistent": true,
+        "defects": []
+      }
+    },
+    {
+      "id": "pendulum_en",
+      "passed": true,
+      "artifact_sha256": "1170caa4fcc925cb3a7550ae03330997189c2ff621f25965254a2fc93d45403c",
+      "deterministic_check_count": 24,
+      "browser_check_count": 16,
+      "actor_tracking": {
+        "passed": true,
+        "action": "oscillates",
+        "actorId": "pendulum_bob",
+        "expected": {
+          "signReversalsAtLeast": 3,
+          "periodSeconds": 2.0061,
+          "periodToleranceRatio": 0.15,
+          "minimumHorizontalSpanPixels": 6
+        },
+        "measured": {
+          "signReversals": 4,
+          "periodSeconds": 2.057,
+          "periodErrorRatio": 0.0254,
+          "horizontalSpanPixels": 36.0996
+        }
+      },
+      "vision": {
+        "actor_visible": true,
+        "action_performed": true,
+        "physically_consistent": true,
+        "defects": []
+      }
+    },
+    {
+      "id": "simple_circuit_en",
+      "passed": true,
+      "artifact_sha256": "af557d799d491ef086ef51a4e08527ad05876e70b5bc6c117b1ccbdd28a25b89",
+      "deterministic_check_count": 27,
+      "browser_check_count": 16,
+      "actor_tracking": {
+        "passed": true,
+        "action": "flows",
+        "actorId": "moving_charge",
+        "expected": {
+          "rateRatio": 3.6809,
+          "maximumRatioError": 0.35
+        },
+        "measured": {
+          "displacementRatio": 3.5167,
+          "ratioError": 0.0446,
+          "lowDisplacementPixels": 32.8014,
+          "highDisplacementPixels": 9.3274
+        }
+      },
+      "vision": {
+        "actor_visible": true,
+        "action_performed": true,
+        "physically_consistent": true,
+        "defects": []
+      }
+    },
+    {
+      "id": "sound_pitch_en",
+      "passed": true,
+      "artifact_sha256": "50b49c863421034f0b7311e3ec7879661a66f11cf2ca87fd7311aa52a53bbb2b",
+      "deterministic_check_count": 27,
+      "browser_check_count": 16,
+      "actor_tracking": {
+        "passed": true,
+        "action": "propagates",
+        "actorId": "sound_wave",
+        "expected": {
+          "phaseShiftRadians": 1.5708,
+          "maximumErrorRadians": 0.6
+        },
+        "measured": {
+          "phaseShiftRadians": 2.0401,
+          "phaseErrorRadians": 0.4693,
+          "dominantSpatialCycles": 7,
+          "matchedColumns": 548
+        }
+      },
+      "vision": {
+        "actor_visible": true,
+        "action_performed": true,
+        "physically_consistent": true,
+        "defects": []
+      }
+    },
+    {
+      "id": "day_night_en",
+      "passed": true,
+      "artifact_sha256": "ce0c5f4fb5d0236f881a013578fe468aab9e81d021843bfc6c013891845dd1cb",
+      "deterministic_check_count": 27,
+      "browser_check_count": 16,
+      "actor_tracking": {
+        "passed": true,
+        "action": "rotates",
+        "actorId": "earth",
+        "expected": {
+          "angularDisplacementDegrees": 360,
+          "maximumTrajectoryErrorDegrees": 18,
+          "minimumSpanPixels": 6,
+          "featureCrossesLimb": true
+        },
+        "measured": {
+          "angularDisplacementDegrees": 360,
+          "horizontalSpanPixels": 111.9571,
+          "trajectoryErrorRatio": 0.0004,
+          "visibilityMatchRatio": 0.96,
+          "fittedFeatureLongitudeDegrees": 300
+        }
+      },
+      "vision": {
+        "actor_visible": true,
+        "action_performed": true,
+        "physically_consistent": true,
+        "defects": []
+      }
+    }
+  ]
+}

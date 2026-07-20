@@ -8,6 +8,8 @@
   },
   "review_contract": {
     "formula": "c = cos θ",
+    "actor": {"id": "earth", "label": "الأرض ومعلمها السطحي المتتبَّع", "tracking_signature": {"color_rgb": [92, 196, 105], "tolerance": 12, "reference_color_rgb": null, "reference_tolerance": null}, "tracking_output": null},
+    "action": "rotates",
     "primary_parameter": {"id": "rotation_deg", "min": 0, "max": 360, "default": 60, "step": 1, "unit": "°", "sweep_mode": "cyclic"},
     "units": ["°", "ratio"],
     "assumptions": ["أشعة شمس متوازية", "محور مبسط دون فصول", "نهار عندما c > 0"],

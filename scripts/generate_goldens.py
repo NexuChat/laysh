@@ -59,6 +59,7 @@ async def generate_candidate(fixture_id: str, attempt: int) -> int:
         evidence_stage_timeout_seconds=settings.evidence_stage_timeout_seconds,
         record_runtime=True,
         evidence_allowlist=frozenset(GOLDEN_FIXTURE_IDS),
+        service_tier=settings.service_tier,
     )
     backend = CodexBackend(executor=executor, settings=settings)
     manager = JobManager(

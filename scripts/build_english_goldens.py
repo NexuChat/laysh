@@ -74,6 +74,7 @@ def _english_inputs(fixture: dict[str, Any]) -> tuple[dict[str, Any], dict[str, 
     if "key_formula" in copy:
         understanding["key_formula"] = copy["key_formula"]
     understanding["primary_parameter"]["label"] = copy["primary_parameter_label"]
+    understanding["actor"]["label"] = copy["actor_label"]
     for original, replacement in fixture["module_replacements"].items():
         if original not in module_js:
             raise ValueError(f"module localization source text is missing: {original}")
@@ -96,6 +97,7 @@ class EnglishGoldenBackend:
         self.generate_calls = 0
         self.heal_calls = 0
         self.qa_calls = 0
+        self.vision_calls = 0
 
     @staticmethod
     def scenario_for(_question: str) -> str:
@@ -152,6 +154,15 @@ class EnglishGoldenBackend:
                 "reactive_feedback": approved,
                 "readable_overlays": approved,
             },
+        }
+
+    async def vision(self, *_args: Any, **_kwargs: Any) -> dict[str, Any]:
+        self.vision_calls += 1
+        return {
+            "actor_visible": True,
+            "action_performed": True,
+            "physically_consistent": True,
+            "defects": [],
         }
 
 

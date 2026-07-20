@@ -63,6 +63,7 @@ async def run() -> int:
         evidence_stage_timeout_seconds=settings.evidence_stage_timeout_seconds,
         record_runtime=True,
         evidence_allowlist=frozenset({"moon_phases_ar"}),
+        service_tier=settings.service_tier,
     )
     backend = CodexBackend(executor=executor, settings=settings)
     manager = JobManager(

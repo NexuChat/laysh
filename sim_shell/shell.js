@@ -56,6 +56,7 @@
     interacting: false,
     lastTimestamp: null,
     lastSettleRedraw: 0,
+    elapsedTime: 0,
   };
   let simulation;
   let frameCount = 0;
@@ -119,9 +120,14 @@
     }
   }
 
+  function simulationTime() {
+    const verificationTime = Number(window.__LAYSH_VERIFICATION_TIME__);
+    return Number.isFinite(verificationTime) ? verificationTime : state.elapsedTime;
+  }
+
   function update(value, syncControl = true) {
     state.value = Math.max(Number(parameter.min), Math.min(Number(parameter.max), Number(value)));
-    simulation.setParameter(parameter.id, state.value);
+    simulation.setParameter(parameter.id, state.value, simulationTime());
     if (syncControl) control.value = String(state.value);
     const parameterText = displayValue(state.value);
     output.value = `${parameterText} ${parameter.unit}`;
@@ -161,6 +167,7 @@
   function beginInteraction() {
     state.interacting = true;
     state.lastTimestamp = null;
+    state.elapsedTime = 0;
   }
 
   function endInteraction() {
@@ -216,11 +223,16 @@
     if (state.lastTimestamp === null) state.lastTimestamp = timestamp;
     const deltaSeconds = Math.min(0.1, Math.max(0, timestamp - state.lastTimestamp) / 1000);
     state.lastTimestamp = timestamp;
-    if (!state.paused && !state.interacting) {
-      advanceParameter(deltaSeconds);
+    if (!state.paused) {
+      state.elapsedTime += deltaSeconds;
+      if (!state.interacting) {
+        advanceParameter(deltaSeconds);
+      } else {
+        update(state.value);
+      }
     } else if (timestamp - state.lastSettleRedraw >= SETTLE_REDRAW_INTERVAL_MS) {
       state.lastSettleRedraw = timestamp;
-      simulation.setParameter(parameter.id, state.value);
+      simulation.setParameter(parameter.id, state.value, simulationTime());
     }
     animationFrameId = requestAnimationFrame(animate);
   }

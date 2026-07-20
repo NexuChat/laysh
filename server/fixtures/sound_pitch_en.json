@@ -13,6 +13,7 @@
     "tldr": "Pitch sounds higher as the number of wave vibrations per second increases. Here f is frequency, λ is wavelength, v is the fixed sound speed of 343 m/s, and T is period; wavelength and period both decrease as frequency rises, but that does not mean the sound becomes louder.",
     "key_formula": "λ = v / f; T = 1 / f",
     "learning_objective": "Explain causally how increasing sound-wave frequency creates a higher pitch while distinguishing pitch from loudness.",
+    "actor_label": "Sound wave",
     "primary_parameter_label": "Sound-wave frequency",
     "misconception": "A higher-frequency sound is not necessarily louder, but frequency determines pitch while amplitude determines loudness.",
     "explanation_prompt": "Move the frequency and compare pitch with wavelength and period. Explain why both quantities decrease as pitch rises.",
@@ -21,7 +22,7 @@
     "brief_summary": "Shows how frequency changes pitch, wavelength, and period without playing audio.",
     "assumptions": ["Sound speed is 343 m/s", "Fixed air medium", "Pitch does not mean loudness"]
   },
-  "review_localization": {"assumptions": ["Sound speed is 343 m/s", "Fixed air medium", "Pitch does not mean loudness"]},
+  "review_localization": {"actor_label": "Sound wave", "assumptions": ["Sound speed is 343 m/s", "Fixed air medium", "Pitch does not mean loudness"]},
   "module_replacements": {
     "التردد · حدّة النغمة": "Frequency · pitch",
     "الطول الموجي λ": "Wavelength λ",

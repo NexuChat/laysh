@@ -8,6 +8,10 @@ import { pathToFileURL } from "node:url";
 const artifactPath = path.resolve(process.argv[2]);
 const chromePath = process.env.CHROME_BIN || "/usr/bin/google-chrome";
 const profilePath = fs.mkdtempSync(path.join(os.tmpdir(), "laysh-chrome-"));
+const actionTrackingSource = fs.readFileSync(
+  new URL("./action_tracking_browser.js", import.meta.url),
+  "utf8",
+);
 
 function delay(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -182,6 +186,12 @@ try {
     returnByValue: true,
   });
 
+  const actorTracking = await command("Runtime.evaluate", {
+    expression: actionTrackingSource,
+    awaitPromise: true,
+    returnByValue: true,
+  });
+
   const interactionStart = await command("Runtime.evaluate", {
     expression: `(() => {
       const root = document.documentElement;
@@ -269,7 +279,10 @@ try {
         width: Math.max(1, Math.floor(canvas.width * 0.6)),
         height: Math.max(1, Math.floor(canvas.height * 0.6)),
       };
-      const metricKeys = ['meanLuminance','bright64','bright128','bright192','dark32','centroidX','centroidY','edgeDensity'];
+      // Actor position is verified independently by the action-tracking gate. Keeping centroid
+      // metrics here lets a correctly moving actor conceal a wrong physics-critical fill/shading
+      // output (for example, a Moon that orbits correctly but renders the wrong lit fraction).
+      const metricKeys = ['meanLuminance','bright64','bright128','bright192','dark32','edgeDensity'];
       const measure = () => {
         const pixels = context.getImageData(bounds.x, bounds.y, bounds.width, bounds.height).data;
         const luminance = new Float64Array(bounds.width * bounds.height);
@@ -385,6 +398,84 @@ try {
     returnByValue: true,
   });
 
+  const visionFrames = [];
+  const visionFrameStates = [];
+  const visionMinimum = Number((await command("Runtime.evaluate", {
+    expression: "window.__LAYSH_LESSON__.primary_parameter.min",
+    returnByValue: true,
+  })).result.value);
+  const visionMaximum = Number((await command("Runtime.evaluate", {
+    expression: "window.__LAYSH_LESSON__.primary_parameter.max",
+    returnByValue: true,
+  })).result.value);
+  const visionAction = (await command("Runtime.evaluate", {
+    expression: "window.__LAYSH_LESSON__.action",
+    returnByValue: true,
+  })).result.value;
+  let visionFractions = [0, 1 / 3, 2 / 3];
+  if (visionAction === "oscillates") visionFractions = [0.15, 0.5, 0.85];
+  if (visionAction === "rotates") visionFractions = [0, 1 / 6, 1 / 3];
+  const visionValues = visionFractions.map(
+    (fraction) => visionMinimum + (visionMaximum - visionMinimum) * fraction,
+  );
+  for (let visionIndex = 0; visionIndex < visionValues.length; visionIndex += 1) {
+    const value = visionValues[visionIndex];
+    await command("Runtime.evaluate", {
+      expression: `(() => {
+        const control = document.querySelector('#primary-control');
+        control.value = ${JSON.stringify(value)};
+        control.dispatchEvent(new Event('input', { bubbles: true }));
+      })()`,
+    });
+    await delay(120);
+    const frameState = await command("Runtime.evaluate", {
+      expression: `(() => {
+        const lesson = window.__LAYSH_LESSON__;
+        const value = ${JSON.stringify(value)};
+        const tested = window.LayshSimulation.test({ [lesson.primary_parameter.id]: value });
+        const output = Number(tested[lesson.actor.tracking_output]);
+        let time = 0;
+        if (lesson.action === 'oscillates' && Number.isFinite(output)) {
+          time = output * ${JSON.stringify(visionIndex)} / 2;
+        } else if (lesson.action === 'propagates' && Number.isFinite(output)) {
+          time = (lesson.actor.tracking_output.endsWith('_ms') ? output / 1000 : output)
+            * ${JSON.stringify(visionIndex)} / 4;
+        } else if (lesson.action === 'flows') {
+          time = 0.3;
+        }
+        window.__LAYSH_VERIFICATION_TIME__ = time;
+        for (let repeat = 0; repeat < 7; repeat += 1) {
+          window.LayshSimulation.setParameter(lesson.primary_parameter.id, value, time);
+        }
+        return { parameter: value, modelOutputs: tested, timeSeconds: time };
+      })()`,
+      returnByValue: true,
+    });
+    visionFrameStates.push(frameState.result.value);
+    const canvasBounds = await command("Runtime.evaluate", {
+      expression: `(() => {
+        const bounds = document.querySelector('#simulation').getBoundingClientRect();
+        return {
+          x: bounds.left + window.scrollX,
+          y: bounds.top + window.scrollY,
+          width: bounds.width,
+          height: bounds.height,
+          scale: 1,
+        };
+      })()`,
+      returnByValue: true,
+    });
+    const screenshot = await command("Page.captureScreenshot", {
+      format: "png",
+      captureBeyondViewport: true,
+      clip: canvasBounds.result.value,
+    });
+    visionFrames.push(screenshot.data);
+  }
+  await command("Runtime.evaluate", {
+    expression: "delete window.__LAYSH_VERIFICATION_TIME__",
+  });
+
   const initialValue = firstCapture.result.value?.controlValue;
   const autoValue = idleMotion.result.value.controlValue;
   const interactionTarget = interactionStart.result.value.target;
@@ -423,6 +514,9 @@ try {
     reducedMotionPlayOptInWorked: reducedHeld.result.value.state === 'playing'
       && Math.abs(reducedPlayed.result.value.value - reducedHeld.result.value.value) > 1e-6,
     renderOutputSweep: renderSweep,
+    actorTracking: actorTracking.result.value,
+    visionFrameStates,
+    visionFrames,
     runtimeError: runtimeState.result.value,
     externalRequests,
   }));

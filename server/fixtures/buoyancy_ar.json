@@ -8,6 +8,8 @@
   },
   "review_contract": {
     "formula": "Fᵦ = ρ𝒻Vg",
+    "actor": {"id": "floating_body", "label": "الجسم", "tracking_signature": {"color_rgb": [244, 165, 72], "tolerance": 12, "reference_color_rgb": [52, 211, 235], "reference_tolerance": 12}, "tracking_output": "submerged_fraction"},
+    "action": "floats_sinks",
     "primary_parameter": {"id": "density_kg_m3", "min": 200, "max": 1400, "default": 750, "step": 10, "unit": "kg/m³", "sweep_mode": "bounce"},
     "units": ["kg/m³", "N", "ratio"],
     "assumptions": ["ماء ساكن كثافته 1000 kg/m³", "جسم متجانس", "إهمال التوتر السطحي"],

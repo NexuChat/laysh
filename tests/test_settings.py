@@ -25,6 +25,8 @@ def test_runtime_defaults_are_gpt_5_6_family_only():
     assert settings.live_cache_root == ""
     assert settings.max_live_lessons == 100
     assert settings.record_runtime is False
+    assert settings.service_tier == "fast"
+    assert settings.vision_model == "gpt-5.6-terra"
 
 
 def test_timeout_profiles_are_independently_configurable(monkeypatch):
@@ -56,4 +58,18 @@ def test_non_gpt_5_6_runtime_override_is_rejected(monkeypatch):
 
     monkeypatch.setenv("LAYSH_UNDERSTAND_MODEL", "legacy-non-gpt-5.6-model")
     with pytest.raises(ValueError, match="GPT-5.6"):
+        Settings.from_env()
+
+
+def test_service_tier_can_be_disabled_without_a_code_change(monkeypatch):
+    from server.settings import Settings
+
+    monkeypatch.setenv("LAYSH_SERVICE_TIER", "")
+    assert Settings.from_env().service_tier is None
+
+    monkeypatch.setenv("LAYSH_SERVICE_TIER", "fast")
+    assert Settings.from_env().service_tier == "fast"
+
+    monkeypatch.setenv("LAYSH_SERVICE_TIER", "slow")
+    with pytest.raises(ValueError, match="service tier"):
         Settings.from_env()

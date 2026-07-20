@@ -8,6 +8,8 @@
   },
   "review_contract": {
     "formula": "I = V/R; P = V²/R",
+    "actor": {"id": "moving_charge", "label": "الشحنة المتحركة", "tracking_signature": {"color_rgb": [97, 241, 196], "tolerance": 12, "reference_color_rgb": null, "reference_tolerance": null}, "tracking_output": "current_a"},
+    "action": "flows",
     "primary_parameter": {"id": "resistance_ohm", "min": 2, "max": 20, "default": 6, "step": 1, "unit": "Ω", "sweep_mode": "bounce"},
     "units": ["V", "Ω", "A", "W"],
     "assumptions": ["مصدر مثالي جهده 6 V", "مقاومة أومية", "السطوع يمثله تبديد القدرة"],

@@ -171,6 +171,63 @@ def test_browser_gate_accepts_motion_above_both_region_thresholds():
     assert result.passed is True
 
 
+def test_actor_tracking_accepts_a_swinging_bob_with_measured_period():
+    from server.browser_verify import BrowserVerificationResult, _evaluate
+
+    tracking = {
+        "passed": True,
+        "action": "oscillates",
+        "actorId": "pendulum_bob",
+        "expected": {
+            "signReversalsAtLeast": 3,
+            "periodSeconds": 2.006,
+            "periodToleranceRatio": 0.15,
+        },
+        "measured": {
+            "signReversals": 4,
+            "periodSeconds": 2.04,
+            "periodErrorRatio": 0.0169,
+            "horizontalSpanPixels": 27.4,
+        },
+    }
+    result = _evaluate(
+        {**BrowserVerificationResult.passing().evidence, "actorTracking": tracking}
+    )
+
+    assert result.passed is True
+    assert result.evidence["actorTracking"]["measured"]["periodSeconds"] == 2.04
+
+
+def test_actor_tracking_rejects_static_actor_with_moving_shadows():
+    from server.browser_verify import BrowserVerificationResult, _evaluate
+
+    tracking = {
+        "passed": False,
+        "action": "rotates",
+        "actorId": "earth_surface_feature",
+        "failure": {
+            "code": "actor_trajectory_static",
+            "expected": {"angularDisplacementDegrees": 90, "minimumSpanPixels": 6},
+            "measured": {
+                "angularDisplacementDegrees": 0,
+                "horizontalSpanPixels": 0.3,
+                "shadowChangedPixelRatio": 0.18,
+            },
+        },
+    }
+    result = _evaluate(
+        {**BrowserVerificationResult.passing().evidence, "actorTracking": tracking}
+    )
+
+    assert result.passed is False
+    assert result.failures[-1] == {
+        "gate": "actor_action_tracking",
+        "code": "actor_trajectory_static",
+        "expected": tracking["failure"]["expected"],
+        "actual": tracking["failure"]["measured"],
+    }
+
+
 def test_render_output_consistency_failure_reports_exact_adjacent_samples():
     from server.browser_verify import BrowserVerificationResult, _evaluate
 

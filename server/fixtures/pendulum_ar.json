@@ -8,6 +8,8 @@
   },
   "review_contract": {
     "formula": "T = 2π√(L/g)",
+    "actor": {"id": "pendulum_bob", "label": "ثقل البندول", "tracking_signature": {"color_rgb": [255, 193, 92], "tolerance": 12, "reference_color_rgb": null, "reference_tolerance": null}, "tracking_output": "period_s"},
+    "action": "oscillates",
     "primary_parameter": {"id": "length_m", "min": 0.25, "max": 2.0, "default": 1.0, "step": 0.05, "unit": "m", "sweep_mode": "bounce"},
     "units": ["m", "s"],
     "assumptions": ["زاوية صغيرة", "خيط عديم الكتلة", "g = 9.81 m/s²", "إهمال مقاومة الهواء"],

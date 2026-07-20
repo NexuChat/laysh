@@ -7,7 +7,7 @@ import shutil
 import signal
 import tempfile
 import time
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -149,6 +149,7 @@ class CodexExecutor:
         evidence_stage_timeout_seconds: float | None = None,
         record_runtime: bool = False,
         evidence_allowlist: frozenset[str] = frozenset(),
+        service_tier: str | None = "fast",
     ) -> None:
         self.process_factory = process_factory or asyncio.create_subprocess_exec
         self.codex_path = codex_path or shutil.which("codex") or "/home/dev/bin/codex"
@@ -160,6 +161,9 @@ class CodexExecutor:
         )
         self.record_runtime = record_runtime
         self.evidence_allowlist = evidence_allowlist
+        if service_tier not in {None, "fast"}:
+            raise ValueError("service_tier must be 'fast' or None")
+        self.service_tier = service_tier
 
     def _enforce_policy(
         self,
@@ -287,6 +291,7 @@ class CodexExecutor:
         public: bool = True,
         evidence_fixture_id: str | None = None,
         timeout_seconds: float | None = None,
+        image_paths: Sequence[Path] = (),
     ) -> StageExecution:
         try:
             output_schema = json.loads(schema_path.read_text(encoding="utf-8"))
@@ -308,6 +313,15 @@ class CodexExecutor:
         )
         started = time.monotonic()
         with tempfile.TemporaryDirectory(prefix="laysh-codex-") as runtime_directory:
+            runtime_path = Path(runtime_directory)
+            attached_images: list[str] = []
+            for index, source in enumerate(image_paths, start=1):
+                destination = runtime_path / f"frame-{index}.png"
+                try:
+                    shutil.copyfile(source, destination)
+                except OSError as error:
+                    raise CodexRuntimeError("image_attachment_failed") from error
+                attached_images.append(str(destination))
             args = [
                 self.codex_path,
                 "exec",
@@ -327,6 +341,16 @@ class CodexExecutor:
                 "--cd",
                 runtime_directory,
             ]
+            if self.service_tier is not None:
+                args[args.index("--sandbox"):args.index("--sandbox")] = [
+                    "-c",
+                    f'service_tier="{self.service_tier}"',
+                ]
+            if attached_images:
+                args[args.index("--sandbox"):args.index("--sandbox")] = [
+                    "--image",
+                    *attached_images,
+                ]
             if public:
                 args.append("--ephemeral")
             try:

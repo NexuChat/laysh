@@ -21,6 +21,7 @@ CODEX_OUTPUT_SCHEMA_BY_STAGE = {
     "generate": SCHEMA_DIR / "module.schema.json",
     "heal": SCHEMA_DIR / "module.schema.json",
     "qa": SCHEMA_DIR / "qa.schema.json",
+    "vision": SCHEMA_DIR / "vision.schema.json",
 }
 CODEX_OUTPUT_SCHEMAS = tuple(sorted(set(CODEX_OUTPUT_SCHEMA_BY_STAGE.values())))
 LOGGER = logging.getLogger(__name__)
@@ -189,6 +190,66 @@ class CodexBackend:
             **self._execution_policy(selected_context),
         )
 
+    async def vision(
+        self,
+        understanding: dict[str, Any],
+        image_paths: list[Path],
+        frame_states: list[dict[str, Any]] | None = None,
+        *,
+        runtime_context: RuntimeContext | None = None,
+    ) -> StageExecution:
+        selected_context = runtime_context or RuntimeContext()
+        if len(image_paths) != 3:
+            raise CodexRuntimeError("vision_frame_count_invalid")
+        actor = understanding["actor"]
+        payload = {
+            "actor": {"id": actor["id"], "label": actor["label"]},
+            "tracking_feature_rgb": actor["tracking_signature"]["color_rgb"],
+            "action": understanding["action"],
+            "formula": understanding["key_formula"],
+            "primary_parameter": understanding["primary_parameter"],
+            "frame_parameter_positions": ["see_exact_frame_model_states"],
+            "frame_model_states": frame_states or [],
+            "judgment_note": {
+                "rotates": (
+                    "Track the declared RGB surface feature. Any daylight output describes "
+                    "the separate location marker, not every continent."
+                ),
+                "phases": (
+                    "Track the declared RGB Moon in Top view: it must orbit. The larger View "
+                    "from Earth disc intentionally stays centered while its lit fraction changes."
+                ),
+                "oscillates": (
+                    "The small-angle painter uses alpha(t)=8 degrees*cos(2*pi*t/T): t=0 "
+                    "is right, t=T/2 is left, and t=T returns right. Length changes too."
+                ),
+                "propagates": (
+                    "Track cyan waveform crests, not the fixed speaker. Frequency changes the "
+                    "wavelength while exact frame times advance phase by quarter periods."
+                ),
+                "flows": (
+                    "These are parameter-ordered snapshots at the same model time, not a time "
+                    "sequence. Higher resistance lowers current, so the charge is less far along."
+                ),
+            }.get(
+                understanding["action"],
+                "Judge the declared actor trajectory against the exact frame model states.",
+            ),
+        }
+        return await self.executor.execute_stage(
+            prompt=self._render_prompt("vision.md", payload),
+            schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["vision"],
+            model=self.settings.vision_model,
+            effort="low",
+            image_paths=image_paths,
+            timeout_seconds=(
+                self.settings.public_qa_timeout_seconds
+                if selected_context.public
+                else self.settings.evidence_qa_timeout_seconds
+            ),
+            **self._execution_policy(selected_context),
+        )
+
 
 def _success_understanding(locale: str) -> dict[str, Any]:
     arabic = locale != "en"
@@ -212,6 +273,18 @@ def _success_understanding(locale: str) -> dict[str, Any]:
             if arabic
             else "Connect orbital angle to the visible lit fraction"
         ),
+        "actor": {
+            "id": "moon",
+            "label": "القمر" if arabic else "Moon",
+            "tracking_signature": {
+                "color_rgb": [255, 118, 92],
+                "tolerance": 8,
+                "reference_color_rgb": None,
+                "reference_tolerance": None,
+            },
+            "tracking_output": "lit_fraction",
+        },
+        "action": "phases",
         "primary_parameter": {
             "id": "angle_deg",
             "label": "زاوية القمر" if arabic else "Moon angle",
@@ -289,6 +362,8 @@ def _non_simulatable(locale: str) -> dict[str, Any]:
                 if arabic
                 else "Distinguish an explanation from a measurable model"
             ),
+            "actor": None,
+            "action": None,
             "primary_parameter": None,
             "secondary_parameter": None,
             "misconception": None,
@@ -336,6 +411,8 @@ def _unsafe(locale: str) -> dict[str, Any]:
                 if arabic
                 else "Move to a safe science exploration"
             ),
+            "actor": None,
+            "action": None,
             "primary_parameter": None,
             "secondary_parameter": None,
             "misconception": None,
@@ -380,6 +457,7 @@ class MockCodexBackend:
         self.generate_calls = 0
         self.heal_calls = 0
         self.qa_calls = 0
+        self.vision_calls = 0
         self.last_heal_failures: list[list[dict[str, Any]]] = []
         self._good_source = (ROOT / "tests" / "fixtures" / "moon_phase_module.js").read_text(
             encoding="utf-8"
@@ -482,6 +560,23 @@ class MockCodexBackend:
                 "reactive_feedback": True,
                 "readable_overlays": True,
             },
+        }
+
+    async def vision(
+        self,
+        understanding: dict[str, Any],
+        image_paths: list[Path],
+        frame_states: list[dict[str, Any]] | None = None,
+        *,
+        runtime_context: RuntimeContext | None = None,
+    ) -> dict[str, Any]:
+        del understanding, image_paths, frame_states, runtime_context
+        self.vision_calls += 1
+        return {
+            "actor_visible": True,
+            "action_performed": True,
+            "physically_consistent": True,
+            "defects": [],
         }
 
     @staticmethod

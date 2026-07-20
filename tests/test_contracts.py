@@ -59,6 +59,48 @@ def test_simulatable_understanding_requires_two_independent_checks():
         validate_understanding(candidate)
 
 
+def test_simulatable_understanding_requires_closed_actor_action_contract():
+    from server.schemas import ContractError, validate_understanding
+
+    assert VALID_UNDERSTANDING["action"] == "phases"
+    assert VALID_UNDERSTANDING["actor"]["tracking_signature"]["color_rgb"] == [
+        255,
+        118,
+        92,
+    ]
+
+    missing_actor = deepcopy(VALID_UNDERSTANDING)
+    missing_actor.pop("actor")
+    with pytest.raises(ValidationError):
+        validate_understanding(missing_actor)
+
+    unknown_action = deepcopy(VALID_UNDERSTANDING)
+    unknown_action["action"] = "shimmers"
+    with pytest.raises(ValidationError):
+        validate_understanding(unknown_action)
+
+    null_actor = deepcopy(VALID_UNDERSTANDING)
+    null_actor["actor"] = None
+    with pytest.raises(ContractError, match="actor and action"):
+        validate_understanding(null_actor)
+
+
+def test_non_simulatable_understanding_must_not_claim_an_actor_action():
+    from server.schemas import ContractError, validate_understanding
+
+    candidate = deepcopy(VALID_UNDERSTANDING)
+    candidate["simulatable"] = False
+    candidate["primary_parameter"] = None
+    candidate["checks"] = []
+    candidate["actor"] = None
+    candidate["action"] = None
+    assert validate_understanding(candidate) == candidate
+
+    candidate["action"] = "phases"
+    with pytest.raises(ContractError, match="non-simulatable"):
+        validate_understanding(candidate)
+
+
 def test_misconception_gate_accepts_corrective_copy_and_rejects_a_bare_myth():
     from server.schemas import load_schema
     from server.verify import misconception_report
@@ -79,14 +121,14 @@ def test_current_frozen_contract_manifest_strictly_matches_repository():
     from scripts.freeze_contracts import build_manifest
 
     expected = json.loads(
-        (ROOT / "contracts" / "contracts-frozen-r3.json").read_text(encoding="utf-8")
+        (ROOT / "contracts" / "contracts-frozen-r4.json").read_text(encoding="utf-8")
     )
     historical = json.loads(
         (ROOT / "out" / "evidence" / "contracts-frozen.json").read_text(encoding="utf-8")
     )
 
     assert historical["contract_version"] == expected["contract_version"] == "1.0"
-    assert expected["freeze_revision"] == 3
+    assert expected["freeze_revision"] == 4
     assert build_manifest() == expected
 
 

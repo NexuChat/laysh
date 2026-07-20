@@ -10,6 +10,18 @@ VALID_UNDERSTANDING = {
     "tldr": "يتغير الجزء المضيء الذي نراه لأن موضع القمر يتغير بالنسبة إلى الأرض والشمس.",
     "key_formula": "f = (1 − cos θ) / 2",
     "learning_objective": "ربط زاوية المدار بالجزء المضيء المرئي",
+    "actor": {
+        "id": "moon",
+        "label": "القمر",
+        "tracking_signature": {
+            "color_rgb": [255, 118, 92],
+            "tolerance": 8,
+            "reference_color_rgb": None,
+            "reference_tolerance": None,
+        },
+        "tracking_output": "lit_fraction",
+    },
+    "action": "phases",
     "primary_parameter": {
         "id": "angle_deg",
         "label": "زاوية القمر",

@@ -14,6 +14,8 @@ class Settings:
     generate_model: str = "gpt-5.6-sol"
     heal_model: str = "gpt-5.6-sol"
     qa_model: str = "gpt-5.6-sol"
+    vision_model: str = "gpt-5.6-terra"
+    service_tier: str | None = "fast"
     backend: str = "mock"
     public_job_timeout_seconds: float = 180.0
     evidence_job_timeout_seconds: float = 600.0
@@ -39,9 +41,12 @@ class Settings:
             self.generate_model,
             self.heal_model,
             self.qa_model,
+            self.vision_model,
         }
         if not configured <= ALLOWED_RUNTIME_MODELS:
             raise ValueError("every Laysh runtime stage must use an approved GPT-5.6 model")
+        if self.service_tier not in {None, "fast"}:
+            raise ValueError("LAYSH service tier must be 'fast' or disabled")
         timeout_values = (
             self.public_job_timeout_seconds,
             self.evidence_job_timeout_seconds,
@@ -73,6 +78,8 @@ class Settings:
             generate_model=os.getenv("LAYSH_GENERATE_MODEL", defaults.generate_model),
             heal_model=os.getenv("LAYSH_HEAL_MODEL", defaults.heal_model),
             qa_model=os.getenv("LAYSH_QA_MODEL", defaults.qa_model),
+            vision_model=os.getenv("LAYSH_VISION_MODEL", defaults.vision_model),
+            service_tier=os.getenv("LAYSH_SERVICE_TIER", defaults.service_tier) or None,
             backend=os.getenv("LAYSH_CODEX_BACKEND", defaults.backend),
             public_job_timeout_seconds=float(
                 os.getenv(

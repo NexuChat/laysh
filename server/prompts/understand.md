@@ -19,6 +19,13 @@ Rules:
   unsafe input and private identifiers; it does not permit unreadable placeholders in a safe lesson.
 - A simulatable result has one primary parameter, no more than one secondary parameter, and at least
   two independent numeric or relational fixtures.
+- Every simulatable lesson declares one central physical `actor` and exactly one `action` from the
+  closed list `rotates`, `oscillates`, `orbits`, `propagates`, `flows`, `floats_sinks`, `phases`.
+  Give the actor a unique, high-contrast RGB tracking signature that the painter can use as a small
+  solid core or surface feature and must not reuse in decoration. For waterline comparison also
+  declare the reference RGB signature; otherwise both reference fields are null. `tracking_output`
+  names the model output used to judge period, rate, phase, or submerged fraction, or is null when
+  the primary angle alone defines the trajectory. Non-simulatable results use null actor and action.
 - Give every primary parameter an honest `sweep_mode`: use `cyclic` only when the maximum reconnects
   physically to the minimum (for example a complete 0°–360° rotation); use `bounce` for bounded
   non-cyclic quantities such as length, density, resistance, or frequency.
@@ -37,6 +44,8 @@ Rules:
   misconception target, output names, and all reference input/output values. Convert every reference
   value into a closed schema numeric check. Copy its named tolerance exactly; never widen a reference
   tolerance. Do not reinterpret or omit those references.
+- When `builder_reference_contract` includes actor/action tracking, preserve it exactly, including
+  signature colors and tracking output.
 - Fixtures are the fixed scientific contract for module verification. Use finite values and honest
   tolerances.
 - Privately derive every fixture from `key_formula` before emitting it. Check the arithmetic internally

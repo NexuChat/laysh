@@ -28,8 +28,26 @@ def validate_document(document: dict[str, Any], schema: dict[str, Any]) -> dict[
 
 def validate_understanding(document: dict[str, Any]) -> dict[str, Any]:
     validate_document(document, load_schema("understand.schema.json"))
-    if document["simulatable"] and len(document["checks"]) < 2:
-        raise ContractError("a simulatable lesson requires at least two independent checks")
+    if document["simulatable"]:
+        if len(document["checks"]) < 2:
+            raise ContractError("a simulatable lesson requires at least two independent checks")
+        if document["actor"] is None or document["action"] is None:
+            raise ContractError("a simulatable lesson requires an actor and action")
+        tracking_output = document["actor"]["tracking_output"]
+        if (
+            tracking_output is not None
+            and tracking_output not in document["module_spec"]["outputs"]
+        ):
+            raise ContractError("actor tracking_output must be a declared module output")
+        signature = document["actor"]["tracking_signature"]
+        reference_values = (
+            signature["reference_color_rgb"],
+            signature["reference_tolerance"],
+        )
+        if (reference_values[0] is None) != (reference_values[1] is None):
+            raise ContractError("actor reference signature fields must both be null or present")
+    elif document["actor"] is not None or document["action"] is not None:
+        raise ContractError("a non-simulatable answer cannot claim an actor or action")
     return document
 
 

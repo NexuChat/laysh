@@ -48,6 +48,7 @@ async def run() -> int:
         evidence_stage_timeout_seconds=settings.evidence_stage_timeout_seconds,
         record_runtime=False,
         evidence_allowlist=frozenset(GOLDEN_FIXTURE_IDS),
+        service_tier=settings.service_tier,
     )
     manager = JobManager(
         CodexBackend(executor=executor, settings=settings),

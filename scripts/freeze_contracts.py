@@ -8,7 +8,7 @@ from pathlib import Path
 from server.schemas import CONTRACT_VERSION
 
 ROOT = Path(__file__).parents[1]
-FREEZE_REVISION = 3
+FREEZE_REVISION = 4
 DEFAULT_OUTPUT = ROOT / "contracts" / f"contracts-frozen-r{FREEZE_REVISION}.json"
 
 
