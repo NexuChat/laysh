@@ -1,5 +1,30 @@
+import re
+
 from tests.conftest import wait_for_terminal
 from tests.test_pipeline import ask
+
+
+def test_index_versions_all_same_origin_static_assets(client):
+    response = client.get("/")
+
+    assert response.status_code == 200
+    for asset in (
+        "app.css",
+        "locale.js",
+        "translations.js",
+        "app.js",
+        "fonts/free-sans-arabic-latin.woff2",
+        "fonts/free-serif-arabic-display.woff2",
+    ):
+        assert re.search(rf'/static/{re.escape(asset)}\?v=[^"&]+', response.text)
+
+
+def test_static_assets_ignore_version_query_string(client):
+    first = client.get("/static/app.js?v=first-deploy")
+    second = client.get("/static/app.js?v=second-deploy")
+
+    assert first.status_code == second.status_code == 200
+    assert first.content == second.content
 
 
 def test_root_is_arabic_first_ask_build_result_application(client):

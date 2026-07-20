@@ -194,7 +194,7 @@ try {
   const sharedColdLoad = await evaluate(`({
     resultVisible: !document.querySelector('#result-view').hidden,
     shareControlsVisible: !document.querySelector('#share-actions').hidden,
-    stablePath: location.pathname === '/sims/golden_moon_phases',
+    stablePath: location.pathname === '/ar/sims/golden_moon_phases',
     titlePresent: Boolean(document.querySelector('#result-title').textContent.trim()),
     copyConfirmed: document.querySelector('#share-status').textContent.includes('تم نسخ الرابط'),
   })`);

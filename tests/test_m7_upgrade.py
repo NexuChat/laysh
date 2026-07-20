@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -21,7 +22,7 @@ def test_web_shell_carries_the_night_observatory_identity(client):
     assert "color-scheme: dark" in css
     assert "letter-spacing: -" not in css
     assert "prefers-reduced-motion: reduce" in css
-    assert 'href="/static/fonts/free-serif-arabic-display.woff2"' in html
+    assert re.search(r'href="/static/fonts/free-serif-arabic-display\.woff2\?v=[^"&]+"', html)
 
 
 def test_build_view_has_truthful_agent_theatre_hooks(client):

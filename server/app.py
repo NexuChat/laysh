@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import re
 import secrets
+import shutil
+import subprocess
 import unicodedata
 from collections.abc import Callable
 from pathlib import Path
@@ -31,6 +33,23 @@ from server.settings import Settings
 
 ROOT = Path(__file__).parents[1]
 CACHE_REVALIDATION = "no-cache, must-revalidate"
+BUILD_ID_PLACEHOLDER = "{{ BUILD_ID }}"
+
+
+def build_id() -> str:
+    """Return the deploy's Git revision, with a stable local fallback."""
+    git = shutil.which("git")
+    if git is None:
+        return "dev"
+    try:
+        return subprocess.check_output(  # noqa: S603 -- executable and arguments are fixed.
+            [git, "rev-parse", "--short", "HEAD"],
+            cwd=ROOT,
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    except (OSError, subprocess.CalledProcessError):
+        return "dev"
 
 
 class RevalidatingStaticFiles(StaticFiles):
@@ -48,6 +67,7 @@ def create_app(
     browser_verifier: Callable[[str], BrowserVerificationResult] = verify_artifact_in_browser,
 ) -> FastAPI:
     settings = Settings.from_env()
+    asset_build_id = build_id()
     if backend is not None:
         selected_backend = backend
     elif settings.backend == "codex":
@@ -108,7 +128,9 @@ def create_app(
     app.state.verified_cache = verified_cache
 
     def index_response() -> HTMLResponse:
-        content = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
+        content = (ROOT / "web" / "index.html").read_text(encoding="utf-8").replace(
+            BUILD_ID_PLACEHOLDER, asset_build_id
+        )
         return HTMLResponse(
             content,
             headers={
@@ -369,6 +391,18 @@ def create_app(
                 "known_jobs": len(app.state.jobs.records),
             },
         }
+
+    @app.get("/{locale}", response_class=HTMLResponse)
+    async def localized_index(locale: str) -> HTMLResponse:
+        if locale not in {"ar", "en"}:
+            raise HTTPException(status_code=404, detail="page not found")
+        return index_response()
+
+    @app.get("/{locale}/sims/{sim_id}", response_class=HTMLResponse)
+    async def localized_shared_lesson(locale: str, sim_id: str) -> HTMLResponse:
+        if locale not in {"ar", "en"} or resolve_shareable(sim_id) is None:
+            raise HTTPException(status_code=404, detail="shared simulation not found")
+        return index_response()
 
     return app
 
