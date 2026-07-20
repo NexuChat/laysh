@@ -1,0 +1,114 @@
+{
+  "schema_version": "1.0",
+  "gate": "trusted_shell_autoplay_and_render_output_consistency",
+  "lessons": [
+    {
+      "id": "moon_phases",
+      "method": "regenerated",
+      "passed": true,
+      "artifact_sha256": "b3a633dfd3664e9b56f7040df47c21123ba43c9439eabfac36b37f96d37fe1d4",
+      "deterministic_check_count": 24,
+      "browser_check_count": 15,
+      "subject_motion_ratio": 0.07027391975308642,
+      "whole_canvas_motion_ratio": 0.03243055555555555,
+      "render_output_gate": {
+        "passed": true,
+        "metric": "meanLuminance",
+        "rank_correlation": 0.9944753255009663,
+        "sample_count": 17,
+        "failure": null
+      },
+      "failures": []
+    },
+    {
+      "id": "buoyancy",
+      "method": "reassembled",
+      "passed": true,
+      "artifact_sha256": "b7e115733df7aff5ec4966e5252c73f2052a6d31e274da867472e7837c16f14f",
+      "deterministic_check_count": 27,
+      "browser_check_count": 15,
+      "subject_motion_ratio": 0.38641010802469133,
+      "whole_canvas_motion_ratio": 0.17805208333333333,
+      "render_output_gate": {
+        "passed": true,
+        "metric": "meanLuminance",
+        "rank_correlation": 0.9783188862212846,
+        "sample_count": 17,
+        "failure": null
+      },
+      "failures": []
+    },
+    {
+      "id": "pendulum",
+      "method": "reassembled",
+      "passed": true,
+      "artifact_sha256": "66798c7919f830bd535409f5a4acb2e5e3d598aceadb0714efd8ce108d3af546",
+      "deterministic_check_count": 24,
+      "browser_check_count": 15,
+      "subject_motion_ratio": 0.22073688271604938,
+      "whole_canvas_motion_ratio": 0.08236111111111111,
+      "render_output_gate": {
+        "passed": true,
+        "metric": "bright192",
+        "rank_correlation": 0.9975490196078431,
+        "sample_count": 17,
+        "failure": null
+      },
+      "failures": []
+    },
+    {
+      "id": "simple_circuit",
+      "method": "reassembled",
+      "passed": true,
+      "artifact_sha256": "b6fb673c8b2f7439f6170a44de532d1d430a1d853ae5fefe70eb1d88a390ff57",
+      "deterministic_check_count": 27,
+      "browser_check_count": 15,
+      "subject_motion_ratio": 0.21623263888888888,
+      "whole_canvas_motion_ratio": 0.13591319444444444,
+      "render_output_gate": {
+        "passed": true,
+        "metric": "meanLuminance",
+        "rank_correlation": 1,
+        "sample_count": 17,
+        "failure": null
+      },
+      "failures": []
+    },
+    {
+      "id": "sound_pitch",
+      "method": "reassembled",
+      "passed": true,
+      "artifact_sha256": "53e2120a8a343921b991ccbb415a2140e72afe6e0bdef2beb81cd4838c772257",
+      "deterministic_check_count": 27,
+      "browser_check_count": 15,
+      "subject_motion_ratio": 0.3763213734567901,
+      "whole_canvas_motion_ratio": 0.14536805555555554,
+      "render_output_gate": {
+        "passed": true,
+        "metric": "bright192",
+        "rank_correlation": 1,
+        "sample_count": 17,
+        "failure": null
+      },
+      "failures": []
+    },
+    {
+      "id": "day_night",
+      "method": "reassembled",
+      "passed": true,
+      "artifact_sha256": "3120bc792d32b2ea0c96994ef3cc4935de9de07d577336cf3c01cd20fec57d64",
+      "deterministic_check_count": 27,
+      "browser_check_count": 15,
+      "subject_motion_ratio": 0.014023919753086419,
+      "whole_canvas_motion_ratio": 0.005048611111111111,
+      "render_output_gate": {
+        "passed": true,
+        "metric": "bright128",
+        "rank_correlation": 0.9116571279743092,
+        "sample_count": 17,
+        "failure": null
+      },
+      "failures": []
+    }
+  ]
+}

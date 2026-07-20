@@ -30,7 +30,7 @@ class BrowserVerificationResult:
     def passing(cls) -> BrowserVerificationResult:
         return cls(
             passed=True,
-            check_count=7,
+            check_count=15,
             failures=[],
             evidence={
                 "ready": True,
@@ -39,7 +39,19 @@ class BrowserVerificationResult:
                 "idleMotionSubjectChangedPixelRatio": 0.011,
                 "idleMotionWholeCanvasChangedPixelRatio": 0.004,
                 "idleMotionCaptureIntervalMs": 1100,
-                "controlEnabledBeforePrediction": True,
+                "autoAdvanceValueChanged": True,
+                "sliderTrackedAnimation": True,
+                "controlAlwaysEnabled": True,
+                "pauseHeldValue": True,
+                "sliderInteractionYielded": True,
+                "reducedMotionStartedPaused": True,
+                "reducedMotionPlayOptInWorked": True,
+                "renderOutputSweep": {
+                    "passed": True,
+                    "metric": "meanLuminance",
+                    "rankCorrelation": 0.9,
+                    "samples": [{"parameter": 0, "computedOutput": 0, "renderedMeasure": 0}],
+                },
                 "runtimeError": False,
                 "externalRequests": 0,
             },
@@ -125,6 +137,63 @@ def _evaluate(evidence: dict[str, Any]) -> BrowserVerificationResult:
             "visual_richness",
         ),
         (
+            bool(evidence.get("autoAdvanceValueChanged")),
+            "parameter_did_not_auto_advance",
+            {"fresh_lesson_parameter_advances": True},
+            {"fresh_lesson_parameter_advances": bool(evidence.get("autoAdvanceValueChanged"))},
+            "motion_control",
+        ),
+        (
+            bool(evidence.get("sliderTrackedAnimation")),
+            "slider_did_not_track_animation",
+            {"slider_tracks_parameter": True},
+            {"slider_tracks_parameter": bool(evidence.get("sliderTrackedAnimation"))},
+            "motion_control",
+        ),
+        (
+            bool(evidence.get("controlAlwaysEnabled")),
+            "primary_control_disabled",
+            {"primary_control_always_enabled": True},
+            {"primary_control_always_enabled": bool(evidence.get("controlAlwaysEnabled"))},
+            "motion_control",
+        ),
+        (
+            bool(evidence.get("pauseHeldValue")),
+            "pause_did_not_hold_parameter",
+            {"paused_parameter_stable": True},
+            {"paused_parameter_stable": bool(evidence.get("pauseHeldValue"))},
+            "motion_control",
+        ),
+        (
+            bool(evidence.get("sliderInteractionYielded")),
+            "slider_interaction_did_not_yield_motion",
+            {"auto_advance_yields_during_slider_interaction": True},
+            {
+                "auto_advance_yields_during_slider_interaction": bool(
+                    evidence.get("sliderInteractionYielded")
+                )
+            },
+            "motion_control",
+        ),
+        (
+            bool(evidence.get("reducedMotionStartedPaused")),
+            "reduced_motion_autoplayed",
+            {"reduced_motion_starts_paused": True},
+            {"reduced_motion_starts_paused": bool(evidence.get("reducedMotionStartedPaused"))},
+            "reduced_motion",
+        ),
+        (
+            bool(evidence.get("reducedMotionPlayOptInWorked")),
+            "reduced_motion_play_opt_in_failed",
+            {"reduced_motion_play_control_works": True},
+            {
+                "reduced_motion_play_control_works": bool(
+                    evidence.get("reducedMotionPlayOptInWorked")
+                )
+            },
+            "reduced_motion",
+        ),
+        (
             not bool(evidence.get("runtimeError")),
             "runtime_error_beacon",
             {"runtime_error": False},
@@ -142,9 +211,25 @@ def _evaluate(evidence: dict[str, Any]) -> BrowserVerificationResult:
     for passed, code, expected, actual, gate in checks:
         if not passed:
             failures.append(_failure(code, expected, actual, gate=gate))
+    render_sweep = evidence.get("renderOutputSweep")
+    render_passed = isinstance(render_sweep, dict) and render_sweep.get("passed") is True
+    if not render_passed:
+        diagnostic = render_sweep.get("failure", {}) if isinstance(render_sweep, dict) else {}
+        failures.append(
+            _failure(
+                str(diagnostic.get("code", "render_output_sweep_missing")),
+                {
+                    "full_parameter_sweep": True,
+                    "render_tracks_computed_output": True,
+                    "adjacent_discontinuities": 0,
+                },
+                diagnostic,
+                gate="render_output_consistency",
+            )
+        )
     return BrowserVerificationResult(
         passed=not failures,
-        check_count=len(checks),
+        check_count=len(checks) + 1,
         failures=failures,
         evidence=evidence,
     )

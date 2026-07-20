@@ -88,19 +88,15 @@ def review_golden_candidate(
     metadata = fixture["metadata"]
     teaching_fields = (
         "learning_objective",
-        "prediction",
         "misconception",
         "explanation_prompt",
         "transfer_prompt",
     )
-    prediction = understanding.get("prediction") or {}
     learner_strings = [
         understanding.get("title", ""),
         understanding.get("tldr", ""),
         understanding.get("learning_objective", ""),
         (understanding.get("primary_parameter") or {}).get("label", ""),
-        prediction.get("prompt", ""),
-        *prediction.get("choices", []),
         understanding.get("misconception", ""),
         understanding.get("explanation_prompt", ""),
         understanding.get("transfer_prompt", ""),
@@ -116,7 +112,6 @@ def review_golden_candidate(
         understanding.get("tldr", ""),
         understanding.get("learning_objective", ""),
         (understanding.get("primary_parameter") or {}).get("label", ""),
-        prediction.get("prompt", ""),
         understanding.get("misconception", ""),
         understanding.get("explanation_prompt", ""),
         understanding.get("transfer_prompt", ""),
@@ -132,7 +127,7 @@ def review_golden_candidate(
     parameter = understanding.get("primary_parameter") or {}
     parameter_matches = all(
         parameter.get(field) == parameter_contract[field]
-        for field in ("id", "min", "max", "default", "step", "unit")
+        for field in ("id", "min", "max", "default", "step", "unit", "sweep_mode")
     )
     model_fixture_matches = True
     for reference_fixture in contract["reference_fixtures"]:

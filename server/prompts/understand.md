@@ -3,7 +3,8 @@
 Return only JSON matching the supplied closed schema. Do not use tools.
 
 Complete safety classification, concise answer, simulation decision, one causal learning objective,
-localized teaching prompts, module specification, and independent fixtures in ONE structured call.
+localized observe/explain/transfer teaching prompts, module specification, and independent fixtures
+in ONE structured call. The lesson has no prediction step.
 
 Rules:
 
@@ -12,12 +13,15 @@ Rules:
 - Reject personal identifiers and unsafe requests without restating them.
 - Normalize Arabic dialect, Arabizi, and Arabic/English code-switching to one stable lowercase intent.
 - Use natural Modern Standard Arabic for Arabic input and concise English for English input.
-- For safe input, every learner-facing title, answer, label, prediction, choice, misconception, and
+- For safe input, every learner-facing title, answer, label, misconception, and
   teaching prompt must be meaningful natural language in `lang`. Never substitute hashes, UUIDs,
   opaque IDs, redaction tokens, or placeholder strings for learner-facing copy. Zero-echo applies to
   unsafe input and private identifiers; it does not permit unreadable placeholders in a safe lesson.
 - A simulatable result has one primary parameter, no more than one secondary parameter, and at least
   two independent numeric or relational fixtures.
+- Give every primary parameter an honest `sweep_mode`: use `cyclic` only when the maximum reconnects
+  physically to the minimum (for example a complete 0°–360° rotation); use `bounce` for bounded
+  non-cyclic quantities such as length, density, resistance, or frequency.
 - Write `key_formula` as short, student-facing display-grade math, never as source code. Use concise
   symbols such as `f`, `θ`, `T`, `L`, `I`, and `R`; use the Unicode minus sign `−`; and never emit
   snake_case, camelCase, implementation field names, or programming syntax. For example, emit
@@ -29,7 +33,7 @@ Rules:
   `not/is not/does not … but/rather …`. For example: `ليست أطوار القمر ظل الأرض، بل تتغير بسبب موضعه
   بالنسبة إلى الأرض والشمس.`
 - When `builder_reference_contract` is present, it is a builder-reviewed curated constraint: preserve
-  its scientific formula, primary parameter ID/range/default/step/unit, units, assumptions,
+  its scientific formula, primary parameter ID/range/default/step/unit/sweep mode, units, assumptions,
   misconception target, output names, and all reference input/output values. Convert every reference
   value into a closed schema numeric check. Copy its named tolerance exactly; never widen a reference
   tolerance. Do not reinterpret or omit those references.

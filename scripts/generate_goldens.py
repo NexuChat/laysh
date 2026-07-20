@@ -348,7 +348,7 @@ def parse_args() -> argparse.Namespace:
     subparsers = parser.add_subparsers(dest="command", required=True)
     generate = subparsers.add_parser("generate")
     generate.add_argument("--fixture", required=True, choices=GOLDEN_FIXTURE_IDS)
-    generate.add_argument("--attempt", type=int, choices=(1, 2, 3), required=True)
+    generate.add_argument("--attempt", type=int, choices=tuple(range(1, 10)), required=True)
     promote = subparsers.add_parser("promote")
     promote.add_argument("--fixture", required=True, choices=GOLDEN_FIXTURE_IDS)
     promote.add_argument("--revision", choices=("v1.1",))

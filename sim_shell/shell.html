@@ -24,17 +24,8 @@
       <p class="formula" id="formula" dir="ltr"></p>
     </header>
 
-    <section class="step prediction-card" id="prediction" aria-labelledby="prediction-title">
-      <p class="step-number">1</p>
-      <div>
-        <h2 id="prediction-title"></h2>
-        <p id="prediction-prompt"></p>
-        <div class="choices" id="prediction-choices"></div>
-      </div>
-    </section>
-
     <section class="step phenomenon" id="observe" aria-labelledby="observe-title">
-      <p class="step-number">2</p>
+      <p class="step-number">1</p>
       <div class="stage">
         <h2 id="observe-title"></h2>
         <canvas id="simulation" width="720" height="400" role="img" aria-describedby="state-description"></canvas>
@@ -45,18 +36,17 @@
           <output id="primary-output" for="primary-control" dir="auto"></output>
         </div>
         <div class="actions">
+          <button id="play-pause" type="button" aria-pressed="false"></button>
           <button id="reset" type="button"></button>
-          <button id="replay" type="button"></button>
         </div>
       </div>
     </section>
 
-    <section class="step" id="explain" aria-labelledby="explain-title" hidden>
-      <p class="step-number">3</p>
+    <section class="step" id="explain" aria-labelledby="explain-title">
+      <p class="step-number">2</p>
       <div>
         <h2 id="explain-title"></h2>
         <p id="explanation-prompt"></p>
-        <p id="prediction-comparison" class="prediction-comparison" role="status" aria-live="polite" hidden></p>
         <aside id="misconception" class="misconception" role="note">
           <span class="misconception-label" id="misconception-label"></span>
           <span id="misconception-copy"></span>

@@ -29,7 +29,9 @@ async def test_repeatable_g3_demo_proves_heal_reverify_browser_and_cache(tmp_pat
     }
     assert evidence["browser"]["idleMotionSubjectChangedPixelRatio"] >= 0.01
     assert evidence["browser"]["idleMotionWholeCanvasChangedPixelRatio"] >= 0.001
-    assert evidence["browser"]["controlEnabledBeforePrediction"] is True
+    assert evidence["browser"]["controlAlwaysEnabled"] is True
+    assert evidence["browser"]["autoAdvanceValueChanged"] is True
+    assert evidence["browser"]["renderOutputSweep"]["passed"] is True
     assert evidence["cache"]["entry_count"] == 1
     assert evidence["cache"]["receipt"]["failed_gate_count"] == 0
     assert evidence["cache"]["receipt"]["browser_passed"] is True

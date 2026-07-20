@@ -5,7 +5,7 @@
 ### اسأل ليش، والعب الجواب · Ask why. Play the answer.
 
 An Arabic-first learning experience that answers a learner's question, then builds a
-small verified simulation for prediction, observation, and explanation.
+small verified simulation for self-playing observation, explanation, and transfer.
 
 **Live demo:** `https://<FINAL-DEMO-URL>` **(owner placeholder; replace before submission)**  
 **Public repository:** `https://<FINAL-REPOSITORY-URL>` **(owner placeholder; replace after push)**

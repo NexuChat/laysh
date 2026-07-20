@@ -255,10 +255,10 @@ def test_generate_prompt_is_bounded_without_reducing_the_visual_contract():
     for requirement in (
         "three visible depth layers",
         "physical light",
-        "idle motion",
+        "advancing value",
         "reactive feedback",
         "readout chip",
-        "same-value redraw",
+        "full primary-parameter sweep",
         "curved terminator",
     ):
         assert requirement in prompt
@@ -273,6 +273,8 @@ def test_understand_prompt_requires_formula_derived_consistent_fixtures():
     )
 
     assert "derive every fixture from `key_formula`" in prompt
+    assert "`sweep_mode`" in prompt
+    assert "no prediction step" in prompt
     assert "Check the arithmetic internally" in prompt
     assert "relation fixture must agree with every numeric fixture" in prompt
 

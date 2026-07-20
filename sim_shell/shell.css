@@ -72,9 +72,8 @@ h2 { margin-block: 0 .5rem; font-size: 1.35rem; line-height: 1.4; }
 .answer-detail > summary { display: none; }
 .formula { display: inline-block; padding: .4rem .65rem; border: 1px solid rgb(88 183 255 / 22%); border-radius: .6rem; background: rgb(2 8 13 / 65%); color: #caeaff; unicode-bidi: isolate; }
 .step { display: grid; grid-template-columns: 2.4rem minmax(0, 1fr); gap: .85rem; }
-.prediction-card { border-color: rgb(88 183 255 / 32%); background: linear-gradient(145deg, rgb(22 48 70 / 92%), rgb(7 16 25 / 82%)); }
 .step-number { width: 2.4rem; height: 2.4rem; display: flex; align-items: center; justify-content: center; margin: 0; border: 1px solid rgb(88 183 255 / 50%); border-radius: 999px; background: rgb(88 183 255 / 10%); color: #bfe4ff; font-weight: 700; box-shadow: 0 0 20px rgb(88 183 255 / 12%); }
-.choices, .actions { display: flex; flex-wrap: wrap; gap: .65rem; }
+.actions { display: flex; flex-wrap: wrap; gap: .65rem; }
 button { min-height: 44px; padding: .65rem 1rem; border: 1px solid rgb(88 183 255 / 45%); border-radius: .8rem; background: rgb(88 183 255 / 9%); color: #d8edfc; cursor: pointer; font-weight: 700; transition: transform 140ms cubic-bezier(.2,.8,.2,1.25), background 140ms ease, box-shadow 140ms ease; }
 button:hover { transform: translateY(-2px); background: rgb(88 183 255 / 16%); box-shadow: inset 0 0 20px rgb(88 183 255 / 8%); }
 button:focus-visible, input:focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; }
@@ -92,14 +91,12 @@ input[type="range"]::-webkit-slider-runnable-track { height: 7px; border: 1px so
 input[type="range"]::-webkit-slider-thumb { width: 22px; height: 22px; margin-block-start: -8px; appearance: none; border: 3px solid #09131e; border-radius: 50%; background: var(--amber); box-shadow: 0 0 0 2px rgb(246 169 74 / 45%), 0 0 20px rgb(246 169 74 / 38%); }
 input[type="range"]::-moz-range-track { height: 7px; border-radius: 999px; background: linear-gradient(90deg, rgb(88 183 255 / 22%), rgb(246 169 74 / 35%)); }
 input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border: 3px solid #09131e; border-radius: 50%; background: var(--amber); }
-.prediction-comparison { padding: .7rem .8rem; border: 1px solid rgb(88 183 255 / 25%); border-radius: .65rem; background: rgb(88 183 255 / 8%); color: #cceaff; line-height: 1.7; }
 .misconception { display: grid; gap: .35rem; padding: .8rem; border-inline-start: 4px solid #cc6d91; border-radius: .55rem; background: rgb(204 109 145 / 12%); color: #f2d7e1; }
 .misconception-label { color: #ffb8d0; font-weight: 800; }
 #runtime-error { border-color: rgb(255 133 133 / 55%); }
 
 body.projector-mode .lesson { width: 100%; max-width: none; padding: .45rem; }
 body.projector-mode .lesson > header,
-body.projector-mode #prediction,
 body.projector-mode #explain { display: none; }
 body.projector-mode .instrument-bar { position: fixed; z-index: 5; inset-block-start: .5rem; inset-inline: .75rem; pointer-events: none; }
 body.projector-mode .projector { pointer-events: auto; }
@@ -114,7 +111,6 @@ body.projector-mode canvas { max-height: calc(100vh - 190px); }
     grid-template-areas:
       "bar bar"
       "intro observe"
-      "predict observe"
       "explain observe"
       "error error";
     align-items: start;
@@ -122,16 +118,11 @@ body.projector-mode canvas { max-height: calc(100vh - 190px); }
   }
   .instrument-bar { grid-area: bar; margin: 0; }
   .lesson > header { grid-area: intro; margin: 0; }
-  #prediction { grid-area: predict; margin: 0; }
   #observe { grid-area: observe; position: sticky; inset-block-start: .7rem; margin: 0; }
   #explain { grid-area: explain; margin: 0; }
   #runtime-error { grid-area: error; }
   .lesson > header h1 { font-size: clamp(1.9rem, 3.3vw, 3rem); }
   .lesson > header .answer { font-size: .98rem; }
-  #prediction { grid-template-columns: 2rem minmax(0, 1fr); padding: 1rem; }
-  #prediction .step-number { width: 2rem; height: 2rem; }
-  #prediction .choices { gap: .45rem; }
-  #prediction button { width: 100%; min-height: 40px; padding: .5rem .65rem; }
   body.projector-mode .lesson { display: block; }
 }
 
@@ -141,8 +132,6 @@ body.projector-mode canvas { max-height: calc(100vh - 190px); }
   .step-number { width: 2rem; height: 2rem; }
   .answer-detail > summary { min-height: 44px; display: flex; align-items: center; color: #bfe4ff; cursor: pointer; font-weight: 700; }
   .answer-detail .answer { margin-block-end: .6rem; }
-  #prediction .choices { flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: inline mandatory; padding-block-end: .35rem; }
-  #prediction .choices button { min-width: 74%; flex: 0 0 74%; scroll-snap-align: start; }
   .control-row { grid-template-columns: 1fr auto; }
   .control-row input { grid-column: 1 / -1; grid-row: 2; }
   .readout-chip { border-radius: .75rem; line-height: 1.6; }

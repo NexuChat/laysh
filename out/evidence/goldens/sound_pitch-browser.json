@@ -3,17 +3,17 @@
     {
       "value": 110,
       "frameChanged": true,
-      "visualSignature": 3466224217
+      "visualSignature": 1766060733
     },
     {
       "value": 440,
       "frameChanged": true,
-      "visualSignature": 2642402979
+      "visualSignature": 3828107457
     },
     {
       "value": 880,
       "frameChanged": true,
-      "visualSignature": 2500664136
+      "visualSignature": 775911686
     }
   ],
   "lang": "ar",
@@ -26,7 +26,7 @@
   "externalRequests": 0,
   "consoleErrors": [],
   "screenshots": [
-    "sound_pitch-after-mobile-390x844.png",
-    "sound_pitch-after-desktop-1440x900.png"
+    "sound_pitch-mobile-390x844.png",
+    "sound_pitch-desktop-1440x900.png"
   ]
 }

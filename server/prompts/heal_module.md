@@ -9,16 +9,15 @@ failure, then provide safe summary and assumptions fields. Do not include reason
 
 The v1.1 visual quality is part of the fixed contract and must survive every repair: preserve or add
 at least three scene-depth layers, physically consistent curved illumination and occlusion, and
-continuous idle motion driven by the lesson's own physical model: the pendulum swings at the period
-the model computes, Earth rotates about its axis, the moon advances along its orbit, the boat bobs on
-the water line, the wave travels at a speed tied to frequency, or current particles flow at a speed
-tied to I. Decorative shimmer or twinkle alone MUST NOT satisfy the gate. Advance a private visual
-phase through the trusted shell's same-value redraw when reduced motion is off; it must freeze under
-reduced motion and change at least 1.0% of pixels in the central 60% of the canvas across two settled
-frames at least one second apart, as well as clearing the lower whole-canvas freeze tripwire. Preserve
-smooth parameter-linked reactive feedback and rounded translucent readout chips. The module still
-owns no timers or animation APIs. Fixing a deterministic gate must never flatten or visually regress
-the scene.
+continuous physics driven by the trusted shell's advancing parameter. Render that advancing parameter
+as the actual subject state; decorative shimmer or twinkle alone MUST NOT satisfy the gate. Modules
+must not own animation clocks, timers, or `requestAnimationFrame`. The physical subject must change at
+least 1.0% of pixels in the central 60% across frames one second apart and clear the whole-canvas
+freeze tripwire. Across the full parameter sweep, the rendered subject must track the first declared
+computed output monotonically-consistently and contain no adjacent visual cliff. Use the exact sweep
+diagnostics below—including both adjacent parameter values, computed outputs, and rendered measures—to
+repair the painter. Preserve smooth parameter-linked reactive feedback and rounded translucent readout
+chips. Fixing a deterministic gate must never flatten or visually regress the scene.
 
 HEAL_INPUT_JSON_WITH_EXACT_GATE_FAILURES:
 @@INPUT_JSON@@

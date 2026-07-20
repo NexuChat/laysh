@@ -51,7 +51,7 @@ def test_generate_prompt_requires_light_occlusion_labels_and_smooth_shading():
     assert "golf-ball dot patterns" in prompt
 
 
-def test_codegen_contract_requires_model_driven_subject_motion_not_decoration():
+def test_codegen_contract_requires_shell_driven_subject_motion_and_render_consistency():
     from server.codex_backend import CodexBackend
     from tests.golden_cases import VALID_UNDERSTANDING
 
@@ -67,13 +67,9 @@ def test_codegen_contract_requires_model_driven_subject_motion_not_decoration():
 
     for prompt in (generate, heal):
         normalized = " ".join(prompt.split())
-        assert "pendulum swings at the period the model computes" in normalized
-        assert "Earth rotates about its axis" in normalized
-        assert "moon advances along its orbit" in normalized
-        assert "boat bobs on the water line" in normalized
-        assert "wave travels at a speed tied to frequency" in normalized
-        assert "current particles flow at a speed tied to I" in normalized
-        assert "Decorative shimmer or twinkle alone" in normalized
+        assert "advancing parameter" in normalized or "advancing value" in normalized
+        assert "must not own animation clocks" in normalized
+        assert "visual cliff" in normalized
         assert "central 60%" in normalized and "1.0%" in normalized
 
 
@@ -195,7 +191,7 @@ def test_builder_review_rejects_hash_placeholders_in_learner_copy():
     fixture = load_golden_fixtures()["moon_phases_ar"]
     understanding = deepcopy(VALID_UNDERSTANDING)
     understanding["title"] = "3d9f70870e5a4e9b8beaa5bf8d7e27c8"
-    understanding["prediction"]["prompt"] = "3eb7f1ad304c420eb3dac23a762e9636"
+    understanding["explanation_prompt"] = "3eb7f1ad304c420eb3dac23a762e9636"
     module_output = {
         **VALID_MODULE_OUTPUT,
         "module_js": (Path(__file__).parent / "fixtures" / "moon_phase_module.js").read_text(

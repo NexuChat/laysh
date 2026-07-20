@@ -28,7 +28,6 @@ OUTPUT_SCHEMA_PROBES: dict[str, tuple[str, dict[str, Any]]] = {
             "learning_objective": "Confirm schema acceptance.",
             "primary_parameter": None,
             "secondary_parameter": None,
-            "prediction": None,
             "misconception": None,
             "explanation_prompt": None,
             "transfer_prompt": None,

@@ -8,7 +8,7 @@
   },
   "review_contract": {
     "formula": "T = 2π√(L/g)",
-    "primary_parameter": {"id": "length_m", "min": 0.25, "max": 2.0, "default": 1.0, "step": 0.05, "unit": "m"},
+    "primary_parameter": {"id": "length_m", "min": 0.25, "max": 2.0, "default": 1.0, "step": 0.05, "unit": "m", "sweep_mode": "bounce"},
     "units": ["m", "s"],
     "assumptions": ["زاوية صغيرة", "خيط عديم الكتلة", "g = 9.81 m/s²", "إهمال مقاومة الهواء"],
   "misconception": "لا تجعل زيادة طول البندول أسرع، بل تزيد زمن دورته.",

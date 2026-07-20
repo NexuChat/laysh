@@ -8,7 +8,7 @@
   },
   "review_contract": {
     "formula": "c = cos θ",
-    "primary_parameter": {"id": "rotation_deg", "min": 0, "max": 360, "default": 60, "step": 1, "unit": "°"},
+    "primary_parameter": {"id": "rotation_deg", "min": 0, "max": 360, "default": 60, "step": 1, "unit": "°", "sweep_mode": "cyclic"},
     "units": ["°", "ratio"],
     "assumptions": ["أشعة شمس متوازية", "محور مبسط دون فصول", "نهار عندما c > 0"],
   "misconception": "لا يحدث الليل لأن الشمس تنطفئ أو تختفي خلف القمر، بل لأن دوران الأرض يوجّه موقعنا بعيدًا عنها.",

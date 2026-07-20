@@ -15,7 +15,8 @@
 
 ## Teaching checks
 
-- Predict comes before exploration; observation precedes causal explanation.
+- The primary parameter self-plays on open; observation precedes causal explanation.
+- Play/pause, reset, reduced-motion opt-in, and a never-disabled slider remain available.
 - No more than two controls exist and only the primary is initially prominent.
 - Feedback names what changed and why; no scores, streaks, shame, or celebration effects.
 - The misconception is replaced with visible causal evidence.
@@ -27,4 +28,3 @@
 - No external URL, full HTML document, or source above 40 KiB.
 - Trusted CSP, iframe sandbox, escaping, and error-beacon boundaries remain unchanged.
 - Keyboard, RTL/LTR, 320px reflow, and reduced motion retain essential functionality.
-

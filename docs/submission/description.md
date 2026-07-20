@@ -14,7 +14,7 @@ Laysh is an Arabic-first learning experience for secondary-school learners aged
 interactive simulation when the concept is meaningfully simulatable. Six
 builder-reviewed lessons—Moon phases, buoyancy, pendulum period, a simple
 circuit, sound pitch, and day/night—play instantly. Every lesson includes a
-prediction prompt, an observable control, a causal text alternative, precise
+self-playing physical motion, play/pause and reset controls, a causal text alternative, precise
 assumptions and units, and an expandable verification receipt. The complete
 lesson downloads as a self-contained, network-dead HTML file.
 
@@ -63,4 +63,3 @@ domain adapters, and teacher-facing tools.
 
 Primary Codex `/feedback` Session ID:
 `019f7998-9378-72b2-b590-ee10e632ce81`
-

@@ -288,14 +288,13 @@ def verify_artifact_contract(
         )
 
     pedagogy_ids = {
-        "prediction",
-        "prediction-choices",
         "primary-control",
         "state-description",
         "explain",
         "explanation-prompt",
         "misconception",
         "reset",
+        "play-pause",
     }
     missing_pedagogy_ids = sorted(
         element_id

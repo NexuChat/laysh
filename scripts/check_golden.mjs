@@ -122,7 +122,7 @@ try {
         }
         return hash;
       };
-      const initialValue = control.value;
+      const initialValue = String(window.__LAYSH_LESSON__.primary_parameter.default);
       const values = [control.min, initialValue, control.max];
       const cases = [];
       for (const value of values) {

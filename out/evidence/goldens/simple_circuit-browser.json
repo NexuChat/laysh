@@ -3,17 +3,17 @@
     {
       "value": 2,
       "frameChanged": true,
-      "visualSignature": 3045041429
+      "visualSignature": 2718382159
     },
     {
       "value": 6,
       "frameChanged": true,
-      "visualSignature": 4045456631
+      "visualSignature": 1331889788
     },
     {
       "value": 20,
       "frameChanged": true,
-      "visualSignature": 4249911775
+      "visualSignature": 2724517344
     }
   ],
   "lang": "ar",
@@ -26,7 +26,7 @@
   "externalRequests": 0,
   "consoleErrors": [],
   "screenshots": [
-    "simple_circuit-after-mobile-390x844.png",
-    "simple_circuit-after-desktop-1440x900.png"
+    "simple_circuit-mobile-390x844.png",
+    "simple_circuit-desktop-1440x900.png"
   ]
 }

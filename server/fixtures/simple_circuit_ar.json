@@ -8,7 +8,7 @@
   },
   "review_contract": {
     "formula": "I = V/R; P = V²/R",
-    "primary_parameter": {"id": "resistance_ohm", "min": 2, "max": 20, "default": 6, "step": 1, "unit": "Ω"},
+    "primary_parameter": {"id": "resistance_ohm", "min": 2, "max": 20, "default": 6, "step": 1, "unit": "Ω", "sweep_mode": "bounce"},
     "units": ["V", "Ω", "A", "W"],
     "assumptions": ["مصدر مثالي جهده 6 V", "مقاومة أومية", "السطوع يمثله تبديد القدرة"],
   "misconception": "لا تسمح زيادة المقاومة بمرور تيار أكبر، بل تقلل التيار عند ثبات الجهد.",

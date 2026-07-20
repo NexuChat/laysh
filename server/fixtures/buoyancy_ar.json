@@ -8,7 +8,7 @@
   },
   "review_contract": {
     "formula": "Fᵦ = ρ𝒻Vg",
-    "primary_parameter": {"id": "density_kg_m3", "min": 200, "max": 1400, "default": 750, "step": 10, "unit": "kg/m³"},
+    "primary_parameter": {"id": "density_kg_m3", "min": 200, "max": 1400, "default": 750, "step": 10, "unit": "kg/m³", "sweep_mode": "bounce"},
     "units": ["kg/m³", "N", "ratio"],
     "assumptions": ["ماء ساكن كثافته 1000 kg/m³", "جسم متجانس", "إهمال التوتر السطحي"],
   "misconception": "لا يعتمد الطفو على خفة الجسم المطلقة، بل على كثافته مقارنة بكثافة السائل.",

@@ -48,30 +48,37 @@ def test_shell_owns_bilingual_teaching_and_accessibility_states():
     shell = (ROOT / "sim_shell" / "shell.html").read_text(encoding="utf-8")
     shell_js = (ROOT / "sim_shell" / "shell.js").read_text(encoding="utf-8")
 
-    assert 'id="prediction"' in shell
+    assert 'id="prediction"' not in shell
+    assert "prediction" not in shell_js.lower()
     assert 'id="primary-control"' in shell
     assert 'id="state-description"' in shell
     assert 'aria-live="polite"' in shell
-    assert 'id="reset"' in shell and 'id="replay"' in shell
+    assert 'id="reset"' in shell and 'id="play-pause"' in shell
+    assert '<section class="step" id="explain"' in shell
+    assert 'id="explain"' in shell and 'id="explain" hidden' not in shell
     assert "prefers-reduced-motion" in shell_js
     assert "SIM_RUNTIME_ERROR" in shell_js
     assert "postMessage" in shell_js
     assert "dir === \"rtl\"" in shell_js
 
 
-def test_prediction_invites_without_locking_and_compares_only_after_exploration():
+def test_slider_is_always_free_and_shell_owns_play_pause_and_parameter_sweep():
     shell = (ROOT / "sim_shell" / "shell.html").read_text(encoding="utf-8")
     shell_js = (ROOT / "sim_shell" / "shell.js").read_text(encoding="utf-8")
     shell_css = (ROOT / "sim_shell" / "shell.css").read_text(encoding="utf-8")
 
     assert '<input id="primary-control" type="range">' in shell
-    assert 'id="prediction-comparison"' in shell
-    assert 'id="prediction-hint"' not in shell
+    assert 'id="prediction-comparison"' not in shell
     assert "control.disabled" not in shell_js
-    assert "hasExplored" in shell_js and "selectedPrediction" in shell_js
-    assert "بعد الاستكشاف يعرض النموذج" in shell_js
-    assert "prediction-hint" not in shell_css
-    assert "is-unlocked" not in shell_css
+    assert "parameter.sweep_mode === \"cyclic\"" in shell_js
+    assert "SWEEP_CYCLE_SECONDS" in shell_js
+    assert "SWEEP_HALF_CYCLE_SECONDS" in shell_js
+    assert "state.value" in shell_js
+    assert "state.interacting" in shell_js
+    assert 'addEventListener("pointerdown"' in shell_js
+    assert 'addEventListener("pointerup"' in shell_js
+    assert "إيقاف الحركة" in shell_js and "متابعة الحركة" in shell_js
+    assert "prediction" not in shell_css
 
 
 @pytest.mark.parametrize(
@@ -159,9 +166,14 @@ def test_portable_artifact_plays_from_file_without_network(tmp_path):
     assert evidence["idleMotionSubjectChangedPixelRatio"] >= 0.01
     assert evidence["idleMotionWholeCanvasChangedPixelRatio"] >= 0.001
     assert evidence["idleMotionCaptureIntervalMs"] >= 1000
-    assert evidence["controlEnabledBeforePrediction"] is True
-    assert evidence["predictionComparisonAbsentWithoutChoice"] is True
-    assert evidence["predictionComparisonVisibleAfterChoice"] is True
+    assert evidence["autoAdvanceValueChanged"] is True
+    assert evidence["sliderTrackedAnimation"] is True
+    assert evidence["controlAlwaysEnabled"] is True
+    assert evidence["pauseHeldValue"] is True
+    assert evidence["sliderInteractionYielded"] is True
+    assert evidence["reducedMotionStartedPaused"] is True
+    assert evidence["reducedMotionPlayOptInWorked"] is True
+    assert evidence["renderOutputSweep"]["samples"]
 
 
 @pytest.mark.browser
@@ -193,4 +205,4 @@ def test_browser_control_gate_accepts_range_value_sanitized_to_step_grid(tmp_pat
     assert completed.returncode == 0, completed.stderr
     evidence = json.loads(completed.stdout)
     assert evidence["controlChanged"] is True
-    assert evidence["controlEnabledBeforePrediction"] is True
+    assert evidence["controlAlwaysEnabled"] is True

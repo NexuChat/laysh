@@ -62,13 +62,16 @@ def test_result_and_portable_shell_offer_projector_mode(client):
     assert '"intro observe"' in shell_css
 
 
-def test_shell_scheduler_is_visual_only_and_reduced_motion_aware():
+def test_shell_scheduler_advances_physics_and_is_reduced_motion_aware():
     source = (ROOT / "sim_shell" / "shell.js").read_text(encoding="utf-8")
 
     assert "requestAnimationFrame" in source
     assert "cancelAnimationFrame" in source
-    assert "if (reducedMotion)" in source
-    assert "simulation.setParameter(parameter.id, Number(control.value))" in source
+    assert "paused: reducedMotion" in source
+    assert "state.value" in source
+    assert "advanceParameter" in source
+    assert "control.value = String" in source
+    assert "parameter.sweep_mode" in source
     assert "setInterval" not in source
 
 
@@ -95,18 +98,18 @@ def test_generation_prompt_enforces_the_living_instrument_bar():
     for requirement in (
         "layered scene depth",
         "physically consistent",
-        "idle motion",
+        "shell-driven parameter motion",
         "reactive feedback",
         "readout chips",
-        "same-value redraw",
+        "advancing value",
     ):
         assert requirement in prompt
     assert "timers" in prompt and "requestAnimationFrame" in prompt
-    assert "`visualPhase`" in prompt
+    assert "must not own animation clocks" in prompt
     assert "at least three visible depth layers" in prompt
     assert "curved terminator" in prompt
     assert "visual quality is part of the fixed contract" in heal_prompt
-    assert "same-value redraw" in heal_prompt
+    assert "advancing parameter" in heal_prompt
 
 
 def test_qa_contract_contains_a_closed_visual_richness_review():
@@ -138,7 +141,7 @@ def test_qa_prompt_reviews_visual_richness_without_rewriting():
     prompt = (ROOT / "server" / "prompts" / "qa.md").read_text(encoding="utf-8")
 
     assert "visual_richness" in prompt
-    for requirement in ("scene depth", "physical light", "idle motion", "reactive feedback"):
+    for requirement in ("scene depth", "physical light", "physical motion", "reactive feedback"):
         assert requirement in prompt
     assert "does not implement" in prompt
 

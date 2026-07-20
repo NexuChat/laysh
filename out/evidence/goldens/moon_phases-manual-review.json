@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "fixture_id": "moon_phases_ar",
-  "attempt": 3,
+  "attempt": 4,
   "verdict": "pass",
   "answer_correct": true,
   "assumptions_honest": true,
@@ -23,8 +23,8 @@
   "reactive_feedback_present": true,
   "readout_overlay_clear": true,
   "notes": [
-    "The regenerated top and Earth-observer views are explicitly labeled and agree at 0, 90, 180, and 360 degrees.",
-    "The curved illumination, corona, shadow side, and sunlight rays stay physically consistent; no light crosses an opaque body.",
-    "Layered stars, orbital depth, idle shimmer, smooth phase response, and two in-scene readout chips meet the v1.1 bar."
+    "The regenerated top and Earth-observer views are explicitly labeled and agree across the 17-sample 0–360 degree sweep.",
+    "The illuminated disc rises continuously through 180 degrees and falls continuously afterward, with no post-180 dark-side cliff.",
+    "Layered stars, orbital depth, shell-driven phase motion, smooth reactive response, and in-scene readout chips meet the visual bar."
   ]
 }

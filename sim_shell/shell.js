@@ -6,11 +6,11 @@
   const labels = ar
     ? {
         lesson: "الجواب التفاعلي",
-        predict: "توقّع أولًا",
         observe: "لاحظ ما يتغيّر",
         explain: "فسّر ما رأيت",
         reset: "إعادة الضبط",
-        replay: "إعادة العرض",
+        pause: "إيقاف الحركة",
+        play: "متابعة الحركة",
         projector: "وضع العرض",
         exitProjector: "إنهاء العرض",
         answerDetails: "اقرأ الجواب الكامل",
@@ -20,11 +20,11 @@
       }
     : {
         lesson: "Interactive answer",
-        predict: "Predict first",
         observe: "Observe what changes",
         explain: "Explain what you saw",
         reset: "Reset",
-        replay: "Replay",
+        pause: "Pause motion",
+        play: "Resume motion",
         projector: "Projector mode",
         exitProjector: "Exit projector",
         answerDetails: "Read the full answer",
@@ -33,19 +33,29 @@
         misconceptionLabel: "⚠ Common myth",
       };
 
+  const SWEEP_CYCLE_SECONDS = 24;
+  const SWEEP_HALF_CYCLE_SECONDS = 10;
+  const SETTLE_REDRAW_INTERVAL_MS = 80;
   const byId = (id) => document.getElementById(id);
   const canvas = byId("simulation");
   const control = byId("primary-control");
   const output = byId("primary-output");
   const description = byId("state-description");
+  const playPause = byId("play-pause");
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const compactLayout = matchMedia("(max-width: 480px)");
+  const parameter = lesson.primary_parameter;
+  const state = {
+    value: Number(parameter.default),
+    direction: 1,
+    paused: reducedMotion,
+    interacting: false,
+    lastTimestamp: null,
+    lastSettleRedraw: 0,
+  };
   let simulation;
   let frameCount = 0;
-  let idleFrameId = 0;
-  let previousIdleAt = 0;
-  let selectedPrediction = null;
-  let hasExplored = false;
+  let animationFrameId = 0;
 
   document.body.dataset.direction = dir === "rtl" ? "rtl" : "ltr";
   byId("lesson-label").textContent = labels.lesson;
@@ -53,8 +63,6 @@
   byId("answer").textContent = lesson.tldr;
   byId("answer-summary").textContent = labels.answerDetails;
   byId("formula").textContent = lesson.key_formula || "";
-  byId("prediction-title").textContent = labels.predict;
-  byId("prediction-prompt").textContent = lesson.prediction.prompt;
   byId("observe-title").textContent = labels.observe;
   byId("explain-title").textContent = labels.explain;
   byId("explanation-prompt").textContent = lesson.explanation_prompt;
@@ -62,17 +70,16 @@
   byId("misconception-copy").textContent = lesson.misconception;
   byId("transfer").textContent = lesson.transfer_prompt || "";
   byId("reset").textContent = labels.reset;
-  byId("replay").textContent = labels.replay;
   byId("projector").textContent = labels.projector;
   byId("runtime-error-title").textContent = labels.runtimeTitle;
   byId("runtime-error-copy").textContent = labels.runtimeCopy;
+
   function syncCompactAnswer() {
     if (compactLayout.matches) byId("answer-detail").open = false;
   }
   syncCompactAnswer();
   compactLayout.addEventListener("change", syncCompactAnswer);
 
-  const parameter = lesson.primary_parameter;
   byId("primary-label").textContent = parameter.label;
   Object.assign(control, {
     min: String(parameter.min),
@@ -81,13 +88,20 @@
     value: String(parameter.default),
   });
 
+  function displayValue(value) {
+    const stepText = String(parameter.step);
+    const decimals = stepText.includes(".") ? stepText.split(".")[1].length : 0;
+    return Number(value).toFixed(Math.min(decimals, 4));
+  }
+
   function formatState(value) {
     const tested = simulation.test({ [parameter.id]: Number(value) });
     const observed = tested[lesson.module_spec.outputs[0]];
     const valueText = Number.isFinite(observed) ? Number(observed).toFixed(2) : String(observed);
+    const parameterText = displayValue(value);
     return ar
-      ? `${parameter.label}: ${value} ${parameter.unit} — النتيجة المحسوبة: ${valueText}`
-      : `${parameter.label}: ${value} ${parameter.unit} — calculated outcome: ${valueText}`;
+      ? `${parameter.label}: ${parameterText} ${parameter.unit} — النتيجة المحسوبة: ${valueText}`
+      : `${parameter.label}: ${parameterText} ${parameter.unit} — calculated outcome: ${valueText}`;
   }
 
   function emitFrame() {
@@ -99,61 +113,77 @@
     }
   }
 
-  function update(value) {
-    simulation.setParameter(parameter.id, Number(value));
-    output.value = `${value} ${parameter.unit}`;
-    description.textContent = formatState(value);
+  function update(value, syncControl = true) {
+    state.value = Math.max(Number(parameter.min), Math.min(Number(parameter.max), Number(value)));
+    simulation.setParameter(parameter.id, state.value);
+    if (syncControl) control.value = String(state.value);
+    const parameterText = displayValue(state.value);
+    output.value = `${parameterText} ${parameter.unit}`;
+    description.textContent = formatState(state.value);
   }
 
-  function updatePredictionComparison() {
-    const comparison = byId("prediction-comparison");
-    if (!selectedPrediction || !hasExplored) {
-      comparison.hidden = true;
-      comparison.textContent = "";
+  function syncPlayback() {
+    playPause.textContent = state.paused ? labels.play : labels.pause;
+    playPause.setAttribute("aria-pressed", String(state.paused));
+    document.documentElement.dataset.motionState = state.paused ? "paused" : "playing";
+  }
+
+  function advanceParameter(deltaSeconds) {
+    const minimum = Number(parameter.min);
+    const maximum = Number(parameter.max);
+    const span = maximum - minimum;
+    if (!(span > 0) || !(deltaSeconds > 0)) return;
+    if (parameter.sweep_mode === "cyclic") {
+      const rate = span / SWEEP_CYCLE_SECONDS;
+      update(minimum + ((state.value - minimum + rate * deltaSeconds) % span));
       return;
     }
-    comparison.textContent = ar
-      ? `توقّعت: «${selectedPrediction}». بعد الاستكشاف يعرض النموذج: ${description.textContent}`
-      : `You predicted “${selectedPrediction}”. After exploring, the model shows: ${description.textContent}`;
-    comparison.hidden = false;
-  }
-
-  function selectPrediction(button) {
-    for (const choice of byId("prediction-choices").querySelectorAll("button")) {
-      choice.setAttribute("aria-pressed", String(choice === button));
+    const rate = span / SWEEP_HALF_CYCLE_SECONDS;
+    let next = state.value + state.direction * rate * deltaSeconds;
+    while (next > maximum || next < minimum) {
+      if (next > maximum) {
+        next = maximum - (next - maximum);
+        state.direction = -1;
+      } else {
+        next = minimum + (minimum - next);
+        state.direction = 1;
+      }
     }
-    selectedPrediction = button.textContent;
-    updatePredictionComparison();
+    update(next);
   }
 
-  for (const choice of lesson.prediction.choices) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.textContent = choice;
-    button.setAttribute("aria-pressed", "false");
-    button.addEventListener("click", () => selectPrediction(button));
-    byId("prediction-choices").append(button);
+  function beginInteraction() {
+    state.interacting = true;
+    state.lastTimestamp = null;
   }
 
-  control.addEventListener("input", () => {
-    hasExplored = true;
-    update(control.value);
-    updatePredictionComparison();
-    byId("explain").hidden = false;
+  function endInteraction() {
+    state.interacting = false;
+    state.lastTimestamp = null;
+  }
+
+  control.addEventListener("input", () => update(Number(control.value), false));
+  control.addEventListener("pointerdown", beginInteraction);
+  control.addEventListener("pointerup", endInteraction);
+  control.addEventListener("pointercancel", endInteraction);
+  control.addEventListener("lostpointercapture", endInteraction);
+  control.addEventListener("keydown", beginInteraction);
+  control.addEventListener("keyup", endInteraction);
+  control.addEventListener("blur", endInteraction);
+
+  playPause.addEventListener("click", () => {
+    state.paused = !state.paused;
+    state.lastTimestamp = null;
+    syncPlayback();
   });
 
   byId("reset").addEventListener("click", () => {
-    control.value = String(parameter.default);
-    update(control.value);
-  });
-
-  byId("replay").addEventListener("click", () => {
-    const replayValue = Number(control.value) === parameter.max ? parameter.min : parameter.max;
-    control.value = String(replayValue);
-    hasExplored = true;
-    update(control.value);
-    updatePredictionComparison();
-    byId("explain").hidden = false;
+    state.direction = 1;
+    state.paused = reducedMotion;
+    state.interacting = false;
+    state.lastTimestamp = null;
+    update(parameter.default);
+    syncPlayback();
   });
 
   function syncProjectorState(active) {
@@ -176,13 +206,17 @@
     if (!document.fullscreenElement) syncProjectorState(false);
   });
 
-  function scheduleIdleFrame(timestamp = 0) {
-    if (reducedMotion) return;
-    if (timestamp - previousIdleAt >= 80) {
-      previousIdleAt = timestamp;
-      simulation.setParameter(parameter.id, Number(control.value));
+  function animate(timestamp) {
+    if (state.lastTimestamp === null) state.lastTimestamp = timestamp;
+    const deltaSeconds = Math.min(0.1, Math.max(0, timestamp - state.lastTimestamp) / 1000);
+    state.lastTimestamp = timestamp;
+    if (!state.paused && !state.interacting) {
+      advanceParameter(deltaSeconds);
+    } else if (timestamp - state.lastSettleRedraw >= SETTLE_REDRAW_INTERVAL_MS) {
+      state.lastSettleRedraw = timestamp;
+      simulation.setParameter(parameter.id, state.value);
     }
-    idleFrameId = requestAnimationFrame(scheduleIdleFrame);
+    animationFrameId = requestAnimationFrame(animate);
   }
 
   function resize() {
@@ -205,10 +239,11 @@
       emitFrame,
     });
     update(parameter.default);
-    idleFrameId = requestAnimationFrame(scheduleIdleFrame);
+    syncPlayback();
+    animationFrameId = requestAnimationFrame(animate);
     window.addEventListener("resize", resize, { passive: true });
     window.addEventListener("pagehide", () => {
-      cancelAnimationFrame(idleFrameId);
+      cancelAnimationFrame(animationFrameId);
       simulation.destroy();
     }, { once: true });
   } catch {

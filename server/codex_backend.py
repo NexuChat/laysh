@@ -220,16 +220,9 @@ def _success_understanding(locale: str) -> dict[str, Any]:
             "max": 360,
             "default": 90,
             "step": 1,
+            "sweep_mode": "cyclic",
         },
         "secondary_parameter": None,
-        "prediction": {
-            "prompt": (
-                "عند زيادة الزاوية، هل يكبر الجزء المضيء أولًا؟"
-                if arabic
-                else "As the angle increases, does the lit part grow at first?"
-            ),
-            "choices": ["نعم", "لا"] if arabic else ["Yes", "No"],
-        },
         "misconception": (
             "ليست أطوار القمر ظل الأرض، بل تتغير بسبب موضعه بالنسبة إلى الأرض والشمس."
             if arabic
@@ -294,7 +287,6 @@ def _non_simulatable(locale: str) -> dict[str, Any]:
             "learning_objective": "تمييز الشرح عن النموذج القابل للقياس",
             "primary_parameter": None,
             "secondary_parameter": None,
-            "prediction": None,
             "misconception": None,
             "explanation_prompt": None,
             "transfer_prompt": None,
@@ -330,7 +322,6 @@ def _unsafe(locale: str) -> dict[str, Any]:
             "learning_objective": "الانتقال إلى استكشاف علمي آمن",
             "primary_parameter": None,
             "secondary_parameter": None,
-            "prediction": None,
             "misconception": None,
             "explanation_prompt": None,
             "transfer_prompt": None,

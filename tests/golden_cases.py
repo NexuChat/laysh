@@ -18,12 +18,9 @@ VALID_UNDERSTANDING = {
         "max": 360,
         "default": 90,
         "step": 1,
+        "sweep_mode": "cyclic",
     },
     "secondary_parameter": None,
-    "prediction": {
-        "prompt": "عند زيادة الزاوية، هل يكبر الجزء المضيء أولًا؟",
-        "choices": ["نعم", "لا"],
-    },
     "misconception": "ليست أطوار القمر بسبب ظل الأرض، بل بسبب موضع القمر بالنسبة إلى الأرض والشمس.",
     "explanation_prompt": "تغيّر الجزء المضيء لأن…",
     "transfer_prompt": "ماذا تتوقع عند زاوية 180°؟",

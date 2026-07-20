@@ -8,7 +8,7 @@
   },
   "review_contract": {
     "formula": "λ = v/f; T = 1/f",
-    "primary_parameter": {"id": "frequency_hz", "min": 110, "max": 880, "default": 440, "step": 10, "unit": "Hz"},
+    "primary_parameter": {"id": "frequency_hz", "min": 110, "max": 880, "default": 440, "step": 10, "unit": "Hz", "sweep_mode": "bounce"},
     "units": ["Hz", "m", "ms"],
     "assumptions": ["سرعة الصوت 343 m/s", "وسط هوائي ثابت", "الحدّة لا تعني شدة الصوت"],
   "misconception": "ليس الصوت الأعلى ترددًا أعلى شدة بالضرورة، بل يحدد التردد حدة الصوت وتحدد الشدة سعته.",

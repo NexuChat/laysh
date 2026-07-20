@@ -8,7 +8,7 @@
   },
   "review_contract": {
     "formula": "f = (1 − cos θ) / 2",
-    "primary_parameter": {"id": "angle_deg", "min": 0, "max": 360, "default": 90, "step": 1, "unit": "°"},
+    "primary_parameter": {"id": "angle_deg", "min": 0, "max": 360, "default": 90, "step": 1, "unit": "°", "sweep_mode": "cyclic"},
     "units": ["°", "ratio"],
     "assumptions": ["مدار دائري مبسط", "أشعة شمس متوازية", "إهمال ميل المدار والكسوف"],
   "misconception": "ليست أطوار القمر بسبب ظل الأرض، بل بسبب موضع القمر بالنسبة إلى الأرض والشمس.",

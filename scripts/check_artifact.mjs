@@ -110,11 +110,12 @@ try {
     await delay(50);
   }
 
-  await command("Runtime.evaluate", {
+  const firstCapture = await command("Runtime.evaluate", {
     expression: `(() => {
       const canvas = document.querySelector('#simulation');
       const context = canvas && canvas.getContext('2d');
-      if (!canvas || !context) return false;
+      const control = document.querySelector('#primary-control');
+      if (!canvas || !context || !control) return null;
       const subject = {
         x: Math.floor(canvas.width * 0.2),
         y: Math.floor(canvas.height * 0.2),
@@ -126,7 +127,7 @@ try {
         subject: context.getImageData(subject.x, subject.y, subject.width, subject.height).data,
         subjectBounds: subject,
       };
-      return true;
+      return { controlValue: Number(control.value), controlEnabled: !control.disabled };
     })()`,
     returnByValue: true,
   });
@@ -148,59 +149,281 @@ try {
         return changed / (before.length / 4);
       };
       const bounds = first.subjectBounds;
+      const control = document.querySelector('#primary-control');
+      const output = document.querySelector('#primary-output');
       const secondWhole = context.getImageData(0, 0, canvas.width, canvas.height).data;
       const secondSubject = context.getImageData(bounds.x, bounds.y, bounds.width, bounds.height).data;
       return {
         subjectChangedPixelRatio: changedPixelRatio(first.subject, secondSubject),
         wholeCanvasChangedPixelRatio: changedPixelRatio(first.whole, secondWhole),
         captureIntervalMs: 1100,
+        controlValue: Number(control.value),
+        sliderTrackedAnimation: Math.abs(Number(control.value) - Number.parseFloat(output.value)) <= Number(control.step),
+        controlEnabled: !control.disabled,
       };
     })()`,
     returnByValue: true,
   });
 
-  const interaction = await command("Runtime.evaluate", {
+  const pauseStart = await command("Runtime.evaluate", {
+    expression: `(() => {
+      const control = document.querySelector('#primary-control');
+      document.querySelector('#play-pause').click();
+      return { value: Number(control.value), enabled: !control.disabled };
+    })()`,
+    returnByValue: true,
+  });
+  await delay(350);
+  const pauseEnd = await command("Runtime.evaluate", {
+    expression: `(() => {
+      const control = document.querySelector('#primary-control');
+      return { value: Number(control.value), enabled: !control.disabled };
+    })()`,
+    returnByValue: true,
+  });
+
+  const interactionStart = await command("Runtime.evaluate", {
     expression: `(() => {
       const root = document.documentElement;
-      const before = Number(root.dataset.frameCount || 0);
-      const choice = document.querySelector('#prediction-choices button');
       const control = document.querySelector('#primary-control');
-      const comparison = document.querySelector('#prediction-comparison');
-      const controlEnabledBeforePrediction = !control.disabled;
-      const beforeControlValue = Number(control.value);
-      const target = Math.abs(beforeControlValue - Number(control.min))
-        <= Math.abs(beforeControlValue - Number(control.max))
-        ? control.max
-        : control.min;
-      control.value = target;
+      const beforeFrame = Number(root.dataset.frameCount || 0);
+      document.querySelector('#play-pause').click();
+      control.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 1 }));
+      const target = (Number(control.min) + Number(control.max)) / 2;
+      control.value = String(target);
       control.dispatchEvent(new Event('input', { bubbles: true }));
-      const predictionComparisonAbsentWithoutChoice = comparison.hidden && !comparison.textContent;
-      choice.click();
-      control.value = target === control.max ? control.min : control.max;
-      control.dispatchEvent(new Event('input', { bubbles: true }));
-      return {
-        controlChanged: controlEnabledBeforePrediction && Number(target) !== beforeControlValue,
-        frameChanged: Number(root.dataset.frameCount || 0) > before,
-        controlEnabledBeforePrediction,
-        predictionComparisonAbsentWithoutChoice,
-        predictionComparisonVisibleAfterChoice: !comparison.hidden && comparison.textContent.includes(choice.textContent),
-        runtimeError: Boolean(root.dataset.runtimeError),
-      };
+      return { target: Number(control.value), beforeFrame, enabled: !control.disabled };
     })()`,
+    returnByValue: true,
+  });
+  await delay(350);
+  const interactionHeld = await command("Runtime.evaluate", {
+    expression: `(() => {
+      const control = document.querySelector('#primary-control');
+      const held = Number(control.value);
+      control.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 1 }));
+      return { held, enabled: !control.disabled };
+    })()`,
+    returnByValue: true,
+  });
+  await delay(350);
+  const interactionEnd = await command("Runtime.evaluate", {
+    expression: `(() => {
+      const root = document.documentElement;
+      const control = document.querySelector('#primary-control');
+      return { value: Number(control.value), frame: Number(root.dataset.frameCount || 0), enabled: !control.disabled };
+    })()`,
+    returnByValue: true,
+  });
+
+  await command("Emulation.setEmulatedMedia", {
+    features: [{ name: "prefers-reduced-motion", value: "reduce" }],
+  });
+  await command("Page.reload", { ignoreCache: true });
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    const response = await command("Runtime.evaluate", {
+      expression: "document.documentElement.dataset.layshReady === 'true'",
+      returnByValue: true,
+    });
+    if (response.result.value === true) break;
+    await delay(50);
+  }
+  const reducedStart = await command("Runtime.evaluate", {
+    expression: `(() => {
+      const control = document.querySelector('#primary-control');
+      return { value: Number(control.value), state: document.documentElement.dataset.motionState, enabled: !control.disabled };
+    })()`,
+    returnByValue: true,
+  });
+  await delay(400);
+  const reducedHeld = await command("Runtime.evaluate", {
+    expression: `(() => {
+      const control = document.querySelector('#primary-control');
+      document.querySelector('#play-pause').click();
+      return { value: Number(control.value), state: document.documentElement.dataset.motionState, enabled: !control.disabled };
+    })()`,
+    returnByValue: true,
+  });
+  await delay(400);
+  const reducedPlayed = await command("Runtime.evaluate", {
+    expression: `(() => {
+      const control = document.querySelector('#primary-control');
+      document.querySelector('#play-pause').click();
+      return { value: Number(control.value), state: document.documentElement.dataset.motionState, enabled: !control.disabled };
+    })()`,
+    returnByValue: true,
+  });
+
+  const renderOutputSweep = await command("Runtime.evaluate", {
+    expression: `(async () => {
+      const canvas = document.querySelector('#simulation');
+      const context = canvas && canvas.getContext('2d');
+      const control = document.querySelector('#primary-control');
+      const lesson = window.__LAYSH_LESSON__;
+      const outputName = lesson.module_spec.outputs[0];
+      const parameter = lesson.primary_parameter;
+      if (!canvas || !context || !control || !outputName) return { passed: false, samples: [], failure: { code: 'render_sweep_unavailable' } };
+      const bounds = {
+        x: Math.floor(canvas.width * 0.2),
+        y: Math.floor(canvas.height * 0.2),
+        width: Math.max(1, Math.floor(canvas.width * 0.6)),
+        height: Math.max(1, Math.floor(canvas.height * 0.6)),
+      };
+      const metricKeys = ['meanLuminance','bright64','bright128','bright192','dark32','centroidX','centroidY','edgeDensity'];
+      const measure = () => {
+        const pixels = context.getImageData(bounds.x, bounds.y, bounds.width, bounds.height).data;
+        const luminance = new Float64Array(bounds.width * bounds.height);
+        let sum = 0, weightedX = 0, weightedY = 0, bright64 = 0, bright128 = 0, bright192 = 0, dark32 = 0, edges = 0;
+        for (let index = 0, pixel = 0; index < pixels.length; index += 4, pixel += 1) {
+          const value = pixels[index] * 0.2126 + pixels[index + 1] * 0.7152 + pixels[index + 2] * 0.0722;
+          luminance[pixel] = value;
+          sum += value;
+          const x = pixel % bounds.width;
+          const y = Math.floor(pixel / bounds.width);
+          weightedX += value * x;
+          weightedY += value * y;
+          if (value >= 64) bright64 += 1;
+          if (value >= 128) bright128 += 1;
+          if (value >= 192) bright192 += 1;
+          if (value < 32) dark32 += 1;
+          if (x > 0 && Math.abs(value - luminance[pixel - 1]) >= 24) edges += 1;
+          if (y > 0 && Math.abs(value - luminance[pixel - bounds.width]) >= 24) edges += 1;
+        }
+        const count = luminance.length;
+        return {
+          meanLuminance: sum / count,
+          bright64: bright64 / count,
+          bright128: bright128 / count,
+          bright192: bright192 / count,
+          dark32: dark32 / count,
+          centroidX: sum ? weightedX / sum / Math.max(1, bounds.width - 1) : 0,
+          centroidY: sum ? weightedY / sum / Math.max(1, bounds.height - 1) : 0,
+          edgeDensity: edges / (count * 2),
+        };
+      };
+      const samples = [];
+      for (let index = 0; index <= 16; index += 1) {
+        const value = Number(parameter.min) + (Number(parameter.max) - Number(parameter.min)) * index / 16;
+        control.value = String(value);
+        control.dispatchEvent(new Event('input', { bubbles: true }));
+        await new Promise((resolve) => setTimeout(resolve, 120));
+        const tested = window.LayshSimulation.test({ [parameter.id]: value });
+        samples.push({ parameter: value, computedOutput: Number(tested[outputName]), metrics: measure() });
+      }
+      const rank = (values) => {
+        const ordered = values.map((value, index) => ({ value, index })).sort((a, b) => a.value - b.value);
+        const ranks = new Array(values.length);
+        for (let start = 0; start < ordered.length;) {
+          let end = start + 1;
+          while (end < ordered.length && ordered[end].value === ordered[start].value) end += 1;
+          const average = (start + end - 1) / 2;
+          for (let cursor = start; cursor < end; cursor += 1) ranks[ordered[cursor].index] = average;
+          start = end;
+        }
+        return ranks;
+      };
+      const correlation = (left, right) => {
+        const leftRank = rank(left), rightRank = rank(right);
+        const leftMean = leftRank.reduce((sum, value) => sum + value, 0) / leftRank.length;
+        const rightMean = rightRank.reduce((sum, value) => sum + value, 0) / rightRank.length;
+        let numerator = 0, leftSquare = 0, rightSquare = 0;
+        for (let index = 0; index < leftRank.length; index += 1) {
+          const a = leftRank[index] - leftMean, b = rightRank[index] - rightMean;
+          numerator += a * b; leftSquare += a * a; rightSquare += b * b;
+        }
+        return leftSquare && rightSquare ? numerator / Math.sqrt(leftSquare * rightSquare) : 0;
+      };
+      const computed = samples.map((sample) => sample.computedOutput);
+      let best = { key: metricKeys[0], correlation: 0, span: 0 };
+      for (const key of metricKeys) {
+        const values = samples.map((sample) => sample.metrics[key]);
+        const span = Math.max(...values) - Math.min(...values);
+        const candidate = Math.abs(correlation(computed, values));
+        if (span > 0.001 && candidate > best.correlation) best = { key, correlation: candidate, span };
+      }
+      const outputSpan = Math.max(...computed) - Math.min(...computed);
+      const compactSamples = samples.map((sample) => ({
+        parameter: sample.parameter,
+        computedOutput: sample.computedOutput,
+        renderedMeasure: sample.metrics[best.key],
+      }));
+      let cliff = null;
+      for (let index = 1; index < compactSamples.length; index += 1) {
+        const left = compactSamples[index - 1], right = compactSamples[index];
+        const renderedDelta = best.span ? Math.abs(right.renderedMeasure - left.renderedMeasure) / best.span : 0;
+        const outputDelta = outputSpan ? Math.abs(right.computedOutput - left.computedOutput) / outputSpan : 0;
+        if (renderedDelta > 0.42 && outputDelta < 0.18) {
+          cliff = { code: 'rendered_output_discontinuity', metric: best.key, left, right };
+          break;
+        }
+      }
+      if (cliff) return { passed: false, metric: best.key, rankCorrelation: best.correlation, samples: compactSamples, failure: cliff };
+      if (!(outputSpan > 0) || best.correlation < 0.65) {
+        let worstIndex = 1, worstMismatch = -Infinity;
+        for (let index = 1; index < compactSamples.length; index += 1) {
+          const renderedDelta = best.span ? Math.abs(compactSamples[index].renderedMeasure - compactSamples[index - 1].renderedMeasure) / best.span : 0;
+          const outputDelta = outputSpan ? Math.abs(compactSamples[index].computedOutput - compactSamples[index - 1].computedOutput) / outputSpan : 0;
+          if (renderedDelta - outputDelta > worstMismatch) { worstMismatch = renderedDelta - outputDelta; worstIndex = index; }
+        }
+        return {
+          passed: false,
+          metric: best.key,
+          rankCorrelation: best.correlation,
+          samples: compactSamples,
+          failure: {
+            code: 'rendered_output_not_monotonic_consistent',
+            metric: best.key,
+            rankCorrelation: best.correlation,
+            left: compactSamples[worstIndex - 1],
+            right: compactSamples[worstIndex],
+          },
+        };
+      }
+      return { passed: true, metric: best.key, rankCorrelation: best.correlation, samples: compactSamples };
+    })()`,
+    awaitPromise: true,
+    returnByValue: true,
+  });
+
+  const initialValue = firstCapture.result.value?.controlValue;
+  const autoValue = idleMotion.result.value.controlValue;
+  const interactionTarget = interactionStart.result.value.target;
+  const renderSweep = renderOutputSweep.result.value;
+  const runtimeState = await command("Runtime.evaluate", {
+    expression: "Boolean(document.documentElement.dataset.runtimeError)",
     returnByValue: true,
   });
   socket.close();
   process.stdout.write(JSON.stringify({
     ready,
-    controlChanged: interaction.result.value.controlChanged,
-    frameChanged: interaction.result.value.frameChanged,
+    controlChanged: interactionEnd.result.value.value !== interactionTarget,
+    frameChanged: interactionEnd.result.value.frame > interactionStart.result.value.beforeFrame,
     idleMotionSubjectChangedPixelRatio: idleMotion.result.value.subjectChangedPixelRatio,
     idleMotionWholeCanvasChangedPixelRatio: idleMotion.result.value.wholeCanvasChangedPixelRatio,
     idleMotionCaptureIntervalMs: idleMotion.result.value.captureIntervalMs,
-    controlEnabledBeforePrediction: interaction.result.value.controlEnabledBeforePrediction,
-    predictionComparisonAbsentWithoutChoice: interaction.result.value.predictionComparisonAbsentWithoutChoice,
-    predictionComparisonVisibleAfterChoice: interaction.result.value.predictionComparisonVisibleAfterChoice,
-    runtimeError: interaction.result.value.runtimeError,
+    autoAdvanceValueChanged: Number.isFinite(initialValue) && Math.abs(autoValue - initialValue) > 1e-6,
+    sliderTrackedAnimation: idleMotion.result.value.sliderTrackedAnimation,
+    controlAlwaysEnabled: [
+      firstCapture.result.value?.controlEnabled,
+      idleMotion.result.value.controlEnabled,
+      pauseStart.result.value.enabled,
+      pauseEnd.result.value.enabled,
+      interactionStart.result.value.enabled,
+      interactionHeld.result.value.enabled,
+      interactionEnd.result.value.enabled,
+      reducedStart.result.value.enabled,
+      reducedHeld.result.value.enabled,
+      reducedPlayed.result.value.enabled,
+    ].every(Boolean),
+    pauseHeldValue: Math.abs(pauseEnd.result.value.value - pauseStart.result.value.value) <= 1e-6,
+    sliderInteractionYielded: Math.abs(interactionHeld.result.value.held - interactionTarget) <= 1e-6
+      && Math.abs(interactionEnd.result.value.value - interactionTarget) > 1e-6,
+    reducedMotionStartedPaused: reducedStart.result.value.state === 'paused'
+      && Math.abs(reducedHeld.result.value.value - reducedStart.result.value.value) <= 1e-6,
+    reducedMotionPlayOptInWorked: reducedHeld.result.value.state === 'playing'
+      && Math.abs(reducedPlayed.result.value.value - reducedHeld.result.value.value) > 1e-6,
+    renderOutputSweep: renderSweep,
+    runtimeError: runtimeState.result.value,
     externalRequests,
   }));
 } catch (error) {

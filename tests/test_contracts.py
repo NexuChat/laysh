@@ -17,6 +17,22 @@ def test_valid_understanding_matches_closed_schema():
     assert validate_understanding(VALID_UNDERSTANDING) == VALID_UNDERSTANDING
 
 
+def test_understanding_contract_removes_prediction_and_declares_sweep_semantics():
+    from server.schemas import load_schema, validate_understanding
+
+    schema = load_schema("understand.schema.json")
+    assert "prediction" not in schema["properties"]
+    assert "prediction" not in schema["required"]
+    parameter = schema["properties"]["primary_parameter"]["anyOf"][1]
+    assert parameter["properties"]["sweep_mode"]["enum"] == ["cyclic", "bounce"]
+    assert "sweep_mode" in parameter["required"]
+
+    legacy = deepcopy(VALID_UNDERSTANDING)
+    legacy["prediction"] = {"prompt": "Predict?", "choices": ["Yes", "No"]}
+    with pytest.raises(ValidationError):
+        validate_understanding(legacy)
+
+
 @pytest.mark.parametrize(
     "mutate",
     [
@@ -63,14 +79,14 @@ def test_current_frozen_contract_manifest_strictly_matches_repository():
     from scripts.freeze_contracts import build_manifest
 
     expected = json.loads(
-        (ROOT / "contracts" / "contracts-frozen-r2.json").read_text(encoding="utf-8")
+        (ROOT / "contracts" / "contracts-frozen-r3.json").read_text(encoding="utf-8")
     )
     historical = json.loads(
         (ROOT / "out" / "evidence" / "contracts-frozen.json").read_text(encoding="utf-8")
     )
 
     assert historical["contract_version"] == expected["contract_version"] == "1.0"
-    assert expected["freeze_revision"] == 2
+    assert expected["freeze_revision"] == 3
     assert build_manifest() == expected
 
 

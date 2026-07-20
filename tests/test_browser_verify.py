@@ -1,7 +1,13 @@
 import json
+from copy import deepcopy
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+
+from tests.golden_cases import VALID_MODULE_OUTPUT, VALID_UNDERSTANDING
+
+ROOT = Path(__file__).parents[1]
 
 
 def test_browser_gate_returns_actionable_structured_failures(monkeypatch):
@@ -14,6 +20,14 @@ def test_browser_gate_returns_actionable_structured_failures(monkeypatch):
         "idleMotionSubjectChangedPixelRatio": 0.011,
         "idleMotionWholeCanvasChangedPixelRatio": 0.004,
         "idleMotionCaptureIntervalMs": 1100,
+        "autoAdvanceValueChanged": True,
+        "sliderTrackedAnimation": True,
+        "controlAlwaysEnabled": True,
+        "pauseHeldValue": True,
+        "sliderInteractionYielded": True,
+        "reducedMotionStartedPaused": True,
+        "reducedMotionPlayOptInWorked": True,
+        "renderOutputSweep": {"passed": True, "samples": [{"parameter": 0}]},
         "runtimeError": False,
         "externalRequests": 0,
     }
@@ -30,7 +44,7 @@ def test_browser_gate_returns_actionable_structured_failures(monkeypatch):
     result = verify_artifact_in_browser("<!doctype html><title>fixture</title>")
 
     assert result.passed is False
-    assert result.check_count == 7
+    assert result.check_count == 15
     assert result.evidence == observed
     assert result.failures == [
         {
@@ -53,6 +67,14 @@ def test_browser_gate_rejects_backdrop_only_motion_with_a_subject_region_diagnos
             "idleMotionSubjectChangedPixelRatio": 0.004,
             "idleMotionWholeCanvasChangedPixelRatio": 0.014,
             "idleMotionCaptureIntervalMs": 1100,
+            "autoAdvanceValueChanged": True,
+            "sliderTrackedAnimation": True,
+            "controlAlwaysEnabled": True,
+            "pauseHeldValue": True,
+            "sliderInteractionYielded": True,
+            "reducedMotionStartedPaused": True,
+            "reducedMotionPlayOptInWorked": True,
+            "renderOutputSweep": {"passed": True, "samples": [{"parameter": 0}]},
             "runtimeError": False,
             "externalRequests": 0,
         }
@@ -89,6 +111,14 @@ def test_browser_gate_reports_a_whole_canvas_freeze_separately():
             "idleMotionSubjectChangedPixelRatio": 0.012,
             "idleMotionWholeCanvasChangedPixelRatio": 0.0,
             "idleMotionCaptureIntervalMs": 1100,
+            "autoAdvanceValueChanged": True,
+            "sliderTrackedAnimation": True,
+            "controlAlwaysEnabled": True,
+            "pauseHeldValue": True,
+            "sliderInteractionYielded": True,
+            "reducedMotionStartedPaused": True,
+            "reducedMotionPlayOptInWorked": True,
+            "renderOutputSweep": {"passed": True, "samples": [{"parameter": 0}]},
             "runtimeError": False,
             "externalRequests": 0,
         }
@@ -125,12 +155,94 @@ def test_browser_gate_accepts_motion_above_both_region_thresholds():
             "idleMotionSubjectChangedPixelRatio": 0.0101,
             "idleMotionWholeCanvasChangedPixelRatio": 0.0011,
             "idleMotionCaptureIntervalMs": 1100,
+            "autoAdvanceValueChanged": True,
+            "sliderTrackedAnimation": True,
+            "controlAlwaysEnabled": True,
+            "pauseHeldValue": True,
+            "sliderInteractionYielded": True,
+            "reducedMotionStartedPaused": True,
+            "reducedMotionPlayOptInWorked": True,
+            "renderOutputSweep": {"passed": True, "samples": [{"parameter": 0}]},
             "runtimeError": False,
             "externalRequests": 0,
         }
     )
 
     assert result.passed is True
+
+
+def test_render_output_consistency_failure_reports_exact_adjacent_samples():
+    from server.browser_verify import BrowserVerificationResult, _evaluate
+
+    evidence = {
+        **BrowserVerificationResult.passing().evidence,
+        "renderOutputSweep": {
+            "passed": False,
+            "samples": [],
+            "failure": {
+                "code": "rendered_output_discontinuity",
+                "metric": "brightPixelRatio",
+                "left": {"parameter": 180, "computedOutput": 1.0, "renderedMeasure": 0.237},
+                "right": {"parameter": 195, "computedOutput": 0.983, "renderedMeasure": 0.011},
+            },
+        },
+    }
+
+    result = _evaluate(evidence)
+
+    assert result.passed is False
+    assert result.failures == [{
+        "gate": "render_output_consistency",
+        "code": "rendered_output_discontinuity",
+        "expected": {
+            "full_parameter_sweep": True,
+            "render_tracks_computed_output": True,
+            "adjacent_discontinuities": 0,
+        },
+        "actual": evidence["renderOutputSweep"]["failure"],
+    }]
+
+
+@pytest.mark.browser
+def test_real_render_sweep_rejects_correct_numbers_with_a_post_180_visual_cliff():
+    from server.assemble import assemble_artifact
+    from server.browser_verify import verify_artifact_in_browser
+
+    source = (ROOT / "tests" / "fixtures" / "moon_phase_module.js").read_text(
+        encoding="utf-8"
+    )
+    broken_painter = source.replace(
+        "const fraction = litFraction(angleDeg);",
+        "const fraction = angleDeg > 180 ? 0 : litFraction(angleDeg);",
+        1,
+    )
+    understanding = deepcopy(VALID_UNDERSTANDING)
+    artifact = assemble_artifact(
+        understanding,
+        {**VALID_MODULE_OUTPUT, "module_js": broken_painter},
+    )
+
+    result = verify_artifact_in_browser(artifact)
+
+    failures = [
+        failure
+        for failure in result.failures
+        if failure["gate"] == "render_output_consistency"
+    ]
+    assert len(failures) == 1
+    failure = failures[0]
+    assert failure["code"] in {
+        "rendered_output_discontinuity",
+        "rendered_output_not_monotonic_consistent",
+    }
+    assert failure["actual"]["left"]["parameter"] == 180
+    assert failure["actual"]["right"]["parameter"] == 202.5
+    for side in ("left", "right"):
+        assert set(failure["actual"][side]) == {
+            "parameter",
+            "computedOutput",
+            "renderedMeasure",
+        }
 
 
 @pytest.mark.asyncio
@@ -211,7 +323,7 @@ async def test_idle_motion_failure_enters_the_existing_bounded_heal_loop():
         },
     }
     reports = [
-        BrowserVerificationResult(False, 7, [motion_failure], {}),
+        BrowserVerificationResult(False, 15, [motion_failure], {}),
         BrowserVerificationResult.passing(),
     ]
     backend = MockCodexBackend()
