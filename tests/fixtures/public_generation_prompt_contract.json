@@ -51,7 +51,25 @@
       "gate": "invariant",
       "required_terms": [
         "every supplied fixture",
-        "exactly one model function"
+        "exactly one model function",
+        "all supplied input names",
+        "never substitute defaults"
+      ]
+    },
+    {
+      "id": "static_response_too_small",
+      "gate": "visual_richness",
+      "required_terms": [
+        "auto-sweep",
+        "1.0% of the central 60%",
+        "held state stays stable"
+      ]
+    },
+    {
+      "id": "mobile_label_avoidance",
+      "gate": "mobile_overlay_safe_band",
+      "required_terms": [
+        "Prefer zero canvas labels on mobile"
       ]
     }
   ]

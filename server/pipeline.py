@@ -406,9 +406,10 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             runtime_context=runtime_context,
         )
     except CodexRuntimeError as error:
-        if error.code != "stage_timeout" or not record.public:
+        if not record.public:
             raise
-        _fallback(manager, record, "generation_timeout", _default_suggestions(record))
+        reason = "generation_timeout" if error.code == "stage_timeout" else "generation_failed"
+        _fallback(manager, record, reason, _default_suggestions(record))
         return
     module_output = validate_module_output(stage_data(generated, "generate"))
     if scenario == "exhausted_heal":
@@ -460,8 +461,16 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                         vision_result = evaluate_vision_verdict(vision_verdict)
                         break
                     except CodexRuntimeError as error:
-                        if error.code != "stage_timeout":
+                        if error.code != "stage_timeout" and not record.public:
                             raise
+                        if error.code != "stage_timeout":
+                            _fallback(
+                                manager,
+                                record,
+                                "vision_inconclusive",
+                                _default_suggestions(record),
+                            )
+                            return
                         if not record.public:
                             record.builder_diagnostics.append(
                                 {
@@ -614,9 +623,10 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 runtime_context=runtime_context,
             )
         except CodexRuntimeError as error:
-            if error.code != "stage_timeout" or not record.public:
+            if not record.public:
                 raise
-            _fallback(manager, record, "healing_timeout", _default_suggestions(record))
+            reason = "healing_timeout" if error.code == "stage_timeout" else "healing_failed"
+            _fallback(manager, record, reason, _default_suggestions(record))
             return
         module_output = validate_module_output(stage_data(healed, f"heal_{heal_count}"))
 
@@ -670,8 +680,16 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 )
                 break
             except CodexRuntimeError as error:
-                if error.code != "stage_timeout":
+                if error.code != "stage_timeout" and not record.public:
                     raise
+                if error.code != "stage_timeout":
+                    _fallback(
+                        manager,
+                        record,
+                        "qa_inconclusive",
+                        _default_suggestions(record),
+                    )
+                    return
                 if not record.public:
                     record.builder_diagnostics.append(
                         {

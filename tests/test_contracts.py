@@ -163,14 +163,14 @@ def test_current_frozen_contract_manifest_strictly_matches_repository():
     from scripts.freeze_contracts import build_manifest
 
     expected = json.loads(
-        (ROOT / "contracts" / "contracts-frozen-r9.json").read_text(encoding="utf-8")
+        (ROOT / "contracts" / "contracts-frozen-r11.json").read_text(encoding="utf-8")
     )
     historical = json.loads(
         (ROOT / "out" / "evidence" / "contracts-frozen.json").read_text(encoding="utf-8")
     )
 
     assert historical["contract_version"] == expected["contract_version"] == "1.0"
-    assert expected["freeze_revision"] == 9
+    assert expected["freeze_revision"] == 11
     assert build_manifest() == expected
 
 

@@ -1,0 +1,451 @@
+{
+  "schema_version": "1.0",
+  "phase": "after",
+  "runtime_mode": "public_ephemeral",
+  "job_timeout_seconds": 180.0,
+  "case_count": 5,
+  "success_count": 0,
+  "success_rate": 0.0,
+  "results": [
+    {
+      "case_id": "rainbow_refraction_ar",
+      "locale": "ar",
+      "status": "answer_only",
+      "fallback_reason": "healing_timeout",
+      "total_elapsed_ms": 153410,
+      "first_answer_ms": 17789,
+      "heal_count": 1,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "single_causal_slice",
+        "domain": "optics",
+        "canonical_intent": "rainbow_formation_after_rain",
+        "actor_id": "violet_ray_path",
+        "action": "responds",
+        "fixture_count": 2,
+        "primary_parameter_id": "refractive_index",
+        "tracking_output": "deviation_angle",
+        "contract_failures": []
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 17786,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 70427,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 49
+        },
+        {
+          "stage": "browser_verify",
+          "elapsed_ms": 10114
+        },
+        {
+          "stage": "heal_1",
+          "elapsed_ms": 55027
+        }
+      ],
+      "verification_attempts": [
+        {
+          "attempt": 0,
+          "gate_phase": "deterministic",
+          "passed": true,
+          "check_count": 23,
+          "failures": []
+        },
+        {
+          "attempt": 0,
+          "gate_phase": "browser",
+          "passed": false,
+          "check_count": 18,
+          "failures": [
+            {
+              "gate": "visual_richness",
+              "code": "subject_idle_motion_insufficient",
+              "expected": {
+                "region": "central_60_percent",
+                "minimum_changed_pixel_ratio": 0.005,
+                "capture_interval_ms": 1000
+              },
+              "actual": {
+                "region": "central_60_percent",
+                "changed_pixel_ratio": 0.004040849313055617,
+                "shortfall": 0.000959,
+                "capture_interval_ms": 1100
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "seasons_tilt_en",
+      "locale": "en",
+      "status": "answer_only",
+      "fallback_reason": "fixture_integrity_unresolved",
+      "total_elapsed_ms": 101550,
+      "first_answer_ms": 13500,
+      "heal_count": 0,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "single_causal_slice",
+        "domain": "earth_science",
+        "canonical_intent": "why_earth_seasons_change_over_the_year",
+        "actor_id": "sunlight_indicator",
+        "action": "responds",
+        "fixture_count": 3,
+        "primary_parameter_id": "axial_tilt",
+        "tracking_output": "noon_solar_elevation",
+        "contract_failures": []
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 13496,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 87990,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 59
+        }
+      ],
+      "verification_attempts": [
+        {
+          "attempt": 0,
+          "gate_phase": "deterministic",
+          "passed": false,
+          "check_count": 13,
+          "failures": [
+            {
+              "gate": "fixture_integrity",
+              "code": "suspect_relation_fixture",
+              "expected": {
+                "output": "noon_solar_elevation",
+                "relation": "right_gt_left",
+                "minimum_ratio": 1.4
+              },
+              "actual": {
+                "left_value": 55,
+                "right_value": 75
+              },
+              "fixture_id": "tilt_30",
+              "inputs": {
+                "left": [
+                  {
+                    "name": "axial_tilt",
+                    "value": 10
+                  },
+                  {
+                    "name": "latitude",
+                    "value": 45
+                  }
+                ],
+                "right": [
+                  {
+                    "name": "axial_tilt",
+                    "value": 30
+                  },
+                  {
+                    "name": "latitude",
+                    "value": 45
+                  }
+                ]
+              },
+              "numeric_cross_check": {
+                "output": "noon_solar_elevation",
+                "passing_fixture_ids": [
+                  "tilt_zero",
+                  "tilt_235"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "lever_torque_en",
+      "locale": "en",
+      "status": "failed",
+      "fallback_reason": null,
+      "total_elapsed_ms": 92952,
+      "first_answer_ms": 12242,
+      "heal_count": 1,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "single_causal_relation",
+        "domain": "physics",
+        "canonical_intent": "understand_how_a_longer_lever_reduces_required_lifting_force",
+        "actor_id": "effort_indicator",
+        "action": "responds",
+        "fixture_count": 2,
+        "primary_parameter_id": "effort_arm_length",
+        "tracking_output": "required_effort_force",
+        "contract_failures": []
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 12241,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 78289,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 43
+        },
+        {
+          "stage": "heal_1",
+          "elapsed_ms": 2375
+        }
+      ],
+      "verification_attempts": [
+        {
+          "attempt": 0,
+          "gate_phase": "deterministic",
+          "passed": false,
+          "check_count": 12,
+          "failures": [
+            {
+              "gate": "invariant",
+              "code": "numeric_fixture_mismatch",
+              "expected": {
+                "output": "required_effort_force",
+                "value": 10,
+                "tolerance": 0.01
+              },
+              "actual": {
+                "output": "required_effort_force",
+                "value": 20
+              },
+              "fixture_id": "effort_force_longer_arm",
+              "inputs": [
+                {
+                  "name": "load_force",
+                  "value": 50
+                },
+                {
+                  "name": "load_arm_length",
+                  "value": 0.4
+                },
+                {
+                  "name": "effort_arm_length",
+                  "value": 2
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "evaporation_ar",
+      "locale": "ar",
+      "status": "answer_only",
+      "fallback_reason": "fixture_integrity_unresolved",
+      "total_elapsed_ms": 93840,
+      "first_answer_ms": 15398,
+      "heal_count": 0,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "single_temperature_to_evaporation_rate_slice",
+        "domain": "physics",
+        "canonical_intent": "explain_why_water_evaporates_faster_when_temperature_increases",
+        "actor_id": "water_vapor_cloud",
+        "action": "responds",
+        "fixture_count": 3,
+        "primary_parameter_id": "temperature",
+        "tracking_output": "relative_evaporation_rate",
+        "contract_failures": []
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 15397,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 78392,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 48
+        }
+      ],
+      "verification_attempts": [
+        {
+          "attempt": 0,
+          "gate_phase": "deterministic",
+          "passed": false,
+          "check_count": 13,
+          "failures": [
+            {
+              "gate": "security",
+              "code": "forbidden_capability",
+              "expected": {
+                "forbidden_capabilities": []
+              },
+              "actual": {
+                "capabilities": [
+                  "dom_or_navigation"
+                ]
+              }
+            },
+            {
+              "gate": "invariant",
+              "code": "numeric_fixture_mismatch",
+              "expected": {
+                "output": "relative_evaporation_rate",
+                "value": 4,
+                "tolerance": 0.01
+              },
+              "actual": {
+                "output": "relative_evaporation_rate",
+                "value": 1
+              },
+              "fixture_id": "rate_at_45",
+              "inputs": [
+                {
+                  "name": "temperature",
+                  "value": 45
+                }
+              ]
+            },
+            {
+              "gate": "fixture_integrity",
+              "code": "suspect_relation_fixture",
+              "expected": {
+                "output": "relative_evaporation_rate",
+                "relation": "right_gt_left",
+                "minimum_ratio": 1.9
+              },
+              "actual": {
+                "left_value": 1,
+                "right_value": 1
+              },
+              "fixture_id": "hotter_rate_greater",
+              "inputs": {
+                "left": [
+                  {
+                    "name": "temperature",
+                    "value": 25
+                  }
+                ],
+                "right": [
+                  {
+                    "name": "temperature",
+                    "value": 35
+                  }
+                ]
+              },
+              "numeric_cross_check": {
+                "output": "relative_evaporation_rate",
+                "passing_fixture_ids": [
+                  "rate_at_25"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "magnetism_en",
+      "locale": "en",
+      "status": "answer_only",
+      "fallback_reason": "insufficient_heal_budget",
+      "total_elapsed_ms": 111708,
+      "first_answer_ms": 15256,
+      "heal_count": 0,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "single_parameter_causal_slice",
+        "domain": "physics",
+        "canonical_intent": "distance_effect_on_magnetic_force",
+        "actor_id": "force_indicator",
+        "action": "responds",
+        "fixture_count": 3,
+        "primary_parameter_id": "distance",
+        "tracking_output": "force_newtons",
+        "contract_failures": []
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 15256,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 86144,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 70
+        },
+        {
+          "stage": "browser_verify",
+          "elapsed_ms": 10234
+        }
+      ],
+      "verification_attempts": [
+        {
+          "attempt": 0,
+          "gate_phase": "deterministic",
+          "passed": true,
+          "check_count": 24,
+          "failures": []
+        },
+        {
+          "attempt": 0,
+          "gate_phase": "browser",
+          "passed": false,
+          "check_count": 18,
+          "failures": [
+            {
+              "gate": "mobile_overlay_safe_band",
+              "code": "mobile_overlay_count_exceeded",
+              "expected": {
+                "canvas_width_max": 420,
+                "overlay_count_max": 1,
+                "overlay_height_ratio_max": 0.22,
+                "subject_overlap_pixels": 0,
+                "label_subject_overlap_pixels": 0,
+                "drawn_label_count_max": 1,
+                "unregistered_label_count": 0,
+                "unanchored_overlay_count": 0
+              },
+              "actual": {
+                "overlay_count": 1,
+                "drawn_label_count": 5,
+                "overlay_height_ratio": 0.105,
+                "subject_overlap_pixels": 0,
+                "label_subject_overlap_pixels": 0,
+                "unregistered_label_count": 5,
+                "unanchored_overlay_count": 0
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

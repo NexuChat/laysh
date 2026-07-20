@@ -1,0 +1,96 @@
+{
+  "schema_version": "1.0",
+  "phase": "after",
+  "runtime_mode": "public_ephemeral",
+  "job_timeout_seconds": 180.0,
+  "case_count": 5,
+  "success_count": 0,
+  "success_rate": 0.0,
+  "results": [
+    {
+      "case_id": "rainbow_refraction_ar",
+      "locale": "ar",
+      "status": "failed",
+      "fallback_reason": null,
+      "total_elapsed_ms": 4607,
+      "first_answer_ms": null,
+      "heal_count": 0,
+      "understanding": {},
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 4607
+        }
+      ],
+      "verification_attempts": []
+    },
+    {
+      "case_id": "seasons_tilt_en",
+      "locale": "en",
+      "status": "failed",
+      "fallback_reason": null,
+      "total_elapsed_ms": 4185,
+      "first_answer_ms": null,
+      "heal_count": 0,
+      "understanding": {},
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 4184
+        }
+      ],
+      "verification_attempts": []
+    },
+    {
+      "case_id": "lever_torque_en",
+      "locale": "en",
+      "status": "failed",
+      "fallback_reason": null,
+      "total_elapsed_ms": 4392,
+      "first_answer_ms": null,
+      "heal_count": 0,
+      "understanding": {},
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 4391
+        }
+      ],
+      "verification_attempts": []
+    },
+    {
+      "case_id": "evaporation_ar",
+      "locale": "ar",
+      "status": "failed",
+      "fallback_reason": null,
+      "total_elapsed_ms": 7742,
+      "first_answer_ms": null,
+      "heal_count": 0,
+      "understanding": {},
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 7742
+        }
+      ],
+      "verification_attempts": []
+    },
+    {
+      "case_id": "magnetism_en",
+      "locale": "en",
+      "status": "failed",
+      "fallback_reason": null,
+      "total_elapsed_ms": 4676,
+      "first_answer_ms": null,
+      "heal_count": 0,
+      "understanding": {},
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 4676
+        }
+      ],
+      "verification_attempts": []
+    }
+  ]
+}

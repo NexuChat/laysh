@@ -658,6 +658,28 @@ async def test_public_generate_timeout_preserves_answer_as_fast_answer_only_outc
 
 
 @pytest.mark.asyncio
+async def test_public_generate_process_error_preserves_answer_only_outcome():
+    from server.codex_backend import MockCodexBackend
+    from server.codex_runtime import CodexRuntimeError
+    from server.jobs import JobManager
+
+    class FailedGenerateBackend(MockCodexBackend):
+        async def generate(self, *args, **kwargs):
+            self.generate_calls += 1
+            raise CodexRuntimeError("nonzero_exit")
+
+    backend = FailedGenerateBackend()
+    manager = JobManager(backend, public_job_timeout_seconds=2)
+    record = manager.start("success", "ar")
+    await record.task
+
+    assert record.status == "answer_only"
+    assert record.answer is not None
+    assert record.fallback is not None
+    assert record.fallback.reason_code == "generation_failed"
+
+
+@pytest.mark.asyncio
 async def test_public_heal_timeout_preserves_answer_without_a_second_attempt():
     from server.browser_verify import BrowserVerificationResult
     from server.codex_backend import MockCodexBackend
@@ -684,6 +706,33 @@ async def test_public_heal_timeout_preserves_answer_without_a_second_attempt():
     assert record.fallback is not None
     assert record.fallback.reason_code == "healing_timeout"
     assert backend.heal_calls == 1
+
+
+@pytest.mark.asyncio
+async def test_public_heal_process_error_preserves_answer_only_outcome():
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend
+    from server.codex_runtime import CodexRuntimeError
+    from server.jobs import JobManager
+
+    class FailedHealBackend(MockCodexBackend):
+        async def heal(self, *args, **kwargs):
+            self.heal_calls += 1
+            raise CodexRuntimeError("nonzero_exit")
+
+    backend = FailedHealBackend()
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+    )
+    record = manager.start("broken first draft", "ar")
+    await record.task
+
+    assert record.status == "answer_only"
+    assert record.answer is not None
+    assert record.fallback is not None
+    assert record.fallback.reason_code == "healing_failed"
 
 
 @pytest.mark.asyncio

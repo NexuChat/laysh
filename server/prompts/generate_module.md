@@ -10,15 +10,16 @@ Export exactly `version`, `init`, `setParameter`, `test`, `resize`, `destroy`;
 to zero and is the shell-owned PHENOMENON clock: it advances while auto-sweep is paused or the slider
 held, freezing only for reduced motion. `test(inputs)` is pure and returns exactly declared outputs.
 
-Use only canvas/context, Math, Number, arrays, objects. No document/network/storage/navigation,
+Use canvas/context, Math, Number, arrays, objects. No document/network/storage/navigation,
 dynamic code/workers/timers/sensors/audio/clipboard/console/URLs/animation API. Modules
-must not own animation clocks, timers, or `requestAnimationFrame`. Target 12–20 KiB; hard cap 40 KiB.
+must not own animation clocks, timers, or `requestAnimationFrame`. Target 12–20 KiB; cap 40 KiB.
 
 ## FIRST-DRAFT ACCEPTANCE CONTRACT
 
 Every item is measured; pass on draft one.
 
-1. Model: implement every supplied fixture. Use exactly one model function per output; painter,
+1. Model: implement every supplied fixture from all supplied input names; never substitute defaults
+for provided inputs. Use exactly one model function per output; painter,
 `test`, geometry, feedback, and readout share it. This SINGLE-SOURCE RULE forbids tuned painter math.
 Across the full primary-parameter sweep a visible property follows output one with absolute rank correlation
 ≥ 0.65 and no false visual cliff or jump.
@@ -37,7 +38,8 @@ sweep fail. One-second frames change 1.0% of the central 60% and clear freeze.
 
 4. Mobile: at width ≤420 px draw at most one edge `essential-state` label, no numeric/duplicate state.
 Call `registerOverlayRect` with exact bounds; height ≤22%, edge anchored, zero overlap with central
-20%–80% subject or actor. Shell owns other readouts. Wide readout chips obey the same safe band.
+20%–80% subject or actor. Prefer zero canvas labels on mobile; shell owns readouts. Wide readout chips
+obey the same safe band.
 
 5. Scene: layered scene depth has at least three visible depth layers and reactive feedback beyond
 text. Keep physical light physically consistent: never draw light through an opaque body; use a

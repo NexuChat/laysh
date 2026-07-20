@@ -164,6 +164,24 @@ def test_understand_prompt_does_not_reject_an_honest_single_slice_of_a_complex_t
     assert "signed indicator" in prompt
 
 
+def test_understand_prompt_prefers_numeric_fixtures_over_fragile_ratios():
+    prompt = (ROOT / "server" / "prompts" / "understand.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert "Prefer three independent numeric fixtures" in prompt
+    assert "Use a relation fixture only" in prompt
+
+
+def test_understand_prompt_forbids_static_surfaces_from_claiming_flow():
+    prompt = (ROOT / "server" / "prompts" / "understand.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert "`flows` actor must be moving matter parcels" in prompt
+    assert "never a stationary sample, surface, container, or field" in prompt
+
+
 def test_qa_contract_contains_a_closed_visual_richness_review():
     from server.schemas import load_schema, validate_document
 

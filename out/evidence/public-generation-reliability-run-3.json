@@ -1,0 +1,333 @@
+{
+  "schema_version": "1.0",
+  "phase": "after",
+  "runtime_mode": "public_ephemeral",
+  "job_timeout_seconds": 180.0,
+  "case_count": 5,
+  "success_count": 2,
+  "success_rate": 0.4,
+  "results": [
+    {
+      "case_id": "rainbow_refraction_ar",
+      "locale": "ar",
+      "status": "failed",
+      "fallback_reason": null,
+      "total_elapsed_ms": 107076,
+      "first_answer_ms": 14911,
+      "heal_count": 0,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "isolated_dispersion_slice",
+        "domain": "optics",
+        "canonical_intent": "explain_why_rainbows_form_after_rain",
+        "actor_id": "rainbow_ray",
+        "action": "responds",
+        "fixture_count": 3,
+        "primary_parameter_id": "wavelength",
+        "tracking_output": "deviation_angle",
+        "contract_failures": []
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 14910,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 79066,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 58
+        },
+        {
+          "stage": "browser_verify",
+          "elapsed_ms": 10200
+        },
+        {
+          "stage": "vision",
+          "elapsed_ms": 2834
+        }
+      ],
+      "verification_attempts": [
+        {
+          "attempt": 0,
+          "gate_phase": "deterministic",
+          "passed": true,
+          "check_count": 24,
+          "failures": []
+        },
+        {
+          "attempt": 0,
+          "gate_phase": "browser",
+          "passed": true,
+          "check_count": 18,
+          "failures": []
+        }
+      ]
+    },
+    {
+      "case_id": "seasons_tilt_en",
+      "locale": "en",
+      "status": "failed",
+      "fallback_reason": null,
+      "total_elapsed_ms": 14942,
+      "first_answer_ms": 12318,
+      "heal_count": 0,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "single_causal_slice",
+        "domain": "earth_science",
+        "canonical_intent": "explain_that_seasons_change_because_earths_tilt_changes_sunlight_angle_and_day_length_during_its_orb",
+        "actor_id": "sunlight_beam",
+        "action": "responds",
+        "fixture_count": 3,
+        "primary_parameter_id": "sun_angle",
+        "tracking_output": "surface_heating_intensity",
+        "contract_failures": []
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 12314,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 2623
+        }
+      ],
+      "verification_attempts": []
+    },
+    {
+      "case_id": "lever_torque_en",
+      "locale": "en",
+      "status": "complete",
+      "fallback_reason": null,
+      "total_elapsed_ms": 117203,
+      "first_answer_ms": 15773,
+      "heal_count": 0,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "single_causal_parameter_isolatable",
+        "domain": "physics",
+        "canonical_intent": "understand_why_a_longer_lever_reduces_the_force_needed_to_lift_a_load",
+        "actor_id": "effort_indicator",
+        "action": "responds",
+        "fixture_count": 3,
+        "primary_parameter_id": "effort_arm_length",
+        "tracking_output": "required_effort_force",
+        "contract_failures": []
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 15772,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 85938,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 71
+        },
+        {
+          "stage": "browser_verify",
+          "elapsed_ms": 10034
+        },
+        {
+          "stage": "vision",
+          "elapsed_ms": 5380,
+          "model": "gpt-5.6-terra"
+        }
+      ],
+      "verification_attempts": [
+        {
+          "attempt": 0,
+          "gate_phase": "deterministic",
+          "passed": true,
+          "check_count": 24,
+          "failures": []
+        },
+        {
+          "attempt": 0,
+          "gate_phase": "browser",
+          "passed": true,
+          "check_count": 18,
+          "failures": []
+        }
+      ]
+    },
+    {
+      "case_id": "evaporation_ar",
+      "locale": "ar",
+      "status": "answer_only",
+      "fallback_reason": "healing_timeout",
+      "total_elapsed_ms": 157256,
+      "first_answer_ms": 12139,
+      "heal_count": 1,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "single_causal_temperature_to_evaporation_rate",
+        "domain": "thermal_physics",
+        "canonical_intent": "temperature_increases_water_evaporation_rate",
+        "actor_id": "water_sample",
+        "action": "flows",
+        "fixture_count": 3,
+        "primary_parameter_id": "temperature",
+        "tracking_output": "evaporation_rate",
+        "contract_failures": []
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 12138,
+          "model": "gpt-5.6-luna"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 79765,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 58
+        },
+        {
+          "stage": "browser_verify",
+          "elapsed_ms": 10263
+        },
+        {
+          "stage": "heal_1",
+          "elapsed_ms": 55027
+        }
+      ],
+      "verification_attempts": [
+        {
+          "attempt": 0,
+          "gate_phase": "deterministic",
+          "passed": true,
+          "check_count": 24,
+          "failures": []
+        },
+        {
+          "attempt": 0,
+          "gate_phase": "browser",
+          "passed": false,
+          "check_count": 18,
+          "failures": [
+            {
+              "gate": "actor_action_tracking",
+              "code": "actor_trajectory_static",
+              "expected": {
+                "rateRatio": 3,
+                "maximumRatioError": 0.35
+              },
+              "actual": {
+                "displacementRatio": 3.1805,
+                "ratioError": 0.0602,
+                "lowDisplacementPixels": 0.1147,
+                "highDisplacementPixels": 0.3648
+              }
+            },
+            {
+              "gate": "actor_action_tracking",
+              "code": "paused_phenomenon_actor_static",
+              "expected": {
+                "lesson": "لماذا يتبخر الماء أسرع عند ارتفاع درجة الحرارة؟",
+                "held_parameter": {
+                  "id": "temperature",
+                  "value": 55,
+                  "unit": "°C"
+                },
+                "action": "flows",
+                "minimum_trajectory_span_pixels": 6,
+                "sample_duration_seconds": 0.08
+              },
+              "actual": {
+                "lesson": "لماذا يتبخر الماء أسرع عند ارتفاع درجة الحرارة؟",
+                "held_parameter": {
+                  "id": "temperature",
+                  "value": 55,
+                  "unit": "°C"
+                },
+                "action": "flows",
+                "trajectory_span_pixels": 0.2545,
+                "horizontal_span_pixels": 0.2471,
+                "vertical_span_pixels": 0.061,
+                "sample_count": 7
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "magnetism_en",
+      "locale": "en",
+      "status": "complete",
+      "fallback_reason": null,
+      "total_elapsed_ms": 110471,
+      "first_answer_ms": 22377,
+      "heal_count": 0,
+      "understanding": {
+        "simulatable": true,
+        "reason_code": "isolatable_distance_force_relation",
+        "domain": "physics",
+        "canonical_intent": "effect_of_distance_on_force_between_two_magnets",
+        "actor_id": "force_indicator",
+        "action": "responds",
+        "fixture_count": 3,
+        "primary_parameter_id": "distance",
+        "tracking_output": "force",
+        "contract_failures": []
+      },
+      "stage_timings": [
+        {
+          "stage": "understand",
+          "elapsed_ms": 22374,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "generate",
+          "elapsed_ms": 70365,
+          "model": "gpt-5.6-sol"
+        },
+        {
+          "stage": "deterministic_verify",
+          "elapsed_ms": 47
+        },
+        {
+          "stage": "browser_verify",
+          "elapsed_ms": 10216
+        },
+        {
+          "stage": "vision",
+          "elapsed_ms": 7460,
+          "model": "gpt-5.6-terra"
+        }
+      ],
+      "verification_attempts": [
+        {
+          "attempt": 0,
+          "gate_phase": "deterministic",
+          "passed": true,
+          "check_count": 24,
+          "failures": []
+        },
+        {
+          "attempt": 0,
+          "gate_phase": "browser",
+          "passed": true,
+          "check_count": 18,
+          "failures": []
+        }
+      ]
+    }
+  ]
+}

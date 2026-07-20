@@ -33,6 +33,8 @@ Simulation decision and generation inputs:
   `flows` requires a positive physical matter-flow rate; `floats_sinks` requires submerged fraction;
   `responds` is the honest static-response action for an actor whose position, size, or extent changes
   monotonically with an output and stays stable at a held parameter. If none fits, do not simulate.
+- A `flows` actor must be moving matter parcels with a time-varying centroid,
+  never a stationary sample, surface, container, or field. Use `responds` for a changing level or extent.
 - Use `sweep_mode` value `cyclic` only when max reconnects physically to min; otherwise use `bounce`.
 
 Fixture integrity:
@@ -41,6 +43,8 @@ Fixture integrity:
   Check the arithmetic internally. Numeric fixtures use closed arrays of
   `{ "name": string, "value": number }`. A relation fixture must agree with every numeric fixture and
   formula direction. Never use a ratio when the result crosses zero or compares signed direction.
+- Prefer three independent numeric fixtures at low, middle, and high inputs. Use a relation fixture only
+  when both sides were calculated from the exact formula and its `minimum_ratio` is arithmetically true.
 - When `builder_reference_contract` is present, preserve its formula, parameter, actor/action,
   signatures, outputs, assumptions, values, units, and tolerances exactly; never widen or omit them.
 

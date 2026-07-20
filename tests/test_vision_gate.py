@@ -149,3 +149,30 @@ async def test_failed_vision_verdict_enters_bounded_heal_loop_with_exact_critiqu
         }
     ]
     assert verdicts == []
+
+
+@pytest.mark.asyncio
+async def test_public_vision_process_error_preserves_answer_only_outcome():
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend
+    from server.codex_runtime import CodexRuntimeError
+    from server.jobs import JobManager
+
+    class FailedVisionBackend(MockCodexBackend):
+        async def vision(self, *args, **kwargs):
+            self.vision_calls += 1
+            raise CodexRuntimeError("nonzero_exit")
+
+    backend = FailedVisionBackend()
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+    )
+    record = manager.start("success", "ar")
+    await record.task
+
+    assert record.status == "answer_only"
+    assert record.answer is not None
+    assert record.fallback is not None
+    assert record.fallback.reason_code == "vision_inconclusive"
