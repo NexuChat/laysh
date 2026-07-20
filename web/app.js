@@ -84,7 +84,7 @@
         node.setAttribute(attribute, t(node.dataset[dataName]));
       }
     }
-    for (const button of document.querySelectorAll("[data-locale]")) {
+    for (const button of document.querySelectorAll("#locale-switch > button[data-locale]")) {
       button.setAttribute("aria-pressed", String(button.dataset.locale === state.locale));
     }
     number = new Intl.NumberFormat(state.locale, { maximumFractionDigits: 0 });
@@ -609,7 +609,7 @@
     }
   });
 
-  for (const button of document.querySelectorAll("[data-locale]")) {
+  for (const button of document.querySelectorAll("#locale-switch > button[data-locale]")) {
     button.addEventListener("click", () => setLocale(button.dataset.locale));
   }
 

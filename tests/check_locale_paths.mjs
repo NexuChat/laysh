@@ -33,6 +33,7 @@ const chrome = spawn(chromePath, [
   "--disable-gpu",
   "--no-first-run",
   "--no-default-browser-check",
+  "--lang=en-US",
   `--remote-debugging-port=${port}`,
   `--user-data-dir=${profilePath}`,
   "about:blank",
@@ -97,6 +98,18 @@ try {
     }
     throw new Error(`Timed out waiting for ${expression}; errors=${JSON.stringify(errors)}`);
   }
+  async function clickElement(id) {
+    const point = await evaluate(`(() => {
+      const element = document.getElementById(${JSON.stringify(id)});
+      const rect = element.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      return { x, y, hit: document.elementFromPoint(x, y)?.id };
+    })()`);
+    if (point.hit !== id) throw new Error(`pointer target for ${id} was ${point.hit}`);
+    await command("Input.dispatchMouseEvent", { type: "mousePressed", x: point.x, y: point.y, button: "left", clickCount: 1 });
+    await command("Input.dispatchMouseEvent", { type: "mouseReleased", x: point.x, y: point.y, button: "left", clickCount: 1 });
+  }
   const snapshot = () => `({
     lang: document.documentElement.lang,
     dir: document.documentElement.dir,
@@ -108,12 +121,19 @@ try {
 
   await command("Runtime.enable");
   await command("Page.enable");
-  await command("Page.navigate", { url: `${baseUrl}/en#ask` });
+  await command("Page.navigate", { url: `${baseUrl}/#ask` });
   await waitFor("document.documentElement.lang === 'en' && document.querySelector('#hero-title').textContent.startsWith('Every')");
   const english = await evaluate(snapshot());
-  await evaluate("document.getElementById('locale-ar').click()");
+  await clickElement("hero-title");
+  const ordinaryClick = await evaluate("localStorage.getItem('laysh.locale')");
+  await clickElement("locale-ar");
   await waitFor("location.pathname === '/ar' && document.querySelector('#hero-title').textContent.startsWith('كل')");
   const arabic = await evaluate(snapshot());
+  await clickElement("locale-en");
+  await waitFor("location.pathname === '/en' && document.querySelector('#hero-title').textContent.startsWith('Every')");
+  const switchedEnglish = await evaluate(snapshot());
+  await clickElement("locale-ar");
+  await waitFor("location.pathname === '/ar' && document.querySelector('#hero-title').textContent.startsWith('كل')");
   await command("Page.reload", { ignoreCache: true });
   await waitFor("location.pathname === '/ar' && document.documentElement.lang === 'ar' && document.querySelector('#hero-title').textContent.startsWith('كل')");
   const reloadedArabic = await evaluate("localStorage.getItem('laysh.locale') === 'ar'");
@@ -132,7 +152,7 @@ try {
     sharePath: shared.sharePath,
     resultVisible: shared.resultVisible,
   };
-  await evaluate("document.getElementById('locale-ar').click()");
+  await clickElement("locale-ar");
   await waitFor("location.pathname === '/ar/sims/golden_moon_phases_en' && document.querySelector('#hero-title').textContent.startsWith('كل')");
   const sharedArabic = await evaluate(`({
     lang: document.documentElement.lang,
@@ -141,7 +161,7 @@ try {
     resultVisible: !document.querySelector('[data-view="result"]').hidden,
   })`);
   socket.close();
-  process.stdout.write(JSON.stringify({ english, arabic, reloadedArabic, sharedEnglish, sharedArabic }));
+  process.stdout.write(JSON.stringify({ english, ordinaryClick, arabic, switchedEnglish, reloadedArabic, sharedEnglish, sharedArabic }));
 } catch (error) {
   process.stderr.write(`${error.stack || error.message}\n`);
   process.exitCode = 1;

@@ -169,7 +169,7 @@ try {
   await command("Page.addScriptToEvaluateOnNewDocument", {
     source: languageOverride(["ar-SA", "en-US"]),
   });
-  await command("Page.reload", { ignoreCache: true });
+  await command("Page.navigate", { url: `${baseUrl}/` });
   await waitFor("document.documentElement.lang === 'ar' && document.querySelectorAll('.instant-badge').length === 6");
   const detectedArabic = await evaluate("document.documentElement.dir === 'rtl' && localStorage.getItem('laysh.locale') === null");
 

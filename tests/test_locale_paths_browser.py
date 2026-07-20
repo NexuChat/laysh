@@ -77,8 +77,9 @@ def test_locale_path_switches_visible_copy_persists_and_serves_shared_pages():
         "hero": "Every curious question deserves an answer you can touch.",
         "pressed": ["false", "true"],
         "path": "/en",
-        "stored": "en",
+        "stored": None,
     }
+    assert evidence["ordinaryClick"] is None
     assert evidence["arabic"] == {
         "lang": "ar",
         "dir": "rtl",
@@ -86,6 +87,14 @@ def test_locale_path_switches_visible_copy_persists_and_serves_shared_pages():
         "pressed": ["true", "false"],
         "path": "/ar",
         "stored": "ar",
+    }
+    assert evidence["switchedEnglish"] == {
+        "lang": "en",
+        "dir": "ltr",
+        "hero": "Every curious question deserves an answer you can touch.",
+        "pressed": ["false", "true"],
+        "path": "/en",
+        "stored": "en",
     }
     assert evidence["reloadedArabic"] is True
     assert evidence["sharedEnglish"] == {
