@@ -10,6 +10,12 @@
     "formula": "f = (1 − cos θ) / 2",
     "actor": "moon",
     "action": "orbits",
+    "actor_tracking": {
+      "actor_region": {"x": 0.04, "y": 0.18, "width": 0.5, "height": 0.62},
+      "sample_count": 4,
+      "sample_interval_ms": 140,
+      "actor_color": {"red": 243, "green": 241, "blue": 220, "tolerance": 72}
+    },
     "primary_parameter": {"id": "angle_deg", "min": 0, "max": 360, "default": 90, "step": 1, "unit": "°"},
     "units": ["°", "ratio"],
     "assumptions": ["مدار دائري مبسط", "أشعة شمس متوازية", "إهمال ميل المدار والكسوف"],

@@ -1,0 +1,724 @@
+{
+  "schema_version": "1.0",
+  "gate": "MOTION-02",
+  "model_calls": 0,
+  "golden_count": 6,
+  "passed": true,
+  "check_count": 42,
+  "goldens": [
+    {
+      "golden_id": "moon_phases",
+      "artifact_sha256": "2b0bece8f55356f0f65cb85601b5c05d92d078aab21f5567a90d1ea8ef29306b",
+      "actor": "moon",
+      "action": "orbits",
+      "passed": true,
+      "check_count": 7,
+      "failures": [],
+      "evidence": {
+        "cases": [
+          {
+            "value": 0,
+            "frameChanged": true,
+            "visualSignature": 2507369338
+          },
+          {
+            "value": 90,
+            "frameChanged": true,
+            "visualSignature": 3069519251
+          },
+          {
+            "value": 360,
+            "frameChanged": true,
+            "visualSignature": 4016568162
+          }
+        ],
+        "lang": "ar",
+        "dir": "rtl",
+        "ready": true,
+        "runtimeError": false,
+        "alternative": "زاوية الطور: 90 ° — النتيجة المحسوبة: 0.50",
+        "idleFrameChanged": true,
+        "reactiveFrameVariants": 3,
+        "externalRequests": 0,
+        "consoleErrors": [],
+        "screenshots": [
+          "moon_phases-mobile-390x844.png",
+          "moon_phases-desktop-1440x900.png"
+        ],
+        "actorSamples": [
+          {
+            "time_ms": 374,
+            "frame_count": 11,
+            "canvas_signature": 369010636,
+            "actor": {
+              "visible_pixels": 312,
+              "signature": "593d8380",
+              "centroid": {
+                "x": 0.47135861823361824,
+                "y": 0.4659375
+              },
+              "bounds": {
+                "x": 0.3111111111111111,
+                "y": 0.315,
+                "width": 0.2222222222222222,
+                "height": 0.22
+              }
+            }
+          },
+          {
+            "time_ms": 528,
+            "frame_count": 14,
+            "canvas_signature": 3538599533,
+            "actor": {
+              "visible_pixels": 342,
+              "signature": "9759fdd",
+              "centroid": {
+                "x": 0.4985136452241715,
+                "y": 0.49428362573099416
+              },
+              "bounds": {
+                "x": 0.44166666666666665,
+                "y": 0.4425,
+                "width": 0.09166666666666666,
+                "height": 0.0925
+              }
+            }
+          },
+          {
+            "time_ms": 691,
+            "frame_count": 17,
+            "canvas_signature": 687828374,
+            "actor": {
+              "visible_pixels": 348,
+              "signature": "339cdee1",
+              "centroid": {
+                "x": 0.5001756066411238,
+                "y": 0.5057327586206897
+              },
+              "bounds": {
+                "x": 0.4486111111111111,
+                "y": 0.48,
+                "width": 0.08472222222222223,
+                "height": 0.055
+              }
+            }
+          },
+          {
+            "time_ms": 850,
+            "frame_count": 20,
+            "canvas_signature": 3492706041,
+            "actor": {
+              "visible_pixels": 331,
+              "signature": "e6d0965",
+              "centroid": {
+                "x": 0.4714039946290702,
+                "y": 0.4606570996978852
+              },
+              "bounds": {
+                "x": 0.3416666666666667,
+                "y": 0.3225,
+                "width": 0.19166666666666668,
+                "height": 0.2125
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "golden_id": "buoyancy",
+      "artifact_sha256": "bf4521c93f174a157d6343e7293d4eb9c444e705f0247679fc0ce91f6815596c",
+      "actor": "floating_body",
+      "action": "floats_sinks",
+      "passed": true,
+      "check_count": 7,
+      "failures": [],
+      "evidence": {
+        "cases": [
+          {
+            "value": 200,
+            "frameChanged": true,
+            "visualSignature": 956361717
+          },
+          {
+            "value": 750,
+            "frameChanged": true,
+            "visualSignature": 1700343923
+          },
+          {
+            "value": 1400,
+            "frameChanged": true,
+            "visualSignature": 331549714
+          }
+        ],
+        "lang": "ar",
+        "dir": "rtl",
+        "ready": true,
+        "runtimeError": false,
+        "alternative": "كثافة الجسم: 750 kg/m³ — النتيجة المحسوبة: 0.75",
+        "idleFrameChanged": true,
+        "reactiveFrameVariants": 3,
+        "externalRequests": 0,
+        "consoleErrors": [],
+        "screenshots": [
+          "buoyancy-mobile-390x844.png",
+          "buoyancy-desktop-1440x900.png"
+        ],
+        "actorSamples": [
+          {
+            "time_ms": 301,
+            "frame_count": 10,
+            "canvas_signature": 323393868,
+            "actor": {
+              "visible_pixels": 2606,
+              "signature": "e2ac16b5",
+              "centroid": {
+                "x": 0.4793350814360024,
+                "y": 0.3995740598618573
+              },
+              "bounds": {
+                "x": 0.43333333333333335,
+                "y": 0.345,
+                "width": 0.13333333333333333,
+                "height": 0.2375
+              }
+            }
+          },
+          {
+            "time_ms": 456,
+            "frame_count": 13,
+            "canvas_signature": 124934683,
+            "actor": {
+              "visible_pixels": 2689,
+              "signature": "24861481",
+              "centroid": {
+                "x": 0.47295514648155035,
+                "y": 0.3164884715507624
+              },
+              "bounds": {
+                "x": 0.43472222222222223,
+                "y": 0.255,
+                "width": 0.13194444444444445,
+                "height": 0.235
+              }
+            }
+          },
+          {
+            "time_ms": 612,
+            "frame_count": 16,
+            "canvas_signature": 2780305344,
+            "actor": {
+              "visible_pixels": 1780,
+              "signature": "f18cd40a",
+              "centroid": {
+                "x": 0.4791097066167291,
+                "y": 0.4924494382022472
+              },
+              "bounds": {
+                "x": 0.43472222222222223,
+                "y": 0.4475,
+                "width": 0.13055555555555556,
+                "height": 0.2375
+              }
+            }
+          },
+          {
+            "time_ms": 766,
+            "frame_count": 18,
+            "canvas_signature": 716523137,
+            "actor": {
+              "visible_pixels": 2476,
+              "signature": "2945f44a",
+              "centroid": {
+                "x": 0.4799244973972357,
+                "y": 0.412279886914378
+              },
+              "bounds": {
+                "x": 0.43472222222222223,
+                "y": 0.36,
+                "width": 0.13055555555555556,
+                "height": 0.2375
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "golden_id": "pendulum",
+      "artifact_sha256": "00629ee82df746eab4f2353cf6c473eb6d88bf740bdd1a8def4044a4f89cf3b6",
+      "actor": "pendulum_bob",
+      "action": "oscillates",
+      "passed": true,
+      "check_count": 7,
+      "failures": [],
+      "evidence": {
+        "cases": [
+          {
+            "value": 0.25,
+            "frameChanged": true,
+            "visualSignature": 3520044511
+          },
+          {
+            "value": 1,
+            "frameChanged": true,
+            "visualSignature": 2411309599
+          },
+          {
+            "value": 2,
+            "frameChanged": true,
+            "visualSignature": 3182585687
+          }
+        ],
+        "lang": "ar",
+        "dir": "rtl",
+        "ready": true,
+        "runtimeError": false,
+        "alternative": "طول البندول: 1 m — النتيجة المحسوبة: 2.01",
+        "idleFrameChanged": true,
+        "reactiveFrameVariants": 3,
+        "externalRequests": 0,
+        "consoleErrors": [],
+        "screenshots": [
+          "pendulum-mobile-390x844.png",
+          "pendulum-desktop-1440x900.png"
+        ],
+        "actorSamples": [
+          {
+            "time_ms": 309,
+            "frame_count": 10,
+            "canvas_signature": 2760235640,
+            "actor": {
+              "visible_pixels": 333,
+              "signature": "a49bbdf2",
+              "centroid": {
+                "x": 0.5597555889222556,
+                "y": 0.32507507507507505
+              },
+              "bounds": {
+                "x": 0.4930555555555556,
+                "y": 0.1275,
+                "width": 0.2569444444444444,
+                "height": 0.3775
+              }
+            }
+          },
+          {
+            "time_ms": 457,
+            "frame_count": 13,
+            "canvas_signature": 3691730611,
+            "actor": {
+              "visible_pixels": 220,
+              "signature": "43cc93a8",
+              "centroid": {
+                "x": 0.5818497474747475,
+                "y": 0.21695454545454546
+              },
+              "bounds": {
+                "x": 0.4930555555555556,
+                "y": 0.1275,
+                "width": 0.25416666666666665,
+                "height": 0.1725
+              }
+            }
+          },
+          {
+            "time_ms": 607,
+            "frame_count": 16,
+            "canvas_signature": 2021416814,
+            "actor": {
+              "visible_pixels": 388,
+              "signature": "1affca2d",
+              "centroid": {
+                "x": 0.5295962199312715,
+                "y": 0.39337628865979385
+              },
+              "bounds": {
+                "x": 0.4930555555555556,
+                "y": 0.1275,
+                "width": 0.2513888888888889,
+                "height": 0.5775
+              }
+            }
+          },
+          {
+            "time_ms": 759,
+            "frame_count": 18,
+            "canvas_signature": 458695711,
+            "actor": {
+              "visible_pixels": 311,
+              "signature": "37682ba4",
+              "centroid": {
+                "x": 0.5350928903179707,
+                "y": 0.3186897106109325
+              },
+              "bounds": {
+                "x": 0.4930555555555556,
+                "y": 0.1275,
+                "width": 0.2569444444444444,
+                "height": 0.42
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "golden_id": "simple_circuit",
+      "artifact_sha256": "616414dc40c2b0209f1054f2ed9f2ac6a38aba5d7c09f2b9c34888b15142b39d",
+      "actor": "charge_carrier",
+      "action": "flows",
+      "passed": true,
+      "check_count": 7,
+      "failures": [],
+      "evidence": {
+        "cases": [
+          {
+            "value": 2,
+            "frameChanged": true,
+            "visualSignature": 3045041429
+          },
+          {
+            "value": 6,
+            "frameChanged": true,
+            "visualSignature": 4045456631
+          },
+          {
+            "value": 20,
+            "frameChanged": true,
+            "visualSignature": 4249911775
+          }
+        ],
+        "lang": "ar",
+        "dir": "rtl",
+        "ready": true,
+        "runtimeError": false,
+        "alternative": "المقاومة: 6 Ω — النتيجة المحسوبة: 1.00",
+        "idleFrameChanged": true,
+        "reactiveFrameVariants": 3,
+        "externalRequests": 0,
+        "consoleErrors": [],
+        "screenshots": [
+          "simple_circuit-mobile-390x844.png",
+          "simple_circuit-desktop-1440x900.png"
+        ],
+        "actorSamples": [
+          {
+            "time_ms": 428,
+            "frame_count": 11,
+            "canvas_signature": 1339763583,
+            "actor": {
+              "visible_pixels": 75,
+              "signature": "7973274f",
+              "centroid": {
+                "x": 0.26385185185185184,
+                "y": 0.4254
+              },
+              "bounds": {
+                "x": 0.11388888888888889,
+                "y": 0.31,
+                "width": 0.7069444444444445,
+                "height": 0.225
+              }
+            }
+          },
+          {
+            "time_ms": 581,
+            "frame_count": 14,
+            "canvas_signature": 3931301222,
+            "actor": {
+              "visible_pixels": 81,
+              "signature": "986c0c73",
+              "centroid": {
+                "x": 0.25776748971193414,
+                "y": 0.42064814814814816
+              },
+              "bounds": {
+                "x": 0.11388888888888889,
+                "y": 0.31,
+                "width": 0.7069444444444445,
+                "height": 0.225
+              }
+            }
+          },
+          {
+            "time_ms": 736,
+            "frame_count": 17,
+            "canvas_signature": 1020761929,
+            "actor": {
+              "visible_pixels": 75,
+              "signature": "9905ee67",
+              "centroid": {
+                "x": 0.24585185185185182,
+                "y": 0.42619999999999997
+              },
+              "bounds": {
+                "x": 0.11388888888888889,
+                "y": 0.31,
+                "width": 0.7069444444444445,
+                "height": 0.225
+              }
+            }
+          },
+          {
+            "time_ms": 885,
+            "frame_count": 20,
+            "canvas_signature": 2056116947,
+            "actor": {
+              "visible_pixels": 75,
+              "signature": "7f3360e3",
+              "centroid": {
+                "x": 0.24581481481481482,
+                "y": 0.4282666666666667
+              },
+              "bounds": {
+                "x": 0.11388888888888889,
+                "y": 0.31,
+                "width": 0.7069444444444445,
+                "height": 0.225
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "golden_id": "sound_pitch",
+      "artifact_sha256": "f0b2c1aaa4ab647cd56990b33f61e657a74034f653e595c5aeafb547cb6f3ba8",
+      "actor": "wavefront",
+      "action": "propagates",
+      "passed": true,
+      "check_count": 7,
+      "failures": [],
+      "evidence": {
+        "cases": [
+          {
+            "value": 110,
+            "frameChanged": true,
+            "visualSignature": 3466224217
+          },
+          {
+            "value": 440,
+            "frameChanged": true,
+            "visualSignature": 2642402979
+          },
+          {
+            "value": 880,
+            "frameChanged": true,
+            "visualSignature": 2500664136
+          }
+        ],
+        "lang": "ar",
+        "dir": "rtl",
+        "ready": true,
+        "runtimeError": false,
+        "alternative": "تردد الموجة الصوتية: 440 Hz — النتيجة المحسوبة: 0.78",
+        "idleFrameChanged": true,
+        "reactiveFrameVariants": 3,
+        "externalRequests": 0,
+        "consoleErrors": [],
+        "screenshots": [
+          "sound_pitch-mobile-390x844.png",
+          "sound_pitch-desktop-1440x900.png"
+        ],
+        "actorSamples": [
+          {
+            "time_ms": 322,
+            "frame_count": 10,
+            "canvas_signature": 204606681,
+            "actor": {
+              "visible_pixels": 2353,
+              "signature": "ddcf2345",
+              "centroid": {
+                "x": 0.5366500212494688,
+                "y": 0.5243040798980025
+              },
+              "bounds": {
+                "x": 0.2,
+                "y": 0.38,
+                "width": 0.7319444444444444,
+                "height": 0.28
+              }
+            }
+          },
+          {
+            "time_ms": 481,
+            "frame_count": 13,
+            "canvas_signature": 2243089810,
+            "actor": {
+              "visible_pixels": 1692,
+              "signature": "ccb579e2",
+              "centroid": {
+                "x": 0.5450215064355135,
+                "y": 0.5193705673758866
+              },
+              "bounds": {
+                "x": 0.2,
+                "y": 0.3925,
+                "width": 0.7319444444444444,
+                "height": 0.2675
+              }
+            }
+          },
+          {
+            "time_ms": 632,
+            "frame_count": 16,
+            "canvas_signature": 2230206084,
+            "actor": {
+              "visible_pixels": 3054,
+              "signature": "ab9a8a8e",
+              "centroid": {
+                "x": 0.5315146802008296,
+                "y": 0.5246889325474787
+              },
+              "bounds": {
+                "x": 0.2,
+                "y": 0.38,
+                "width": 0.7319444444444444,
+                "height": 0.28
+              }
+            }
+          },
+          {
+            "time_ms": 782,
+            "frame_count": 19,
+            "canvas_signature": 2471469041,
+            "actor": {
+              "visible_pixels": 2448,
+              "signature": "f16d4bd6",
+              "centroid": {
+                "x": 0.5354081563180828,
+                "y": 0.5244464869281046
+              },
+              "bounds": {
+                "x": 0.2,
+                "y": 0.3825,
+                "width": 0.7319444444444444,
+                "height": 0.2775
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "golden_id": "day_night",
+      "artifact_sha256": "f6abc6cb212554f08980e2eb78b20d1644da35cc264dbfe3e33258b3ebc65306",
+      "actor": "earth_landmark",
+      "action": "rotates",
+      "passed": true,
+      "check_count": 7,
+      "failures": [],
+      "evidence": {
+        "cases": [
+          {
+            "value": 0,
+            "frameChanged": true,
+            "visualSignature": 1546659944
+          },
+          {
+            "value": 60,
+            "frameChanged": true,
+            "visualSignature": 224530084
+          },
+          {
+            "value": 360,
+            "frameChanged": true,
+            "visualSignature": 1567682245
+          }
+        ],
+        "lang": "ar",
+        "dir": "rtl",
+        "ready": true,
+        "runtimeError": false,
+        "alternative": "زاوية دوران الأرض: 60 ° — النتيجة المحسوبة: 0.50",
+        "idleFrameChanged": true,
+        "reactiveFrameVariants": 3,
+        "externalRequests": 0,
+        "consoleErrors": [],
+        "screenshots": [
+          "day_night-mobile-390x844.png",
+          "day_night-desktop-1440x900.png"
+        ],
+        "actorSamples": [
+          {
+            "time_ms": 401,
+            "frame_count": 11,
+            "canvas_signature": 1694584421,
+            "actor": {
+              "visible_pixels": 151,
+              "signature": "48eabc0e",
+              "centroid": {
+                "x": 0.6784492273730685,
+                "y": 0.5706622516556291
+              },
+              "bounds": {
+                "x": 0.625,
+                "y": 0.2825,
+                "width": 0.11805555555555555,
+                "height": 0.4975
+              }
+            }
+          },
+          {
+            "time_ms": 559,
+            "frame_count": 14,
+            "canvas_signature": 330540626,
+            "actor": {
+              "visible_pixels": 152,
+              "signature": "335e195e",
+              "centroid": {
+                "x": 0.651343201754386,
+                "y": 0.6021052631578947
+              },
+              "bounds": {
+                "x": 0.5916666666666667,
+                "y": 0.3675,
+                "width": 0.15138888888888888,
+                "height": 0.4125
+              }
+            }
+          },
+          {
+            "time_ms": 714,
+            "frame_count": 17,
+            "canvas_signature": 3199625404,
+            "actor": {
+              "visible_pixels": 185,
+              "signature": "6e258261",
+              "centroid": {
+                "x": 0.6928678678678678,
+                "y": 0.7084324324324324
+              },
+              "bounds": {
+                "x": 0.6208333333333333,
+                "y": 0.5975,
+                "width": 0.125,
+                "height": 0.1825
+              }
+            }
+          },
+          {
+            "time_ms": 875,
+            "frame_count": 20,
+            "canvas_signature": 2383583609,
+            "actor": {
+              "visible_pixels": 172,
+              "signature": "175e6f3d",
+              "centroid": {
+                "x": 0.7002018733850129,
+                "y": 0.6199563953488372
+              },
+              "bounds": {
+                "x": 0.6222222222222222,
+                "y": 0.31,
+                "width": 0.12361111111111112,
+                "height": 0.47
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

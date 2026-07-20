@@ -9,6 +9,10 @@ const artifactPath = path.resolve(process.argv[2]);
 const screenshotRoot = path.resolve(process.argv[3]);
 const goldenId = process.argv[4];
 const reportPath = process.argv[5] ? path.resolve(process.argv[5]) : null;
+const motionProfilePath = process.argv[6] ? path.resolve(process.argv[6]) : null;
+const motionProfile = motionProfilePath
+  ? JSON.parse(fs.readFileSync(motionProfilePath, "utf8"))
+  : null;
 const chromePath = process.env.CHROME_BIN || "/usr/bin/google-chrome";
 const profilePath = fs.mkdtempSync(path.join(os.tmpdir(), "laysh-golden-chrome-"));
 fs.mkdirSync(screenshotRoot, { recursive: true });
@@ -148,6 +152,94 @@ try {
     })()`,
     returnByValue: true,
   });
+  const actorSamples = [];
+  if (motionProfile) {
+    const sampleValues = await command("Runtime.evaluate", {
+      expression: `(() => {
+        const control = document.querySelector('#primary-control');
+        return [control.value, control.min, control.max, control.value].map(Number);
+      })()`,
+      returnByValue: true,
+    });
+    const profileLiteral = JSON.stringify(motionProfile);
+    for (const value of sampleValues.result.value) {
+      await command("Runtime.evaluate", {
+        expression: `(() => {
+          const control = document.querySelector('#primary-control');
+          control.value = String(${value});
+          control.dispatchEvent(new Event('input', { bubbles: true }));
+        })()`,
+        returnByValue: true,
+      });
+      await delay(motionProfile.sample_interval_ms);
+      const sample = await command("Runtime.evaluate", {
+        expression: `(() => {
+          const profile = ${profileLiteral};
+          const canvas = document.querySelector('#simulation');
+          const root = document.documentElement;
+          const region = profile.actor_region;
+          const color = profile.actor_color;
+          const x0 = Math.max(0, Math.floor(region.x * canvas.width));
+          const y0 = Math.max(0, Math.floor(region.y * canvas.height));
+          const x1 = Math.min(canvas.width, Math.ceil((region.x + region.width) * canvas.width));
+          const y1 = Math.min(canvas.height, Math.ceil((region.y + region.height) * canvas.height));
+          const data = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+          const toleranceSquared = color.tolerance * color.tolerance;
+          let count = 0;
+          let sumX = 0;
+          let sumY = 0;
+          let minX = canvas.width;
+          let minY = canvas.height;
+          let maxX = -1;
+          let maxY = -1;
+          let hash = 2166136261;
+          let canvasHash = 2166136261;
+          const stride = Math.max(4, Math.floor(data.length / 4096 / 4) * 4);
+          for (let offset = 0; offset < data.length; offset += stride) {
+            canvasHash = Math.imul(canvasHash ^ data[offset], 16777619) >>> 0;
+          }
+          for (let y = y0; y < y1; y += 1) {
+            for (let x = x0; x < x1; x += 1) {
+              const offset = (y * canvas.width + x) * 4;
+              const red = data[offset] - color.red;
+              const green = data[offset + 1] - color.green;
+              const blue = data[offset + 2] - color.blue;
+              if (data[offset + 3] === 0 || red * red + green * green + blue * blue > toleranceSquared) continue;
+              count += 1;
+              sumX += x;
+              sumY += y;
+              minX = Math.min(minX, x);
+              minY = Math.min(minY, y);
+              maxX = Math.max(maxX, x);
+              maxY = Math.max(maxY, y);
+              hash = Math.imul(hash ^ ((x - x0) * 4099 + (y - y0)), 16777619) >>> 0;
+            }
+          }
+          const actor = count > 0
+            ? {
+                visible_pixels: count,
+                signature: hash.toString(16),
+                centroid: { x: sumX / count / canvas.width, y: sumY / count / canvas.height },
+                bounds: {
+                  x: minX / canvas.width,
+                  y: minY / canvas.height,
+                  width: (maxX - minX + 1) / canvas.width,
+                  height: (maxY - minY + 1) / canvas.height,
+                },
+              }
+            : { visible_pixels: 0, signature: '', centroid: null, bounds: null };
+          return {
+            time_ms: Math.round(performance.now()),
+            frame_count: Number(root.dataset.frameCount || 0),
+            canvas_signature: canvasHash,
+            actor,
+          };
+        })()`,
+        returnByValue: true,
+      });
+      actorSamples.push(sample.result.value);
+    }
+  }
   const idleBefore = await command("Runtime.evaluate", {
     expression: `(() => {
       const canvas = document.querySelector('#simulation');
@@ -198,6 +290,7 @@ try {
     externalRequests,
     consoleErrors,
     screenshots,
+    actorSamples,
   };
   if (reportPath) {
     fs.mkdirSync(path.dirname(reportPath), { recursive: true });

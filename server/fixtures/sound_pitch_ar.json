@@ -10,6 +10,12 @@
     "formula": "λ = v/f; T = 1/f",
     "actor": "wavefront",
     "action": "propagates",
+    "actor_tracking": {
+      "actor_region": {"x": 0.2, "y": 0.28, "width": 0.74, "height": 0.38},
+      "sample_count": 4,
+      "sample_interval_ms": 140,
+      "actor_color": {"red": 102, "green": 226, "blue": 255, "tolerance": 68}
+    },
     "primary_parameter": {"id": "frequency_hz", "min": 110, "max": 880, "default": 440, "step": 10, "unit": "Hz"},
     "units": ["Hz", "m", "ms"],
     "assumptions": ["سرعة الصوت 343 m/s", "وسط هوائي ثابت", "الحدّة لا تعني شدة الصوت"],

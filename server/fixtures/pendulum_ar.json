@@ -10,6 +10,12 @@
     "formula": "T = 2π√(L/g)",
     "actor": "pendulum_bob",
     "action": "oscillates",
+    "actor_tracking": {
+      "actor_region": {"x": 0.25, "y": 0.1, "width": 0.5, "height": 0.78},
+      "sample_count": 4,
+      "sample_interval_ms": 140,
+      "actor_color": {"red": 255, "green": 241, "blue": 189, "tolerance": 88}
+    },
     "primary_parameter": {"id": "length_m", "min": 0.25, "max": 2.0, "default": 1.0, "step": 0.05, "unit": "m"},
     "units": ["m", "s"],
     "assumptions": ["زاوية صغيرة", "خيط عديم الكتلة", "g = 9.81 m/s²", "إهمال مقاومة الهواء"],

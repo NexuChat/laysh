@@ -10,6 +10,12 @@
     "formula": "c = cos θ",
     "actor": "earth_landmark",
     "action": "rotates",
+    "actor_tracking": {
+      "actor_region": {"x": 0.5, "y": 0.12, "width": 0.42, "height": 0.66},
+      "sample_count": 4,
+      "sample_interval_ms": 140,
+      "actor_color": {"red": 218, "green": 220, "blue": 208, "tolerance": 80}
+    },
     "primary_parameter": {"id": "rotation_deg", "min": 0, "max": 360, "default": 60, "step": 1, "unit": "°"},
     "units": ["°", "ratio"],
     "assumptions": ["أشعة شمس متوازية", "محور مبسط دون فصول", "نهار عندما c > 0"],

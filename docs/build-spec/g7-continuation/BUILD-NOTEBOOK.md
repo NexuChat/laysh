@@ -32,9 +32,10 @@ opt-in live skip, six browser passes plus its live skip, and coverage above the
 ## Acceptance ledger at initialization
 
 - **Rows total:** 30
-- **Passing:** BASE-01, BASE-02, TEST-01, CONTRACT-01, TEACH-01, TEACH-02
+- **Passing:** BASE-01, BASE-02, TEST-01, CONTRACT-01, TEACH-01, TEACH-02,
+  MOTION-01, MOTION-02
 - **Failing:** none
--- **Not started:** EVID-01, EVID-02, MOTION-01, MOTION-02, MOTION-03, MOTION-04, VQA-01, VISUAL-01, SHARE-01,
+- **Not started:** EVID-01, EVID-02, MOTION-03, MOTION-04, VQA-01, VISUAL-01, SHARE-01,
   SHARE-02, LIB-01, I18N-01, I18N-02, UI-01, UI-02, ASSET-01, REL-01, REL-02,
   GEN-01, EXP-01, GOLD-01, ROUTE-01, ROUTE-02, RELEASE-01
 - **Blocked:** none
@@ -74,7 +75,32 @@ Completed locally; source changes and this evidence record are committed togethe
 
 ### Batch B — actor motion and visual QA
 
-Not started.
+#### MOTION-01 — closed actor/action declaration
+
+- Source commit: `672422b feat: require scientific actor actions`.
+- The closed understanding contract requires one concept-relevant actor and one
+  action for every simulatable lesson. The six curated fixtures and cached
+  lessons declare `moon/orbits`, `floating_body/floats_sinks`,
+  `pendulum_bob/oscillates`, `charge_carrier/flows`, `wavefront/propagates`,
+  and `earth_landmark/rotates`.
+
+#### MOTION-02 — actor-only temporal tracking
+
+- Added a four-sample, actor-region browser contract. It extracts only pixels
+  matching the fixture-reviewed actor color inside a normalized actor region;
+  canvas-wide hashes and advancing frame counters are evidence only and cannot
+  make the gate pass.
+- Negative browser fixtures prove rejection for a moving background, particles
+  outside the actor region, a hidden/off-canvas actor, and a moving frame
+  counter with no actor change. The six pinned artifacts each pass four ordered
+  control-driven samples locally.
+- Profiles use four samples at 140 ms intervals. The documented color-distance
+  tolerances are 68–94 RGB units, selected from the locally rendered actor
+  colors rather than from a visual model.
+- `scripts/verify_golden_motion.py` produced
+  `out/evidence/motion-02.json`: six of six passed, 42 checks, zero model calls.
+  The affected suite recorded 20 passed, zero skipped, zero failures in 56.728s;
+  Ruff and `node --check scripts/check_golden.mjs` were clean.
 
 ### Batch C — sharing, library, localization, and presentation
 

@@ -10,6 +10,12 @@
     "formula": "I = V/R; P = V²/R",
     "actor": "charge_carrier",
     "action": "flows",
+    "actor_tracking": {
+      "actor_region": {"x": 0.1, "y": 0.2, "width": 0.8, "height": 0.5},
+      "sample_count": 4,
+      "sample_interval_ms": 140,
+      "actor_color": {"red": 146, "green": 231, "blue": 255, "tolerance": 68}
+    },
     "primary_parameter": {"id": "resistance_ohm", "min": 2, "max": 20, "default": 6, "step": 1, "unit": "Ω"},
     "units": ["V", "Ω", "A", "W"],
     "assumptions": ["مصدر مثالي جهده 6 V", "مقاومة أومية", "السطوع يمثله تبديد القدرة"],
