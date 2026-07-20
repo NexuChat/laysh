@@ -8,6 +8,8 @@
   },
   "review_contract": {
     "formula": "c = cos θ",
+    "actor": "earth_landmark",
+    "action": "rotates",
     "primary_parameter": {"id": "rotation_deg", "min": 0, "max": 360, "default": 60, "step": 1, "unit": "°"},
     "units": ["°", "ratio"],
     "assumptions": ["أشعة شمس متوازية", "محور مبسط دون فصول", "نهار عندما c > 0"],

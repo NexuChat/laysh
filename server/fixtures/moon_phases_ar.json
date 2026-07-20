@@ -8,6 +8,8 @@
   },
   "review_contract": {
     "formula": "f = (1 − cos θ) / 2",
+    "actor": "moon",
+    "action": "orbits",
     "primary_parameter": {"id": "angle_deg", "min": 0, "max": 360, "default": 90, "step": 1, "unit": "°"},
     "units": ["°", "ratio"],
     "assumptions": ["مدار دائري مبسط", "أشعة شمس متوازية", "إهمال ميل المدار والكسوف"],

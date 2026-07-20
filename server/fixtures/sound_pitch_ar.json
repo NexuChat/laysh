@@ -8,6 +8,8 @@
   },
   "review_contract": {
     "formula": "λ = v/f; T = 1/f",
+    "actor": "wavefront",
+    "action": "propagates",
     "primary_parameter": {"id": "frequency_hz", "min": 110, "max": 880, "default": 440, "step": 10, "unit": "Hz"},
     "units": ["Hz", "m", "ms"],
     "assumptions": ["سرعة الصوت 343 m/s", "وسط هوائي ثابت", "الحدّة لا تعني شدة الصوت"],

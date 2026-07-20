@@ -241,7 +241,7 @@ def _success_understanding(locale: str) -> dict[str, Any]:
         "transfer_prompt": (
             "ماذا تتوقع عند زاوية 180°؟" if arabic else "What do you expect at 180°?"
         ),
-        "module_spec": {"outputs": ["lit_fraction"]},
+        "module_spec": {"outputs": ["lit_fraction"], "actor": "moon", "action": "orbits"},
         "checks": [
             {
                 "id": "quarter_phase",
@@ -295,7 +295,7 @@ def _non_simulatable(locale: str) -> dict[str, Any]:
             "misconception": None,
             "explanation_prompt": None,
             "transfer_prompt": None,
-            "module_spec": {"outputs": []},
+            "module_spec": {"outputs": [], "actor": None, "action": None},
             "checks": [],
             "suggestions": [
                 "لماذا يتغير شكل القمر؟",
@@ -331,7 +331,7 @@ def _unsafe(locale: str) -> dict[str, Any]:
             "misconception": None,
             "explanation_prompt": None,
             "transfer_prompt": None,
-            "module_spec": {"outputs": []},
+            "module_spec": {"outputs": [], "actor": None, "action": None},
             "checks": [],
             "suggestions": [
                 "لماذا يتغير شكل القمر؟",

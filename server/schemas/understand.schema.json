@@ -113,12 +113,38 @@
     "module_spec": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["outputs"],
+      "required": ["outputs", "actor", "action"],
       "properties": {
         "outputs": {
           "type": "array",
           "maxItems": 8,
           "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}
+        },
+        "actor": {
+          "type": ["string", "null"],
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "moon", "pendulum_bob", "earth_landmark", "wavefront",
+                "charge_carrier", "floating_body", "visible_body"
+              ]
+            },
+            {"type": "null"}
+          ]
+        },
+        "action": {
+          "type": ["string", "null"],
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "rotates", "oscillates", "orbits", "propagates", "flows",
+                "floats_sinks", "phases"
+              ]
+            },
+            {"type": "null"}
+          ]
         }
       }
     },

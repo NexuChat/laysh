@@ -32,7 +32,7 @@ OUTPUT_SCHEMA_PROBES: dict[str, tuple[str, dict[str, Any]]] = {
             "misconception": None,
             "explanation_prompt": None,
             "transfer_prompt": None,
-            "module_spec": {"outputs": []},
+            "module_spec": {"outputs": [], "actor": None, "action": None},
             "checks": [],
             "suggestions": [],
         },

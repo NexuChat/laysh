@@ -31,6 +31,12 @@ def validate_understanding(document: dict[str, Any]) -> dict[str, Any]:
     validate_document(document, load_schema("understand.schema.json"))
     if document["simulatable"] and len(document["checks"]) < 2:
         raise ContractError("a simulatable lesson requires at least two independent checks")
+    actor = document["module_spec"]["actor"]
+    action = document["module_spec"]["action"]
+    if document["simulatable"] and (actor is None or action is None):
+        raise ContractError("a simulatable lesson requires an actor and action")
+    if not document["simulatable"] and (actor is not None or action is not None):
+        raise ContractError("a non-simulatable lesson must not declare an actor or action")
     misconception = document["misconception"]
     if misconception and not has_explicit_misconception_correction(
         document["lang"], misconception

@@ -8,6 +8,8 @@
   },
   "review_contract": {
     "formula": "T = 2π√(L/g)",
+    "actor": "pendulum_bob",
+    "action": "oscillates",
     "primary_parameter": {"id": "length_m", "min": 0.25, "max": 2.0, "default": 1.0, "step": 0.05, "unit": "m"},
     "units": ["m", "s"],
     "assumptions": ["زاوية صغيرة", "خيط عديم الكتلة", "g = 9.81 m/s²", "إهمال مقاومة الهواء"],

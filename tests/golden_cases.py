@@ -27,7 +27,7 @@ VALID_UNDERSTANDING = {
     "misconception": "تصحيح: أطوار القمر تنتج من زاوية الشمس والأرض والقمر، لا من ظل الأرض.",
     "explanation_prompt": "تغيّر الجزء المضيء لأن…",
     "transfer_prompt": "ماذا تتوقع عند زاوية 180°؟",
-    "module_spec": {"outputs": ["lit_fraction"]},
+    "module_spec": {"outputs": ["lit_fraction"], "actor": "moon", "action": "orbits"},
     "checks": [
         {
             "id": "new_phase",

@@ -8,6 +8,8 @@
   },
   "review_contract": {
     "formula": "I = V/R; P = V²/R",
+    "actor": "charge_carrier",
+    "action": "flows",
     "primary_parameter": {"id": "resistance_ohm", "min": 2, "max": 20, "default": 6, "step": 1, "unit": "Ω"},
     "units": ["V", "Ω", "A", "W"],
     "assumptions": ["مصدر مثالي جهده 6 V", "مقاومة أومية", "السطوع يمثله تبديد القدرة"],

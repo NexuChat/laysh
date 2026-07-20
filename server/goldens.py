@@ -90,7 +90,10 @@ def _reference_understanding(
                 }
             )
     reference["checks"] = checks
-    reference["module_spec"] = {"outputs": sorted(outputs)}
+    reference["module_spec"] = {
+        **reference["module_spec"],
+        "outputs": sorted(outputs),
+    }
     return reference
 
 
@@ -157,6 +160,7 @@ def review_golden_candidate(
     )
     parameter_contract = contract["primary_parameter"]
     parameter = understanding.get("primary_parameter") or {}
+    module_spec = understanding.get("module_spec") or {}
     parameter_matches = all(
         parameter.get(field) == parameter_contract[field]
         for field in ("id", "min", "max", "default", "step", "unit")
@@ -190,6 +194,10 @@ def review_golden_candidate(
         "learner_copy_has_no_hash_placeholders": copy_has_no_hashes,
         "learner_copy_localized": copy_localized,
         "primary_parameter_matches_reference": parameter_matches,
+        "actor_action_matches_reference": (
+            module_spec.get("actor") == contract.get("actor")
+            and module_spec.get("action") == contract.get("action")
+        ),
         "model_fixtures_match_reference": model_fixture_matches,
         "bilingual_metadata": all(
             metadata.get(locale, {}).get(field)
@@ -216,6 +224,8 @@ def review_golden_candidate(
         failure_codes.append("learner_copy_not_localized")
     if not checks["primary_parameter_matches_reference"]:
         failure_codes.append("primary_parameter_reference_mismatch")
+    if not checks["actor_action_matches_reference"]:
+        failure_codes.append("actor_action_reference_mismatch")
     if not checks["model_fixtures_match_reference"]:
         failure_codes.append("model_fixture_contract_mismatch")
     if not checks["bilingual_metadata"]:
@@ -332,6 +342,11 @@ def refresh_pinned_golden_teaching_shells(
         fixture = fixtures.get(fixture_id)
         if fixture is None:
             raise ValueError("pinned lesson is not in the curated fixture allowlist")
+        lesson["module_spec"] = {
+            **lesson["module_spec"],
+            "actor": lesson["module_spec"].get("actor", fixture["review_contract"]["actor"]),
+            "action": lesson["module_spec"].get("action", fixture["review_contract"]["action"]),
+        }
         module_output = {
             "module_js": module_js,
             "output_names": lesson["module_spec"]["outputs"],
