@@ -369,6 +369,18 @@ def create_app(
             },
         }
 
+    @app.get("/{locale}", response_class=HTMLResponse)
+    async def localized_index(locale: str) -> HTMLResponse:
+        if locale not in {"ar", "en"}:
+            raise HTTPException(status_code=404, detail="page not found")
+        return index_response()
+
+    @app.get("/{locale}/sims/{sim_id}", response_class=HTMLResponse)
+    async def localized_shared_lesson(locale: str, sim_id: str) -> HTMLResponse:
+        if locale not in {"ar", "en"} or resolve_shareable(sim_id) is None:
+            raise HTTPException(status_code=404, detail="shared simulation not found")
+        return index_response()
+
     return app
 
 

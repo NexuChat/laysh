@@ -1,10 +1,15 @@
 (() => {
   "use strict";
 
-  const catalogs = window.LayshTranslations;
-  const localeState = window.LayshLocale;
-  if (!catalogs || !localeState) return;
-  const state = {
+  let booted = false;
+
+  function boot() {
+    if (booted) return;
+    const catalogs = window.LayshTranslations;
+    const localeState = window.LayshLocale;
+    if (!catalogs || !localeState) return;
+    booted = true;
+    const state = {
     locale: localeState.initial,
     view: "ask",
     jobId: null,
@@ -25,10 +30,10 @@
     failureReason: null,
   };
 
-  const byId = (id) => document.getElementById(id);
-  const views = [...document.querySelectorAll("[data-view]")];
-  let number = new Intl.NumberFormat(state.locale, { maximumFractionDigits: 0 });
-  const failureSymbols = {
+    const byId = (id) => document.getElementById(id);
+    const views = [...document.querySelectorAll("[data-view]")];
+    let number = new Intl.NumberFormat(state.locale, { maximumFractionDigits: 0 });
+    const failureSymbols = {
     not_simulatable: "?",
     qa_inconclusive: "…",
     verification_exhausted: "×",
@@ -38,9 +43,22 @@
     cancelled: "■",
     timed_out: "⌛",
     unsafe_redirect: "↗",
-  };
+    };
 
-  function t(key, replacements = {}) {
+    function withoutLocalePrefix(pathname) {
+      return pathname.replace(/^\/(?:ar|en)(?=\/|$)/, "") || "/";
+    }
+
+    function localePath(pathname = window.location.pathname, hash = window.location.hash) {
+      const barePath = withoutLocalePrefix(pathname);
+      return `/${state.locale}${barePath === "/" ? "" : barePath}${hash}`;
+    }
+
+    function replaceLocalePath() {
+      history.replaceState(history.state, "", localePath());
+    }
+
+    function t(key, replacements = {}) {
     let value = catalogs[state.locale][key] || catalogs.ar[key] || key;
     for (const [name, replacement] of Object.entries(replacements)) {
       value = value.replaceAll(`{${name}}`, String(replacement));
@@ -48,11 +66,11 @@
     return value;
   }
 
-  function hasTranslation(key) {
+    function hasTranslation(key) {
     return Object.hasOwn(catalogs[state.locale], key) || Object.hasOwn(catalogs.ar, key);
   }
 
-  function applyTranslations() {
+    function applyTranslations() {
     document.title = t("document_title");
     document.documentElement.lang = state.locale;
     document.documentElement.dir = state.locale === "ar" ? "rtl" : "ltr";
@@ -72,11 +90,13 @@
     number = new Intl.NumberFormat(state.locale, { maximumFractionDigits: 0 });
   }
 
-  function setView(name, { push = false } = {}) {
+    function setView(name, { push = false } = {}) {
     state.view = name;
     for (const view of views) view.hidden = view.dataset.view !== name;
     if (push) {
-      const destination = name === "ask" ? "/#ask" : `#${name}`;
+      const destination = name === "ask"
+        ? localePath("/", "#ask")
+        : localePath(window.location.pathname, `#${name}`);
       history.pushState({ view: name }, "", destination);
     }
     const target = document.querySelector(`[data-view="${name}"] h1, [data-view="${name}"] h2`);
@@ -84,7 +104,7 @@
     window.scrollTo({ top: 0, behavior: "auto" });
   }
 
-  function formatElapsed(milliseconds) {
+    function formatElapsed(milliseconds) {
     const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = String(totalSeconds % 60).padStart(2, "0");
@@ -217,7 +237,9 @@
     const nativeShare = byId("native-share");
     byId("share-status").textContent = "";
     if (simulation.share_url) {
-      shareActions.dataset.shareUrl = new URL(simulation.share_url, window.location.origin).href;
+      shareActions.dataset.shareUrl = new URL(
+        localePath(simulation.share_url, ""), window.location.origin,
+      ).href;
       shareActions.hidden = false;
       nativeShare.hidden = typeof navigator.share !== "function";
     } else {
@@ -255,11 +277,7 @@
       headers: { accept: "application/json" },
     });
     if (!response.ok) throw new Error("shared_simulation_unavailable");
-    const result = await response.json();
-    if (result.simulation?.lang && result.simulation.lang !== state.locale) {
-      setLocale(result.simulation.lang, { persist: false, reset: false });
-    }
-    displayResult(result, { push: false });
+    displayResult(await response.json(), { push: false });
   }
 
   async function copyShareLink() {
@@ -357,7 +375,7 @@
     }
   }
 
-  function setLocale(locale, { persist = true, reset = true } = {}) {
+  function setLocale(locale, { persist = true } = {}) {
     if (locale !== "ar" && locale !== "en") return;
     if (persist) {
       try {
@@ -368,39 +386,19 @@
     }
     if (locale === state.locale) {
       applyTranslations();
+      replaceLocalePath();
       return;
-    }
-    if (reset && state.result?.simulation?.sim_id?.startsWith("golden_")) {
-      const currentId = state.result.simulation.sim_id;
-      const targetId = locale === "en"
-        ? (currentId.endsWith("_en") ? currentId : `${currentId}_en`)
-        : currentId.replace(/_en$/, "");
-      if (targetId !== currentId) {
-        window.location.assign(`/sims/${targetId}`);
-        return;
-      }
     }
     state.locale = locale;
     applyTranslations();
+    replaceLocalePath();
+    if (state.result?.simulation?.share_url) {
+      byId("share-actions").dataset.shareUrl = new URL(
+        localePath(state.result.simulation.share_url, ""), window.location.origin,
+      ).href;
+    }
     exampleIndex = 0;
     byId("safe-example").textContent = t("example.0");
-    if (reset && state.view !== "ask") {
-      const activeJobId = state.jobId;
-      state.terminal = true;
-      state.streamController?.abort();
-      clearInterval(state.timer);
-      clearInterval(state.watchdog);
-      if (activeJobId) {
-        fetch(`/api/jobs/${activeJobId}/cancel`, { method: "POST" }).catch(() => {});
-      }
-      state.jobId = null;
-      state.answer = null;
-      state.formula = null;
-      state.result = null;
-      state.failureReason = null;
-      byId("preserved-answer").textContent = "";
-      setView("ask", { push: true });
-    }
     if (state.view === "ask") hydrateGallery();
   }
 
@@ -616,7 +614,8 @@
   }
 
   applyTranslations();
-  const sharedPath = window.location.pathname.match(/^\/sims\/([^/]+)$/);
+  replaceLocalePath();
+  const sharedPath = withoutLocalePrefix(window.location.pathname).match(/^\/sims\/([^/]+)$/);
   if (sharedPath) {
     history.replaceState({ view: "result" }, "", window.location.href);
     loadSharedSimulation(decodeURIComponent(sharedPath[1])).catch(() => {
@@ -625,5 +624,15 @@
   } else {
     history.replaceState({ view: "ask" }, "", "#ask");
     hydrateGallery();
+  }
+  }
+
+  boot();
+  if (!booted) {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot, { once: true });
+    } else {
+      setTimeout(boot, 0);
+    }
   }
 })();
