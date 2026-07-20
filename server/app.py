@@ -30,6 +30,16 @@ from server.schemas import (
 from server.settings import Settings
 
 ROOT = Path(__file__).parents[1]
+CACHE_REVALIDATION = "no-cache, must-revalidate"
+
+
+class RevalidatingStaticFiles(StaticFiles):
+    """Serve deployable assets with validators but never as stale cached copies."""
+
+    async def get_response(self, path: str, scope: dict) -> Response:
+        response = await super().get_response(path, scope)
+        response.headers["Cache-Control"] = CACHE_REVALIDATION
+        return response
 
 
 def create_app(
@@ -56,7 +66,7 @@ def create_app(
         settings.public_job_timeout_seconds if job_timeout_seconds is None else job_timeout_seconds
     )
     app = FastAPI(title="Laysh", version="1.1.0")
-    app.mount("/static", StaticFiles(directory=ROOT / "web"), name="static")
+    app.mount("/static", RevalidatingStaticFiles(directory=ROOT / "web"), name="static")
     verified_cache = (
         VerifiedCache(
             root=ROOT / "out" / "cache" / "live",
@@ -92,6 +102,7 @@ def create_app(
         return HTMLResponse(
             content,
             headers={
+                "Cache-Control": CACHE_REVALIDATION,
                 "X-Content-Type-Options": "nosniff",
                 "Referrer-Policy": "no-referrer",
             },
@@ -301,6 +312,7 @@ def create_app(
         return HTMLResponse(
             artifact,
             headers={
+                "Cache-Control": CACHE_REVALIDATION,
                 "Content-Disposition": f'{disposition}; filename="laysh-{sim_id}.html"',
                 "Content-Security-Policy": PORTABLE_CSP,
                 "X-Content-Type-Options": "nosniff",

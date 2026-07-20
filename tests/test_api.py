@@ -16,6 +16,14 @@ def test_root_is_arabic_first_ask_build_result_application(client):
     assert "fake-percent" not in response.text
 
 
+def test_html_and_static_assets_revalidate_after_each_deploy(client):
+    for path in ("/", "/static/app.js", "/static/app.css"):
+        response = client.get(path)
+
+        assert response.status_code == 200
+        assert response.headers["cache-control"] == "no-cache, must-revalidate"
+
+
 def test_parent_accepts_only_narrow_origin_checked_runtime_error_beacon(client):
     source = client.get("/static/app.js").text
     assert 'event.origin !== "null"' in source
@@ -56,6 +64,8 @@ def test_result_artifact_can_be_rendered_inline_or_downloaded(client):
     download = client.get(url)
     assert inline.headers["content-disposition"].startswith("inline")
     assert download.headers["content-disposition"].startswith("attachment")
+    assert inline.headers["cache-control"] == "no-cache, must-revalidate"
+    assert download.headers["cache-control"] == "no-cache, must-revalidate"
     assert inline.text == download.text
     assert download.text.startswith("<!doctype html>")
 
