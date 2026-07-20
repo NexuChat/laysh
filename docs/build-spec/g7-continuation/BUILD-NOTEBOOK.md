@@ -53,6 +53,8 @@ valid for this continuation.
 
 Completed locally; source changes and this evidence record are committed together.
 
+- Source commit: `1d5fa01 feat: complete Batch A pedagogy contracts`.
+
 - Reconciled the 96 KiB UTF-8 source limit in the schema, generation prompt,
   verifier, quality checklist, boundary tests, and frozen-contract manifest.
 - Added a deterministic AR/EN misconception correction shape. The trusted shell
