@@ -1,0 +1,8 @@
+{
+  "model": "gpt-5.6-sol",
+  "effort": "medium",
+  "schema": "module.schema.json",
+  "ownership_clause": "Return closed-schema JSON only; use no tools. Assign JavaScript once to `window.LayshSimulation`; no Markdown, full HTML, CSS, or shell UI.",
+  "trusted_shell_source": "sim_shell/shell.html",
+  "rendered_prompt_sha256": "9f47b24eca9d7b67288b91c6cad527f9ba0190fde83a73213220f90fdd20b8da"
+}

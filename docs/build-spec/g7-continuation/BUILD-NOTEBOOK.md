@@ -518,3 +518,30 @@ and 0 blocked. This is not the final release query.
   current iframe's CDP `frameId` and waits on both parent height and child
   viewport containment. Focused Chrome verification passed in 38.82s; the final
   full suite passed with 276 tests, one opt-in live test skipped, in 288.20s.
+
+#### GEN-01 / EXP-01 — shell-owned generation and closed experimental promotion
+
+- A retained generated-document fixture proves that full HTML is rejected as
+  `security/forbidden_capability` with `html_document`, while a reviewed route
+  snapshot binds generation to `gpt-5.6-sol`, medium effort, the closed module
+  schema, the module-only ownership clause, and the trusted shell source. The
+  snapshot's preparation replay recorded red at 1 failed in 0.10s before the
+  snapshot existed and green at 1 passed in 0.13s after it was reviewed; no
+  production prompt was changed.
+- Stable-cache writes now require an explicit `stable` or `experimental` route.
+  An experimental artifact must carry successful contracts, physics-fixture,
+  actor-motion, browser, download, and accessibility gates; omission of any one
+  is rejected before a file is written, and the policy is checked again on
+  load. The normal generated route is explicitly labeled stable.
+- Root-session verification: GEN/EXP/cache/upgrade focused suite, 31 passed in
+  0.57s; full suite, 329 passed with the single opt-in live test skipped in
+  301.85s. Ruff and diff checks were clean, and the example-specific runtime
+  scan returned `[]`. No live model call, Canary, golden rewrite, service
+  mutation, push, or publish occurred.
+- Preparation provenance is recorded in `SESSION-PROVENANCE.json`: three helper
+  homes were ephemeral and retained no session ID, while the lib/asset helper
+  retained its real ID. Those sessions had preparation authority only; every
+  repository commit remains authored and verified in this root thread.
+
+Current acceptance ledger after GEN-01 and EXP-01: 20 passing, 0 failing, 10
+not started, and 0 blocked. This is not the final release query.

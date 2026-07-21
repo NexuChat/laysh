@@ -11,6 +11,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Literal
 
+from server.promotion import STABLE_ROUTE, PromotionRoute, require_stable_cache_eligibility
+
 
 @dataclass(frozen=True, slots=True)
 class VerificationReceipt:
@@ -18,6 +20,7 @@ class VerificationReceipt:
     browser_passed: bool
     failed_gate_count: int
     check_count: int
+    passed_gates: tuple[str, ...] = ()
 
     @property
     def verified(self) -> bool:
@@ -43,6 +46,7 @@ class CacheEntry:
     tier: Literal["A", "B"]
     receipt: VerificationReceipt
     pinned: bool
+    route_label: PromotionRoute
 
 
 def _normalize(value: str) -> str:
@@ -81,7 +85,17 @@ class VerifiedCache:
     def _load(path: Path) -> CacheEntry | None:
         try:
             document = json.loads(path.read_text(encoding="utf-8"))
-            receipt = VerificationReceipt(**document["receipt"])
+            receipt_document = dict(document["receipt"])
+            receipt_document["passed_gates"] = tuple(
+                receipt_document.get("passed_gates", ())
+            )
+            receipt = VerificationReceipt(**receipt_document)
+            route_label = document.get("route_label", STABLE_ROUTE)
+            require_stable_cache_eligibility(
+                route_label=route_label,
+                receipt_verified=receipt.verified,
+                passed_gates=frozenset(receipt.passed_gates),
+            )
             entry = CacheEntry(
                 cache_id=document["cache_id"],
                 contract_version=document["contract_version"],
@@ -95,6 +109,7 @@ class VerifiedCache:
                 tier=document["tier"],
                 receipt=receipt,
                 pinned=bool(document.get("pinned", False)),
+                route_label=route_label,
             )
         except (KeyError, OSError, TypeError, ValueError, json.JSONDecodeError):
             return None
@@ -140,9 +155,15 @@ class VerifiedCache:
         direction: Literal["rtl", "ltr"],
         tier: str,
         receipt: VerificationReceipt | None,
+        route_label: str,
     ) -> CacheEntry:
         if receipt is None or not receipt.verified or tier not in {"A", "B"}:
             raise ValueError("only verified Tier A or Tier B artifacts may be cached")
+        require_stable_cache_eligibility(
+            route_label=route_label,
+            receipt_verified=receipt.verified,
+            passed_gates=frozenset(receipt.passed_gates),
+        )
         exact_key = self.exact_key(question, locale)
         semantic_key = self.semantic_key(locale, domain, canonical_intent)
         if any(
@@ -168,6 +189,7 @@ class VerifiedCache:
             tier=tier,
             receipt=receipt,
             pinned=False,
+            route_label=route_label,
         )
         document: dict[str, Any] = asdict(entry)
         destination = self.root / f"{cache_id}.json"
@@ -247,6 +269,7 @@ class VerifiedCache:
             tier="A",
             receipt=receipt,
             pinned=True,
+            route_label=STABLE_ROUTE,
         )
         document: dict[str, Any] = {
             **asdict(entry),

@@ -211,6 +211,7 @@ def test_explicit_release_revision_can_replace_a_pin_but_live_writes_remain_bloc
             direction="rtl",
             tier="B",
             receipt=receipt,
+            route_label="stable",
         )
 
 

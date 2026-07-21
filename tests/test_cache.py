@@ -36,6 +36,7 @@ def test_exact_and_semantic_cache_without_raw_question(tmp_path):
         direction="rtl",
         tier="B",
         receipt=verified_receipt(),
+        route_label="stable",
     )
 
     exact = cache.lookup(
@@ -97,6 +98,7 @@ def test_cache_rejects_every_unverified_write(tmp_path, receipt, tier):
             direction="rtl",
             tier=tier,
             receipt=receipts[receipt],
+            route_label="stable",
         )
 
     assert list((tmp_path / "live").glob("*.json")) == []
@@ -123,6 +125,7 @@ def test_contract_version_invalidates_cache_and_golden_is_immutable(tmp_path):
         direction="ltr",
         tier="B",
         receipt=verified_receipt(),
+        route_label="stable",
     )
     runtime_path = tmp_path / "live" / f"{entry.cache_id}.json"
     pinned = json.loads(runtime_path.read_text(encoding="utf-8"))
@@ -144,6 +147,7 @@ def test_contract_version_invalidates_cache_and_golden_is_immutable(tmp_path):
             direction="ltr",
             tier="B",
             receipt=verified_receipt(),
+            route_label="stable",
         )
 
     cache_v2 = VerifiedCache(
@@ -244,6 +248,7 @@ def test_cache_admin_lists_inspects_and_purges_only_explicit_runtime_id(tmp_path
         direction="ltr",
         tier="B",
         receipt=verified_receipt(),
+        route_label="stable",
     )
     common = [
         "--root",

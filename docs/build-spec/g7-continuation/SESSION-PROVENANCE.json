@@ -72,5 +72,47 @@
   "runtime_evidence_policy": {
     "gpt_5_6_thread_ids_are_subordinate_runtime_receipts": true,
     "implementation_authority": false
+  },
+  "helper_preparation_sessions": [
+    {
+      "workstream": "gen-exp",
+      "session_id": null,
+      "session_id_status": "unrecorded_ephemeral_home_removed",
+      "model": "gpt-5.6-sol",
+      "started_utc": "2026-07-21T18:39:00Z",
+      "authority": "preparation_only",
+      "commits_created": false
+    },
+    {
+      "workstream": "share",
+      "session_id": null,
+      "session_id_status": "unrecorded_ephemeral_home_removed",
+      "model": "gpt-5.6-terra",
+      "started_utc": "2026-07-21T18:39:00Z",
+      "authority": "preparation_only",
+      "commits_created": false
+    },
+    {
+      "workstream": "ui",
+      "session_id": null,
+      "session_id_status": "unrecorded_ephemeral_home_removed",
+      "model": "gpt-5.6-terra",
+      "started_utc": "2026-07-21T18:39:00Z",
+      "authority": "preparation_only",
+      "commits_created": false
+    },
+    {
+      "workstream": "lib-asset",
+      "session_id": "019f85fa-b940-7b03-b728-1ba0c8fa71c9",
+      "session_id_status": "recorded",
+      "model": "gpt-5.6-terra",
+      "started_utc": "2026-07-21T18:40:29Z",
+      "authority": "preparation_only",
+      "commits_created": false
+    }
+  ],
+  "implementation_commit_authority": {
+    "session_id": "019f7998-9378-72b2-b590-ee10e632ce81",
+    "root_thread_only": true
   }
 }

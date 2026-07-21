@@ -9,6 +9,7 @@ from jsonschema import ValidationError
 from server.cache import VerificationReceipt
 from server.codex_backend import RuntimeContext
 from server.codex_runtime import CodexRuntimeError, StageExecution
+from server.promotion import STABLE_ROUTE
 from server.schemas import (
     AnswerPayload,
     ContractError,
@@ -629,6 +630,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                     failed_gate_count=0,
                     check_count=check_count,
                 ),
+                route_label=STABLE_ROUTE,
             )
         except (OSError, ValueError) as error:
             if not record.public:
