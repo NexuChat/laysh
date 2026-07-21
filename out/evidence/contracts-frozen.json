@@ -11,6 +11,7 @@
     "server/schemas/module.schema.json": "d3b68cc0a4f0ac656f963c95d5fb3726200520156cd873ca199023fe2668b739",
     "server/schemas/module_fixture.schema.json": "1191f30e60aee78ae02f92440421a3175c63af080ce9d14d3453a8f3f27d447e",
     "server/schemas/qa.schema.json": "36754ea08cad302d908f29cba270df9e2f807581a16ddf3b9b246c1042109511",
+    "server/schemas/scene_geometry.schema.json": "941a219c368fec6b199c083f635d93d7bba62db8492711f4c86f7b987a0cabc0",
     "server/schemas/understand.schema.json": "aa8776fa20d21ad749c966ceef21c98b59ef5cf630b9061090c1a7c16c98cb58",
     "server/schemas/verification_report.schema.json": "5fa54e7d4cbe52fe10bc114532fe8fa5085c4cfb21534fb134e333cc95728a81",
     "server/schemas/visual_qa.schema.json": "433a60f403351ef7b5ae527178d2d91a3916f3479607b4c7c004d673a2e71311",
