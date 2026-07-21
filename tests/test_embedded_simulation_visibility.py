@@ -98,4 +98,45 @@ def test_every_gallery_simulation_is_visible_and_unclipped_at_supported_sizes():
     )
     resize_measurements = evidence["resizeMeasurements"]
     assert len(resize_measurements) == 2
-    assert all(item["passed"] for item in resize_measurements)
+    resize_failures = [
+        {
+            "cardId": item["cardId"],
+            "viewport": item["viewport"],
+            "checks": item["checks"],
+            "parent": item["parent"],
+            "childFocus": item["childFocus"],
+            "parentFocus": item["parentFocus"],
+            "childKeyboard": item["childKeyboard"],
+            "parentKeyboard": item["parentKeyboard"],
+        }
+        for item in resize_measurements
+        if not item["passed"]
+    ]
+    assert all(item["passed"] for item in resize_measurements), json.dumps(
+        resize_failures,
+        ensure_ascii=False,
+        indent=2,
+    )
+
+    required_viewports = {"narrow-mobile-320x844", "modern-mobile-390x844", "zoom-200pct"}
+    required_measurements = [
+        item for item in measurements if item["viewport"] in required_viewports
+    ]
+    assert len(required_measurements) == 18
+    css = (ROOT / "web" / "app.css").read_text(encoding="utf-8")
+    controller = (ROOT / "web" / "app.js").read_text(encoding="utf-8")
+    assert "height: 150px" not in css
+    assert 'style.height = "150px"' not in controller
+    assert all("150px" not in item["initialHeightWrites"] for item in required_measurements)
+    assert all(item["checks"]["keyboardFocus"] for item in required_measurements)
+
+    clocks = {item["slug"]: item for item in evidence["clocks"]}
+    assert set(clocks) == {"pendulum", "sound_pitch"}
+    for clock in clocks.values():
+        assert clock["before"]["clock"]["now"] == 0
+        assert clock["afterParameter"]["clock"]["now"] == 0
+        assert clock["afterParameter"]["clock"]["executed"] == 0
+        assert clock["afterParameter"]["value"] != clock["before"]["value"]
+        assert clock["afterClock"]["clock"]["now"] == 96
+        assert clock["afterClock"]["clock"]["executed"] > 0
+        assert clock["afterClock"]["value"] == clock["afterParameter"]["value"]

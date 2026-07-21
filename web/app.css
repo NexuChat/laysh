@@ -196,7 +196,7 @@ textarea[aria-invalid="true"] { border-color: var(--danger); }
 .simulation-tools { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: .5rem; }
 .verified-badge { padding: .35rem .65rem; border: 1px solid rgb(101 223 177 / 42%); border-radius: 999px; background: rgb(101 223 177 / 9%); color: #98efcd; font-size: .8rem; font-weight: 700; }
 .projector-button { min-height: 38px; padding: .4rem .65rem; font-size: .8rem; }
-iframe { display: block; width: 100%; height: 150px; min-height: 0; border: 0; background: #05080b; overflow: auto; }
+iframe { display: block; width: 100%; min-height: 0; border: 0; background: #05080b; overflow: auto; }
 .result-actions, .failure-actions { display: flex; flex-wrap: wrap; gap: .7rem; margin-block: 1rem; }
 .receipt { padding: 1rem; border-radius: 1rem; box-shadow: none; }
 .receipt summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 700; }

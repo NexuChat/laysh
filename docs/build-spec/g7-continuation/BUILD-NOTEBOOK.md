@@ -545,3 +545,32 @@ and 0 blocked. This is not the final release query.
 
 Current acceptance ledger after GEN-01 and EXP-01: 20 passing, 0 failing, 10
 not started, and 0 blocked. This is not the final release query.
+
+#### UI-01 / UI-02 — reachable controls and independent concept time
+
+- The browser gate now traverses all six pinned lessons at 320×844, 390×844,
+  1440×900, and 200% zoom. It checks rendered bounds and the topmost element at
+  each action's center, then sends real Tab events through the trusted lesson
+  controls and result actions. No fixed iframe seed height remains in CSS or the
+  result controller; the bounded trusted layout-height bridge remains the sole
+  content-derived sizing source.
+- The first root-session run exposed a resize race: 24 normal loads passed, but
+  the desktop-to-320 OOPIF could still report its desktop width while the parent
+  had already narrowed. That let height-only convergence finish early and made
+  `#reset` focused but offscreen. The retained red was 1 failed in 40.31s. The
+  harness now waits for both parent/child width convergence and content-height
+  convergence before testing focus; the focused rerun passed in 40.70s without
+  weakening any visibility or obstruction check.
+- A deterministic fake animation clock proves the pinned pendulum and wave
+  lessons keep parameter-sweep time separate from concept time: changing the
+  parameter leaves the clock at 0 ms with zero callbacks executed, while a
+  96 ms clock advance executes animation callbacks without changing the
+  parameter value. The browser route first requires `verified/golden`, so this
+  proof makes zero model calls.
+- Root-session final verification: full suite, 329 passed with the single
+  opt-in live test skipped in 305.28s. Ruff, JavaScript syntax, diff, and
+  example-specific runtime checks were clean. No Canary, golden rewrite,
+  service mutation, push, or publish occurred.
+
+Current acceptance ledger after UI-01 and UI-02: 22 passing, 0 failing, 8 not
+started, and 0 blocked. This is not the final release query.

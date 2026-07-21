@@ -245,7 +245,7 @@
     byId("simulation-alternative").textContent = state.answer || t("result.alternativeShort");
     const simulationFrame = byId("simulation-frame");
     simulationFrame.hidden = false;
-    simulationFrame.style.height = "150px";
+    simulationFrame.style.removeProperty("height");
     delete simulationFrame.dataset.contentHeight;
     simulationFrame.src = `${simulation.artifact_url}?inline=1`;
     byId("download").href = simulation.artifact_url;

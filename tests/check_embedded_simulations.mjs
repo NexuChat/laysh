@@ -180,15 +180,18 @@ try {
     const convergenceDeadline = Date.now() + 5000;
     let converged = false;
     while (Date.now() < convergenceDeadline) {
-      const frameHeight = await evaluate(
-        "document.querySelector('#simulation-frame').getBoundingClientRect().height",
-      );
+      const frameBounds = await evaluate(`(() => {
+        const rect = document.querySelector('#simulation-frame').getBoundingClientRect();
+        return { width: rect.width, height: rect.height };
+      })()`);
       const childLayout = await evaluate(`(() => ({
+        viewportWidth: innerWidth,
         viewportHeight: innerHeight,
         lessonBottom: Math.ceil(document.querySelector('#lesson').getBoundingClientRect().bottom),
       }))()`, sessionId);
       if (
-        frameHeight + 2 >= childLayout.lessonBottom
+        Math.abs(frameBounds.width - childLayout.viewportWidth) <= 2
+        && frameBounds.height + 2 >= childLayout.lessonBottom
         && childLayout.viewportHeight + 2 >= childLayout.lessonBottom
       ) {
         converged = true;
@@ -248,6 +251,88 @@ try {
         control: bounds('#primary-control'),
       };
     })()`, sessionId);
+    const childFocus = await evaluate(`(() => {
+      const viewport = window.visualViewport || { width: innerWidth, height: innerHeight };
+      return ['#primary-control', '#reset', '#replay', '#projector'].map((selector) => {
+        const element = document.querySelector(selector);
+        element.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
+        element.focus();
+        const rect = element.getBoundingClientRect();
+        const top = document.elementFromPoint(
+          Math.min(viewport.width - 1, Math.max(0, rect.left + rect.width / 2)),
+          Math.min(viewport.height - 1, Math.max(0, rect.top + rect.height / 2)),
+        );
+        return {
+          selector,
+          focused: document.activeElement === element,
+          visible: rect.width > 0 && rect.height > 0
+            && rect.top >= 0 && rect.left >= 0
+            && rect.bottom <= viewport.height && rect.right <= viewport.width,
+          unobscured: top === element || element.contains(top),
+        };
+      });
+    })()`, sessionId);
+    const parentFocus = await evaluate(`(() => {
+      const viewport = window.visualViewport || { width: innerWidth, height: innerHeight };
+      return ['#replay-result', '#download', '#ask-another'].map((selector) => {
+        const element = document.querySelector(selector);
+        element.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
+        element.focus();
+        const rect = element.getBoundingClientRect();
+        const top = document.elementFromPoint(
+          Math.min(viewport.width - 1, Math.max(0, rect.left + rect.width / 2)),
+          Math.min(viewport.height - 1, Math.max(0, rect.top + rect.height / 2)),
+        );
+        return {
+          selector,
+          focused: document.activeElement === element,
+          visible: rect.width > 0 && rect.height > 0
+            && rect.top >= 0 && rect.left >= 0
+            && rect.bottom <= viewport.height && rect.right <= viewport.width,
+          unobscured: top === element || element.contains(top),
+        };
+      });
+    })()`);
+    async function tabTo(selectors, sessionId) {
+      await evaluate(`document.querySelector(${JSON.stringify(selectors[0])}).focus()`, sessionId);
+      const results = [];
+      for (const selector of selectors.slice(1)) {
+        await command("Input.dispatchKeyEvent", {
+          type: "keyDown",
+          key: "Tab",
+          code: "Tab",
+          windowsVirtualKeyCode: 9,
+          nativeVirtualKeyCode: 9,
+        }, sessionId);
+        await command("Input.dispatchKeyEvent", {
+          type: "keyUp",
+          key: "Tab",
+          code: "Tab",
+          windowsVirtualKeyCode: 9,
+          nativeVirtualKeyCode: 9,
+        }, sessionId);
+        results.push(await evaluate(`(() => {
+          const element = document.querySelector(${JSON.stringify(selector)});
+          const viewport = window.visualViewport || { width: innerWidth, height: innerHeight };
+          const rect = element.getBoundingClientRect();
+          const top = document.elementFromPoint(
+            Math.min(viewport.width - 1, Math.max(0, rect.left + rect.width / 2)),
+            Math.min(viewport.height - 1, Math.max(0, rect.top + rect.height / 2)),
+          );
+          return {
+            selector: ${JSON.stringify(selector)},
+            focused: document.activeElement === element,
+            visible: rect.width > 0 && rect.height > 0
+              && rect.top >= 0 && rect.left >= 0
+              && rect.bottom <= viewport.height && rect.right <= viewport.width,
+            unobscured: top === element || element.contains(top),
+          };
+        })()`, sessionId));
+      }
+      return results;
+    }
+    const childKeyboard = await tabTo(['#primary-control', '#reset', '#replay'], sessionId);
+    const parentKeyboard = await tabTo(['#replay-result', '#download', '#ask-another']);
     await command("Target.detachFromTarget", { sessionId });
     const checks = {
       iframeInsideStage: parent.iframeBottomInsideStage,
@@ -257,6 +342,9 @@ try {
       canvasInsideViewport: child.canvas.insideViewport,
       controlVisible: child.control.visible,
       controlInsideViewport: child.control.insideViewport,
+      keyboardFocus: [...childFocus, ...parentFocus, ...childKeyboard, ...parentKeyboard].every(
+        (item) => item.focused && item.visible && item.unobscured,
+      ),
     };
     const passed = Object.values(checks).every(Boolean);
     return {
@@ -265,6 +353,10 @@ try {
       scale: viewport.scale,
       parent,
       child,
+      childFocus,
+      parentFocus,
+      childKeyboard,
+      parentKeyboard,
       checks,
       passed,
     };
@@ -272,13 +364,82 @@ try {
 
   async function measure(cardId, viewport) {
     const previousUrl = await evaluate("document.querySelector('#simulation-frame').src");
+    await evaluate(`(() => {
+      const frame = document.querySelector('#simulation-frame');
+      window.__layshFrameHeightWrites = [];
+      new MutationObserver(() => {
+        window.__layshFrameHeightWrites.push(frame.style.height);
+      }).observe(frame, { attributes: true, attributeFilter: ['style'] });
+    })()`);
     await evaluate(`document.querySelector(${JSON.stringify(
       `[data-golden-id="${cardId}"] .golden-launch`,
     )}).click()`);
     await waitFor("!document.querySelector('#result-view').hidden");
     await waitFor(`document.querySelector('#simulation-frame').src.includes('/api/sims/')
       && document.querySelector('#simulation-frame').src !== ${JSON.stringify(previousUrl)}`);
-    return measureLoaded(cardId, viewport);
+    const initialHeightWrites = await evaluate("window.__layshFrameHeightWrites");
+    return { ...await measureLoaded(cardId, viewport), initialHeightWrites };
+  }
+
+  const fakeClockSource = `(() => {
+    const callbacks = new Map();
+    let nextId = 1;
+    let now = 0;
+    let executed = 0;
+    window.__layshTestClock = {
+      snapshot: () => ({ now, queued: callbacks.size, executed }),
+      advance: (milliseconds) => {
+        now += milliseconds;
+        const ready = [...callbacks.values()];
+        callbacks.clear();
+        for (const callback of ready) {
+          executed += 1;
+          callback(now);
+        }
+      },
+    };
+    window.requestAnimationFrame = (callback) => {
+      const id = nextId;
+      nextId += 1;
+      callbacks.set(id, callback);
+      return id;
+    };
+    window.cancelAnimationFrame = (id) => callbacks.delete(id);
+  })();`;
+
+  async function measureClock(slug) {
+    const detail = await fetchJson(`${baseUrl}/api/gallery/${slug}?locale=ar`);
+    if (detail.simulation.effective_model !== "verified/golden") {
+      throw new Error(`${slug}: expected a deterministic pinned artifact`);
+    }
+    const script = await command("Page.addScriptToEvaluateOnNewDocument", { source: fakeClockSource });
+    try {
+      await command("Page.navigate", { url: `${baseUrl}${detail.simulation.artifact_url}?inline=1` });
+      await waitFor("document.documentElement?.dataset.layshReady === 'true'");
+      const before = await evaluate(`(() => ({
+        clock: window.__layshTestClock.snapshot(),
+        value: document.querySelector('#primary-control').value,
+      }))()`);
+      const afterParameter = await evaluate(`(() => {
+        const control = document.querySelector('#primary-control');
+        const next = Number(control.value) === Number(control.max)
+          ? Number(control.min)
+          : Number(control.value) + Number(control.step);
+        control.value = String(next);
+        control.dispatchEvent(new Event('input', { bubbles: true }));
+        return { clock: window.__layshTestClock.snapshot(), value: control.value };
+      })()`);
+      const afterClock = await evaluate(`(() => {
+        const control = document.querySelector('#primary-control');
+        window.__layshTestClock.advance(96);
+        return { clock: window.__layshTestClock.snapshot(), value: control.value };
+      })()`);
+      return { slug, before, afterParameter, afterClock };
+    } finally {
+      await command("Page.removeScriptToEvaluateOnNewDocument", {
+        identifier: script.identifier,
+      });
+    }
   }
 
   await command("Runtime.enable");
@@ -317,7 +478,14 @@ try {
     label: "live-resize-desktop-to-320",
   });
 
-  process.stdout.write(JSON.stringify({ measurements, resizeMeasurements: [resizeBefore, resizeAfter] }));
+  const clocks = [];
+  for (const slug of ["pendulum", "sound_pitch"]) clocks.push(await measureClock(slug));
+
+  process.stdout.write(JSON.stringify({
+    measurements,
+    resizeMeasurements: [resizeBefore, resizeAfter],
+    clocks,
+  }));
 } catch (error) {
   process.stderr.write(`${error.stack || error.message}\n`);
   process.exitCode = 1;
