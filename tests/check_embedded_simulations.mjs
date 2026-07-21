@@ -253,7 +253,7 @@ try {
     })()`, sessionId);
     const childFocus = await evaluate(`(() => {
       const viewport = window.visualViewport || { width: innerWidth, height: innerHeight };
-      return ['#primary-control', '#reset', '#replay', '#projector'].map((selector) => {
+      return ['#primary-control', '#play-pause', '#reset', '#replay', '#projector'].map((selector) => {
         const element = document.querySelector(selector);
         element.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
         element.focus();
@@ -274,7 +274,7 @@ try {
     })()`, sessionId);
     const parentFocus = await evaluate(`(() => {
       const viewport = window.visualViewport || { width: innerWidth, height: innerHeight };
-      return ['#replay-result', '#download', '#ask-another'].map((selector) => {
+      return ['#replay-result', '#share-result', '#download', '#ask-another'].map((selector) => {
         const element = document.querySelector(selector);
         element.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
         element.focus();
@@ -297,6 +297,7 @@ try {
       await evaluate(`document.querySelector(${JSON.stringify(selectors[0])}).focus()`, sessionId);
       const results = [];
       for (const selector of selectors.slice(1)) {
+        const dispatchedAt = Date.now();
         await command("Input.dispatchKeyEvent", {
           type: "keyDown",
           key: "Tab",
@@ -311,8 +312,10 @@ try {
           windowsVirtualKeyCode: 9,
           nativeVirtualKeyCode: 9,
         }, sessionId);
+        const observedAt = Date.now();
         results.push(await evaluate(`(() => {
           const element = document.querySelector(${JSON.stringify(selector)});
+          const active = document.activeElement;
           const viewport = window.visualViewport || { width: innerWidth, height: innerHeight };
           const rect = element.getBoundingClientRect();
           const top = document.elementFromPoint(
@@ -321,6 +324,10 @@ try {
           );
           return {
             selector: ${JSON.stringify(selector)},
+            actualActiveId: active?.id || null,
+            targetTabIndex: element.tabIndex,
+            targetDisabled: Boolean(element.disabled),
+            focusObservedAfterMs: ${observedAt - dispatchedAt},
             focused: document.activeElement === element,
             visible: rect.width > 0 && rect.height > 0
               && rect.top >= 0 && rect.left >= 0
@@ -331,8 +338,17 @@ try {
       }
       return results;
     }
-    const childKeyboard = await tabTo(['#primary-control', '#reset', '#replay'], sessionId);
-    const parentKeyboard = await tabTo(['#replay-result', '#download', '#ask-another']);
+    const childKeyboard = await tabTo(
+      ['#primary-control', '#play-pause', '#reset', '#replay'],
+      sessionId,
+    );
+    const parentActiveAfterChildKeyboard = await evaluate(`(() => {
+      const active = document.activeElement;
+      return { tagName: active?.tagName || null, id: active?.id || null };
+    })()`);
+    const parentKeyboard = await tabTo(
+      ['#replay-result', '#share-result', '#download', '#ask-another'],
+    );
     await command("Target.detachFromTarget", { sessionId });
     const checks = {
       iframeInsideStage: parent.iframeBottomInsideStage,
@@ -356,6 +372,7 @@ try {
       childFocus,
       parentFocus,
       childKeyboard,
+      parentActiveAfterChildKeyboard,
       parentKeyboard,
       checks,
       passed,

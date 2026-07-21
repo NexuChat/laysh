@@ -165,6 +165,10 @@ try {
           const control = document.querySelector('#primary-control');
           control.value = String(${value});
           control.dispatchEvent(new Event('input', { bubbles: true }));
+          const playback = document.querySelector('#play-pause');
+          if (document.documentElement.dataset.playbackState === 'paused' && playback) {
+            playback.click();
+          }
         })()`,
         returnByValue: true,
       });
@@ -186,6 +190,7 @@ try {
             const y1 = Math.min(canvas.height, Math.ceil((region.y + region.height) * canvas.height));
             const toleranceSquared = color.tolerance * color.tolerance;
             const columns = Array.from({ length: columnCount }, () => ({ count: 0, sumY: 0 }));
+            const matched = new Uint8Array(canvas.width * canvas.height);
             let count = 0;
             let sumX = 0;
             let sumY = 0;
@@ -209,10 +214,53 @@ try {
                 maxX = Math.max(maxX, x);
                 maxY = Math.max(maxY, y);
                 hash = Math.imul(hash ^ ((x - x0) * 4099 + (y - y0)), 16777619) >>> 0;
+                matched[y * canvas.width + x] = 1;
                 if (columns.length) {
                   const column = Math.min(columns.length - 1, Math.floor((x - x0) / Math.max(1, x1 - x0) * columns.length));
                   columns[column].count += 1;
                   columns[column].sumY += y;
+                }
+              }
+            }
+            const features = [];
+            const visited = new Uint8Array(matched.length);
+            for (let y = y0; y < y1; y += 1) {
+              for (let x = x0; x < x1; x += 1) {
+                const start = y * canvas.width + x;
+                if (!matched[start] || visited[start]) continue;
+                const stack = [start];
+                visited[start] = 1;
+                let featureCount = 0;
+                let featureX = 0;
+                let featureY = 0;
+                while (stack.length) {
+                  const pixel = stack.pop();
+                  const pixelX = pixel % canvas.width;
+                  const pixelY = Math.floor(pixel / canvas.width);
+                  featureCount += 1;
+                  featureX += pixelX;
+                  featureY += pixelY;
+                  for (let offsetY = -1; offsetY <= 1; offsetY += 1) {
+                    for (let offsetX = -1; offsetX <= 1; offsetX += 1) {
+                      if (offsetX === 0 && offsetY === 0) continue;
+                      const nextX = pixelX + offsetX;
+                      const nextY = pixelY + offsetY;
+                      if (nextX < x0 || nextX >= x1 || nextY < y0 || nextY >= y1) continue;
+                      const next = nextY * canvas.width + nextX;
+                      if (!matched[next] || visited[next]) continue;
+                      visited[next] = 1;
+                      stack.push(next);
+                    }
+                  }
+                }
+                if (featureCount >= 4) {
+                  features.push({
+                    visible_pixels: featureCount,
+                    centroid: {
+                      x: featureX / featureCount / canvas.width,
+                      y: featureY / featureCount / canvas.height,
+                    },
+                  });
                 }
               }
             }
@@ -226,6 +274,7 @@ try {
                 width: (maxX - minX + 1) / canvas.width,
                 height: (maxY - minY + 1) / canvas.height,
               } : null,
+              features,
               phase_columns: columns.length
                 ? columns.map((column) => column.count ? column.sumY / column.count / canvas.height : null)
                 : null,

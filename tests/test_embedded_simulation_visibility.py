@@ -87,6 +87,11 @@ def test_every_gallery_simulation_is_visible_and_unclipped_at_supported_sizes():
             "panel": item["child"]["panel"],
             "canvas": item["child"]["canvas"],
             "control": item["child"]["control"],
+            "childFocus": item["childFocus"],
+            "childKeyboard": item["childKeyboard"],
+            "parentFocus": item["parentFocus"],
+            "parentKeyboard": item["parentKeyboard"],
+            "parentActiveAfterChildKeyboard": item["parentActiveAfterChildKeyboard"],
         }
         for item in measurements
         if not item["passed"]
@@ -129,6 +134,30 @@ def test_every_gallery_simulation_is_visible_and_unclipped_at_supported_sizes():
     assert 'style.height = "150px"' not in controller
     assert all("150px" not in item["initialHeightWrites"] for item in required_measurements)
     assert all(item["checks"]["keyboardFocus"] for item in required_measurements)
+    assert all(
+        [step["selector"] for step in item["childKeyboard"]]
+        == ["#play-pause", "#reset", "#replay"]
+        for item in required_measurements
+    )
+    assert all(
+        step["actualActiveId"] == step["selector"].removeprefix("#")
+        and step["targetTabIndex"] == 0
+        and not step["targetDisabled"]
+        for item in required_measurements
+        for step in item["childKeyboard"]
+    )
+    assert all(
+        [step["selector"] for step in item["parentKeyboard"]]
+        == ["#share-result", "#download", "#ask-another"]
+        for item in required_measurements
+    )
+    assert all(
+        step["actualActiveId"] == step["selector"].removeprefix("#")
+        and step["targetTabIndex"] == 0
+        and not step["targetDisabled"]
+        for item in required_measurements
+        for step in item["parentKeyboard"]
+    )
 
     clocks = {item["slug"]: item for item in evidence["clocks"]}
     assert set(clocks) == {"pendulum", "sound_pitch"}

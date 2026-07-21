@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import shutil
 from copy import deepcopy
 from pathlib import Path
@@ -202,6 +203,15 @@ def test_legacy_shared_model_refresh_fails_closed_without_scene_evidence(
     )
     golden_root = tmp_path / "golden"
     shutil.copytree(ROOT / "out/cache/golden", golden_root)
+    for path in golden_root.glob("*.json"):
+        if path.name == "manifest.json":
+            continue
+        document = json.loads(path.read_text(encoding="utf-8"))
+        document["artifact"] = document["artifact"].replace(
+            "LAYSH_CURATED_SCENE_ADAPTER_V1", "LEGACY_SCENE_ADAPTER", 1
+        )
+        document["evidence"].pop("curated_shell_refresh", None)
+        path.write_text(json.dumps(document, ensure_ascii=False), encoding="utf-8")
     before = {path.name: path.read_bytes() for path in golden_root.glob("*.json")}
 
     with pytest.raises(ValueError, match="deterministic refresh verification"):

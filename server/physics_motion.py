@@ -405,14 +405,52 @@ def _trace_speed(samples: Sequence[Mapping[str, object]]) -> float | None:
     if len(samples) < 2:
         return None
     times = [_number(sample.get("time_ms")) for sample in samples]
-    points = [_centroid(sample) for sample in samples]
-    if any(value is None for value in times) or any(point is None for point in points):
+    if any(value is None for value in times):
         return None
     numeric_times = [float(value) for value in times if value is not None]
-    numeric_points = [point for point in points if point is not None]
     duration = numeric_times[-1] - numeric_times[0]
     if duration <= 0 or not _strictly_increasing(numeric_times):
         return None
+
+    feature_frames: list[list[tuple[float, float]]] = []
+    for sample in samples:
+        actor = sample.get("actor")
+        features = actor.get("features") if isinstance(actor, Mapping) else None
+        if not isinstance(features, Sequence) or not features:
+            feature_frames = []
+            break
+        points: list[tuple[float, float]] = []
+        for feature in features:
+            if not isinstance(feature, Mapping):
+                continue
+            centroid = feature.get("centroid")
+            if not isinstance(centroid, Mapping):
+                continue
+            x = _number(centroid.get("x"))
+            y = _number(centroid.get("y"))
+            if x is not None and y is not None:
+                points.append((x, y))
+        if not points:
+            feature_frames = []
+            break
+        feature_frames.append(points)
+    if len(feature_frames) == len(samples):
+        travelled = 0.0
+        for earlier, later in zip(feature_frames, feature_frames[1:], strict=False):
+            distances: list[float] = []
+            for point in earlier:
+                distance = min(math.dist(point, candidate) for candidate in later)
+                if distance <= 0.2:
+                    distances.append(distance)
+            if not distances:
+                return None
+            travelled += max(distances)
+        return travelled / duration
+
+    points = [_centroid(sample) for sample in samples]
+    if any(point is None for point in points):
+        return None
+    numeric_points = [point for point in points if point is not None]
     travelled = sum(
         math.dist(left, right)
         for left, right in zip(numeric_points, numeric_points[1:], strict=False)

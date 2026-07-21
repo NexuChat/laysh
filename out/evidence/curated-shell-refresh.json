@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0",
+  "gate": "curated_shell_refresh",
+  "model_calls": 0,
+  "passed": true,
+  "golden_count": 6,
+  "goldens": [
+    {
+      "golden_id": "buoyancy",
+      "artifact_sha256": "5a878506c8f5a520a430bbc4abbb50b1be71b5880184a09d12d533765dcc9ec1",
+      "shared_scene_adapter": true,
+      "legacy_scene_failure_only": false,
+      "scene_sample_count": 1,
+      "passed": true
+    },
+    {
+      "golden_id": "day_night",
+      "artifact_sha256": "2faa32e175de6f8996ae4764f9102118bc1319a012dcf010aaa774e207e27ee0",
+      "shared_scene_adapter": true,
+      "legacy_scene_failure_only": false,
+      "scene_sample_count": 1,
+      "passed": true
+    },
+    {
+      "golden_id": "moon_phases",
+      "artifact_sha256": "9205eb45f7ffdcb7e501a926b6d17f2409c1f1f9dd09a0dccc585cee1481480b",
+      "shared_scene_adapter": true,
+      "legacy_scene_failure_only": false,
+      "scene_sample_count": 1,
+      "passed": true
+    },
+    {
+      "golden_id": "pendulum",
+      "artifact_sha256": "bf405874ba30186d7b8e33835efa8b9bd1e1fa26144a83700ee779c7fa01fa9e",
+      "shared_scene_adapter": true,
+      "legacy_scene_failure_only": false,
+      "scene_sample_count": 1,
+      "passed": true
+    },
+    {
+      "golden_id": "simple_circuit",
+      "artifact_sha256": "48c5eef46d6f680e296dda2d76793c18e320d73a7f7b5f87e9a81fde146fb09a",
+      "shared_scene_adapter": true,
+      "legacy_scene_failure_only": false,
+      "scene_sample_count": 1,
+      "passed": true
+    },
+    {
+      "golden_id": "sound_pitch",
+      "artifact_sha256": "07d43e091e144011761ae06403c494e5099263aabdabc310df41c4e87672d631",
+      "shared_scene_adapter": true,
+      "legacy_scene_failure_only": false,
+      "scene_sample_count": 1,
+      "passed": true
+    }
+  ]
+}

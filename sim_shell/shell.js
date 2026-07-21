@@ -10,6 +10,10 @@
         observe: "لاحظ ما يتغيّر",
         explain: "فسّر ما رأيت",
         misconception: "فكرة شائعة تحتاج إلى تصحيح",
+        pause: "إيقاف الحركة",
+        resume: "استئناف الحركة",
+        running: "الحركة تعمل",
+        paused: "الحركة متوقفة",
         reset: "إعادة الضبط",
         replay: "إعادة العرض",
         projector: "وضع العرض",
@@ -24,6 +28,10 @@
         observe: "Observe what changes",
         explain: "Explain what you saw",
         misconception: "Common misconception",
+        pause: "Pause motion",
+        resume: "Resume motion",
+        running: "Motion is playing",
+        paused: "Motion is paused",
         reset: "Reset",
         replay: "Replay",
         projector: "Projector mode",
@@ -44,8 +52,11 @@
   let frameCount = 0;
   let idleFrameId = 0;
   let previousIdleAt = 0;
-  let idlePhaseBudget = 0;
-  const pendulumPhaseIncrement = 0.085;
+  let motionSampleBudget = 0;
+  let playbackState = "paused";
+  let destroyed = false;
+  let moduleReducedMotion = reducedMotion;
+  const periodicSamplesPerCycle = 74;
   const maxIdleStepMs = 100;
 
   document.body.dataset.direction = dir === "rtl" ? "rtl" : "ltr";
@@ -62,6 +73,7 @@
   byId("misconception-label").textContent = labels.misconception;
   byId("misconception").textContent = lesson.misconception;
   byId("transfer").textContent = lesson.transfer_prompt || "";
+  byId("play-pause").textContent = labels.resume;
   byId("reset").textContent = labels.reset;
   byId("replay").textContent = labels.replay;
   byId("projector").textContent = labels.projector;
@@ -107,6 +119,51 @@
     description.textContent = formatState(value);
   }
 
+  function syncPlaybackUi(reason) {
+    const running = playbackState === "running";
+    document.documentElement.dataset.playbackState = playbackState;
+    document.documentElement.dataset.playbackReason = reason;
+    const toggle = byId("play-pause");
+    toggle.textContent = running ? labels.pause : labels.resume;
+    toggle.setAttribute("aria-pressed", String(!running));
+    byId("playback-status").textContent = running ? labels.running : labels.paused;
+  }
+
+  function cancelIdleFrame() {
+    if (!idleFrameId) return;
+    cancelAnimationFrame(idleFrameId);
+    idleFrameId = 0;
+  }
+
+  function requestIdleFrame() {
+    if (destroyed || playbackState !== "running" || idleFrameId) return;
+    idleFrameId = requestAnimationFrame(scheduleIdleFrame);
+  }
+
+  function pausePlayback(reason) {
+    playbackState = "paused";
+    previousIdleAt = 0;
+    motionSampleBudget = 0;
+    cancelIdleFrame();
+    syncPlaybackUi(reason);
+  }
+
+  function resumePlayback(reason) {
+    if (destroyed) return;
+    if (moduleReducedMotion) {
+      const value = Number(control.value);
+      simulation.destroy();
+      moduleReducedMotion = false;
+      simulation.init(simulationOptions());
+      simulation.setParameter(parameter.id, value);
+    }
+    playbackState = "running";
+    previousIdleAt = 0;
+    motionSampleBudget = 0;
+    syncPlaybackUi(reason);
+    requestIdleFrame();
+  }
+
   function selectPrediction(button) {
     for (const choice of byId("prediction-choices").querySelectorAll("button")) {
       choice.setAttribute("aria-pressed", String(choice === button));
@@ -123,22 +180,45 @@
   }
 
   control.addEventListener("input", () => {
-    previousIdleAt = 0;
-    idlePhaseBudget = 0;
+    pausePlayback("user-control");
     update(control.value);
     byId("explain").hidden = false;
   });
 
-  byId("reset").addEventListener("click", () => {
+  function simulationOptions() {
+    return {
+      canvas,
+      context: canvas.getContext("2d"),
+      width: canvas.width,
+      height: canvas.height,
+      locale: lesson.lang,
+      reducedMotion: moduleReducedMotion,
+      emitFrame,
+    };
+  }
+
+  function resetSimulation() {
+    pausePlayback("reset");
+    simulation.destroy();
+    simulation.init(simulationOptions());
     control.value = String(parameter.default);
     update(control.value);
+    byId("explain").hidden = true;
+  }
+
+  byId("play-pause").addEventListener("click", () => {
+    if (playbackState === "running") pausePlayback("user");
+    else resumePlayback("user");
   });
+
+  byId("reset").addEventListener("click", resetSimulation);
 
   byId("replay").addEventListener("click", () => {
     const replayValue = Number(control.value) === parameter.max ? parameter.min : parameter.max;
     control.value = String(replayValue);
     update(control.value);
     byId("explain").hidden = false;
+    resumePlayback("replay");
   });
 
   function syncProjectorState(active) {
@@ -162,33 +242,37 @@
   });
 
   function scheduleIdleFrame(timestamp = 0) {
-    if (reducedMotion) return;
+    idleFrameId = 0;
+    if (destroyed || playbackState !== "running") return;
     if (lesson.module_spec.action === "oscillates") {
       if (previousIdleAt > 0) {
         const elapsedMs = Math.min(maxIdleStepMs, Math.max(0, timestamp - previousIdleAt));
         const model = simulation.test({ [parameter.id]: Number(control.value) });
-        const periodSeconds = Number(model && model.period_s);
+        const periodOutput = lesson.module_spec.outputs.find(
+          (name) => /(?:^|_)(?:period|duration)_s$/.test(name),
+        );
+        const periodSeconds = Number(periodOutput && model && model[periodOutput]);
         if (Number.isFinite(periodSeconds) && periodSeconds > 0) {
-          idlePhaseBudget += (elapsedMs / (periodSeconds * 1000)) * Math.PI * 2;
+          motionSampleBudget += (elapsedMs / (periodSeconds * 1000)) * periodicSamplesPerCycle;
           const redrawCount = Math.min(
             8,
-            Math.floor(idlePhaseBudget / pendulumPhaseIncrement),
+            Math.floor(motionSampleBudget),
           );
           for (let index = 0; index < redrawCount; index += 1) {
             simulation.setParameter(parameter.id, Number(control.value));
           }
-          idlePhaseBudget -= redrawCount * pendulumPhaseIncrement;
+          motionSampleBudget -= redrawCount;
         }
       }
       previousIdleAt = timestamp;
-      idleFrameId = requestAnimationFrame(scheduleIdleFrame);
+      requestIdleFrame();
       return;
     }
     if (timestamp - previousIdleAt >= 80) {
       previousIdleAt = timestamp;
       simulation.setParameter(parameter.id, Number(control.value));
     }
-    idleFrameId = requestAnimationFrame(scheduleIdleFrame);
+    requestIdleFrame();
   }
 
   function resize() {
@@ -201,21 +285,18 @@
 
   try {
     simulation = window.LayshContract.assertSimulation(window.LayshSimulation);
-    simulation.init({
-      canvas,
-      context: canvas.getContext("2d"),
-      width: canvas.width,
-      height: canvas.height,
-      locale: lesson.lang,
-      reducedMotion,
-      emitFrame,
-    });
+    simulation.init(simulationOptions());
     update(parameter.default);
-    idleFrameId = requestAnimationFrame(scheduleIdleFrame);
+    document.documentElement.dataset.reducedMotion = String(reducedMotion);
+    if (reducedMotion) pausePlayback("reduced-motion");
+    else resumePlayback("autoplay");
     window.addEventListener("resize", resize, { passive: true });
     window.addEventListener("pagehide", () => {
-      cancelAnimationFrame(idleFrameId);
+      destroyed = true;
+      cancelIdleFrame();
       simulation.destroy();
+      playbackState = "destroyed";
+      syncPlaybackUi("pagehide");
     }, { once: true });
   } catch {
     byId("runtime-error").hidden = false;

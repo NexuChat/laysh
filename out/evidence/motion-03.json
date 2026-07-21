@@ -4,2433 +4,427 @@
   "model_calls": 0,
   "golden_count": 6,
   "passed": true,
-  "check_count": 83,
+  "check_count": 10191,
   "goldens": [
     {
       "golden_id": "moon_phases",
-      "artifact_sha256": "b62f82acf339ca7eb1fa36153d7cd262beea930b0ace79a0cbad06976bbf5663",
+      "artifact_sha256": "9205eb45f7ffdcb7e501a926b6d17f2409c1f1f9dd09a0dccc585cee1481480b",
       "actor": "moon",
       "action": "orbits",
       "passed": true,
-      "check_count": 13,
+      "check_count": 10121,
+      "minimum_clearance_px": 4.72495,
       "failures": [],
       "evidence": {
-        "cases": [
-          {
-            "value": 0,
-            "frameChanged": true,
-            "visualSignature": 3911052668
+        "browser": {
+          "ready": true,
+          "runtime_error": false,
+          "external_requests": 0,
+          "console_error_count": 0
+        },
+        "contracts": {
+          "actor": {
+            "actor_region": {
+              "x": 0.04,
+              "y": 0.18,
+              "width": 0.5,
+              "height": 0.62
+            },
+            "sample_count": 4,
+            "sample_interval_ms": 140,
+            "actor_color": {
+              "red": 243,
+              "green": 241,
+              "blue": 220,
+              "tolerance": 72
+            }
           },
-          {
-            "value": 90,
-            "frameChanged": true,
-            "visualSignature": 3123009321
+          "physics": {
+            "kind": "moon_phases",
+            "tolerance": 0.01,
+            "settle_ms": 500,
+            "control_values": [
+              0,
+              90,
+              180,
+              270
+            ],
+            "illumination_probe": {
+              "region": {
+                "x": 0.63,
+                "y": 0.22,
+                "width": 0.32,
+                "height": 0.48
+              },
+              "color": {
+                "red": 255,
+                "green": 252,
+                "blue": 229,
+                "tolerance": 88
+              }
+            }
           },
-          {
-            "value": 360,
-            "frameChanged": true,
-            "visualSignature": 14712280
+          "geometry": {
+            "viewport_widths": [
+              320,
+              390,
+              700,
+              1200
+            ],
+            "viewport_height": 900,
+            "mobile_viewport_height": 844,
+            "parameter_sweep": "step"
           }
-        ],
-        "lang": "ar",
-        "dir": "rtl",
-        "ready": true,
-        "runtimeError": false,
-        "alternative": "زاوية الطور: 90 ° — النتيجة المحسوبة: 0.50",
-        "idleFrameChanged": true,
-        "reactiveFrameVariants": 3,
-        "externalRequests": 0,
-        "consoleErrors": [],
-        "screenshots": [
-          "moon_phases-mobile-390x844.png",
-          "moon_phases-desktop-1440x900.png"
-        ],
-        "actorSamples": [
-          {
-            "time_ms": 376,
-            "control_value": 90,
-            "model_outputs": {
-              "lit_fraction": 0.49999999999999994
-            },
-            "frame_count": 12,
-            "canvas_signature": 1513914653,
-            "actor": {
-              "visible_pixels": 312,
-              "signature": "593d8380",
-              "centroid": {
-                "x": 0.47135861823361824,
-                "y": 0.4659375
-              },
-              "bounds": {
-                "x": 0.3111111111111111,
-                "y": 0.315,
-                "width": 0.2222222222222222,
-                "height": 0.22
-              },
-              "phase_columns": null
-            },
-            "illumination": {
-              "visible_pixels": 13,
-              "signature": "d01e7844",
-              "centroid": {
-                "x": 0.8118589743589744,
-                "y": 0.4125
-              },
-              "bounds": {
-                "x": 0.8097222222222222,
-                "y": 0.395,
-                "width": 0.006944444444444444,
-                "height": 0.0425
-              },
-              "phase_columns": null
-            },
-            "phase_columns": null
-          },
-          {
-            "time_ms": 526,
-            "control_value": 0,
-            "model_outputs": {
-              "lit_fraction": 0
-            },
-            "frame_count": 15,
-            "canvas_signature": 437541397,
-            "actor": {
-              "visible_pixels": 342,
-              "signature": "9759fdd",
-              "centroid": {
-                "x": 0.4985136452241715,
-                "y": 0.49428362573099416
-              },
-              "bounds": {
-                "x": 0.44166666666666665,
-                "y": 0.4425,
-                "width": 0.09166666666666666,
-                "height": 0.0925
-              },
-              "phase_columns": null
-            },
-            "illumination": {
-              "visible_pixels": 0,
-              "signature": "",
-              "centroid": null,
-              "bounds": null,
-              "phase_columns": null
-            },
-            "phase_columns": null
-          },
-          {
-            "time_ms": 684,
-            "control_value": 360,
-            "model_outputs": {
-              "lit_fraction": 0
-            },
-            "frame_count": 18,
-            "canvas_signature": 2812691110,
-            "actor": {
-              "visible_pixels": 348,
-              "signature": "339cdee1",
-              "centroid": {
-                "x": 0.5001756066411238,
-                "y": 0.5057327586206897
-              },
-              "bounds": {
-                "x": 0.4486111111111111,
-                "y": 0.48,
-                "width": 0.08472222222222223,
-                "height": 0.055
-              },
-              "phase_columns": null
-            },
-            "illumination": {
-              "visible_pixels": 0,
-              "signature": "",
-              "centroid": null,
-              "bounds": null,
-              "phase_columns": null
-            },
-            "phase_columns": null
-          },
-          {
-            "time_ms": 837,
-            "control_value": 90,
-            "model_outputs": {
-              "lit_fraction": 0.49999999999999994
-            },
-            "frame_count": 21,
-            "canvas_signature": 3730834187,
-            "actor": {
-              "visible_pixels": 331,
-              "signature": "e6d0965",
-              "centroid": {
-                "x": 0.4714039946290702,
-                "y": 0.4606570996978852
-              },
-              "bounds": {
-                "x": 0.3416666666666667,
-                "y": 0.3225,
-                "width": 0.19166666666666668,
-                "height": 0.2125
-              },
-              "phase_columns": null
-            },
-            "illumination": {
-              "visible_pixels": 0,
-              "signature": "",
-              "centroid": null,
-              "bounds": null,
-              "phase_columns": null
-            },
-            "phase_columns": null
-          }
-        ],
-        "physicsSamples": [
-          {
-            "time_ms": 1347,
-            "control_value": 0,
-            "model_outputs": {
-              "lit_fraction": 0
-            },
-            "frame_count": 28,
-            "canvas_signature": 1652073241,
-            "actor": {
-              "visible_pixels": 346,
-              "signature": "8777a3eb",
-              "centroid": {
-                "x": 0.5007747270391779,
-                "y": 0.5090823699421966
-              },
-              "bounds": {
-                "x": 0.45,
-                "y": 0.49,
-                "width": 0.08333333333333333,
-                "height": 0.045
-              },
-              "phase_columns": null
-            },
-            "illumination": {
-              "visible_pixels": 0,
-              "signature": "",
-              "centroid": null,
-              "bounds": null,
-              "phase_columns": null
-            },
-            "phase_columns": null
-          },
-          {
-            "time_ms": 1864,
-            "control_value": 90,
-            "model_outputs": {
-              "lit_fraction": 0.49999999999999994
-            },
-            "frame_count": 36,
-            "canvas_signature": 426174447,
-            "actor": {
-              "visible_pixels": 309,
-              "signature": "d2b51c83",
-              "centroid": {
-                "x": 0.4716918374685365,
-                "y": 0.4671035598705502
-              },
-              "bounds": {
-                "x": 0.30694444444444446,
-                "y": 0.3125,
-                "width": 0.2263888888888889,
-                "height": 0.2225
-              },
-              "phase_columns": null
-            },
-            "illumination": {
-              "visible_pixels": 39,
-              "signature": "e994519",
-              "centroid": {
-                "x": 0.8007478632478633,
-                "y": 0.428974358974359
-              },
-              "bounds": {
-                "x": 0.6388888888888888,
-                "y": 0.385,
-                "width": 0.17777777777777778,
-                "height": 0.12
-              },
-              "phase_columns": null
-            },
-            "phase_columns": null
-          },
-          {
-            "time_ms": 2384,
-            "control_value": 180,
-            "model_outputs": {
-              "lit_fraction": 1
-            },
-            "frame_count": 44,
-            "canvas_signature": 103333670,
-            "actor": {
-              "visible_pixels": 243,
-              "signature": "c3122330",
-              "centroid": {
-                "x": 0.5096307727480567,
-                "y": 0.5107818930041153
-              },
-              "bounds": {
-                "x": 0.12777777777777777,
-                "y": 0.49,
-                "width": 0.40555555555555556,
-                "height": 0.045
-              },
-              "phase_columns": null
-            },
-            "illumination": {
-              "visible_pixels": 4402,
-              "signature": "66c2f29e",
-              "centroid": {
-                "x": 0.7598645186531374,
-                "y": 0.45128237164925034
-              },
-              "bounds": {
-                "x": 0.6388888888888888,
-                "y": 0.35,
-                "width": 0.17777777777777778,
-                "height": 0.2075
-              },
-              "phase_columns": null
-            },
-            "phase_columns": null
-          },
-          {
-            "time_ms": 2906,
-            "control_value": 270,
-            "model_outputs": {
-              "lit_fraction": 0.5000000000000001
-            },
-            "frame_count": 52,
-            "canvas_signature": 3500009656,
-            "actor": {
-              "visible_pixels": 279,
-              "signature": "97a5f9a5",
-              "centroid": {
-                "x": 0.48232277976901633,
-                "y": 0.5437724014336918
-              },
-              "bounds": {
-                "x": 0.2652777777777778,
-                "y": 0.49,
-                "width": 0.26805555555555555,
-                "height": 0.2425
-              },
-              "phase_columns": null
-            },
-            "illumination": {
-              "visible_pixels": 3315,
-              "signature": "ecfed028",
-              "centroid": {
-                "x": 0.7496153846153847,
-                "y": 0.4518612368024133
-              },
-              "bounds": {
-                "x": 0.6388888888888888,
-                "y": 0.35,
-                "width": 0.14444444444444443,
-                "height": 0.2075
-              },
-              "phase_columns": null
-            },
-            "phase_columns": null
-          }
-        ],
-        "temporalRuns": []
+        },
+        "sample_counts": {
+          "actor": 4,
+          "physics": 4,
+          "temporal_runs": 0,
+          "temporal_samples": 0,
+          "geometry": 1444
+        },
+        "evidence_sha256": {
+          "actor": "0fb84749d5465202c118c2c5ed77dae7561f0c01fe61634427174bb4056f6677",
+          "physics": "4de2e007b1794220385fde6871136b697a309f1697cd4d7408edecf88c5ec5bd",
+          "temporal": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "geometry": "0ade5af6f418efac2928b3c739282c9af0d0b6ed0477ca686b2665cd11a95396"
+        }
       }
     },
     {
       "golden_id": "buoyancy",
-      "artifact_sha256": "3441947df69027b0925de20ee38e8cd7fd2c9ffc7e9fa208fc7cb7ef2d9ad485",
+      "artifact_sha256": "5a878506c8f5a520a430bbc4abbb50b1be71b5880184a09d12d533765dcc9ec1",
       "actor": "floating_body",
       "action": "floats_sinks",
       "passed": true,
       "check_count": 17,
+      "minimum_clearance_px": null,
       "failures": [],
       "evidence": {
-        "cases": [
-          {
-            "value": 200,
-            "frameChanged": true,
-            "visualSignature": 956361717
+        "browser": {
+          "ready": true,
+          "runtime_error": false,
+          "external_requests": 0,
+          "console_error_count": 0
+        },
+        "contracts": {
+          "actor": {
+            "actor_region": {
+              "x": 0.34,
+              "y": 0.14,
+              "width": 0.32,
+              "height": 0.78
+            },
+            "sample_count": 4,
+            "sample_interval_ms": 140,
+            "actor_color": {
+              "red": 255,
+              "green": 224,
+              "blue": 138,
+              "tolerance": 94
+            }
           },
-          {
-            "value": 750,
-            "frameChanged": true,
-            "visualSignature": 1700343923
+          "physics": {
+            "kind": "buoyancy",
+            "tolerance": 0.01,
+            "settle_ms": 500,
+            "waterline_y": 0.39,
+            "control_values": [
+              250,
+              750,
+              1200
+            ]
           },
-          {
-            "value": 1400,
-            "frameChanged": true,
-            "visualSignature": 331549714
-          }
-        ],
-        "lang": "ar",
-        "dir": "rtl",
-        "ready": true,
-        "runtimeError": false,
-        "alternative": "كثافة الجسم: 750 kg/m³ — النتيجة المحسوبة: 0.75",
-        "idleFrameChanged": true,
-        "reactiveFrameVariants": 3,
-        "externalRequests": 0,
-        "consoleErrors": [],
-        "screenshots": [
-          "buoyancy-mobile-390x844.png",
-          "buoyancy-desktop-1440x900.png"
-        ],
-        "actorSamples": [
-          {
-            "time_ms": 294,
-            "control_value": 750,
-            "model_outputs": {
-              "submerged_fraction": 0.75,
-              "floats": 1
-            },
-            "frame_count": 11,
-            "canvas_signature": 1441240859,
-            "actor": {
-              "visible_pixels": 2653,
-              "signature": "1681f5fe",
-              "centroid": {
-                "x": 0.47961060853541065,
-                "y": 0.3972559366754617
-              },
-              "bounds": {
-                "x": 0.43333333333333335,
-                "y": 0.3425,
-                "width": 0.13333333333333333,
-                "height": 0.2375
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          },
-          {
-            "time_ms": 455,
-            "control_value": 200,
-            "model_outputs": {
-              "submerged_fraction": 0.2,
-              "floats": 1
-            },
-            "frame_count": 14,
-            "canvas_signature": 4159161584,
-            "actor": {
-              "visible_pixels": 2780,
-              "signature": "ea9f93a1",
-              "centroid": {
-                "x": 0.47375,
-                "y": 0.3188776978417266
-              },
-              "bounds": {
-                "x": 0.43472222222222223,
-                "y": 0.2525,
-                "width": 0.13194444444444445,
-                "height": 0.2375
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          },
-          {
-            "time_ms": 608,
-            "control_value": 1400,
-            "model_outputs": {
-              "submerged_fraction": 1,
-              "floats": 0
-            },
-            "frame_count": 17,
-            "canvas_signature": 3285079542,
-            "actor": {
-              "visible_pixels": 1806,
-              "signature": "88e68781",
-              "centroid": {
-                "x": 0.47947582133628647,
-                "y": 0.49060354374307863
-              },
-              "bounds": {
-                "x": 0.43472222222222223,
-                "y": 0.445,
-                "width": 0.13055555555555556,
-                "height": 0.2375
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          },
-          {
-            "time_ms": 758,
-            "control_value": 750,
-            "model_outputs": {
-              "submerged_fraction": 0.75,
-              "floats": 1
-            },
-            "frame_count": 20,
-            "canvas_signature": 2573003002,
-            "actor": {
-              "visible_pixels": 2481,
-              "signature": "b4c8e0b3",
-              "centroid": {
-                "x": 0.47909892964306505,
-                "y": 0.40797460701330107
-              },
-              "bounds": {
-                "x": 0.43333333333333335,
-                "y": 0.355,
-                "width": 0.13333333333333333,
-                "height": 0.2375
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          }
-        ],
-        "physicsSamples": [
-          {
-            "time_ms": 1282,
-            "control_value": 250,
-            "model_outputs": {
-              "submerged_fraction": 0.25,
-              "floats": 1
-            },
-            "frame_count": 28,
-            "canvas_signature": 111129900,
-            "actor": {
-              "visible_pixels": 2699,
-              "signature": "2871cb9b",
-              "centroid": {
-                "x": 0.473731526079618,
-                "y": 0.2980020377917747
-              },
-              "bounds": {
-                "x": 0.43472222222222223,
-                "y": 0.2325,
-                "width": 0.13194444444444445,
-                "height": 0.2375
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          },
-          {
-            "time_ms": 1800,
-            "control_value": 750,
-            "model_outputs": {
-              "submerged_fraction": 0.75,
-              "floats": 1
-            },
-            "frame_count": 35,
-            "canvas_signature": 1504981782,
-            "actor": {
-              "visible_pixels": 2719,
-              "signature": "30671cda",
-              "centroid": {
-                "x": 0.47688335172244695,
-                "y": 0.36867966164030896
-              },
-              "bounds": {
-                "x": 0.43333333333333335,
-                "y": 0.3125,
-                "width": 0.13333333333333333,
-                "height": 0.2375
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          },
-          {
-            "time_ms": 2321,
-            "control_value": 1200,
-            "model_outputs": {
-              "submerged_fraction": 1,
-              "floats": 0
-            },
-            "frame_count": 44,
-            "canvas_signature": 378670063,
-            "actor": {
-              "visible_pixels": 951,
-              "signature": "5795599a",
-              "centroid": {
-                "x": 0.470208260310784,
-                "y": 0.590651945320715
-              },
-              "bounds": {
-                "x": 0.43472222222222223,
-                "y": 0.56,
-                "width": 0.13055555555555556,
-                "height": 0.23
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          }
-        ],
-        "temporalRuns": []
+          "geometry": null
+        },
+        "sample_counts": {
+          "actor": 4,
+          "physics": 3,
+          "temporal_runs": 0,
+          "temporal_samples": 0,
+          "geometry": 0
+        },
+        "evidence_sha256": {
+          "actor": "f542f3c8aa29e4f6ede5122f709de4d6c8e6de93d097df5e07588cd7963e399a",
+          "physics": "36d8b6ee774804ff684ff4ac8ca0c7d7e06ab0aabca6589295f71a4a5c9e016f",
+          "temporal": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "geometry": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        }
       }
     },
     {
       "golden_id": "pendulum",
-      "artifact_sha256": "c04002bd7a53840084c976374d39f4700f68eec09946567807d298b3b81136e3",
+      "artifact_sha256": "bf405874ba30186d7b8e33835efa8b9bd1e1fa26144a83700ee779c7fa01fa9e",
       "actor": "pendulum_bob",
       "action": "oscillates",
       "passed": true,
       "check_count": 13,
+      "minimum_clearance_px": null,
       "failures": [],
       "evidence": {
-        "cases": [
-          {
-            "value": 0.25,
-            "frameChanged": true,
-            "visualSignature": 2302330405
+        "browser": {
+          "ready": true,
+          "runtime_error": false,
+          "external_requests": 0,
+          "console_error_count": 0
+        },
+        "contracts": {
+          "actor": {
+            "actor_region": {
+              "x": 0.39,
+              "y": 0.18,
+              "width": 0.21,
+              "height": 0.67
+            },
+            "sample_count": 4,
+            "sample_interval_ms": 140,
+            "actor_color": {
+              "red": 239,
+              "green": 174,
+              "blue": 72,
+              "tolerance": 35
+            }
           },
-          {
-            "value": 1,
-            "frameChanged": true,
-            "visualSignature": 2621375202
-          },
-          {
-            "value": 2,
-            "frameChanged": true,
-            "visualSignature": 1609783812
-          }
-        ],
-        "lang": "ar",
-        "dir": "rtl",
-        "ready": true,
-        "runtimeError": false,
-        "alternative": "طول البندول: 1 m — النتيجة المحسوبة: 2.01",
-        "idleFrameChanged": true,
-        "reactiveFrameVariants": 3,
-        "externalRequests": 0,
-        "consoleErrors": [],
-        "screenshots": [
-          "pendulum-mobile-390x844.png",
-          "pendulum-desktop-1440x900.png"
-        ],
-        "actorSamples": [
-          {
-            "time_ms": 415,
-            "control_value": 1,
-            "model_outputs": {
-              "period_s": 2.0060666807106475
-            },
-            "frame_count": 14,
-            "canvas_signature": 1755168231,
-            "actor": {
-              "visible_pixels": 223,
-              "signature": "eb80591",
-              "centroid": {
-                "x": 0.5454035874439461,
-                "y": 0.4539461883408072
-              },
-              "bounds": {
-                "x": 0.5013888888888889,
-                "y": 0.4075,
-                "width": 0.06388888888888888,
-                "height": 0.1
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          },
-          {
-            "time_ms": 570,
-            "control_value": 0.25,
-            "model_outputs": {
-              "period_s": 1.0030333403553238
-            },
-            "frame_count": 24,
-            "canvas_signature": 1716775263,
-            "actor": {
-              "visible_pixels": 207,
-              "signature": "5bd4c9c8",
-              "centroid": {
-                "x": 0.5360171765968867,
-                "y": 0.2184903381642512
-              },
-              "bounds": {
-                "x": 0.4930555555555556,
-                "y": 0.18,
-                "width": 0.06388888888888888,
-                "height": 0.0875
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          },
-          {
-            "time_ms": 721,
-            "control_value": 2,
-            "model_outputs": {
-              "period_s": 2.837006706885775
-            },
-            "frame_count": 28,
-            "canvas_signature": 110472348,
-            "actor": {
-              "visible_pixels": 189,
-              "signature": "36efc104",
-              "centroid": {
-                "x": 0.5602807172251617,
-                "y": 0.6875396825396826
-              },
-              "bounds": {
-                "x": 0.5194444444444445,
-                "y": 0.6425,
-                "width": 0.06388888888888888,
-                "height": 0.0975
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          },
-          {
-            "time_ms": 868,
-            "control_value": 1,
-            "model_outputs": {
-              "period_s": 2.0060666807106475
-            },
-            "frame_count": 33,
-            "canvas_signature": 1058311172,
-            "actor": {
-              "visible_pixels": 191,
-              "signature": "becc936c",
-              "centroid": {
-                "x": 0.5446116928446771,
-                "y": 0.4643979057591623
-              },
-              "bounds": {
-                "x": 0.5041666666666667,
-                "y": 0.42,
-                "width": 0.06388888888888888,
-                "height": 0.0975
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          }
-        ],
-        "physicsSamples": [
-          {
-            "time_ms": 1375,
-            "control_value": 0.25,
-            "model_outputs": {
-              "period_s": 1.0030333403553238
-            },
-            "frame_count": 69,
-            "canvas_signature": 1827142231,
-            "actor": {
-              "visible_pixels": 173,
-              "signature": "772af83e",
-              "centroid": {
-                "x": 0.5227119460500963,
-                "y": 0.21604046242774566
-              },
-              "bounds": {
-                "x": 0.48333333333333334,
-                "y": 0.18,
-                "width": 0.06388888888888888,
-                "height": 0.085
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          },
-          {
-            "time_ms": 1887,
-            "control_value": 1,
-            "model_outputs": {
-              "period_s": 2.0060666807106475
-            },
-            "frame_count": 88,
-            "canvas_signature": 2795478992,
-            "actor": {
-              "visible_pixels": 183,
-              "signature": "b717f53a",
-              "centroid": {
-                "x": 0.5359289617486339,
-                "y": 0.44596994535519124
-              },
-              "bounds": {
-                "x": 0.49444444444444446,
-                "y": 0.4,
-                "width": 0.06388888888888888,
-                "height": 0.1
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          },
-          {
-            "time_ms": 2405,
-            "control_value": 2,
-            "model_outputs": {
-              "period_s": 2.837006706885775
-            },
-            "frame_count": 102,
-            "canvas_signature": 2677389021,
-            "actor": {
-              "visible_pixels": 192,
-              "signature": "e974d0c4",
-              "centroid": {
-                "x": 0.5639178240740741,
-                "y": 0.7521744791666667
-              },
-              "bounds": {
-                "x": 0.5236111111111111,
-                "y": 0.7075,
-                "width": 0.06388888888888888,
-                "height": 0.0975
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          }
-        ],
-        "temporalRuns": [
-          {
-            "control_value": 1,
-            "samples": [
+          "physics": {
+            "kind": "pendulum",
+            "gravity_m_s2": 9.81,
+            "settle_ms": 500,
+            "period_tolerance_ratio": 0.1,
+            "pivot_x": 0.5,
+            "position_tolerance": 0.007,
+            "endpoint_tolerance": 0.025,
+            "control_values": [
+              0.25,
+              1.0,
+              2.0
+            ],
+            "temporal_runs": [
               {
-                "time_ms": 2918,
-                "control_value": 1,
-                "model_outputs": {
-                  "period_s": 2.0060666807106475
-                },
-                "frame_count": 121,
-                "canvas_signature": 2400043865,
-                "actor": {
-                  "visible_pixels": 223,
-                  "signature": "6dd7ad87",
-                  "centroid": {
-                    "x": 0.5350336322869955,
-                    "y": 0.4463116591928251
-                  },
-                  "bounds": {
-                    "x": 0.49027777777777776,
-                    "y": 0.4,
-                    "width": 0.06527777777777778,
-                    "height": 0.1
-                  },
-                  "phase_columns": null
-                },
-                "illumination": null,
-                "phase_columns": null
-              },
-              {
-                "time_ms": 3404,
-                "control_value": 1,
-                "model_outputs": {
-                  "period_s": 2.0060666807106475
-                },
-                "frame_count": 139,
-                "canvas_signature": 2607509076,
-                "actor": {
-                  "visible_pixels": 224,
-                  "signature": "278f752c",
-                  "centroid": {
-                    "x": 0.5144779265873016,
-                    "y": 0.44484375
-                  },
-                  "bounds": {
-                    "x": 0.4708333333333333,
-                    "y": 0.4,
-                    "width": 0.06388888888888888,
-                    "height": 0.0975
-                  },
-                  "phase_columns": null
-                },
-                "illumination": null,
-                "phase_columns": null
-              },
-              {
-                "time_ms": 3895,
-                "control_value": 1,
-                "model_outputs": {
-                  "period_s": 2.0060666807106475
-                },
-                "frame_count": 157,
-                "canvas_signature": 4133875320,
-                "actor": {
-                  "visible_pixels": 188,
-                  "signature": "86904af1",
-                  "centroid": {
-                    "x": 0.5241873522458629,
-                    "y": 0.44569148936170216
-                  },
-                  "bounds": {
-                    "x": 0.48333333333333334,
-                    "y": 0.4,
-                    "width": 0.06388888888888888,
-                    "height": 0.1
-                  },
-                  "phase_columns": null
-                },
-                "illumination": null,
-                "phase_columns": null
-              },
-              {
-                "time_ms": 4383,
-                "control_value": 1,
-                "model_outputs": {
-                  "period_s": 2.0060666807106475
-                },
-                "frame_count": 175,
-                "canvas_signature": 3415391272,
-                "actor": {
-                  "visible_pixels": 188,
-                  "signature": "507f1347",
-                  "centroid": {
-                    "x": 0.5460328014184397,
-                    "y": 0.44432180851063824
-                  },
-                  "bounds": {
-                    "x": 0.5055555555555555,
-                    "y": 0.4,
-                    "width": 0.06388888888888888,
-                    "height": 0.0975
-                  },
-                  "phase_columns": null
-                },
-                "illumination": null,
-                "phase_columns": null
-              },
-              {
-                "time_ms": 4872,
-                "control_value": 1,
-                "model_outputs": {
-                  "period_s": 2.0060666807106475
-                },
-                "frame_count": 193,
-                "canvas_signature": 2375351525,
-                "actor": {
-                  "visible_pixels": 225,
-                  "signature": "4ab1a649",
-                  "centroid": {
-                    "x": 0.5380246913580247,
-                    "y": 0.4462888888888889
-                  },
-                  "bounds": {
-                    "x": 0.4930555555555556,
-                    "y": 0.4,
-                    "width": 0.06527777777777778,
-                    "height": 0.1
-                  },
-                  "phase_columns": null
-                },
-                "illumination": null,
-                "phase_columns": null
+                "control_value": 1.0,
+                "sample_count": 5,
+                "sample_interval_ms": 480
               }
             ]
-          }
-        ]
+          },
+          "geometry": null
+        },
+        "sample_counts": {
+          "actor": 4,
+          "physics": 3,
+          "temporal_runs": 1,
+          "temporal_samples": 5,
+          "geometry": 0
+        },
+        "evidence_sha256": {
+          "actor": "2e3a50851707c2f27b0ab8605841e9a6ea63c292aef79efcf63805fdc15b0580",
+          "physics": "6af3ae16363f0b4d12a5fb83c1b776e3d1d078a6f6a1dcad8ce226d4093c6c55",
+          "temporal": "02e0597b35f8854bf6691ac4ab4128d2d9c696c33b80a5338c890320730d06a9",
+          "geometry": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        }
       }
     },
     {
       "golden_id": "simple_circuit",
-      "artifact_sha256": "be857e789827646a68baa70fba8da4056fb7d54d5b493346ed4f49d15077b11a",
+      "artifact_sha256": "48c5eef46d6f680e296dda2d76793c18e320d73a7f7b5f87e9a81fde146fb09a",
       "actor": "charge_carrier",
       "action": "flows",
       "passed": true,
       "check_count": 14,
+      "minimum_clearance_px": null,
       "failures": [],
       "evidence": {
-        "cases": [
-          {
-            "value": 2,
-            "frameChanged": true,
-            "visualSignature": 3045041429
+        "browser": {
+          "ready": true,
+          "runtime_error": false,
+          "external_requests": 0,
+          "console_error_count": 0
+        },
+        "contracts": {
+          "actor": {
+            "actor_region": {
+              "x": 0.1,
+              "y": 0.2,
+              "width": 0.8,
+              "height": 0.5
+            },
+            "sample_count": 4,
+            "sample_interval_ms": 140,
+            "actor_color": {
+              "red": 146,
+              "green": 231,
+              "blue": 255,
+              "tolerance": 68
+            }
           },
-          {
-            "value": 6,
-            "frameChanged": true,
-            "visualSignature": 4045456631
-          },
-          {
-            "value": 20,
-            "frameChanged": true,
-            "visualSignature": 4249911775
-          }
-        ],
-        "lang": "ar",
-        "dir": "rtl",
-        "ready": true,
-        "runtimeError": false,
-        "alternative": "المقاومة: 6 Ω — النتيجة المحسوبة: 1.00",
-        "idleFrameChanged": true,
-        "reactiveFrameVariants": 3,
-        "externalRequests": 0,
-        "consoleErrors": [],
-        "screenshots": [
-          "simple_circuit-mobile-390x844.png",
-          "simple_circuit-desktop-1440x900.png"
-        ],
-        "actorSamples": [
-          {
-            "time_ms": 347,
-            "control_value": 6,
-            "model_outputs": {
-              "current_a": 1,
-              "power_w": 6
-            },
-            "frame_count": 11,
-            "canvas_signature": 1339763583,
-            "actor": {
-              "visible_pixels": 75,
-              "signature": "7973274f",
-              "centroid": {
-                "x": 0.26385185185185184,
-                "y": 0.4254
-              },
-              "bounds": {
-                "x": 0.11388888888888889,
-                "y": 0.31,
-                "width": 0.7069444444444445,
-                "height": 0.225
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          },
-          {
-            "time_ms": 502,
-            "control_value": 2,
-            "model_outputs": {
-              "current_a": 3,
-              "power_w": 18
-            },
-            "frame_count": 14,
-            "canvas_signature": 3931301222,
-            "actor": {
-              "visible_pixels": 81,
-              "signature": "986c0c73",
-              "centroid": {
-                "x": 0.25776748971193414,
-                "y": 0.42064814814814816
-              },
-              "bounds": {
-                "x": 0.11388888888888889,
-                "y": 0.31,
-                "width": 0.7069444444444445,
-                "height": 0.225
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          },
-          {
-            "time_ms": 656,
-            "control_value": 20,
-            "model_outputs": {
-              "current_a": 0.3,
-              "power_w": 1.8
-            },
-            "frame_count": 17,
-            "canvas_signature": 1020761929,
-            "actor": {
-              "visible_pixels": 75,
-              "signature": "9905ee67",
-              "centroid": {
-                "x": 0.24585185185185182,
-                "y": 0.42619999999999997
-              },
-              "bounds": {
-                "x": 0.11388888888888889,
-                "y": 0.31,
-                "width": 0.7069444444444445,
-                "height": 0.225
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          },
-          {
-            "time_ms": 809,
-            "control_value": 6,
-            "model_outputs": {
-              "current_a": 1,
-              "power_w": 6
-            },
-            "frame_count": 20,
-            "canvas_signature": 2056116947,
-            "actor": {
-              "visible_pixels": 75,
-              "signature": "7f3360e3",
-              "centroid": {
-                "x": 0.24581481481481482,
-                "y": 0.4282666666666667
-              },
-              "bounds": {
-                "x": 0.11388888888888889,
-                "y": 0.31,
-                "width": 0.7069444444444445,
-                "height": 0.225
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          }
-        ],
-        "physicsSamples": [
-          {
-            "time_ms": 1330,
-            "control_value": 2,
-            "model_outputs": {
-              "current_a": 3,
-              "power_w": 18
-            },
-            "frame_count": 27,
-            "canvas_signature": 2446154673,
-            "actor": {
-              "visible_pixels": 86,
-              "signature": "33215739",
-              "centroid": {
-                "x": 0.3059108527131783,
-                "y": 0.4500581395348837
-              },
-              "bounds": {
-                "x": 0.11388888888888889,
-                "y": 0.31,
-                "width": 0.7055555555555556,
-                "height": 0.2275
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          },
-          {
-            "time_ms": 1847,
-            "control_value": 6,
-            "model_outputs": {
-              "current_a": 1,
-              "power_w": 6
-            },
-            "frame_count": 35,
-            "canvas_signature": 305531074,
-            "actor": {
-              "visible_pixels": 85,
-              "signature": "e4bcae8b",
-              "centroid": {
-                "x": 0.30243464052287583,
-                "y": 0.4285
-              },
-              "bounds": {
-                "x": 0.11388888888888889,
-                "y": 0.31,
-                "width": 0.7069444444444445,
-                "height": 0.225
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          },
-          {
-            "time_ms": 2391,
-            "control_value": 12,
-            "model_outputs": {
-              "current_a": 0.5,
-              "power_w": 3
-            },
-            "frame_count": 44,
-            "canvas_signature": 2114730306,
-            "actor": {
-              "visible_pixels": 71,
-              "signature": "25041bfa",
-              "centroid": {
-                "x": 0.2912363067292645,
-                "y": 0.4346830985915493
-              },
-              "bounds": {
-                "x": 0.11388888888888889,
-                "y": 0.31,
-                "width": 0.7069444444444445,
-                "height": 0.225
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          }
-        ],
-        "temporalRuns": [
-          {
-            "control_value": 2,
-            "samples": [
+          "physics": {
+            "kind": "simple_circuit",
+            "tolerance": 0.02,
+            "settle_ms": 500,
+            "minimum_speed_ratio": 1.1,
+            "control_values": [
+              2,
+              6,
+              12
+            ],
+            "temporal_runs": [
               {
-                "time_ms": 2924,
                 "control_value": 2,
-                "model_outputs": {
-                  "current_a": 3,
-                  "power_w": 18
-                },
-                "frame_count": 52,
-                "canvas_signature": 567667795,
-                "actor": {
-                  "visible_pixels": 68,
-                  "signature": "cb5ca718",
-                  "centroid": {
-                    "x": 0.28174019607843137,
-                    "y": 0.43981617647058824
-                  },
-                  "bounds": {
-                    "x": 0.11388888888888889,
-                    "y": 0.4125,
-                    "width": 0.7069444444444445,
-                    "height": 0.1225
-                  },
-                  "phase_columns": null
-                },
-                "illumination": null,
-                "phase_columns": null
+                "sample_count": 6,
+                "sample_interval_ms": 180
               },
               {
-                "time_ms": 3113,
-                "control_value": 2,
-                "model_outputs": {
-                  "current_a": 3,
-                  "power_w": 18
-                },
-                "frame_count": 54,
-                "canvas_signature": 3267429793,
-                "actor": {
-                  "visible_pixels": 74,
-                  "signature": "ef868a95",
-                  "centroid": {
-                    "x": 0.3201951951951952,
-                    "y": 0.4352027027027027
-                  },
-                  "bounds": {
-                    "x": 0.11388888888888889,
-                    "y": 0.31,
-                    "width": 0.7069444444444445,
-                    "height": 0.225
-                  },
-                  "phase_columns": null
-                },
-                "illumination": null,
-                "phase_columns": null
-              },
-              {
-                "time_ms": 3301,
-                "control_value": 2,
-                "model_outputs": {
-                  "current_a": 3,
-                  "power_w": 18
-                },
-                "frame_count": 56,
-                "canvas_signature": 2627569252,
-                "actor": {
-                  "visible_pixels": 100,
-                  "signature": "f2b43cc5",
-                  "centroid": {
-                    "x": 0.3368055555555556,
-                    "y": 0.45315
-                  },
-                  "bounds": {
-                    "x": 0.11388888888888889,
-                    "y": 0.31,
-                    "width": 0.7083333333333334,
-                    "height": 0.225
-                  },
-                  "phase_columns": null
-                },
-                "illumination": null,
-                "phase_columns": null
-              },
-              {
-                "time_ms": 3492,
-                "control_value": 2,
-                "model_outputs": {
-                  "current_a": 3,
-                  "power_w": 18
-                },
-                "frame_count": 59,
-                "canvas_signature": 1647597808,
-                "actor": {
-                  "visible_pixels": 67,
-                  "signature": "1e30091c",
-                  "centroid": {
-                    "x": 0.25849917081260365,
-                    "y": 0.4248880597014925
-                  },
-                  "bounds": {
-                    "x": 0.11388888888888889,
-                    "y": 0.31,
-                    "width": 0.6902777777777778,
-                    "height": 0.225
-                  },
-                  "phase_columns": null
-                },
-                "illumination": null,
-                "phase_columns": null
-              },
-              {
-                "time_ms": 3685,
-                "control_value": 2,
-                "model_outputs": {
-                  "current_a": 3,
-                  "power_w": 18
-                },
-                "frame_count": 61,
-                "canvas_signature": 2672613307,
-                "actor": {
-                  "visible_pixels": 66,
-                  "signature": "65a8a55d",
-                  "centroid": {
-                    "x": 0.25,
-                    "y": 0.4271969696969697
-                  },
-                  "bounds": {
-                    "x": 0.11388888888888889,
-                    "y": 0.315,
-                    "width": 0.7069444444444445,
-                    "height": 0.22
-                  },
-                  "phase_columns": null
-                },
-                "illumination": null,
-                "phase_columns": null
-              },
-              {
-                "time_ms": 3881,
-                "control_value": 2,
-                "model_outputs": {
-                  "current_a": 3,
-                  "power_w": 18
-                },
-                "frame_count": 63,
-                "canvas_signature": 3928572676,
-                "actor": {
-                  "visible_pixels": 68,
-                  "signature": "a91f639",
-                  "centroid": {
-                    "x": 0.27277369281045755,
-                    "y": 0.42628676470588234
-                  },
-                  "bounds": {
-                    "x": 0.11388888888888889,
-                    "y": 0.345,
-                    "width": 0.7069444444444445,
-                    "height": 0.19
-                  },
-                  "phase_columns": null
-                },
-                "illumination": null,
-                "phase_columns": null
+                "control_value": 12,
+                "sample_count": 6,
+                "sample_interval_ms": 180
               }
             ]
           },
-          {
-            "control_value": 12,
-            "samples": [
-              {
-                "time_ms": 4394,
-                "control_value": 12,
-                "model_outputs": {
-                  "current_a": 0.5,
-                  "power_w": 3
-                },
-                "frame_count": 70,
-                "canvas_signature": 3098811658,
-                "actor": {
-                  "visible_pixels": 78,
-                  "signature": "7e481c8d",
-                  "centroid": {
-                    "x": 0.31132478632478633,
-                    "y": 0.43403846153846154
-                  },
-                  "bounds": {
-                    "x": 0.11388888888888889,
-                    "y": 0.31,
-                    "width": 0.6958333333333333,
-                    "height": 0.225
-                  },
-                  "phase_columns": null
-                },
-                "illumination": null,
-                "phase_columns": null
-              },
-              {
-                "time_ms": 4598,
-                "control_value": 12,
-                "model_outputs": {
-                  "current_a": 0.5,
-                  "power_w": 3
-                },
-                "frame_count": 73,
-                "canvas_signature": 1921884537,
-                "actor": {
-                  "visible_pixels": 74,
-                  "signature": "299f0ade",
-                  "centroid": {
-                    "x": 0.296996996996997,
-                    "y": 0.414222972972973
-                  },
-                  "bounds": {
-                    "x": 0.11388888888888889,
-                    "y": 0.31,
-                    "width": 0.6958333333333333,
-                    "height": 0.225
-                  },
-                  "phase_columns": null
-                },
-                "illumination": null,
-                "phase_columns": null
-              },
-              {
-                "time_ms": 4797,
-                "control_value": 12,
-                "model_outputs": {
-                  "current_a": 0.5,
-                  "power_w": 3
-                },
-                "frame_count": 75,
-                "canvas_signature": 3942310596,
-                "actor": {
-                  "visible_pixels": 69,
-                  "signature": "74aa6e76",
-                  "centroid": {
-                    "x": 0.277073268921095,
-                    "y": 0.4215942028985507
-                  },
-                  "bounds": {
-                    "x": 0.11388888888888889,
-                    "y": 0.31,
-                    "width": 0.5333333333333333,
-                    "height": 0.225
-                  },
-                  "phase_columns": null
-                },
-                "illumination": null,
-                "phase_columns": null
-              },
-              {
-                "time_ms": 5000,
-                "control_value": 12,
-                "model_outputs": {
-                  "current_a": 0.5,
-                  "power_w": 3
-                },
-                "frame_count": 78,
-                "canvas_signature": 462867136,
-                "actor": {
-                  "visible_pixels": 57,
-                  "signature": "592a7839",
-                  "centroid": {
-                    "x": 0.21388888888888888,
-                    "y": 0.4444736842105263
-                  },
-                  "bounds": {
-                    "x": 0.11388888888888889,
-                    "y": 0.4125,
-                    "width": 0.49166666666666664,
-                    "height": 0.1225
-                  },
-                  "phase_columns": null
-                },
-                "illumination": null,
-                "phase_columns": null
-              },
-              {
-                "time_ms": 5203,
-                "control_value": 12,
-                "model_outputs": {
-                  "current_a": 0.5,
-                  "power_w": 3
-                },
-                "frame_count": 80,
-                "canvas_signature": 3828542622,
-                "actor": {
-                  "visible_pixels": 62,
-                  "signature": "3570e50c",
-                  "centroid": {
-                    "x": 0.210752688172043,
-                    "y": 0.4384274193548387
-                  },
-                  "bounds": {
-                    "x": 0.11388888888888889,
-                    "y": 0.3675,
-                    "width": 0.4875,
-                    "height": 0.1675
-                  },
-                  "phase_columns": null
-                },
-                "illumination": null,
-                "phase_columns": null
-              },
-              {
-                "time_ms": 5395,
-                "control_value": 12,
-                "model_outputs": {
-                  "current_a": 0.5,
-                  "power_w": 3
-                },
-                "frame_count": 82,
-                "canvas_signature": 2086682836,
-                "actor": {
-                  "visible_pixels": 77,
-                  "signature": "8c33e5cf",
-                  "centroid": {
-                    "x": 0.2364177489177489,
-                    "y": 0.418474025974026
-                  },
-                  "bounds": {
-                    "x": 0.11388888888888889,
-                    "y": 0.31,
-                    "width": 0.48333333333333334,
-                    "height": 0.225
-                  },
-                  "phase_columns": null
-                },
-                "illumination": null,
-                "phase_columns": null
-              }
-            ]
-          }
-        ]
+          "geometry": null
+        },
+        "sample_counts": {
+          "actor": 4,
+          "physics": 3,
+          "temporal_runs": 2,
+          "temporal_samples": 12,
+          "geometry": 0
+        },
+        "evidence_sha256": {
+          "actor": "90be6d3100d9c11738aa19479f93e36d8cc97669fc81d3ceb79c2d6024ba5ecb",
+          "physics": "995476dcc4011518e6f252cf72ec8add92a13d0c663d0b866a632bdde3610da8",
+          "temporal": "1ef47e5413e28678962f68b106999d08cfc9018705d4be552ccc7755d7ffa4e6",
+          "geometry": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        }
       }
     },
     {
       "golden_id": "sound_pitch",
-      "artifact_sha256": "a5ea03cd5a4634c3b1fb929de45d2a13d6736246109cd0041420dd82ddb63793",
+      "artifact_sha256": "07d43e091e144011761ae06403c494e5099263aabdabc310df41c4e87672d631",
       "actor": "wavefront",
       "action": "propagates",
       "passed": true,
       "check_count": 14,
+      "minimum_clearance_px": null,
       "failures": [],
       "evidence": {
-        "cases": [
-          {
-            "value": 110,
-            "frameChanged": true,
-            "visualSignature": 2653317491
+        "browser": {
+          "ready": true,
+          "runtime_error": false,
+          "external_requests": 0,
+          "console_error_count": 0
+        },
+        "contracts": {
+          "actor": {
+            "actor_region": {
+              "x": 0.2,
+              "y": 0.28,
+              "width": 0.74,
+              "height": 0.38
+            },
+            "sample_count": 4,
+            "sample_interval_ms": 140,
+            "actor_color": {
+              "red": 102,
+              "green": 226,
+              "blue": 255,
+              "tolerance": 28
+            }
           },
-          {
-            "value": 440,
-            "frameChanged": true,
-            "visualSignature": 556536679
-          },
-          {
-            "value": 880,
-            "frameChanged": true,
-            "visualSignature": 1527718310
-          }
-        ],
-        "lang": "ar",
-        "dir": "rtl",
-        "ready": true,
-        "runtimeError": false,
-        "alternative": "تردد الموجة الصوتية: 440 Hz — النتيجة المحسوبة: 0.78",
-        "idleFrameChanged": true,
-        "reactiveFrameVariants": 3,
-        "externalRequests": 0,
-        "consoleErrors": [],
-        "screenshots": [
-          "sound_pitch-mobile-390x844.png",
-          "sound_pitch-desktop-1440x900.png"
-        ],
-        "actorSamples": [
-          {
-            "time_ms": 311,
-            "control_value": 440,
-            "model_outputs": {
-              "wavelength_m": 0.7795454545454545,
-              "period_ms": 2.272727272727273
-            },
-            "frame_count": 11,
-            "canvas_signature": 1009596247,
-            "actor": {
-              "visible_pixels": 1955,
-              "signature": "e9783bc1",
-              "centroid": {
-                "x": 0.5392803353225348,
-                "y": 0.524418158567775
-              },
-              "bounds": {
-                "x": 0.2,
-                "y": 0.38,
-                "width": 0.7319444444444444,
-                "height": 0.28
-              },
-              "phase_columns": [
-                0.5585365853658536,
-                0.5054237288135593,
-                0.4671205357142857,
-                0.5897712418300654,
-                0.5762790697674418,
-                0.42200704225352115,
-                0.5116964285714285,
-                0.6400666666666666,
-                0.5110804020100502,
-                0.4420833333333334,
-                0.5714889705882353,
-                0.5719491525423729,
-                0.49537356321839077,
-                0.5202848101265822,
-                0.52875,
-                0.52875
-              ]
-            },
-            "illumination": null,
-            "phase_columns": [
-              0.5585365853658536,
-              0.5054237288135593,
-              0.4671205357142857,
-              0.5897712418300654,
-              0.5762790697674418,
-              0.42200704225352115,
-              0.5116964285714285,
-              0.6400666666666666,
-              0.5110804020100502,
-              0.4420833333333334,
-              0.5714889705882353,
-              0.5719491525423729,
-              0.49537356321839077,
-              0.5202848101265822,
-              0.52875,
-              0.52875
-            ]
-          },
-          {
-            "time_ms": 464,
-            "control_value": 110,
-            "model_outputs": {
-              "wavelength_m": 3.118181818181818,
-              "period_ms": 9.090909090909092
-            },
-            "frame_count": 14,
-            "canvas_signature": 4255888613,
-            "actor": {
-              "visible_pixels": 1434,
-              "signature": "2553e3f1",
-              "centroid": {
-                "x": 0.5502934681543468,
-                "y": 0.5197472105997211
-              },
-              "bounds": {
-                "x": 0.2,
-                "y": 0.3925,
-                "width": 0.7319444444444444,
-                "height": 0.2675
-              },
-              "phase_columns": [
-                0.5548888888888889,
-                0.5908333333333333,
-                0.5638541666666667,
-                0.4734146341463415,
-                0.40204268292682926,
-                0.44451327433628324,
-                0.5655105633802817,
-                0.646015625,
-                0.6248235294117648,
-                0.5293653846153846,
-                0.4487777777777778,
-                0.46073033707865174,
-                0.5157336956521739,
-                0.5375,
-                0.52875,
-                0.52875
-              ]
-            },
-            "illumination": null,
-            "phase_columns": [
-              0.5548888888888889,
-              0.5908333333333333,
-              0.5638541666666667,
-              0.4734146341463415,
-              0.40204268292682926,
-              0.44451327433628324,
-              0.5655105633802817,
-              0.646015625,
-              0.6248235294117648,
-              0.5293653846153846,
-              0.4487777777777778,
-              0.46073033707865174,
-              0.5157336956521739,
-              0.5375,
-              0.52875,
-              0.52875
-            ]
-          },
-          {
-            "time_ms": 615,
-            "control_value": 880,
-            "model_outputs": {
-              "wavelength_m": 0.38977272727272727,
-              "period_ms": 1.1363636363636365
-            },
-            "frame_count": 17,
-            "canvas_signature": 3652891541,
-            "actor": {
-              "visible_pixels": 2559,
-              "signature": "8646b2a4",
-              "centroid": {
-                "x": 0.5335938517650124,
-                "y": 0.5247274325908559
-              },
-              "bounds": {
-                "x": 0.2,
-                "y": 0.38,
-                "width": 0.7319444444444444,
-                "height": 0.28
-              },
-              "phase_columns": [
-                0.5371462264150944,
-                0.49181451612903226,
-                0.5891558441558441,
-                0.47328608247422677,
-                0.5485900473933649,
-                0.5223568702290077,
-                0.5040865384615385,
-                0.5760405405405405,
-                0.4402594339622642,
-                0.595925,
-                0.49979395604395604,
-                0.5274038461538462,
-                0.545,
-                0.5162962962962963,
-                0.52875,
-                0.52875
-              ]
-            },
-            "illumination": null,
-            "phase_columns": [
-              0.5371462264150944,
-              0.49181451612903226,
-              0.5891558441558441,
-              0.47328608247422677,
-              0.5485900473933649,
-              0.5223568702290077,
-              0.5040865384615385,
-              0.5760405405405405,
-              0.4402594339622642,
-              0.595925,
-              0.49979395604395604,
-              0.5274038461538462,
-              0.545,
-              0.5162962962962963,
-              0.52875,
-              0.52875
-            ]
-          },
-          {
-            "time_ms": 775,
-            "control_value": 440,
-            "model_outputs": {
-              "wavelength_m": 0.7795454545454545,
-              "period_ms": 2.272727272727273
-            },
-            "frame_count": 20,
-            "canvas_signature": 194678261,
-            "actor": {
-              "visible_pixels": 2074,
-              "signature": "e29dc0b9",
-              "centroid": {
-                "x": 0.5373874959819994,
-                "y": 0.5251518804243009
-              },
-              "bounds": {
-                "x": 0.2,
-                "y": 0.3825,
-                "width": 0.7319444444444444,
-                "height": 0.2775
-              },
-              "phase_columns": [
-                0.558623595505618,
-                0.504938524590164,
-                0.48037401574803146,
-                0.6060714285714286,
-                0.5336190476190477,
-                0.41638888888888886,
-                0.5673489010989011,
-                0.570453216374269,
-                0.42406028368794324,
-                0.5289141414141414,
-                0.6000604838709678,
-                0.4915301724137931,
-                0.5075471698113208,
-                0.5419155844155844,
-                0.52875,
-                0.52875
-              ]
-            },
-            "illumination": null,
-            "phase_columns": [
-              0.558623595505618,
-              0.504938524590164,
-              0.48037401574803146,
-              0.6060714285714286,
-              0.5336190476190477,
-              0.41638888888888886,
-              0.5673489010989011,
-              0.570453216374269,
-              0.42406028368794324,
-              0.5289141414141414,
-              0.6000604838709678,
-              0.4915301724137931,
-              0.5075471698113208,
-              0.5419155844155844,
-              0.52875,
-              0.52875
-            ]
-          }
-        ],
-        "physicsSamples": [
-          {
-            "time_ms": 1291,
-            "control_value": 110,
-            "model_outputs": {
-              "wavelength_m": 3.118181818181818,
-              "period_ms": 9.090909090909092
-            },
-            "frame_count": 27,
-            "canvas_signature": 257512230,
-            "actor": {
-              "visible_pixels": 1412,
-              "signature": "f1c1b8a1",
-              "centroid": {
-                "x": 0.5510997009757633,
-                "y": 0.5321671388101983
-              },
-              "bounds": {
-                "x": 0.2,
-                "y": 0.3775,
-                "width": 0.7319444444444444,
-                "height": 0.27
-              },
-              "phase_columns": [
-                0.539077380952381,
-                0.5840056818181818,
-                0.6164999999999999,
-                0.5837894736842105,
-                0.4954956896551724,
-                0.4091847826086956,
-                0.3884722222222222,
-                0.46057692307692305,
-                0.5617324561403509,
-                0.6320833333333333,
-                0.6234593023255814,
-                0.5669623655913978,
-                0.5175,
-                0.516,
-                0.52875,
-                0.52875
-              ]
-            },
-            "illumination": null,
-            "phase_columns": [
-              0.539077380952381,
-              0.5840056818181818,
-              0.6164999999999999,
-              0.5837894736842105,
-              0.4954956896551724,
-              0.4091847826086956,
-              0.3884722222222222,
-              0.46057692307692305,
-              0.5617324561403509,
-              0.6320833333333333,
-              0.6234593023255814,
-              0.5669623655913978,
-              0.5175,
-              0.516,
-              0.52875,
-              0.52875
-            ]
-          },
-          {
-            "time_ms": 1811,
-            "control_value": 440,
-            "model_outputs": {
-              "wavelength_m": 0.7795454545454545,
-              "period_ms": 2.272727272727273
-            },
-            "frame_count": 35,
-            "canvas_signature": 1415496419,
-            "actor": {
-              "visible_pixels": 1928,
-              "signature": "30d12689",
-              "centroid": {
-                "x": 0.5419332065467958,
-                "y": 0.5243620331950207
-              },
-              "bounds": {
-                "x": 0.2,
-                "y": 0.3775,
-                "width": 0.7319444444444444,
-                "height": 0.2825
-              },
-              "phase_columns": [
-                0.5528260869565217,
-                0.5540625,
-                0.4617324561403509,
-                0.5101470588235294,
-                0.6336436170212766,
-                0.5261374407582938,
-                0.40568345323741006,
-                0.5593527918781726,
-                0.6097794117647058,
-                0.4785377358490566,
-                0.4728308823529412,
-                0.5786915887850467,
-                0.5507107843137254,
-                0.5164506172839506,
-                0.52875,
-                0.52875
-              ]
-            },
-            "illumination": null,
-            "phase_columns": [
-              0.5528260869565217,
-              0.5540625,
-              0.4617324561403509,
-              0.5101470588235294,
-              0.6336436170212766,
-              0.5261374407582938,
-              0.40568345323741006,
-              0.5593527918781726,
-              0.6097794117647058,
-              0.4785377358490566,
-              0.4728308823529412,
-              0.5786915887850467,
-              0.5507107843137254,
-              0.5164506172839506,
-              0.52875,
-              0.52875
-            ]
-          },
-          {
-            "time_ms": 2333,
-            "control_value": 880,
-            "model_outputs": {
-              "wavelength_m": 0.38977272727272727,
-              "period_ms": 1.1363636363636365
-            },
-            "frame_count": 44,
-            "canvas_signature": 2110086335,
-            "actor": {
-              "visible_pixels": 2833,
-              "signature": "d52248b5",
-              "centroid": {
-                "x": 0.5316953955367297,
-                "y": 0.5250326509001059
-              },
-              "bounds": {
-                "x": 0.2,
-                "y": 0.38,
-                "width": 0.7319444444444444,
-                "height": 0.28
-              },
-              "phase_columns": [
-                0.5507932692307692,
-                0.4905474452554745,
-                0.5793926553672316,
-                0.4719358407079646,
-                0.583783185840708,
-                0.47152671755725195,
-                0.5621202531645569,
-                0.4836587591240876,
-                0.5537345679012345,
-                0.5076229508196721,
-                0.5431311881188119,
-                0.5236144578313253,
-                0.5284842519685039,
-                0.5327556818181818,
-                0.52875,
-                0.52875
-              ]
-            },
-            "illumination": null,
-            "phase_columns": [
-              0.5507932692307692,
-              0.4905474452554745,
-              0.5793926553672316,
-              0.4719358407079646,
-              0.583783185840708,
-              0.47152671755725195,
-              0.5621202531645569,
-              0.4836587591240876,
-              0.5537345679012345,
-              0.5076229508196721,
-              0.5431311881188119,
-              0.5236144578313253,
-              0.5284842519685039,
-              0.5327556818181818,
-              0.52875,
-              0.52875
-            ]
-          }
-        ],
-        "temporalRuns": [
-          {
-            "control_value": 440,
-            "samples": [
+          "physics": {
+            "kind": "sound_pitch",
+            "tolerance": 0.02,
+            "settle_ms": 500,
+            "minimum_spatial_variation": 0.025,
+            "phase_column_count": 16,
+            "control_values": [
+              110,
+              440,
+              880
+            ],
+            "temporal_runs": [
               {
-                "time_ms": 2853,
                 "control_value": 440,
-                "model_outputs": {
-                  "wavelength_m": 0.7795454545454545,
-                  "period_ms": 2.272727272727273
-                },
-                "frame_count": 52,
-                "canvas_signature": 328644074,
-                "actor": {
-                  "visible_pixels": 1960,
-                  "signature": "a9aeec74",
-                  "centroid": {
-                    "x": 0.541343537414966,
-                    "y": 0.5249579081632654
-                  },
-                  "bounds": {
-                    "x": 0.2,
-                    "y": 0.3775,
-                    "width": 0.7319444444444444,
-                    "height": 0.2825
-                  },
-                  "phase_columns": [
-                    0.5389423076923077,
-                    0.5808888888888889,
-                    0.49198581560283683,
-                    0.46579044117647056,
-                    0.5973664122137404,
-                    0.5655163043478261,
-                    0.41227739726027396,
-                    0.5198255813953488,
-                    0.6359269662921349,
-                    0.509022346368715,
-                    0.45807851239669417,
-                    0.5634913793103449,
-                    0.5565227272727272,
-                    0.5183653846153846,
-                    0.52875,
-                    0.52875
-                  ]
-                },
-                "illumination": null,
-                "phase_columns": [
-                  0.5389423076923077,
-                  0.5808888888888889,
-                  0.49198581560283683,
-                  0.46579044117647056,
-                  0.5973664122137404,
-                  0.5655163043478261,
-                  0.41227739726027396,
-                  0.5198255813953488,
-                  0.6359269662921349,
-                  0.509022346368715,
-                  0.45807851239669417,
-                  0.5634913793103449,
-                  0.5565227272727272,
-                  0.5183653846153846,
-                  0.52875,
-                  0.52875
-                ]
-              },
-              {
-                "time_ms": 3046,
-                "control_value": 440,
-                "model_outputs": {
-                  "wavelength_m": 0.7795454545454545,
-                  "period_ms": 2.272727272727273
-                },
-                "frame_count": 54,
-                "canvas_signature": 1607314477,
-                "actor": {
-                  "visible_pixels": 1941,
-                  "signature": "348ce812",
-                  "centroid": {
-                    "x": 0.5426269391493502,
-                    "y": 0.5247668727460072
-                  },
-                  "bounds": {
-                    "x": 0.2,
-                    "y": 0.3775,
-                    "width": 0.7319444444444444,
-                    "height": 0.2825
-                  },
-                  "phase_columns": [
-                    0.5347252747252748,
-                    0.5839444444444445,
-                    0.4982333333333333,
-                    0.45525,
-                    0.5877622377622377,
-                    0.5780379746835443,
-                    0.4255201342281879,
-                    0.5025576036866359,
-                    0.6380978260869565,
-                    0.5242837837837837,
-                    0.44858407079646023,
-                    0.5521031746031746,
-                    0.5622680412371134,
-                    0.52075,
-                    0.52875,
-                    0.52875
-                  ]
-                },
-                "illumination": null,
-                "phase_columns": [
-                  0.5347252747252748,
-                  0.5839444444444445,
-                  0.4982333333333333,
-                  0.45525,
-                  0.5877622377622377,
-                  0.5780379746835443,
-                  0.4255201342281879,
-                  0.5025576036866359,
-                  0.6380978260869565,
-                  0.5242837837837837,
-                  0.44858407079646023,
-                  0.5521031746031746,
-                  0.5622680412371134,
-                  0.52075,
-                  0.52875,
-                  0.52875
-                ]
-              },
-              {
-                "time_ms": 3238,
-                "control_value": 440,
-                "model_outputs": {
-                  "wavelength_m": 0.7795454545454545,
-                  "period_ms": 2.272727272727273
-                },
-                "frame_count": 56,
-                "canvas_signature": 4229943063,
-                "actor": {
-                  "visible_pixels": 1936,
-                  "signature": "48c66d9c",
-                  "centroid": {
-                    "x": 0.5401048840679523,
-                    "y": 0.5248372933884298
-                  },
-                  "bounds": {
-                    "x": 0.2,
-                    "y": 0.3775,
-                    "width": 0.7319444444444444,
-                    "height": 0.2825
-                  },
-                  "phase_columns": [
-                    0.5327722772277227,
-                    0.5848641304347826,
-                    0.5037668918918918,
-                    0.4474390243902439,
-                    0.5821955128205129,
-                    0.5871527777777777,
-                    0.43464743589743593,
-                    0.4908413461538461,
-                    0.6343817204301075,
-                    0.535919689119171,
-                    0.4440454545454546,
-                    0.541198347107438,
-                    0.5652659574468085,
-                    0.5228246753246754,
-                    0.52875,
-                    0.52875
-                  ]
-                },
-                "illumination": null,
-                "phase_columns": [
-                  0.5327722772277227,
-                  0.5848641304347826,
-                  0.5037668918918918,
-                  0.4474390243902439,
-                  0.5821955128205129,
-                  0.5871527777777777,
-                  0.43464743589743593,
-                  0.4908413461538461,
-                  0.6343817204301075,
-                  0.535919689119171,
-                  0.4440454545454546,
-                  0.541198347107438,
-                  0.5652659574468085,
-                  0.5228246753246754,
-                  0.52875,
-                  0.52875
-                ]
+                "sample_count": 3,
+                "sample_interval_ms": 180
               }
             ]
-          }
-        ]
+          },
+          "geometry": null
+        },
+        "sample_counts": {
+          "actor": 4,
+          "physics": 3,
+          "temporal_runs": 1,
+          "temporal_samples": 3,
+          "geometry": 0
+        },
+        "evidence_sha256": {
+          "actor": "8c046267170c908a3be3ed10f0ecd7892029475fc5beb9b55396be74e388f788",
+          "physics": "819698f96ec148a2a5e0bbd86c40123bf561da25e2dd6bbc1012ebfdc0d5fe68",
+          "temporal": "9fcdb667c4c9f0b34524933e486303341150e9173a24ded14fa9b2af2ce4cc02",
+          "geometry": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        }
       }
     },
     {
       "golden_id": "day_night",
-      "artifact_sha256": "dfd5664c66d770cb435b2d1eff0308c556e02033b7ffe7fcce98c1b042841a92",
+      "artifact_sha256": "2faa32e175de6f8996ae4764f9102118bc1319a012dcf010aaa774e207e27ee0",
       "actor": "earth_landmark",
       "action": "rotates",
       "passed": true,
       "check_count": 12,
+      "minimum_clearance_px": null,
       "failures": [],
       "evidence": {
-        "cases": [
-          {
-            "value": 0,
-            "frameChanged": true,
-            "visualSignature": 1546659944
+        "browser": {
+          "ready": true,
+          "runtime_error": false,
+          "external_requests": 0,
+          "console_error_count": 0
+        },
+        "contracts": {
+          "actor": {
+            "actor_region": {
+              "x": 0.5,
+              "y": 0.12,
+              "width": 0.42,
+              "height": 0.66
+            },
+            "sample_count": 4,
+            "sample_interval_ms": 140,
+            "actor_color": {
+              "red": 218,
+              "green": 220,
+              "blue": 208,
+              "tolerance": 80
+            }
           },
-          {
-            "value": 60,
-            "frameChanged": true,
-            "visualSignature": 224530084
+          "physics": {
+            "kind": "day_night",
+            "tolerance": 0.01,
+            "settle_ms": 500,
+            "light_direction": "from_left",
+            "control_values": [
+              0,
+              90,
+              180,
+              270
+            ]
           },
-          {
-            "value": 360,
-            "frameChanged": true,
-            "visualSignature": 1567682245
-          }
-        ],
-        "lang": "ar",
-        "dir": "rtl",
-        "ready": true,
-        "runtimeError": false,
-        "alternative": "زاوية دوران الأرض: 60 ° — النتيجة المحسوبة: 0.50",
-        "idleFrameChanged": true,
-        "reactiveFrameVariants": 3,
-        "externalRequests": 0,
-        "consoleErrors": [],
-        "screenshots": [
-          "day_night-mobile-390x844.png",
-          "day_night-desktop-1440x900.png"
-        ],
-        "actorSamples": [
-          {
-            "time_ms": 406,
-            "control_value": 60,
-            "model_outputs": {
-              "light_alignment": 0.5000000000000001,
-              "daylight": 1
-            },
-            "frame_count": 11,
-            "canvas_signature": 1694584421,
-            "actor": {
-              "visible_pixels": 151,
-              "signature": "48eabc0e",
-              "centroid": {
-                "x": 0.6784492273730685,
-                "y": 0.5706622516556291
-              },
-              "bounds": {
-                "x": 0.625,
-                "y": 0.2825,
-                "width": 0.11805555555555555,
-                "height": 0.4975
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          },
-          {
-            "time_ms": 562,
-            "control_value": 0,
-            "model_outputs": {
-              "light_alignment": 1,
-              "daylight": 1
-            },
-            "frame_count": 14,
-            "canvas_signature": 330540626,
-            "actor": {
-              "visible_pixels": 152,
-              "signature": "335e195e",
-              "centroid": {
-                "x": 0.651343201754386,
-                "y": 0.6021052631578947
-              },
-              "bounds": {
-                "x": 0.5916666666666667,
-                "y": 0.3675,
-                "width": 0.15138888888888888,
-                "height": 0.4125
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          },
-          {
-            "time_ms": 715,
-            "control_value": 360,
-            "model_outputs": {
-              "light_alignment": 1,
-              "daylight": 1
-            },
-            "frame_count": 17,
-            "canvas_signature": 3199625404,
-            "actor": {
-              "visible_pixels": 185,
-              "signature": "6e258261",
-              "centroid": {
-                "x": 0.6928678678678678,
-                "y": 0.7084324324324324
-              },
-              "bounds": {
-                "x": 0.6208333333333333,
-                "y": 0.5975,
-                "width": 0.125,
-                "height": 0.1825
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          },
-          {
-            "time_ms": 867,
-            "control_value": 60,
-            "model_outputs": {
-              "light_alignment": 0.5000000000000001,
-              "daylight": 1
-            },
-            "frame_count": 20,
-            "canvas_signature": 2383583609,
-            "actor": {
-              "visible_pixels": 172,
-              "signature": "175e6f3d",
-              "centroid": {
-                "x": 0.7002018733850129,
-                "y": 0.6199563953488372
-              },
-              "bounds": {
-                "x": 0.6222222222222222,
-                "y": 0.31,
-                "width": 0.12361111111111112,
-                "height": 0.47
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          }
-        ],
-        "physicsSamples": [
-          {
-            "time_ms": 1380,
-            "control_value": 0,
-            "model_outputs": {
-              "light_alignment": 1,
-              "daylight": 1
-            },
-            "frame_count": 27,
-            "canvas_signature": 375329092,
-            "actor": {
-              "visible_pixels": 159,
-              "signature": "fda9a935",
-              "centroid": {
-                "x": 0.6459818308874913,
-                "y": 0.6124213836477987
-              },
-              "bounds": {
-                "x": 0.5833333333333334,
-                "y": 0.405,
-                "width": 0.1597222222222222,
-                "height": 0.375
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          },
-          {
-            "time_ms": 1910,
-            "control_value": 90,
-            "model_outputs": {
-              "light_alignment": 0,
-              "daylight": 0
-            },
-            "frame_count": 35,
-            "canvas_signature": 972803887,
-            "actor": {
-              "visible_pixels": 147,
-              "signature": "a39c19f3",
-              "centroid": {
-                "x": 0.6787414965986395,
-                "y": 0.5663945578231292
-              },
-              "bounds": {
-                "x": 0.625,
-                "y": 0.2825,
-                "width": 0.11805555555555555,
-                "height": 0.4975
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          },
-          {
-            "time_ms": 2437,
-            "control_value": 180,
-            "model_outputs": {
-              "light_alignment": -1,
-              "daylight": 0
-            },
-            "frame_count": 44,
-            "canvas_signature": 1577833786,
-            "actor": {
-              "visible_pixels": 172,
-              "signature": "13f1b337",
-              "centroid": {
-                "x": 0.7110384366925064,
-                "y": 0.655828488372093
-              },
-              "bounds": {
-                "x": 0.6222222222222222,
-                "y": 0.425,
-                "width": 0.15555555555555556,
-                "height": 0.355
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          },
-          {
-            "time_ms": 2952,
-            "control_value": 270,
-            "model_outputs": {
-              "light_alignment": 0,
-              "daylight": 0
-            },
-            "frame_count": 51,
-            "canvas_signature": 2180712059,
-            "actor": {
-              "visible_pixels": 176,
-              "signature": "b1dfd26b",
-              "centroid": {
-                "x": 0.6878472222222223,
-                "y": 0.7126136363636364
-              },
-              "bounds": {
-                "x": 0.6208333333333333,
-                "y": 0.615,
-                "width": 0.125,
-                "height": 0.165
-              },
-              "phase_columns": null
-            },
-            "illumination": null,
-            "phase_columns": null
-          }
-        ],
-        "temporalRuns": []
+          "geometry": null
+        },
+        "sample_counts": {
+          "actor": 4,
+          "physics": 4,
+          "temporal_runs": 0,
+          "temporal_samples": 0,
+          "geometry": 0
+        },
+        "evidence_sha256": {
+          "actor": "823052afc6b00714ded309dee6adbc205a460c6479630654a23f6b76d20b8e1a",
+          "physics": "7ad622471a49c97378a3fe9ef289fa74dcbcb6339dc561b4e653a350c74e1710",
+          "temporal": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "geometry": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        }
       }
     }
   ]

@@ -271,6 +271,44 @@ def test_circuit_proof_requires_carrier_motion_to_increase_with_current():
     }
 
 
+def test_circuit_speed_uses_tracked_actor_features_when_group_centroid_is_misleading():
+    from server.physics_motion import evaluate_action_physics
+
+    profile = {"kind": "simple_circuit", "tolerance": 0.01, "minimum_speed_ratio": 1.5}
+    controls = [
+        {"control_value": 2, "model_outputs": {"current_a": 3.0, "power_w": 18.0}},
+        {"control_value": 12, "model_outputs": {"current_a": 0.5, "power_w": 3.0}},
+    ]
+
+    def sample(time_ms, centroid_x, feature_x):
+        actor = _actor(centroid_x, 0.4)
+        actor["features"] = [{"centroid": {"x": feature_x, "y": 0.4}}]
+        return {"time_ms": time_ms, "actor": actor}
+
+    temporal = [
+        {
+            "control_value": 2,
+            "samples": [
+                sample(0, 0.500, 0.10),
+                sample(100, 0.501, 0.25),
+                sample(200, 0.502, 0.40),
+            ],
+        },
+        {
+            "control_value": 12,
+            "samples": [
+                sample(0, 0.500, 0.10),
+                sample(100, 0.505, 0.14),
+                sample(200, 0.510, 0.18),
+            ],
+        },
+    ]
+
+    report = evaluate_action_physics(profile, controls, temporal)
+
+    assert report["passed"] is True
+
+
 def test_buoyancy_proof_requires_model_consistent_equilibrium_at_waterline():
     from server.physics_motion import evaluate_action_physics
 
@@ -435,6 +473,13 @@ def test_legacy_geometry_refresh_cannot_bypass_shared_scene_evidence(
     )
     golden_root = tmp_path / "golden"
     shutil.copytree(ROOT / "out/cache/golden", golden_root)
+    moon_path = golden_root / "moon_phases.json"
+    moon_document = json.loads(moon_path.read_text(encoding="utf-8"))
+    moon_document["artifact"] = moon_document["artifact"].replace(
+        "LAYSH_CURATED_SCENE_ADAPTER_V1", "LEGACY_SCENE_ADAPTER", 1
+    )
+    moon_document["evidence"].pop("curated_shell_refresh", None)
+    moon_path.write_text(json.dumps(moon_document, ensure_ascii=False), encoding="utf-8")
     before = {path.name: path.read_bytes() for path in golden_root.glob("*.json")}
 
     with pytest.raises(ValueError, match="deterministic refresh verification"):

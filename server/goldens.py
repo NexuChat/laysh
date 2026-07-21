@@ -580,6 +580,7 @@ def refresh_pinned_golden_teaching_shells(
 ) -> list[dict[str, Any]]:
     """Reassemble the six pinned lessons after a trusted teaching-shell revision."""
     from server.browser_verify import verify_artifact_in_browser
+    from server.curated_scene import CURATED_SCENE_ADAPTER_MARKER
     from server.schemas import has_explicit_misconception_correction
     from server.verify import verify_candidate
 
@@ -592,6 +593,15 @@ def refresh_pinned_golden_teaching_shells(
             continue
         document = json.loads(path.read_text(encoding="utf-8"))
         lesson, module_js = _artifact_lesson_and_module(document["artifact"])
+        curated_scene = document.get("evidence", {}).get("curated_shell_refresh")
+        if not (
+            CURATED_SCENE_ADAPTER_MARKER in module_js
+            and isinstance(curated_scene, dict)
+            and curated_scene.get("shared_scene_adapter") is True
+            and isinstance(curated_scene.get("scene_sample_count"), int)
+            and curated_scene["scene_sample_count"] > 0
+        ):
+            raise ValueError("pinned lesson failed deterministic refresh verification")
         if module_transformer is not None:
             module_js = module_transformer(document["golden_id"], module_js)
         misconception = lesson.get("misconception")
@@ -701,3 +711,127 @@ def refresh_pinned_golden_shared_model_states(
         refresh_evidence_key="shared_model_refresh",
         report_flag="shared_model_refreshed",
     )
+
+
+def refresh_curated_pinned_shells(
+    *,
+    root: Path = GOLDEN_ROOT,
+    browser_verifier: Any | None = None,
+) -> dict[str, Any]:
+    """Reassemble reviewed pins with the current shell without learner-path exceptions."""
+
+    from server.assemble import assemble_artifact
+    from server.browser_verify import verify_artifact_in_browser
+    from server.curated_scene import (
+        CURATED_SCENE_ADAPTER_MARKER,
+        attach_curated_scene_contract,
+    )
+    from server.verify import _run_node_report, verify_module_source
+
+    verify_browser = browser_verifier or verify_artifact_in_browser
+    fixtures = load_golden_fixtures()
+    refreshed_documents: list[tuple[Path, dict[str, Any]]] = []
+    reports: list[dict[str, Any]] = []
+    for path in sorted(root.glob("*.json")):
+        if path.name == "manifest.json":
+            continue
+        document = json.loads(path.read_text(encoding="utf-8"))
+        fixture = fixtures.get(f'{document.get("golden_id")}_ar')
+        if fixture is None:
+            raise ValueError("pinned lesson is not in the curated fixture allowlist")
+        lesson, module_source = _artifact_lesson_and_module(document["artifact"])
+        review_contract = fixture["review_contract"]
+        actor_tracking = review_contract.get("actor_tracking", {})
+        module_source = attach_curated_scene_contract(
+            module_source,
+            actor_id=lesson["module_spec"]["actor"],
+            actor_region=actor_tracking.get("actor_region", {}),
+        )
+        verify_module_source(module_source)
+        module_report = _run_node_report(module_source, lesson)
+        scene_adapter_attached = CURATED_SCENE_ADAPTER_MARKER in module_source
+        scene_samples = module_report.get("scene_geometry_samples")
+        module_gate_passed = bool(
+            scene_adapter_attached
+            and module_report.get("passed") is True
+            and isinstance(scene_samples, list)
+            and scene_samples
+            and all(sample.get("phase") == "post_fit" for sample in scene_samples)
+        )
+        if not module_gate_passed:
+            raise ValueError("pinned lesson failed curated module refresh verification")
+        module_output = {
+            "module_js": module_source,
+            "output_names": lesson["module_spec"]["outputs"],
+            "brief_summary": "offline curated trusted-shell refresh",
+            "assumptions": fixture["review_contract"]["assumptions"],
+        }
+        artifact = assemble_artifact(lesson, module_output)
+        browser = verify_browser(artifact)
+        if not browser.passed:
+            raise ValueError("pinned lesson failed browser refresh verification")
+        artifact_hash = hashlib.sha256(artifact.encode("utf-8")).hexdigest()
+        document["artifact"] = artifact
+        document["artifact_sha256"] = artifact_hash
+        document["evidence"] = {
+            **document.get("evidence", {}),
+            "curated_shell_refresh": {
+                "model_calls": 0,
+                "module_check_count": int(module_report.get("check_count", 0)),
+                "legacy_scene_failure_only": False,
+                "shared_scene_adapter": True,
+                "scene_sample_count": len(scene_samples),
+                "browser_check_count": browser.check_count,
+            },
+        }
+        refreshed_documents.append((path, document))
+        reports.append(
+            {
+                "golden_id": document["golden_id"],
+                "artifact_sha256": artifact_hash,
+                "shared_scene_adapter": True,
+                "legacy_scene_failure_only": False,
+                "scene_sample_count": len(scene_samples),
+                "passed": True,
+            }
+        )
+
+    if len(refreshed_documents) != len(fixtures) or len(fixtures) != 6:
+        raise ValueError("curated refresh requires the complete six-lesson registry")
+    manifest = {
+        "schema_version": "1.0",
+        "contract_version": "1.0",
+        "lessons": [
+            {
+                "id": document["golden_id"],
+                "aliases": document["aliases"],
+                "instant": True,
+                "tier": "A",
+                "artifact_sha256": document["artifact_sha256"],
+                "metadata": document["metadata"],
+            }
+            for _, document in refreshed_documents
+        ],
+    }
+    pending_writes = [
+        (path, json.dumps(document, ensure_ascii=False, separators=(",", ":")))
+        for path, document in refreshed_documents
+    ]
+    pending_writes.append(
+        (root / "manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
+    )
+    temporary_paths: list[tuple[Path, Path]] = []
+    for path, content in pending_writes:
+        temporary = path.with_suffix(path.suffix + ".curated.tmp")
+        temporary.write_text(content, encoding="utf-8")
+        temporary_paths.append((temporary, path))
+    for temporary, path in temporary_paths:
+        temporary.replace(path)
+    return {
+        "schema_version": "1.0",
+        "gate": "curated_shell_refresh",
+        "model_calls": 0,
+        "passed": all(report["passed"] for report in reports),
+        "golden_count": len(reports),
+        "goldens": reports,
+    }

@@ -106,6 +106,11 @@ def refresh_pinned_moon_geometry(
 
     moon_path = root / "moon_phases.json"
     manifest_path = root / "manifest.json"
+    current_document = json.loads(moon_path.read_text(encoding="utf-8"))
+    if "LAYSH_CURATED_SCENE_ADAPTER_V1" in current_document.get("artifact", ""):
+        raise ValueError(
+            "deterministic refresh verification is superseded by the shared curated path"
+        )
     with tempfile.TemporaryDirectory(prefix="laysh-moon-geometry-") as temporary:
         temporary_root = Path(temporary)
         shutil.copyfile(moon_path, temporary_root / moon_path.name)

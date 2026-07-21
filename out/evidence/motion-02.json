@@ -8,7 +8,7 @@
   "goldens": [
     {
       "golden_id": "moon_phases",
-      "artifact_sha256": "2b0bece8f55356f0f65cb85601b5c05d92d078aab21f5567a90d1ea8ef29306b",
+      "artifact_sha256": "9205eb45f7ffdcb7e501a926b6d17f2409c1f1f9dd09a0dccc585cee1481480b",
       "actor": "moon",
       "action": "orbits",
       "passed": true,
@@ -19,17 +19,17 @@
           {
             "value": 0,
             "frameChanged": true,
-            "visualSignature": 2507369338
+            "visualSignature": 2260198867
           },
           {
             "value": 90,
             "frameChanged": true,
-            "visualSignature": 3069519251
+            "visualSignature": 2533521949
           },
           {
             "value": 360,
             "frameChanged": true,
-            "visualSignature": 4016568162
+            "visualSignature": 2155516198
           }
         ],
         "lang": "ar",
@@ -47,87 +47,183 @@
         ],
         "actorSamples": [
           {
-            "time_ms": 374,
-            "frame_count": 11,
-            "canvas_signature": 369010636,
+            "time_ms": 422,
+            "control_value": 90,
+            "model_outputs": {
+              "lit_fraction": 0.49999999999999994
+            },
+            "frame_count": 10,
+            "canvas_signature": 1889796363,
             "actor": {
-              "visible_pixels": 312,
-              "signature": "593d8380",
+              "visible_pixels": 296,
+              "signature": "85ad2ce2",
               "centroid": {
-                "x": 0.47135861823361824,
-                "y": 0.4659375
+                "x": 0.4378190690690691,
+                "y": 0.4758192567567568
               },
               "bounds": {
-                "x": 0.3111111111111111,
-                "y": 0.315,
-                "width": 0.2222222222222222,
-                "height": 0.22
-              }
-            }
+                "x": 0.2763888888888889,
+                "y": 0.3175,
+                "width": 0.2111111111111111,
+                "height": 0.2175
+              },
+              "features": [
+                {
+                  "visible_pixels": 57,
+                  "centroid": {
+                    "x": 0.2811647173489279,
+                    "y": 0.32635964912280696
+                  }
+                },
+                {
+                  "visible_pixels": 239,
+                  "centroid": {
+                    "x": 0.4751801487680149,
+                    "y": 0.5114644351464436
+                  }
+                }
+              ],
+              "phase_columns": null
+            },
+            "illumination": null,
+            "phase_columns": null
           },
           {
-            "time_ms": 528,
+            "time_ms": 597,
+            "control_value": 0,
+            "model_outputs": {
+              "lit_fraction": 0
+            },
             "frame_count": 14,
-            "canvas_signature": 3538599533,
+            "canvas_signature": 1188815025,
             "actor": {
-              "visible_pixels": 342,
-              "signature": "9759fdd",
+              "visible_pixels": 352,
+              "signature": "daa2a5af",
               "centroid": {
-                "x": 0.4985136452241715,
-                "y": 0.49428362573099416
+                "x": 0.4525134154040404,
+                "y": 0.4938139204545455
               },
               "bounds": {
-                "x": 0.44166666666666665,
+                "x": 0.3972222222222222,
                 "y": 0.4425,
-                "width": 0.09166666666666666,
+                "width": 0.09027777777777778,
                 "height": 0.0925
-              }
-            }
+              },
+              "features": [
+                {
+                  "visible_pixels": 113,
+                  "centroid": {
+                    "x": 0.4045722713864307,
+                    "y": 0.4564823008849557
+                  }
+                },
+                {
+                  "visible_pixels": 239,
+                  "centroid": {
+                    "x": 0.4751801487680149,
+                    "y": 0.5114644351464436
+                  }
+                }
+              ],
+              "phase_columns": null
+            },
+            "illumination": null,
+            "phase_columns": null
           },
           {
-            "time_ms": 691,
+            "time_ms": 760,
+            "control_value": 360,
+            "model_outputs": {
+              "lit_fraction": 0
+            },
             "frame_count": 17,
-            "canvas_signature": 687828374,
+            "canvas_signature": 741260657,
             "actor": {
-              "visible_pixels": 348,
-              "signature": "339cdee1",
+              "visible_pixels": 349,
+              "signature": "779fb09a",
               "centroid": {
-                "x": 0.5001756066411238,
-                "y": 0.5057327586206897
+                "x": 0.45539239095829354,
+                "y": 0.5059885386819485
               },
               "bounds": {
-                "x": 0.4486111111111111,
+                "x": 0.4041666666666667,
                 "y": 0.48,
-                "width": 0.08472222222222223,
+                "width": 0.08333333333333333,
                 "height": 0.055
-              }
-            }
+              },
+              "features": [
+                {
+                  "visible_pixels": 110,
+                  "centroid": {
+                    "x": 0.41239898989898993,
+                    "y": 0.4940909090909091
+                  }
+                },
+                {
+                  "visible_pixels": 239,
+                  "centroid": {
+                    "x": 0.4751801487680149,
+                    "y": 0.5114644351464436
+                  }
+                }
+              ],
+              "phase_columns": null
+            },
+            "illumination": null,
+            "phase_columns": null
           },
           {
-            "time_ms": 850,
+            "time_ms": 923,
+            "control_value": 90,
+            "model_outputs": {
+              "lit_fraction": 0.49999999999999994
+            },
             "frame_count": 20,
-            "canvas_signature": 3492706041,
+            "canvas_signature": 3842141655,
             "actor": {
-              "visible_pixels": 331,
-              "signature": "e6d0965",
+              "visible_pixels": 309,
+              "signature": "500633f2",
               "centroid": {
-                "x": 0.4714039946290702,
-                "y": 0.4606570996978852
+                "x": 0.4364796835670622,
+                "y": 0.47139967637540453
               },
               "bounds": {
-                "x": 0.3416666666666667,
-                "y": 0.3225,
-                "width": 0.19166666666666668,
-                "height": 0.2125
-              }
-            }
+                "x": 0.2986111111111111,
+                "y": 0.325,
+                "width": 0.18888888888888888,
+                "height": 0.21
+              },
+              "features": [
+                {
+                  "visible_pixels": 70,
+                  "centroid": {
+                    "x": 0.3043452380952381,
+                    "y": 0.3346071428571429
+                  }
+                },
+                {
+                  "visible_pixels": 239,
+                  "centroid": {
+                    "x": 0.4751801487680149,
+                    "y": 0.5114644351464436
+                  }
+                }
+              ],
+              "phase_columns": null
+            },
+            "illumination": null,
+            "phase_columns": null
           }
-        ]
+        ],
+        "physicsSamples": [],
+        "temporalRuns": [],
+        "geometrySamples": [],
+        "geometryScreenshots": []
       }
     },
     {
       "golden_id": "buoyancy",
-      "artifact_sha256": "bf4521c93f174a157d6343e7293d4eb9c444e705f0247679fc0ce91f6815596c",
+      "artifact_sha256": "5a878506c8f5a520a430bbc4abbb50b1be71b5880184a09d12d533765dcc9ec1",
       "actor": "floating_body",
       "action": "floats_sinks",
       "passed": true,
@@ -166,7 +262,12 @@
         ],
         "actorSamples": [
           {
-            "time_ms": 301,
+            "time_ms": 371,
+            "control_value": 750,
+            "model_outputs": {
+              "submerged_fraction": 0.75,
+              "floats": 1
+            },
             "frame_count": 10,
             "canvas_signature": 323393868,
             "actor": {
@@ -181,11 +282,35 @@
                 "y": 0.345,
                 "width": 0.13333333333333333,
                 "height": 0.2375
-              }
-            }
+              },
+              "features": [
+                {
+                  "visible_pixels": 2520,
+                  "centroid": {
+                    "x": 0.4786309523809524,
+                    "y": 0.3935178571428571
+                  }
+                },
+                {
+                  "visible_pixels": 74,
+                  "centroid": {
+                    "x": 0.49930555555555556,
+                    "y": 0.58
+                  }
+                }
+              ],
+              "phase_columns": null
+            },
+            "illumination": null,
+            "phase_columns": null
           },
           {
-            "time_ms": 456,
+            "time_ms": 541,
+            "control_value": 200,
+            "model_outputs": {
+              "submerged_fraction": 0.2,
+              "floats": 1
+            },
             "frame_count": 13,
             "canvas_signature": 124934683,
             "actor": {
@@ -200,11 +325,56 @@
                 "y": 0.255,
                 "width": 0.13194444444444445,
                 "height": 0.235
-              }
-            }
+              },
+              "features": [
+                {
+                  "visible_pixels": 2665,
+                  "centroid": {
+                    "x": 0.47265269960391915,
+                    "y": 0.31504971857410885
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.43777777777777777,
+                    "y": 0.4775
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.5608333333333333,
+                    "y": 0.4775
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.4479166666666667,
+                    "y": 0.4875
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.5506944444444445,
+                    "y": 0.4875
+                  }
+                }
+              ],
+              "phase_columns": null
+            },
+            "illumination": null,
+            "phase_columns": null
           },
           {
-            "time_ms": 612,
+            "time_ms": 705,
+            "control_value": 1400,
+            "model_outputs": {
+              "submerged_fraction": 1,
+              "floats": 0
+            },
             "frame_count": 16,
             "canvas_signature": 2780305344,
             "actor": {
@@ -219,34 +389,88 @@
                 "y": 0.4475,
                 "width": 0.13055555555555556,
                 "height": 0.2375
-              }
-            }
+              },
+              "features": [
+                {
+                  "visible_pixels": 1694,
+                  "centroid": {
+                    "x": 0.4782975862521317,
+                    "y": 0.4829943919716647
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.43472222222222223,
+                    "y": 0.65875
+                  }
+                },
+                {
+                  "visible_pixels": 72,
+                  "centroid": {
+                    "x": 0.49930555555555556,
+                    "y": 0.6825
+                  }
+                }
+              ],
+              "phase_columns": null
+            },
+            "illumination": null,
+            "phase_columns": null
           },
           {
-            "time_ms": 766,
-            "frame_count": 18,
-            "canvas_signature": 716523137,
+            "time_ms": 870,
+            "control_value": 750,
+            "model_outputs": {
+              "submerged_fraction": 0.75,
+              "floats": 1
+            },
+            "frame_count": 19,
+            "canvas_signature": 1602403457,
             "actor": {
               "visible_pixels": 2476,
-              "signature": "2945f44a",
+              "signature": "1bc9601e",
               "centroid": {
-                "x": 0.4799244973972357,
-                "y": 0.412279886914378
+                "x": 0.47898940944175195,
+                "y": 0.40814923263327946
               },
               "bounds": {
-                "x": 0.43472222222222223,
-                "y": 0.36,
-                "width": 0.13055555555555556,
+                "x": 0.43333333333333335,
+                "y": 0.355,
+                "width": 0.13333333333333333,
                 "height": 0.2375
-              }
-            }
+              },
+              "features": [
+                {
+                  "visible_pixels": 2391,
+                  "centroid": {
+                    "x": 0.4782372554486733,
+                    "y": 0.4018736930154747
+                  }
+                },
+                {
+                  "visible_pixels": 70,
+                  "centroid": {
+                    "x": 0.49930555555555556,
+                    "y": 0.59
+                  }
+                }
+              ],
+              "phase_columns": null
+            },
+            "illumination": null,
+            "phase_columns": null
           }
-        ]
+        ],
+        "physicsSamples": [],
+        "temporalRuns": [],
+        "geometrySamples": [],
+        "geometryScreenshots": []
       }
     },
     {
       "golden_id": "pendulum",
-      "artifact_sha256": "00629ee82df746eab4f2353cf6c473eb6d88bf740bdd1a8def4044a4f89cf3b6",
+      "artifact_sha256": "bf405874ba30186d7b8e33835efa8b9bd1e1fa26144a83700ee779c7fa01fa9e",
       "actor": "pendulum_bob",
       "action": "oscillates",
       "passed": true,
@@ -257,17 +481,17 @@
           {
             "value": 0.25,
             "frameChanged": true,
-            "visualSignature": 3520044511
+            "visualSignature": 1677142703
           },
           {
             "value": 1,
             "frameChanged": true,
-            "visualSignature": 2411309599
+            "visualSignature": 3884909936
           },
           {
             "value": 2,
             "frameChanged": true,
-            "visualSignature": 3182585687
+            "visualSignature": 2429238085
           }
         ],
         "lang": "ar",
@@ -285,87 +509,183 @@
         ],
         "actorSamples": [
           {
-            "time_ms": 309,
-            "frame_count": 10,
-            "canvas_signature": 2760235640,
+            "time_ms": 494,
+            "control_value": 1,
+            "model_outputs": {
+              "period_s": 2.0060666807106475
+            },
+            "frame_count": 17,
+            "canvas_signature": 2834902725,
             "actor": {
-              "visible_pixels": 333,
-              "signature": "a49bbdf2",
+              "visible_pixels": 221,
+              "signature": "8bdd20b8",
               "centroid": {
-                "x": 0.5597555889222556,
-                "y": 0.32507507507507505
+                "x": 0.5480266465560584,
+                "y": 0.4534049773755656
               },
               "bounds": {
-                "x": 0.4930555555555556,
-                "y": 0.1275,
-                "width": 0.2569444444444444,
-                "height": 0.3775
-              }
-            }
+                "x": 0.5041666666666667,
+                "y": 0.4075,
+                "width": 0.06388888888888888,
+                "height": 0.0975
+              },
+              "features": [
+                {
+                  "visible_pixels": 152,
+                  "centroid": {
+                    "x": 0.5646107456140351,
+                    "y": 0.45560855263157896
+                  }
+                },
+                {
+                  "visible_pixels": 69,
+                  "centroid": {
+                    "x": 0.5114935587761674,
+                    "y": 0.4485507246376812
+                  }
+                }
+              ],
+              "phase_columns": null
+            },
+            "illumination": null,
+            "phase_columns": null
           },
           {
-            "time_ms": 457,
-            "frame_count": 13,
-            "canvas_signature": 3691730611,
+            "time_ms": 650,
+            "control_value": 0.25,
+            "model_outputs": {
+              "period_s": 1.0030333403553238
+            },
+            "frame_count": 27,
+            "canvas_signature": 2933855076,
             "actor": {
-              "visible_pixels": 220,
-              "signature": "43cc93a8",
+              "visible_pixels": 204,
+              "signature": "a04c3aa",
               "centroid": {
-                "x": 0.5818497474747475,
-                "y": 0.21695454545454546
+                "x": 0.5365536492374727,
+                "y": 0.21870098039215688
               },
               "bounds": {
                 "x": 0.4930555555555556,
-                "y": 0.1275,
-                "width": 0.25416666666666665,
-                "height": 0.1725
-              }
-            }
+                "y": 0.18,
+                "width": 0.06388888888888888,
+                "height": 0.0875
+              },
+              "features": [
+                {
+                  "visible_pixels": 139,
+                  "centroid": {
+                    "x": 0.5534872102318146,
+                    "y": 0.22219424460431653
+                  }
+                },
+                {
+                  "visible_pixels": 65,
+                  "centroid": {
+                    "x": 0.5003418803418803,
+                    "y": 0.21123076923076922
+                  }
+                }
+              ],
+              "phase_columns": null
+            },
+            "illumination": null,
+            "phase_columns": null
           },
           {
-            "time_ms": 607,
-            "frame_count": 16,
-            "canvas_signature": 2021416814,
+            "time_ms": 810,
+            "control_value": 2,
+            "model_outputs": {
+              "period_s": 2.837006706885775
+            },
+            "frame_count": 33,
+            "canvas_signature": 2900193788,
             "actor": {
-              "visible_pixels": 388,
-              "signature": "1affca2d",
+              "visible_pixels": 186,
+              "signature": "1e57ea87",
               "centroid": {
-                "x": 0.5295962199312715,
-                "y": 0.39337628865979385
+                "x": 0.5548237753882915,
+                "y": 0.6883333333333332
               },
               "bounds": {
-                "x": 0.4930555555555556,
-                "y": 0.1275,
-                "width": 0.2513888888888889,
-                "height": 0.5775
-              }
-            }
+                "x": 0.5138888888888888,
+                "y": 0.6425,
+                "width": 0.06388888888888888,
+                "height": 0.1
+              },
+              "features": [
+                {
+                  "visible_pixels": 116,
+                  "centroid": {
+                    "x": 0.575,
+                    "y": 0.69125
+                  }
+                },
+                {
+                  "visible_pixels": 70,
+                  "centroid": {
+                    "x": 0.5213888888888889,
+                    "y": 0.6835
+                  }
+                }
+              ],
+              "phase_columns": null
+            },
+            "illumination": null,
+            "phase_columns": null
           },
           {
-            "time_ms": 759,
-            "frame_count": 18,
-            "canvas_signature": 458695711,
+            "time_ms": 967,
+            "control_value": 1,
+            "model_outputs": {
+              "period_s": 2.0060666807106475
+            },
+            "frame_count": 38,
+            "canvas_signature": 1551213814,
             "actor": {
-              "visible_pixels": 311,
-              "signature": "37682ba4",
+              "visible_pixels": 190,
+              "signature": "835f0258",
               "centroid": {
-                "x": 0.5350928903179707,
-                "y": 0.3186897106109325
+                "x": 0.5391008771929825,
+                "y": 0.4648684210526316
               },
               "bounds": {
-                "x": 0.4930555555555556,
-                "y": 0.1275,
-                "width": 0.2569444444444444,
-                "height": 0.42
-              }
-            }
+                "x": 0.4986111111111111,
+                "y": 0.42,
+                "width": 0.06388888888888888,
+                "height": 0.0975
+              },
+              "features": [
+                {
+                  "visible_pixels": 117,
+                  "centroid": {
+                    "x": 0.5597222222222222,
+                    "y": 0.4675
+                  }
+                },
+                {
+                  "visible_pixels": 73,
+                  "centroid": {
+                    "x": 0.5060502283105023,
+                    "y": 0.46065068493150685
+                  }
+                }
+              ],
+              "phase_columns": null
+            },
+            "illumination": null,
+            "phase_columns": null
           }
-        ]
+        ],
+        "physicsSamples": [],
+        "temporalRuns": [],
+        "geometrySamples": [],
+        "geometryScreenshots": []
       }
     },
     {
       "golden_id": "simple_circuit",
-      "artifact_sha256": "616414dc40c2b0209f1054f2ed9f2ac6a38aba5d7c09f2b9c34888b15142b39d",
+      "artifact_sha256": "48c5eef46d6f680e296dda2d76793c18e320d73a7f7b5f87e9a81fde146fb09a",
       "actor": "charge_carrier",
       "action": "flows",
       "passed": true,
@@ -404,87 +724,418 @@
         ],
         "actorSamples": [
           {
-            "time_ms": 428,
-            "frame_count": 11,
-            "canvas_signature": 1339763583,
+            "time_ms": 453,
+            "control_value": 6,
+            "model_outputs": {
+              "current_a": 1,
+              "power_w": 6
+            },
+            "frame_count": 10,
+            "canvas_signature": 1654609862,
             "actor": {
-              "visible_pixels": 75,
-              "signature": "7973274f",
+              "visible_pixels": 76,
+              "signature": "68d3117e",
               "centroid": {
-                "x": 0.26385185185185184,
-                "y": 0.4254
+                "x": 0.2712171052631579,
+                "y": 0.4242763157894737
               },
               "bounds": {
                 "x": 0.11388888888888889,
                 "y": 0.31,
                 "width": 0.7069444444444445,
                 "height": 0.225
-              }
-            }
+              },
+              "features": [
+                {
+                  "visible_pixels": 8,
+                  "centroid": {
+                    "x": 0.36180555555555555,
+                    "y": 0.3125
+                  }
+                },
+                {
+                  "visible_pixels": 11,
+                  "centroid": {
+                    "x": 0.8179292929292928,
+                    "y": 0.40090909090909094
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.12777777777777777,
+                    "y": 0.4175
+                  }
+                },
+                {
+                  "visible_pixels": 16,
+                  "centroid": {
+                    "x": 0.13585069444444445,
+                    "y": 0.425
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.14722222222222223,
+                    "y": 0.42125
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.15069444444444444,
+                    "y": 0.42375
+                  }
+                },
+                {
+                  "visible_pixels": 6,
+                  "centroid": {
+                    "x": 0.11620370370370371,
+                    "y": 0.42625
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.12430555555555556,
+                    "y": 0.42625
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.20972222222222223,
+                    "y": 0.4675
+                  }
+                },
+                {
+                  "visible_pixels": 9,
+                  "centroid": {
+                    "x": 0.2162037037037037,
+                    "y": 0.5297222222222222
+                  }
+                }
+              ],
+              "phase_columns": null
+            },
+            "illumination": null,
+            "phase_columns": null
           },
           {
-            "time_ms": 581,
-            "frame_count": 14,
-            "canvas_signature": 3931301222,
+            "time_ms": 622,
+            "control_value": 2,
+            "model_outputs": {
+              "current_a": 3,
+              "power_w": 18
+            },
+            "frame_count": 13,
+            "canvas_signature": 1561105011,
             "actor": {
-              "visible_pixels": 81,
-              "signature": "986c0c73",
+              "visible_pixels": 77,
+              "signature": "34df334a",
               "centroid": {
-                "x": 0.25776748971193414,
-                "y": 0.42064814814814816
+                "x": 0.2700937950937951,
+                "y": 0.42944805194805197
               },
               "bounds": {
                 "x": 0.11388888888888889,
                 "y": 0.31,
                 "width": 0.7069444444444445,
                 "height": 0.225
-              }
-            }
+              },
+              "features": [
+                {
+                  "visible_pixels": 8,
+                  "centroid": {
+                    "x": 0.3762152777777778,
+                    "y": 0.3128125
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.12777777777777777,
+                    "y": 0.4175
+                  }
+                },
+                {
+                  "visible_pixels": 16,
+                  "centroid": {
+                    "x": 0.13585069444444445,
+                    "y": 0.425
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.14722222222222223,
+                    "y": 0.42125
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.15069444444444444,
+                    "y": 0.42375
+                  }
+                },
+                {
+                  "visible_pixels": 6,
+                  "centroid": {
+                    "x": 0.11620370370370371,
+                    "y": 0.42625
+                  }
+                },
+                {
+                  "visible_pixels": 11,
+                  "centroid": {
+                    "x": 0.8178030303030304,
+                    "y": 0.4270454545454545
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.12430555555555556,
+                    "y": 0.42625
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.20972222222222223,
+                    "y": 0.4675
+                  }
+                },
+                {
+                  "visible_pixels": 10,
+                  "centroid": {
+                    "x": 0.20166666666666666,
+                    "y": 0.53
+                  }
+                }
+              ],
+              "phase_columns": null
+            },
+            "illumination": null,
+            "phase_columns": null
           },
           {
-            "time_ms": 736,
-            "frame_count": 17,
-            "canvas_signature": 1020761929,
+            "time_ms": 795,
+            "control_value": 20,
+            "model_outputs": {
+              "current_a": 0.3,
+              "power_w": 1.8
+            },
+            "frame_count": 16,
+            "canvas_signature": 1289230788,
             "actor": {
-              "visible_pixels": 75,
-              "signature": "9905ee67",
+              "visible_pixels": 83,
+              "signature": "9aceadf2",
               "centroid": {
-                "x": 0.24585185185185182,
-                "y": 0.42619999999999997
+                "x": 0.2556224899598393,
+                "y": 0.41731927710843375
               },
               "bounds": {
                 "x": 0.11388888888888889,
                 "y": 0.31,
                 "width": 0.7069444444444445,
                 "height": 0.225
-              }
-            }
+              },
+              "features": [
+                {
+                  "visible_pixels": 8,
+                  "centroid": {
+                    "x": 0.19739583333333333,
+                    "y": 0.3128125
+                  }
+                },
+                {
+                  "visible_pixels": 7,
+                  "centroid": {
+                    "x": 0.36567460317460315,
+                    "y": 0.3125
+                  }
+                },
+                {
+                  "visible_pixels": 10,
+                  "centroid": {
+                    "x": 0.8180555555555555,
+                    "y": 0.408
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.12777777777777777,
+                    "y": 0.4175
+                  }
+                },
+                {
+                  "visible_pixels": 16,
+                  "centroid": {
+                    "x": 0.13585069444444445,
+                    "y": 0.425
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.14722222222222223,
+                    "y": 0.42125
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.15069444444444444,
+                    "y": 0.42375
+                  }
+                },
+                {
+                  "visible_pixels": 6,
+                  "centroid": {
+                    "x": 0.11620370370370371,
+                    "y": 0.42625
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.12430555555555556,
+                    "y": 0.42625
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.20972222222222223,
+                    "y": 0.4675
+                  }
+                },
+                {
+                  "visible_pixels": 10,
+                  "centroid": {
+                    "x": 0.21222222222222223,
+                    "y": 0.53
+                  }
+                }
+              ],
+              "phase_columns": null
+            },
+            "illumination": null,
+            "phase_columns": null
           },
           {
-            "time_ms": 885,
-            "frame_count": 20,
-            "canvas_signature": 2056116947,
+            "time_ms": 966,
+            "control_value": 6,
+            "model_outputs": {
+              "current_a": 1,
+              "power_w": 6
+            },
+            "frame_count": 19,
+            "canvas_signature": 3075386348,
             "actor": {
-              "visible_pixels": 75,
-              "signature": "7f3360e3",
+              "visible_pixels": 76,
+              "signature": "58c80e37",
               "centroid": {
-                "x": 0.24581481481481482,
-                "y": 0.4282666666666667
+                "x": 0.25328947368421056,
+                "y": 0.4276973684210526
               },
               "bounds": {
                 "x": 0.11388888888888889,
                 "y": 0.31,
                 "width": 0.7069444444444445,
                 "height": 0.225
-              }
-            }
+              },
+              "features": [
+                {
+                  "visible_pixels": 8,
+                  "centroid": {
+                    "x": 0.20625,
+                    "y": 0.3125
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.12777777777777777,
+                    "y": 0.4175
+                  }
+                },
+                {
+                  "visible_pixels": 16,
+                  "centroid": {
+                    "x": 0.13585069444444445,
+                    "y": 0.425
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.14722222222222223,
+                    "y": 0.42125
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.15069444444444444,
+                    "y": 0.42375
+                  }
+                },
+                {
+                  "visible_pixels": 11,
+                  "centroid": {
+                    "x": 0.8178030303030304,
+                    "y": 0.42454545454545456
+                  }
+                },
+                {
+                  "visible_pixels": 6,
+                  "centroid": {
+                    "x": 0.11620370370370371,
+                    "y": 0.42625
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.12430555555555556,
+                    "y": 0.42625
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.20972222222222223,
+                    "y": 0.4675
+                  }
+                },
+                {
+                  "visible_pixels": 9,
+                  "centroid": {
+                    "x": 0.20324074074074075,
+                    "y": 0.5297222222222222
+                  }
+                }
+              ],
+              "phase_columns": null
+            },
+            "illumination": null,
+            "phase_columns": null
           }
-        ]
+        ],
+        "physicsSamples": [],
+        "temporalRuns": [],
+        "geometrySamples": [],
+        "geometryScreenshots": []
       }
     },
     {
       "golden_id": "sound_pitch",
-      "artifact_sha256": "f0b2c1aaa4ab647cd56990b33f61e657a74034f653e595c5aeafb547cb6f3ba8",
+      "artifact_sha256": "07d43e091e144011761ae06403c494e5099263aabdabc310df41c4e87672d631",
       "actor": "wavefront",
       "action": "propagates",
       "passed": true,
@@ -495,17 +1146,17 @@
           {
             "value": 110,
             "frameChanged": true,
-            "visualSignature": 3466224217
+            "visualSignature": 2653317491
           },
           {
             "value": 440,
             "frameChanged": true,
-            "visualSignature": 2642402979
+            "visualSignature": 556536679
           },
           {
             "value": 880,
             "frameChanged": true,
-            "visualSignature": 2500664136
+            "visualSignature": 1527718310
           }
         ],
         "lang": "ar",
@@ -523,87 +1174,194 @@
         ],
         "actorSamples": [
           {
-            "time_ms": 322,
+            "time_ms": 379,
+            "control_value": 440,
+            "model_outputs": {
+              "wavelength_m": 0.7795454545454545,
+              "period_ms": 2.272727272727273
+            },
             "frame_count": 10,
-            "canvas_signature": 204606681,
+            "canvas_signature": 3214236174,
             "actor": {
-              "visible_pixels": 2353,
-              "signature": "ddcf2345",
+              "visible_pixels": 1969,
+              "signature": "e13b94d9",
               "centroid": {
-                "x": 0.5366500212494688,
-                "y": 0.5243040798980025
+                "x": 0.5405507589865132,
+                "y": 0.5244362620619604
               },
               "bounds": {
                 "x": 0.2,
                 "y": 0.38,
                 "width": 0.7319444444444444,
                 "height": 0.28
-              }
-            }
+              },
+              "features": [
+                {
+                  "visible_pixels": 1014,
+                  "centroid": {
+                    "x": 0.3878711921981152,
+                    "y": 0.52392258382643
+                  }
+                },
+                {
+                  "visible_pixels": 955,
+                  "centroid": {
+                    "x": 0.7026628853984875,
+                    "y": 0.5249816753926702
+                  }
+                }
+              ],
+              "phase_columns": null
+            },
+            "illumination": null,
+            "phase_columns": null
           },
           {
-            "time_ms": 481,
+            "time_ms": 547,
+            "control_value": 110,
+            "model_outputs": {
+              "wavelength_m": 3.118181818181818,
+              "period_ms": 9.090909090909092
+            },
             "frame_count": 13,
-            "canvas_signature": 2243089810,
+            "canvas_signature": 419244966,
             "actor": {
-              "visible_pixels": 1692,
-              "signature": "ccb579e2",
+              "visible_pixels": 1429,
+              "signature": "1708e0a3",
               "centroid": {
-                "x": 0.5450215064355135,
-                "y": 0.5193705673758866
+                "x": 0.5508795972319415,
+                "y": 0.5191130160951715
               },
               "bounds": {
                 "x": 0.2,
                 "y": 0.3925,
                 "width": 0.7319444444444444,
                 "height": 0.2675
-              }
-            }
+              },
+              "features": [
+                {
+                  "visible_pixels": 747,
+                  "centroid": {
+                    "x": 0.38291499330655954,
+                    "y": 0.5181994645247657
+                  }
+                },
+                {
+                  "visible_pixels": 682,
+                  "centroid": {
+                    "x": 0.7348525578364289,
+                    "y": 0.5201136363636363
+                  }
+                }
+              ],
+              "phase_columns": null
+            },
+            "illumination": null,
+            "phase_columns": null
           },
           {
-            "time_ms": 632,
+            "time_ms": 716,
+            "control_value": 880,
+            "model_outputs": {
+              "wavelength_m": 0.38977272727272727,
+              "period_ms": 1.1363636363636365
+            },
             "frame_count": 16,
-            "canvas_signature": 2230206084,
+            "canvas_signature": 679592811,
             "actor": {
-              "visible_pixels": 3054,
-              "signature": "ab9a8a8e",
+              "visible_pixels": 2566,
+              "signature": "b9d71660",
               "centroid": {
-                "x": 0.5315146802008296,
-                "y": 0.5246889325474787
+                "x": 0.534302740971681,
+                "y": 0.5245908028059236
               },
               "bounds": {
                 "x": 0.2,
                 "y": 0.38,
                 "width": 0.7319444444444444,
                 "height": 0.28
-              }
-            }
+              },
+              "features": [
+                {
+                  "visible_pixels": 539,
+                  "centroid": {
+                    "x": 0.4808209647495362,
+                    "y": 0.5171428571428571
+                  }
+                },
+                {
+                  "visible_pixels": 1243,
+                  "centroid": {
+                    "x": 0.686898855814785,
+                    "y": 0.5258326629123089
+                  }
+                },
+                {
+                  "visible_pixels": 784,
+                  "centroid": {
+                    "x": 0.32913655045351475,
+                    "y": 0.5277423469387755
+                  }
+                }
+              ],
+              "phase_columns": null
+            },
+            "illumination": null,
+            "phase_columns": null
           },
           {
-            "time_ms": 782,
+            "time_ms": 883,
+            "control_value": 440,
+            "model_outputs": {
+              "wavelength_m": 0.7795454545454545,
+              "period_ms": 2.272727272727273
+            },
             "frame_count": 19,
-            "canvas_signature": 2471469041,
+            "canvas_signature": 204169252,
             "actor": {
-              "visible_pixels": 2448,
-              "signature": "f16d4bd6",
+              "visible_pixels": 2056,
+              "signature": "f2416fef",
               "centroid": {
-                "x": 0.5354081563180828,
-                "y": 0.5244464869281046
+                "x": 0.5387848573281453,
+                "y": 0.5249513618677043
               },
               "bounds": {
                 "x": 0.2,
                 "y": 0.3825,
                 "width": 0.7319444444444444,
                 "height": 0.2775
-              }
-            }
+              },
+              "features": [
+                {
+                  "visible_pixels": 998,
+                  "centroid": {
+                    "x": 0.37882292362502784,
+                    "y": 0.5242209418837676
+                  }
+                },
+                {
+                  "visible_pixels": 1058,
+                  "centroid": {
+                    "x": 0.6896752257929006,
+                    "y": 0.5256403591682419
+                  }
+                }
+              ],
+              "phase_columns": null
+            },
+            "illumination": null,
+            "phase_columns": null
           }
-        ]
+        ],
+        "physicsSamples": [],
+        "temporalRuns": [],
+        "geometrySamples": [],
+        "geometryScreenshots": []
       }
     },
     {
       "golden_id": "day_night",
-      "artifact_sha256": "f6abc6cb212554f08980e2eb78b20d1644da35cc264dbfe3e33258b3ebc65306",
+      "artifact_sha256": "2faa32e175de6f8996ae4764f9102118bc1319a012dcf010aaa774e207e27ee0",
       "actor": "earth_landmark",
       "action": "rotates",
       "passed": true,
@@ -642,82 +1400,525 @@
         ],
         "actorSamples": [
           {
-            "time_ms": 401,
-            "frame_count": 11,
-            "canvas_signature": 1694584421,
+            "time_ms": 472,
+            "control_value": 60,
+            "model_outputs": {
+              "light_alignment": 0.5000000000000001,
+              "daylight": 1
+            },
+            "frame_count": 10,
+            "canvas_signature": 3034647075,
             "actor": {
-              "visible_pixels": 151,
-              "signature": "48eabc0e",
+              "visible_pixels": 149,
+              "signature": "b9b3d7a4",
               "centroid": {
-                "x": 0.6784492273730685,
-                "y": 0.5706622516556291
+                "x": 0.6831189410887397,
+                "y": 0.5706375838926174
               },
               "bounds": {
                 "x": 0.625,
-                "y": 0.2825,
+                "y": 0.28,
                 "width": 0.11805555555555555,
-                "height": 0.4975
-              }
-            }
+                "height": 0.5
+              },
+              "features": [
+                {
+                  "visible_pixels": 58,
+                  "centroid": {
+                    "x": 0.6770833333333334,
+                    "y": 0.2903448275862069
+                  }
+                },
+                {
+                  "visible_pixels": 10,
+                  "centroid": {
+                    "x": 0.6954166666666667,
+                    "y": 0.7284999999999999
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.68125,
+                    "y": 0.739375
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.7256944444444444,
+                    "y": 0.739375
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.65625,
+                    "y": 0.741875
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.6472222222222223,
+                    "y": 0.7725
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.6527777777777778,
+                    "y": 0.7725
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.7083333333333334,
+                    "y": 0.7725
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.7375,
+                    "y": 0.7725
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.7416666666666667,
+                    "y": 0.7725
+                  }
+                },
+                {
+                  "visible_pixels": 6,
+                  "centroid": {
+                    "x": 0.7162037037037037,
+                    "y": 0.7729166666666667
+                  }
+                }
+              ],
+              "phase_columns": null
+            },
+            "illumination": null,
+            "phase_columns": null
           },
           {
-            "time_ms": 559,
-            "frame_count": 14,
-            "canvas_signature": 330540626,
+            "time_ms": 635,
+            "control_value": 0,
+            "model_outputs": {
+              "light_alignment": 1,
+              "daylight": 1
+            },
+            "frame_count": 13,
+            "canvas_signature": 2540646706,
             "actor": {
-              "visible_pixels": 152,
-              "signature": "335e195e",
+              "visible_pixels": 154,
+              "signature": "3f9b52b0",
               "centroid": {
-                "x": 0.651343201754386,
-                "y": 0.6021052631578947
+                "x": 0.6516594516594517,
+                "y": 0.5988474025974027
               },
               "bounds": {
-                "x": 0.5916666666666667,
-                "y": 0.3675,
-                "width": 0.15138888888888888,
-                "height": 0.4125
-              }
-            }
+                "x": 0.5944444444444444,
+                "y": 0.36,
+                "width": 0.1486111111111111,
+                "height": 0.42
+              },
+              "features": [
+                {
+                  "visible_pixels": 61,
+                  "centroid": {
+                    "x": 0.5994080145719489,
+                    "y": 0.37
+                  }
+                },
+                {
+                  "visible_pixels": 10,
+                  "centroid": {
+                    "x": 0.6954166666666667,
+                    "y": 0.7284999999999999
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.6375,
+                    "y": 0.7375
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.68125,
+                    "y": 0.739375
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.7256944444444444,
+                    "y": 0.739375
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.65625,
+                    "y": 0.741875
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.6472222222222223,
+                    "y": 0.7725
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.6527777777777778,
+                    "y": 0.7725
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.7083333333333334,
+                    "y": 0.7725
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.7375,
+                    "y": 0.7725
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.7416666666666667,
+                    "y": 0.7725
+                  }
+                },
+                {
+                  "visible_pixels": 6,
+                  "centroid": {
+                    "x": 0.7162037037037037,
+                    "y": 0.7729166666666667
+                  }
+                }
+              ],
+              "phase_columns": null
+            },
+            "illumination": null,
+            "phase_columns": null
           },
           {
-            "time_ms": 714,
-            "frame_count": 17,
-            "canvas_signature": 3199625404,
+            "time_ms": 788,
+            "control_value": 360,
+            "model_outputs": {
+              "light_alignment": 1,
+              "daylight": 1
+            },
+            "frame_count": 16,
+            "canvas_signature": 289607411,
             "actor": {
               "visible_pixels": 185,
-              "signature": "6e258261",
+              "signature": "6f52ef6d",
               "centroid": {
-                "x": 0.6928678678678678,
-                "y": 0.7084324324324324
+                "x": 0.6925375375375376,
+                "y": 0.7087837837837837
               },
               "bounds": {
                 "x": 0.6208333333333333,
-                "y": 0.5975,
+                "y": 0.6,
                 "width": 0.125,
-                "height": 0.1825
-              }
-            }
+                "height": 0.18
+              },
+              "features": [
+                {
+                  "visible_pixels": 52,
+                  "centroid": {
+                    "x": 0.7229166666666667,
+                    "y": 0.60875
+                  }
+                },
+                {
+                  "visible_pixels": 14,
+                  "centroid": {
+                    "x": 0.633829365079365,
+                    "y": 0.7292857142857143
+                  }
+                },
+                {
+                  "visible_pixels": 9,
+                  "centroid": {
+                    "x": 0.6708333333333333,
+                    "y": 0.7275
+                  }
+                },
+                {
+                  "visible_pixels": 9,
+                  "centroid": {
+                    "x": 0.7361111111111112,
+                    "y": 0.7275
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.6844444444444444,
+                    "y": 0.7345
+                  }
+                },
+                {
+                  "visible_pixels": 6,
+                  "centroid": {
+                    "x": 0.7194444444444444,
+                    "y": 0.735
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.6236111111111111,
+                    "y": 0.7375
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.6423611111111112,
+                    "y": 0.7375
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.6604166666666667,
+                    "y": 0.741875
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.6263888888888889,
+                    "y": 0.7725
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.6388888888888888,
+                    "y": 0.7725
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.6458333333333334,
+                    "y": 0.7725
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.6513888888888889,
+                    "y": 0.7725
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.7069444444444445,
+                    "y": 0.7725
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.7347222222222223,
+                    "y": 0.7725
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.7402777777777778,
+                    "y": 0.7725
+                  }
+                },
+                {
+                  "visible_pixels": 9,
+                  "centroid": {
+                    "x": 0.7137345679012346,
+                    "y": 0.7736111111111111
+                  }
+                }
+              ],
+              "phase_columns": null
+            },
+            "illumination": null,
+            "phase_columns": null
           },
           {
-            "time_ms": 875,
-            "frame_count": 20,
-            "canvas_signature": 2383583609,
+            "time_ms": 952,
+            "control_value": 60,
+            "model_outputs": {
+              "light_alignment": 0.5000000000000001,
+              "daylight": 1
+            },
+            "frame_count": 19,
+            "canvas_signature": 2000809150,
             "actor": {
               "visible_pixels": 172,
-              "signature": "175e6f3d",
+              "signature": "c23efa69",
               "centroid": {
-                "x": 0.7002018733850129,
-                "y": 0.6199563953488372
+                "x": 0.7003956718346254,
+                "y": 0.6200726744186046
               },
               "bounds": {
                 "x": 0.6222222222222222,
-                "y": 0.31,
+                "y": 0.3125,
                 "width": 0.12361111111111112,
-                "height": 0.47
-              }
-            }
+                "height": 0.4675
+              },
+              "features": [
+                {
+                  "visible_pixels": 52,
+                  "centroid": {
+                    "x": 0.7336805555555556,
+                    "y": 0.32096153846153846
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.6423611111111112,
+                    "y": 0.7175
+                  }
+                },
+                {
+                  "visible_pixels": 9,
+                  "centroid": {
+                    "x": 0.6708333333333333,
+                    "y": 0.7275
+                  }
+                },
+                {
+                  "visible_pixels": 9,
+                  "centroid": {
+                    "x": 0.7361111111111112,
+                    "y": 0.7275
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.6844444444444444,
+                    "y": 0.7345
+                  }
+                },
+                {
+                  "visible_pixels": 6,
+                  "centroid": {
+                    "x": 0.7194444444444444,
+                    "y": 0.735
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.6243055555555556,
+                    "y": 0.7375
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.6326388888888889,
+                    "y": 0.7375
+                  }
+                },
+                {
+                  "visible_pixels": 4,
+                  "centroid": {
+                    "x": 0.6604166666666667,
+                    "y": 0.741875
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.6263888888888889,
+                    "y": 0.7725
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.6388888888888888,
+                    "y": 0.7725
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.6458333333333334,
+                    "y": 0.7725
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.6513888888888889,
+                    "y": 0.7725
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.7069444444444445,
+                    "y": 0.7725
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.7347222222222223,
+                    "y": 0.7725
+                  }
+                },
+                {
+                  "visible_pixels": 5,
+                  "centroid": {
+                    "x": 0.7402777777777778,
+                    "y": 0.7725
+                  }
+                },
+                {
+                  "visible_pixels": 9,
+                  "centroid": {
+                    "x": 0.7137345679012346,
+                    "y": 0.7736111111111111
+                  }
+                }
+              ],
+              "phase_columns": null
+            },
+            "illumination": null,
+            "phase_columns": null
           }
-        ]
+        ],
+        "physicsSamples": [],
+        "temporalRuns": [],
+        "geometrySamples": [],
+        "geometryScreenshots": []
       }
     }
   ]

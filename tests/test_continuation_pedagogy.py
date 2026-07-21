@@ -74,6 +74,20 @@ def _passing_browser(_artifact):
     return BrowserVerificationResult.passing()
 
 
+def _remove_shared_scene_evidence(golden_root: Path) -> None:
+    """Make a true legacy pin: no shared adapter marker or recorded evidence."""
+
+    for path in golden_root.glob("*.json"):
+        if path.name == "manifest.json":
+            continue
+        document = json.loads(path.read_text(encoding="utf-8"))
+        document["artifact"] = document["artifact"].replace(
+            "LAYSH_CURATED_SCENE_ADAPTER_V1", "LEGACY_SCENE_ADAPTER", 1
+        )
+        document.get("evidence", {}).pop("curated_shell_refresh", None)
+        path.write_text(json.dumps(document, ensure_ascii=False), encoding="utf-8")
+
+
 def test_legacy_pinned_goldens_cannot_refresh_without_shared_scene_evidence(
     tmp_path, monkeypatch
 ):
@@ -88,6 +102,7 @@ def test_legacy_pinned_goldens_cannot_refresh_without_shared_scene_evidence(
     source_root = ROOT / "out/cache/golden"
     golden_root = tmp_path / "golden"
     shutil.copytree(source_root, golden_root)
+    _remove_shared_scene_evidence(golden_root)
     before = {path.name: path.read_bytes() for path in golden_root.glob("*.json")}
 
     with pytest.raises(ValueError, match="deterministic refresh verification"):
@@ -105,6 +120,7 @@ def test_pinned_golden_refresh_stops_before_browser_when_scene_evidence_is_missi
 
     golden_root = tmp_path / "golden"
     shutil.copytree(ROOT / "out/cache/golden", golden_root)
+    _remove_shared_scene_evidence(golden_root)
     before = {path.name: path.read_bytes() for path in golden_root.glob("*.json")}
     calls = 0
 
