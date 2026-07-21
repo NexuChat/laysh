@@ -155,6 +155,8 @@ try {
   const actorSamples = [];
   const physicsSamples = [];
   const temporalRuns = [];
+  const geometrySamples = [];
+  const geometryScreenshots = [];
   if (motionProfile) {
     const profileLiteral = JSON.stringify(motionProfile);
     const setControlValue = async (value) => {
@@ -293,6 +295,64 @@ try {
       }
     }
   }
+  const geometry = motionProfile && motionProfile.geometry;
+  if (geometry) {
+    const widths = Array.isArray(geometry.viewport_widths) ? geometry.viewport_widths : [];
+    for (const viewportWidth of widths) {
+      const viewportHeight = viewportWidth < 600
+        ? Number(geometry.mobile_viewport_height)
+        : Number(geometry.viewport_height);
+      await command("Emulation.setDeviceMetricsOverride", {
+        width: viewportWidth,
+        height: viewportHeight,
+        deviceScaleFactor: 1,
+        mobile: viewportWidth < 600,
+      });
+      await delay(100);
+      const viewportSamples = await command("Runtime.evaluate", {
+        expression: `(() => {
+          const canvas = document.querySelector('#simulation');
+          const control = document.querySelector('#primary-control');
+          const lesson = window.__LAYSH_LESSON__;
+          const minimum = Number(control.min);
+          const maximum = Number(control.max);
+          const step = Number(control.step);
+          const samples = [];
+          for (let value = minimum; value <= maximum + step * 0.5; value += step) {
+            const normalizedValue = Number(value.toFixed(10));
+            control.value = String(normalizedValue);
+            control.dispatchEvent(new Event('input', { bubbles: true }));
+            for (let settle = 0; settle < 12; settle += 1) {
+              window.LayshSimulation.setParameter(lesson.primary_parameter.id, normalizedValue);
+            }
+            samples.push({
+              viewport: { width: ${viewportWidth}, height: ${viewportHeight} },
+              canvas: { width: canvas.width, height: canvas.height },
+              parameter: { name: lesson.primary_parameter.id, value: normalizedValue },
+              bodies: Array.isArray(canvas.__layshBodyGeometry)
+                ? canvas.__layshBodyGeometry.map((body) => ({ ...body }))
+                : null,
+            });
+          }
+          control.value = String(lesson.primary_parameter.default);
+          control.dispatchEvent(new Event('input', { bubbles: true }));
+          for (let settle = 0; settle < 12; settle += 1) {
+            window.LayshSimulation.setParameter(
+              lesson.primary_parameter.id,
+              lesson.primary_parameter.default,
+            );
+          }
+          return samples;
+        })()`,
+        returnByValue: true,
+      });
+      geometrySamples.push(...viewportSamples.result.value);
+      const captured = await command("Page.captureScreenshot", { format: "png", fromSurface: true });
+      const filename = `${goldenId}-geometry-${viewportWidth}x${viewportHeight}.png`;
+      fs.writeFileSync(path.join(screenshotRoot, filename), Buffer.from(captured.data, "base64"));
+      geometryScreenshots.push(filename);
+    }
+  }
   const idleBefore = await command("Runtime.evaluate", {
     expression: `(() => {
       const canvas = document.querySelector('#simulation');
@@ -346,6 +406,8 @@ try {
     actorSamples,
     physicsSamples,
     temporalRuns,
+    geometrySamples,
+    geometryScreenshots,
   };
   if (reportPath) {
     fs.mkdirSync(path.dirname(reportPath), { recursive: true });

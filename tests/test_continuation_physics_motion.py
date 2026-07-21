@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import math
+import shutil
 from copy import deepcopy
 from pathlib import Path
 
@@ -317,3 +318,145 @@ def test_each_pinned_golden_declares_its_action_specific_physics_profile():
         assert profile["kind"] == kind
         assert len(profile["control_values"]) >= 3
         assert all(isinstance(value, (int, float)) for value in profile["control_values"])
+
+
+def test_body_geometry_rejects_undeclared_overlap_with_actionable_measurement():
+    from server.golden_physics_motion import evaluate_body_geometry
+
+    report = evaluate_body_geometry(
+        [
+            {
+                "viewport": {"width": 700, "height": 900},
+                "canvas": {"width": 672, "height": 376},
+                "parameter": {"name": "angle_deg", "value": 180},
+                "bodies": [
+                    {"name": "Sun", "shape": "circle", "x": 27, "y": 188, "radius": 35},
+                    {"name": "Moon", "shape": "circle", "x": 66.5, "y": 188, "radius": 12.6},
+                ],
+            }
+        ]
+    )
+
+    assert report["passed"] is False
+    assert report["check_count"] == 1
+    assert report["minimum_clearance_px"] == -8.1
+    failure = report["failures"][0]
+    assert failure["code"] == "drawn_bodies_overlap"
+    assert failure["actual"] == {
+        "body_a": "Sun",
+        "body_b": "Moon",
+        "viewport": {"width": 700, "height": 900},
+        "canvas": {"width": 672, "height": 376},
+        "parameter": {"name": "angle_deg", "value": 180},
+        "overlap_px": 8.1,
+    }
+    assert failure["message"] == (
+        "Sun and Moon overlap by 8.10px at viewport 700x900 "
+        "(canvas 672x376, angle_deg=180)."
+    )
+
+
+def test_body_geometry_allows_only_explicitly_declared_contact():
+    from server.golden_physics_motion import evaluate_body_geometry
+
+    sample = {
+        "viewport": {"width": 390, "height": 844},
+        "canvas": {"width": 350, "height": 196},
+        "parameter": {"name": "density_kg_m3", "value": 1200},
+        "bodies": [
+            {
+                "name": "Body",
+                "shape": "circle",
+                "x": 120,
+                "y": 110,
+                "radius": 30,
+                "contacts": ["Water"],
+            },
+            {"name": "Water", "shape": "circle", "x": 140, "y": 110, "radius": 30},
+        ],
+    }
+
+    report = evaluate_body_geometry([sample])
+
+    assert report["passed"] is True
+    assert report["check_count"] == 1
+    assert report["failures"] == []
+
+
+def test_moon_geometry_profile_sweeps_supported_viewports_and_parameter_range():
+    fixture = json.loads(
+        (ROOT / "server" / "fixtures" / "moon_phases_ar.json").read_text("utf-8")
+    )
+
+    profile = fixture["review_contract"]["body_geometry"]
+
+    assert profile == {
+        "viewport_widths": [320, 390, 700, 1200],
+        "viewport_height": 900,
+        "mobile_viewport_height": 844,
+        "parameter_sweep": "step",
+    }
+
+
+def test_moon_geometry_upgrade_is_deterministic_and_removes_independent_body_clamps():
+    from server.golden_geometry import upgrade_moon_geometry
+    from server.goldens import _artifact_lesson_and_module, load_pinned_golden
+
+    golden = load_pinned_golden("moon_phases")
+    assert golden is not None
+    _, source = _artifact_lesson_and_module(golden["artifact"])
+
+    upgraded = upgrade_moon_geometry("moon_phases", source)
+
+    assert upgraded == upgrade_moon_geometry("moon_phases", source)
+    assert "function sceneLayout(state)" in upgraded
+    assert "canvas.__layshBodyGeometry" in upgraded
+    assert "Math.max(54,scale*.30)" not in upgraded
+    assert "Math.max(18,scale*.075)" not in upgraded
+    assert "var clearance = scale * .03" in upgraded
+
+
+def test_moon_geometry_refresh_is_offline_targeted_and_idempotent(tmp_path, monkeypatch):
+    import server.codex_backend
+    from server.browser_verify import BrowserVerificationResult
+    from server.golden_geometry import refresh_pinned_moon_geometry
+    from server.goldens import _artifact_lesson_and_module
+
+    monkeypatch.setattr(
+        server.codex_backend.CodexBackend,
+        "__init__",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("model call is forbidden")
+        ),
+    )
+    golden_root = tmp_path / "golden"
+    shutil.copytree(ROOT / "out/cache/golden", golden_root)
+    before = {
+        path.name: path.read_bytes()
+        for path in golden_root.glob("*.json")
+        if path.name not in {"moon_phases.json", "manifest.json"}
+    }
+
+    reports = refresh_pinned_moon_geometry(
+        root=golden_root,
+        browser_verifier=lambda _artifact: BrowserVerificationResult.passing(),
+    )
+
+    assert reports[0]["golden_id"] == "moon_phases"
+    assert reports[0]["geometry_refreshed"] is True
+    document = json.loads((golden_root / "moon_phases.json").read_text("utf-8"))
+    _, source = _artifact_lesson_and_module(document["artifact"])
+    assert "function sceneLayout(state)" in source
+    assert document["evidence"]["geometry_refresh"] == {
+        "deterministic_check_count": 31,
+        "browser_check_count": 5,
+    }
+    assert before == {
+        path.name: path.read_bytes()
+        for path in golden_root.glob("*.json")
+        if path.name not in {"moon_phases.json", "manifest.json"}
+    }
+    assert refresh_pinned_moon_geometry(
+        root=golden_root,
+        browser_verifier=lambda _artifact: BrowserVerificationResult.passing(),
+    ) == reports

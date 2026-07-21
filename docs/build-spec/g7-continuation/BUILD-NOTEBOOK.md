@@ -237,6 +237,36 @@ and 0 blocked. This is not the final release query.
 Current acceptance ledger after VISUAL-01: 13 passing, 0 failing, 17 not
 started, and 0 blocked. This is not the final release query.
 
+#### MOTION-03 follow-up — collision-safe Moon geometry
+
+- The retained package RED evidence reproduces the owner-reported defect across
+  the complete four-viewport, one-degree sweep: 118 rejected states, a first
+  Sun–Moon overlap of 18.391 px at 320×844 (canvas 280×157, angle 0°), and a
+  worst clearance of −19.025 px. This retained baseline is distinguished from
+  the locally measured post-patch evidence below.
+- The Moon top view now derives the orbit, Earth, Moon, Sun, clearance, and Sun
+  placement from one scene scale. The scientific `moonState` relation and
+  `(1 − cos θ) / 2` output remain unchanged. Rendered body geometry is exposed
+  only to the trusted browser probe, whose structured diagnostics name both
+  bodies, viewport, canvas size, parameter value, and measured overlap.
+- The package applied cleanly as ten files with 524 insertions and 7 deletions;
+  no three-way application was needed. The pinned Moon was then refreshed
+  locally through deterministic and browser gates. Because this required-order
+  integration follows VISUAL-01, its deterministic count is 31 rather than the
+  package's independent-base count of 30; the additional check is the new
+  `readout_visibility` gate. The final artifact and manifest both record SHA-256
+  `140220caf395d3a76dfae77fda91f89836ea19a5e3b19d56629e001e9db34aec`.
+- Locally measured `/tmp/motion-03-moon-geometry.json` evidence records all six
+  goldens passing 4,415 checks with zero model calls. The Moon accounts for
+  4,345 checks over 1,444 geometry samples and has a minimum clearance of
+  4.725 px with no failures. Focused physics tests: 14 passed in 0.42s. Full
+  suite: 259 passed and the single opt-in live test skipped in 233.26s. Ruff,
+  `git diff --check`, and JavaScript syntax checks were clean.
+
+MOTION-03 remains passing with the stronger collision invariant. The acceptance
+ledger remains 13 passing, 0 failing, 17 not started, and 0 blocked; this closes
+the Moon-geometry defect without double-counting an already accepted row.
+
 ### Batch C — sharing, library, localization, and presentation
 
 Not started.

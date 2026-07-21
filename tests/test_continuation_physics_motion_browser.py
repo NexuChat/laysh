@@ -20,6 +20,7 @@ def test_all_six_pinned_goldens_prove_their_declared_physics_in_browser(tmp_path
             golden_id=golden_id,
             actor_profile=fixture["review_contract"]["actor_tracking"],
             physics_profile=fixture["review_contract"]["physics_motion"],
+            geometry_profile=fixture["review_contract"].get("body_geometry"),
             screenshot_root=tmp_path / golden_id,
         )
 
@@ -27,3 +28,6 @@ def test_all_six_pinned_goldens_prove_their_declared_physics_in_browser(tmp_path
         assert report["evidence"]["actorSamples"]
         if fixture["review_contract"]["physics_motion"].get("temporal_runs"):
             assert report["evidence"]["temporalRuns"]
+        if fixture["review_contract"].get("body_geometry"):
+            assert len(report["evidence"]["geometrySamples"]) == 4 * 361
+            assert report["minimum_clearance_px"] > 0

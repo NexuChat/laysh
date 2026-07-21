@@ -39,6 +39,7 @@ def build_report(*, screenshot_root: Path | None = None) -> dict[str, object]:
             golden_id=golden_id,
             actor_profile=fixture["review_contract"]["actor_tracking"],
             physics_profile=fixture["review_contract"]["physics_motion"],
+            geometry_profile=fixture["review_contract"].get("body_geometry"),
             screenshot_root=(screenshot_root / golden_id) if screenshot_root else None,
         )
         reports.append(

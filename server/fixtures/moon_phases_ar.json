@@ -26,6 +26,12 @@
         "color": {"red": 255, "green": 252, "blue": 229, "tolerance": 88}
       }
     },
+    "body_geometry": {
+      "viewport_widths": [320, 390, 700, 1200],
+      "viewport_height": 900,
+      "mobile_viewport_height": 844,
+      "parameter_sweep": "step"
+    },
     "primary_parameter": {"id": "angle_deg", "min": 0, "max": 360, "default": 90, "step": 1, "unit": "°"},
     "units": ["°", "ratio"],
     "assumptions": ["مدار دائري مبسط", "أشعة شمس متوازية", "إهمال ميل المدار والكسوف"],
