@@ -1,11 +1,14 @@
 (() => {
   "use strict";
 
-  const safeExamples = [
-    "لماذا يتغير شكل القمر خلال الشهر؟",
-    "كيف تطفو السفن الثقيلة فوق الماء؟",
-    "لماذا تتكوّن ألوان قوس المطر؟",
-    "كيف تنتقل الحرارة بين الأجسام؟",
+  const t = (key, values) => window.LayshLocale.t(key, values);
+  let currentLocale = window.LayshLocale.current();
+  let number = new Intl.NumberFormat(currentLocale, { maximumFractionDigits: 0 });
+  const safeExamples = () => [
+    t("ask.example"),
+    t("ask.example.1"),
+    t("ask.example.2"),
+    t("ask.example.3"),
   ];
   const state = {
     view: "ask",
@@ -24,94 +27,85 @@
     formula: null,
     lastQuestion: "",
     result: null,
+    connectionKey: null,
+    failure: null,
   };
 
   const byId = (id) => document.getElementById(id);
   const views = [...document.querySelectorAll("[data-view]")];
-  const number = new Intl.NumberFormat("ar", { maximumFractionDigits: 0 });
-  const stageLabels = {
-    filtering: "حماية السؤال",
-    understanding: "فهم الفكرة",
-    cache_lookup: "البحث في المرصد",
-    generating: "رسم الأداة",
-    verifying: "اختبار القوانين",
-    healing: "إصلاح ذاتي",
-    qa: "مراجعة الجودة",
-    qa_retry: "إعادة مراجعة الجودة",
-    browser_check: "اختبار المشهد",
-    complete: "التجربة جاهزة",
+  const stageLabelKeys = {
+    filtering: "stage.filtering",
+    understanding: "stage.understanding",
+    cache_lookup: "stage.cache_lookup",
+    generating: "stage.generating",
+    verifying: "stage.verifying",
+    healing: "stage.healing",
+    qa: "stage.qa",
+    qa_retry: "stage.qa_retry",
+    browser_check: "stage.browser_check",
+    complete: "stage.complete",
   };
-  const gateLabels = {
-    closed_schema: "العقد المغلق",
-    restricted_source: "المصدر الآمن",
-    node_runtime: "وقت التشغيل",
-    fixtures: "القيم المرجعية",
-    browser_readiness: "جاهزية المتصفح",
-    verified_cache: "نسخة مثبتة",
-    artifact_hash: "بصمة الأثر",
-    interface: "واجهة الوحدة",
-    security: "الأمان",
-    invariant: "ثبات النموذج",
-    formula_presentation: "صياغة المعادلة",
-    fixture_integrity: "سلامة القيم",
+  const stageDetailKeys = {
+    filtering: "stage.detail.filtering",
+    understanding: "stage.detail.understanding",
+    cache_lookup: "stage.detail.cache_lookup",
+    generating: "stage.detail.generating",
+    verifying: "stage.detail.verifying",
+    fixture_refresh: "stage.detail.fixture_refresh",
+    healing: "stage.detail.healing",
+    qa: "stage.detail.qa",
+    qa_retry: "stage.detail.qa_retry",
+    browser_check: "stage.detail.browser_check",
+    complete: "stage.detail.complete",
+  };
+  const gateLabelKeys = {
+    closed_schema: "gate.closed_schema",
+    restricted_source: "gate.restricted_source",
+    node_runtime: "gate.node_runtime",
+    fixtures: "gate.fixtures",
+    browser_readiness: "gate.browser_readiness",
+    verified_cache: "gate.verified_cache",
+    artifact_hash: "gate.artifact_hash",
+    interface: "gate.interface",
+    security: "gate.security",
+    invariant: "gate.invariant",
+    formula_presentation: "gate.formula_presentation",
+    fixture_integrity: "gate.fixture_integrity",
   };
 
-  const failureCopy = {
-    not_simulatable: {
-      eyebrow: "الجواب متاح",
-      title: "احتفظنا بالجواب",
-      copy: "لا يمكن بناء محاكاة صادقة لهذا السؤال الآن. يمكنك تعديل السؤال أو اختيار تجربة مراجعة.",
-      symbol: "؟",
-    },
-    qa_inconclusive: {
-      eyebrow: "الفحص غير حاسم",
-      title: "احتفظنا بالجواب",
-      copy: "لم يكتمل فحص المرشح في الوقت المحدد، لذلك لم نعرض المحاكاة.",
-      symbol: "…",
-    },
-    verification_exhausted: {
-      eyebrow: "أوقفنا مرشحًا غير موثوق",
-      title: "احتفظنا بالجواب",
-      copy: "لم تجتز المحاكاة كل الفحوصات بعد محاولتي إصلاح، لذلك لن نعرضها أو نخزنها.",
-      symbol: "×",
-    },
-    generation_failed: {
-      eyebrow: "تعذّر إكمال البناء",
-      title: "الجواب ما زال هنا",
-      copy: "تعطّل البناء قبل تجهيز تجربة موثوقة. جرّب البناء مرة أخرى أو عد إلى المكتبة.",
-      symbol: "↺",
-    },
-    simulation_runtime_error: {
-      eyebrow: "حماية وقت التشغيل",
-      title: "حدث خطأ داخل المحاكاة",
-      copy: "أخفينا الإطار المتعطل ولم نسجل تفاصيله. يمكنك إعادة البناء أو اختيار تجربة أخرى.",
-      symbol: "!",
-    },
-    backend_unavailable: {
-      eyebrow: "وضع المكتبة فقط",
-      title: "تعذّر الاتصال بالخادم",
-      copy: "لا نستطيع بدء بناء جديد الآن. ما زالت بطاقات المكتبة متاحة للمعاينة.",
-      symbol: "⌁",
-    },
-    cancelled: {
-      eyebrow: "أُلغي البناء",
-      title: "توقفنا بهدوء",
-      copy: "لم نكمل المحاكاة. يمكنك العودة إلى السؤال أو بدء محاولة جديدة.",
-      symbol: "■",
-    },
-    timed_out: {
-      eyebrow: "انتهت مهلة البناء",
-      title: "احتفظنا بالجواب",
-      copy: "توقف البناء بعد المهلة القصوى بدل إبقائك في انتظار غير محدد.",
-      symbol: "⌛",
-    },
-    unsafe_redirect: {
-      eyebrow: "لنحافظ على مساحة آمنة",
-      title: "لا يمكننا متابعة هذا السؤال",
-      copy: "يمكننا بدلًا منه استكشاف سؤال علمي آمن من المقترحات أدناه.",
-      symbol: "↗",
-    },
+  const failureReasons = new Set([
+    "not_simulatable",
+    "qa_inconclusive",
+    "verification_exhausted",
+    "generation_failed",
+    "simulation_runtime_error",
+    "backend_unavailable",
+    "cancelled",
+    "timed_out",
+    "unsafe_redirect",
+  ]);
+  const failureSymbols = {
+    not_simulatable: "؟",
+    qa_inconclusive: "…",
+    verification_exhausted: "×",
+    generation_failed: "↺",
+    simulation_runtime_error: "!",
+    backend_unavailable: "⌁",
+    cancelled: "■",
+    timed_out: "⌛",
+    unsafe_redirect: "↗",
   };
+
+  function localizedFailure(reason) {
+    const selected = failureReasons.has(reason) ? reason : "generation_failed";
+    return {
+      reason: selected,
+      eyebrow: t(`failure.${selected}.eyebrow`),
+      title: t(`failure.${selected}.title`),
+      copy: t(`failure.${selected}.copy`),
+      symbol: failureSymbols[selected],
+    };
+  }
 
   function setView(name, { push = false } = {}) {
     state.view = name;
@@ -126,11 +120,13 @@
     const totalSeconds = Math.max(0, Math.floor(milliseconds / 1000));
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = String(totalSeconds % 60).padStart(2, "0");
-    return `${number.format(minutes)}:${number.format(Number(seconds)).padStart(2, "٠")}`;
+    const zero = currentLocale === "ar" ? "٠" : "0";
+    return `${number.format(minutes)}:${number.format(Number(seconds)).padStart(2, zero)}`;
   }
 
-  function setConnection(copy, mode = "working") {
-    byId("connection-copy").textContent = copy;
+  function setConnection(key, mode = "working") {
+    state.connectionKey = key;
+    byId("connection-copy").textContent = t(key);
     byId("connection-state").dataset.mode = mode;
   }
 
@@ -146,7 +142,7 @@
         state.streamController?.abort();
         showFailure("timed_out");
       } else if (elapsed >= 90_000) {
-        setConnection("ما زلنا نفحص المرشح بعناية؛ لم ننتهِ بعد.", "still-testing");
+        setConnection("connection.stillTesting", "still-testing");
       }
     }, 1000);
   }
@@ -159,14 +155,16 @@
     item.dataset.stage = payload.stage;
     item.dataset.elapsedMs = String(payload.elapsed_ms);
     name.className = "stage-name";
-    name.textContent = stageLabels[payload.stage] || "خطوة بناء";
-    detail.textContent = payload.detail;
+    name.textContent = t(stageLabelKeys[payload.stage] || "build.genericStage");
+    detail.textContent = currentLocale === "ar"
+      ? payload.detail
+      : t(stageDetailKeys[payload.stage] || "build.genericDetail");
     time.className = "stage-time";
-    time.textContent = `${number.format(payload.elapsed_ms / 1000)} ث`;
+    time.textContent = t("build.seconds", { value: number.format(payload.elapsed_ms / 1000) });
     item.append(name, detail, time);
     byId("stage-list").append(item);
     if (payload.stage === "healing") byId("heal-act").hidden = false;
-    setConnection("تقدّم البناء إلى خطوة جديدة", "working");
+    setConnection("connection.progress", "working");
   }
 
   function pinAnswer(payload) {
@@ -183,14 +181,19 @@
   function showVerification(payload) {
     const box = byId("verification-summary");
     box.hidden = false;
-    byId("verification-title").textContent = payload.passed ? "اجتاز المرشح الفحص" : "وجد الفحص نقاطًا تحتاج إصلاحًا";
-    byId("verification-copy").textContent = `${number.format(payload.check_count)} فحصًا · ${number.format(payload.heal_count)} محاولة إصلاح`;
+    byId("verification-title").textContent = t(
+      payload.passed ? "verification.passed" : "verification.failed",
+    );
+    byId("verification-copy").textContent = t("verification.summary", {
+      checks: number.format(payload.check_count),
+      heals: number.format(payload.heal_count),
+    });
     const grid = byId("verification-grid");
     grid.replaceChildren();
     for (const [index, gate] of payload.evidence.entries()) {
       const chip = document.createElement("span");
       chip.className = `verification-chip ${payload.passed ? "passed" : "failed"}`;
-      chip.textContent = `${payload.passed ? "✓" : "!"} ${gateLabels[gate] || gate}`;
+      chip.textContent = `${payload.passed ? "✓" : "!"} ${t(gateLabelKeys[gate] || gate)}`;
       grid.append(chip);
       setTimeout(() => chip.classList.add("visible"), Math.min(index * 90, 720));
     }
@@ -198,8 +201,8 @@
 
   function normalizedReason(reason, status) {
     if (status === "rejected") return "unsafe_redirect";
-    if (["failed", "answer_only"].includes(status) && !failureCopy[reason]) return "generation_failed";
-    return failureCopy[reason] ? reason : "generation_failed";
+    if (["failed", "answer_only"].includes(status) && !failureReasons.has(reason)) return "generation_failed";
+    return failureReasons.has(reason) ? reason : "generation_failed";
   }
 
   function showFailure(reason, suggestions = []) {
@@ -207,7 +210,8 @@
     state.streamController?.abort();
     clearInterval(state.timer);
     clearInterval(state.watchdog);
-    const selected = failureCopy[reason] || failureCopy.generation_failed;
+    const selected = localizedFailure(reason);
+    state.failure = { reason: selected.reason, suggestions };
     byId("failure-eyebrow").textContent = selected.eyebrow;
     byId("failure-title").textContent = selected.title;
     byId("failure-copy").textContent = selected.copy;
@@ -238,15 +242,19 @@
     const simulation = result.simulation;
     byId("result-title").textContent = simulation.title;
     byId("result-answer").textContent = state.answer || result.answer?.tldr || "";
-    byId("simulation-alternative").textContent = state.answer || "وصف نصي للحالة متاح داخل المحاكاة.";
+    byId("simulation-alternative").textContent = state.answer || t("result.alternativeShort");
     byId("simulation-frame").hidden = false;
     byId("simulation-frame").src = `${simulation.artifact_url}?inline=1`;
     byId("download").href = simulation.artifact_url;
-    byId("receipt-tier").textContent = simulation.tier === "A" ? "فئة أ — مراجعة بشرية" : "فئة ب — فحص آلي";
-    byId("tier-badge").textContent = simulation.tier === "A" ? "مراجعة بشرية مثبتة" : "فحص آلي مكتمل";
+    byId("receipt-tier").textContent = t(simulation.tier === "A" ? "result.tierA" : "result.tierB");
+    byId("tier-badge").textContent = t(
+      simulation.tier === "A" ? "result.humanBadge" : "result.autoBadge",
+    );
     byId("check-count").textContent = number.format(simulation.check_count);
     byId("heal-count").textContent = number.format(simulation.heal_count);
-    byId("result-elapsed").textContent = `${number.format(simulation.elapsed_ms / 1000)} ثانية`;
+    byId("result-elapsed").textContent = t("result.seconds", {
+      value: number.format(simulation.elapsed_ms / 1000),
+    });
     byId("effective-model").textContent = simulation.effective_model;
     setView("result", { push: true });
   }
@@ -258,9 +266,12 @@
   }
 
   async function loadGolden(goldenId) {
-    const response = await fetch(`/api/gallery/${encodeURIComponent(goldenId)}`, {
+    const response = await fetch(
+      `/api/gallery/${encodeURIComponent(goldenId)}?locale=${currentLocale}`,
+      {
       headers: { accept: "application/json" },
-    });
+      },
+    );
     if (!response.ok) throw new Error("golden_unavailable");
     const golden = await response.json();
     pinAnswer(golden.answer);
@@ -269,7 +280,7 @@
 
   async function hydrateGallery() {
     try {
-      const response = await fetch("/api/gallery?locale=ar", {
+      const response = await fetch(`/api/gallery?locale=${currentLocale}`, {
         headers: { accept: "application/json" },
       });
       if (!response.ok) return;
@@ -281,12 +292,12 @@
         card.querySelector(".card-domain").textContent = lesson.domain;
         const badge = card.querySelector(".coming-badge");
         badge.className = "instant-badge";
-        badge.textContent = "فوري";
+        badge.textContent = t("gallery.instant");
         const launch = card.querySelector(".golden-launch");
         launch.disabled = false;
-        launch.addEventListener("click", () => {
+        launch.onclick = () => {
           loadGolden(lesson.id).catch(() => showFailure("backend_unavailable"));
-        });
+        };
       }
     } catch {
       // Honest placeholders remain visible when the gallery endpoint is unavailable.
@@ -310,7 +321,7 @@
     const message = JSON.parse(event.data);
     if (event.type === "answer") pinAnswer(message.payload);
     if (event.type === "stage") addStage(message.payload);
-    if (event.type === "heartbeat") setConnection("الاتصال مستقر، والبناء مستمر", "working");
+    if (event.type === "heartbeat") setConnection("connection.stable", "working");
     if (event.type === "verification") showVerification(message.payload);
     if (event.type === "fallback") showFailure(normalizedReason(message.payload.reason_code, "answer_only"), message.payload.suggestions);
     if (event.type === "terminal") showFailure(normalizedReason(message.payload.reason_code, message.payload.status));
@@ -327,7 +338,7 @@
     try {
       const response = await fetch(state.streamUrl, { headers, signal: controller.signal });
       if (!response.ok || !response.body) throw new Error("stream_unavailable");
-      setConnection("الاتصال مستقر، والبناء مستمر", "working");
+      setConnection("connection.stable", "working");
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
@@ -355,7 +366,7 @@
       showFailure("backend_unavailable");
       return;
     }
-    setConnection("انقطع الاتصال مؤقتًا؛ نحاول إعادة الاتصال واستعادة ما فات.", "reconnecting");
+    setConnection("connection.reconnecting", "reconnecting");
     const delays = [1200, 2500, 5000];
     setTimeout(connectStream, delays[state.reconnectAttempt - 1]);
   }
@@ -386,15 +397,15 @@
     byId("verification-grid").replaceChildren();
     byId("domain-fact").hidden = true;
     byId("heal-act").hidden = true;
-    byId("elapsed").textContent = "٠:٠٠";
-    setConnection("في قائمة البناء", "queued");
+    byId("elapsed").textContent = currentLocale === "ar" ? "٠:٠٠" : "0:00";
+    setConnection("connection.queued", "queued");
     setView("build", { push: true });
     startClock();
     try {
       const response = await fetch("/api/ask", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ question, locale: "ar" }),
+        body: JSON.stringify({ question, locale: currentLocale }),
       });
       if (!response.ok) throw new Error("ask_unavailable");
       const accepted = await response.json();
@@ -413,7 +424,7 @@
     const question = byId("question").value.trim();
     if (!question) {
       byId("question-error").hidden = false;
-      byId("question-error").textContent = "اكتب سؤالًا واحدًا على الأقل.";
+      byId("question-error").textContent = t("ask.required");
       byId("question").setAttribute("aria-invalid", "true");
       byId("question").focus();
       return;
@@ -430,13 +441,13 @@
   });
   if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
     setInterval(() => {
-      exampleIndex = (exampleIndex + 1) % safeExamples.length;
-      byId("safe-example").textContent = safeExamples[exampleIndex];
+      exampleIndex = (exampleIndex + 1) % safeExamples().length;
+      byId("safe-example").textContent = safeExamples()[exampleIndex];
     }, 5000);
   }
 
   byId("cancel-action").addEventListener("click", async () => {
-    setConnection("جارٍ إلغاء البناء بهدوء", "cancelling");
+    setConnection("connection.cancelling", "cancelling");
     if (state.jobId) await fetch(`/api/jobs/${state.jobId}/cancel`, { method: "POST" }).catch(() => {});
     showFailure("cancelled");
   });
@@ -472,7 +483,7 @@
   window.addEventListener("offline", () => {
     if (state.terminal || !state.streamUrl) return;
     state.streamController?.abort();
-    setConnection("انقطع الاتصال مؤقتًا؛ نحاول إعادة الاتصال واستعادة ما فات.", "reconnecting");
+    setConnection("connection.reconnecting", "reconnecting");
   });
   window.addEventListener("online", () => {
     if (state.terminal || !state.streamUrl) return;
@@ -488,6 +499,21 @@
       frame.hidden = true;
       showFailure("simulation_runtime_error");
     }
+  });
+
+  document.addEventListener("laysh:locale-changed", (event) => {
+    currentLocale = event.detail.locale;
+    number = new Intl.NumberFormat(currentLocale, { maximumFractionDigits: 0 });
+    exampleIndex = 0;
+    byId("safe-example").textContent = t("ask.example");
+    if (state.connectionKey) setConnection(state.connectionKey, byId("connection-state").dataset.mode);
+    if (state.failure) {
+      const selected = localizedFailure(state.failure.reason);
+      byId("failure-eyebrow").textContent = selected.eyebrow;
+      byId("failure-title").textContent = selected.title;
+      byId("failure-copy").textContent = selected.copy;
+    }
+    hydrateGallery();
   });
 
   history.replaceState({ view: "ask" }, "", "#ask");

@@ -269,7 +269,36 @@ the Moon-geometry defect without double-counting an already accepted row.
 
 ### Batch C — sharing, library, localization, and presentation
 
-Not started.
+#### I18N-01 / I18N-02 — bilingual direction and explicit locale control
+
+- The package applied cleanly as 14 files with 1,462 insertions and 205
+  deletions; no three-way application was needed. The closed locale inventory
+  contains the same 152 non-empty keys in Arabic and English and covers the
+  landing page, gallery, build theatre, result receipt, and all nine designed
+  recovery reasons.
+- The locale controller updates document `lang` and `dir`, persists only a
+  deliberate locale-control action, and does not let unrelated click targets
+  change locale. User text retains automatic direction while formula and model
+  fragments remain explicitly isolated LTR.
+- The six pinned gallery artifacts remain immutable Arabic cache records.
+  English launches create an in-memory LTR runtime artifact from the reviewed
+  module and translated lesson payload, so metadata, accessible text, answer,
+  and portable root direction all match the selected locale without overwriting
+  a pinned golden.
+- Focused locale/server tests: 4 passed in 0.26s. The real Chrome AR→EN journey
+  passed in 32.38s and verified Arabic and English landing states, the English
+  golden and ordinary result, build detail, failure recovery copy, portable
+  artifact direction, and locale-control event scope. The combined focused
+  rerun finished with 5 passed in 32.23s.
+- The first full run exposed the documented pre-existing circuit timing sample
+  below its 1.1 speed-ratio threshold (263 passed, 1 failed, 1 skipped in
+  250.65s). The identical physics browser test then passed in 88.71s, and the
+  commit-gating full rerun completed with 264 passed and the single opt-in live
+  test skipped in 266.39s. No circuit source, fixture, or gate was changed.
+  Ruff, `git diff --check`, and JavaScript syntax checks were clean.
+
+Current acceptance ledger after I18N-01 and I18N-02: 15 passing, 0 failing, 15
+not started, and 0 blocked. This is not the final release query.
 
 ### Batch D — reliability, routing, and release evidence
 

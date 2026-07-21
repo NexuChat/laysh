@@ -9,26 +9,29 @@
   <link rel="preload" href="/static/fonts/free-sans-arabic-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/static/fonts/free-serif-arabic-display.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/translations.js" defer></script>
+  <script src="/static/locale.js" defer></script>
   <script src="/static/app.js" defer></script>
 </head>
 <body>
-  <a class="skip-link" href="#main-content">انتقل إلى المحتوى</a>
+  <a class="skip-link" href="#main-content" data-i18n="nav.skip">انتقل إلى المحتوى</a>
   <div class="star-field" aria-hidden="true"><i></i><i></i><i></i></div>
   <div class="site-shell">
     <header class="site-header">
-      <a class="brand" href="#ask" aria-label="ليش، الصفحة الرئيسية">
+      <button class="locale-control" id="locale-control" type="button" data-i18n="locale.control" data-i18n-aria-label="locale.controlLabel">E</button>
+      <a class="brand" href="#ask" aria-label="ليش، الصفحة الرئيسية" data-i18n-aria-label="nav.brandLabel">
         <span>ليش<span class="brand-dot">.</span></span>
       </a>
-      <span class="lab-label">مرصد العلوم التفاعلي</span>
+      <span class="lab-label" data-i18n="nav.lab">مرصد العلوم التفاعلي</span>
     </header>
 
     <main id="main-content" tabindex="-1">
       <section class="view ask-view" id="ask-view" data-view="ask" aria-labelledby="hero-title">
         <div class="hero-grid">
           <div class="hero-copy">
-            <p class="eyebrow"><span aria-hidden="true">✦</span> اسأل ليش، والعب الجواب.</p>
-            <h1 id="hero-title">كل سؤال فضولي يستحق جوابًا يمكنك لمسه.</h1>
-            <p class="hero-promise">اسأل سؤالًا في العلوم. نجيبك باختصار، ثم نبني محاكاة آمنة إذا أمكن تمثيل الفكرة بصدق.</p>
+            <p class="eyebrow" data-i18n="landing.eyebrow"><span aria-hidden="true">✦</span> اسأل ليش، والعب الجواب.</p>
+            <h1 id="hero-title" data-i18n="landing.title">كل سؤال فضولي يستحق جوابًا يمكنك لمسه.</h1>
+            <p class="hero-promise" data-i18n="landing.promise">اسأل سؤالًا في العلوم. نجيبك باختصار، ثم نبني محاكاة آمنة إذا أمكن تمثيل الفكرة بصدق.</p>
           </div>
           <div class="orbit-illustration orbit-scene" aria-hidden="true">
             <span class="orbit orbit-one"></span>
@@ -37,68 +40,68 @@
             <span class="sun"></span>
             <span class="moon moon-one"></span>
             <span class="moon moon-two"></span>
-            <span class="orbit-note">ليش؟</span>
+            <span class="orbit-note" data-i18n="landing.orbitNote">ليش؟</span>
             <span class="orbit-star star-a"></span><span class="orbit-star star-b"></span>
           </div>
         </div>
 
         <form class="ask-card" id="ask-form" novalidate>
-          <label class="question-label" for="question">ما الذي تريد أن تفهمه اليوم؟</label>
-          <textarea id="question" name="question" maxlength="600" rows="3" dir="auto" aria-describedby="question-help question-error" required placeholder="اكتب سؤالك هنا…"></textarea>
+          <label class="question-label" for="question" data-i18n="ask.label">ما الذي تريد أن تفهمه اليوم؟</label>
+          <textarea id="question" name="question" maxlength="600" rows="3" dir="auto" aria-describedby="question-help question-error" required placeholder="اكتب سؤالك هنا…" data-i18n-placeholder="ask.placeholder"></textarea>
           <p id="question-error" class="field-error" role="alert" hidden></p>
           <div class="example-row">
-            <span>مثال آمن:</span>
-            <button class="example-button" id="safe-example" type="button" dir="auto">لماذا يتغير شكل القمر خلال الشهر؟</button>
+            <span data-i18n="ask.exampleLabel">مثال آمن:</span>
+            <button class="example-button" id="safe-example" type="button" dir="auto" data-i18n="ask.example">لماذا يتغير شكل القمر خلال الشهر؟</button>
           </div>
-          <p class="privacy-note" id="question-help">تُعالج الأسئلة عبر خدمة <bdi dir="ltr">OpenAI</bdi> لبناء الجواب. لا تكتب اسمًا أو رقم هاتف أو أي بيانات شخصية أو حساسة.</p>
+          <p class="privacy-note" id="question-help" data-i18n-html="ask.privacy">تُعالج الأسئلة عبر خدمة <bdi dir="ltr">OpenAI</bdi> لبناء الجواب. لا تكتب اسمًا أو رقم هاتف أو أي بيانات شخصية أو حساسة.</p>
           <div class="ask-actions">
             <button class="button button-primary" id="ask-submit" type="submit">
-              <span>ابنِ لي تجربة</span><span aria-hidden="true">←</span>
+              <span data-i18n="ask.submit">ابنِ لي تجربة</span><span aria-hidden="true" data-i18n="ask.submitArrow">←</span>
             </button>
           </div>
         </form>
 
         <section class="gallery" id="gallery" aria-labelledby="gallery-title">
           <div class="section-heading">
-            <div><p class="eyebrow">مكتبة ليش</p><h2 id="gallery-title">ست تجارب مرجعية</h2></div>
-            <p>تظهر شارة الجاهزية فقط بعد تثبيت التجربة ومراجعتها.</p>
+            <div><p class="eyebrow" data-i18n="gallery.eyebrow">مكتبة ليش</p><h2 id="gallery-title" data-i18n="gallery.title">ست تجارب مرجعية</h2></div>
+            <p data-i18n="gallery.description">تظهر شارة الجاهزية فقط بعد تثبيت التجربة ومراجعتها.</p>
           </div>
           <div class="gallery-grid">
-            <article class="gallery-card" data-golden-id="moon_phases"><span class="gallery-icon" aria-hidden="true">☾</span><p class="card-domain">الأرض والفضاء</p><h3>أطوار القمر</h3><span class="coming-badge">قريبًا بعد المراجعة</span><button class="golden-launch" type="button" disabled>شغّل التجربة</button></article>
-            <article class="gallery-card" data-golden-id="buoyancy"><span class="gallery-icon" aria-hidden="true">◌</span><p class="card-domain">الطفو والكثافة</p><h3>لماذا تطفو بعض الأجسام؟</h3><span class="coming-badge">قريبًا بعد المراجعة</span><button class="golden-launch" type="button" disabled>شغّل التجربة</button></article>
-            <article class="gallery-card" data-golden-id="pendulum"><span class="gallery-icon" aria-hidden="true">⌁</span><p class="card-domain">الحركة الدورية</p><h3>طول البندول وزمنه</h3><span class="coming-badge">قريبًا بعد المراجعة</span><button class="golden-launch" type="button" disabled>شغّل التجربة</button></article>
-            <article class="gallery-card" data-golden-id="simple_circuit"><span class="gallery-icon" aria-hidden="true">ϟ</span><p class="card-domain">الكهرباء</p><h3>المقاومة وسطوع المصباح</h3><span class="coming-badge">قريبًا بعد المراجعة</span><button class="golden-launch" type="button" disabled>شغّل التجربة</button></article>
-            <article class="gallery-card" data-golden-id="sound_pitch"><span class="gallery-icon" aria-hidden="true">≈</span><p class="card-domain">الصوت والموجات</p><h3>التردد وحدّة الصوت</h3><span class="coming-badge">قريبًا بعد المراجعة</span><button class="golden-launch" type="button" disabled>شغّل التجربة</button></article>
-            <article class="gallery-card" data-golden-id="day_night"><span class="gallery-icon" aria-hidden="true">◐</span><p class="card-domain">الأرض والفضاء</p><h3>دوران الأرض والنهار والليل</h3><span class="coming-badge">قريبًا بعد المراجعة</span><button class="golden-launch" type="button" disabled>شغّل التجربة</button></article>
+            <article class="gallery-card" data-golden-id="moon_phases"><span class="gallery-icon" aria-hidden="true">☾</span><p class="card-domain" data-i18n="gallery.moon.domain">الأرض والفضاء</p><h3 data-i18n="gallery.moon.title">أطوار القمر</h3><span class="coming-badge" data-i18n="gallery.pending">قريبًا بعد المراجعة</span><button class="golden-launch" type="button" disabled data-i18n="gallery.launch">شغّل التجربة</button></article>
+            <article class="gallery-card" data-golden-id="buoyancy"><span class="gallery-icon" aria-hidden="true">◌</span><p class="card-domain" data-i18n="gallery.buoyancy.domain">الطفو والكثافة</p><h3 data-i18n="gallery.buoyancy.title">لماذا تطفو بعض الأجسام؟</h3><span class="coming-badge" data-i18n="gallery.pending">قريبًا بعد المراجعة</span><button class="golden-launch" type="button" disabled data-i18n="gallery.launch">شغّل التجربة</button></article>
+            <article class="gallery-card" data-golden-id="pendulum"><span class="gallery-icon" aria-hidden="true">⌁</span><p class="card-domain" data-i18n="gallery.pendulum.domain">الحركة الدورية</p><h3 data-i18n="gallery.pendulum.title">طول البندول وزمنه</h3><span class="coming-badge" data-i18n="gallery.pending">قريبًا بعد المراجعة</span><button class="golden-launch" type="button" disabled data-i18n="gallery.launch">شغّل التجربة</button></article>
+            <article class="gallery-card" data-golden-id="simple_circuit"><span class="gallery-icon" aria-hidden="true">ϟ</span><p class="card-domain" data-i18n="gallery.circuit.domain">الكهرباء</p><h3 data-i18n="gallery.circuit.title">المقاومة وسطوع المصباح</h3><span class="coming-badge" data-i18n="gallery.pending">قريبًا بعد المراجعة</span><button class="golden-launch" type="button" disabled data-i18n="gallery.launch">شغّل التجربة</button></article>
+            <article class="gallery-card" data-golden-id="sound_pitch"><span class="gallery-icon" aria-hidden="true">≈</span><p class="card-domain" data-i18n="gallery.sound.domain">الصوت والموجات</p><h3 data-i18n="gallery.sound.title">التردد وحدّة الصوت</h3><span class="coming-badge" data-i18n="gallery.pending">قريبًا بعد المراجعة</span><button class="golden-launch" type="button" disabled data-i18n="gallery.launch">شغّل التجربة</button></article>
+            <article class="gallery-card" data-golden-id="day_night"><span class="gallery-icon" aria-hidden="true">◐</span><p class="card-domain" data-i18n="gallery.dayNight.domain">الأرض والفضاء</p><h3 data-i18n="gallery.dayNight.title">دوران الأرض والنهار والليل</h3><span class="coming-badge" data-i18n="gallery.pending">قريبًا بعد المراجعة</span><button class="golden-launch" type="button" disabled data-i18n="gallery.launch">شغّل التجربة</button></article>
           </div>
         </section>
       </section>
 
       <section class="view build-view" id="build-view" data-view="build" aria-labelledby="build-title" hidden>
         <div class="view-toolbar">
-          <button class="button button-quiet" id="back-action" type="button">رجوع</button>
-          <button class="button button-quiet danger" id="cancel-action" type="button">إلغاء البناء</button>
+          <button class="button button-quiet" id="back-action" type="button" data-i18n="build.back">رجوع</button>
+          <button class="button button-quiet danger" id="cancel-action" type="button" data-i18n="build.cancel">إلغاء البناء</button>
         </div>
         <div class="build-layout">
           <article class="answer-card pinned-card" id="answer-card" aria-labelledby="answer-title" hidden>
-            <p class="eyebrow">الجواب المختصر</p>
-            <h2 id="answer-title">هذا ما نعرفه أولًا</h2>
+            <p class="eyebrow" data-i18n="build.answerEyebrow">الجواب المختصر</p>
+            <h2 id="answer-title" data-i18n="build.answerTitle">هذا ما نعرفه أولًا</h2>
             <p id="answer-copy" dir="auto"></p>
             <p class="formula" id="answer-formula" dir="ltr"></p>
           </article>
           <section class="agent-card" id="agent-theatre" aria-labelledby="build-title">
             <div class="agent-heading">
-              <div><p class="eyebrow">بناء حقيقي، بلا نسب وهمية</p><h2 id="build-title">نحوّل الجواب إلى تجربة</h2></div>
+              <div><p class="eyebrow" data-i18n="build.eyebrow">بناء حقيقي، بلا نسب وهمية</p><h2 id="build-title" data-i18n="build.title">نحوّل الجواب إلى تجربة</h2></div>
               <time class="elapsed" id="elapsed" datetime="PT0S">٠:٠٠</time>
             </div>
-            <p class="build-expectation">قد يستغرق بناء تجربة جديدة حتى ٣ دقائق، وسنعرض كل خطوة حقيقية هنا.</p>
+            <p class="build-expectation" data-i18n="build.expectation">قد يستغرق بناء تجربة جديدة حتى ٣ دقائق، وسنعرض كل خطوة حقيقية هنا.</p>
             <div class="connection-state" id="connection-state" role="status" aria-live="polite">
-              <span class="pulse" aria-hidden="true"></span><span id="connection-copy">في قائمة البناء</span>
+              <span class="pulse" aria-hidden="true"></span><span id="connection-copy" data-i18n="connection.queued">في قائمة البناء</span>
             </div>
-            <ol class="stage-list" id="stage-list" aria-label="خطوات البناء"></ol>
+            <ol class="stage-list" id="stage-list" aria-label="خطوات البناء" data-i18n-aria-label="build.stagesLabel"></ol>
             <aside class="domain-fact" id="domain-fact" hidden>
               <span class="fact-orbit" aria-hidden="true"></span>
-              <div><strong>هل تعلم؟</strong><p id="domain-fact-copy" dir="auto"></p></div>
+              <div><strong data-i18n="build.factLabel">هل تعلم؟</strong><p id="domain-fact-copy" dir="auto"></p></div>
             </aside>
             <div class="sim-silhouette" id="sim-silhouette" aria-hidden="true">
               <span class="silhouette-ring ring-a"></span><span class="silhouette-ring ring-b"></span>
@@ -106,12 +109,12 @@
             </div>
             <section class="heal-act" id="heal-act" aria-live="polite" hidden>
               <span class="heal-symbol" aria-hidden="true">↻</span>
-              <div><strong>إصلاح ذاتي</strong><p>نعيد بناء الجزء الذي لم يجتز الفحص.</p></div>
+              <div><strong data-i18n="build.healLabel">إصلاح ذاتي</strong><p data-i18n="build.healCopy">نعيد بناء الجزء الذي لم يجتز الفحص.</p></div>
             </section>
             <div class="verification-summary" id="verification-summary" hidden>
-              <strong id="verification-title">نتيجة الفحص</strong>
+              <strong id="verification-title" data-i18n="build.verificationTitle">نتيجة الفحص</strong>
               <p id="verification-copy"></p>
-              <div class="verification-grid" id="verification-grid" aria-label="بوابات التحقق"></div>
+              <div class="verification-grid" id="verification-grid" aria-label="بوابات التحقق" data-i18n-aria-label="build.verificationGates"></div>
             </div>
           </section>
         </div>
@@ -119,46 +122,46 @@
 
       <section class="view result-view" id="result-view" data-view="result" aria-labelledby="result-title" hidden>
         <div class="view-toolbar">
-          <button class="button button-quiet" id="ask-another-top" type="button">اسأل سؤالًا آخر</button>
+          <button class="button button-quiet" id="ask-another-top" type="button" data-i18n="result.another">اسأل سؤالًا آخر</button>
         </div>
         <header class="result-header">
-          <p class="eyebrow">التجربة جاهزة</p>
+          <p class="eyebrow" data-i18n="result.ready">التجربة جاهزة</p>
           <h1 id="result-title" dir="auto"></h1>
           <p class="result-answer" id="result-answer" dir="auto"></p>
         </header>
         <section class="simulation-stage" aria-labelledby="simulation-heading">
-          <div class="simulation-bar"><h2 id="simulation-heading">جرّب بنفسك</h2><div class="simulation-tools"><span class="verified-badge" id="tier-badge">فحص آلي مكتمل</span><button class="projector-button" id="projector-result" type="button" aria-label="اعرض المحاكاة بملء الشاشة">وضع العرض</button></div></div>
-          <iframe id="simulation-frame" title="المحاكاة التفاعلية" sandbox="allow-scripts"></iframe>
-          <p class="sr-only" id="simulation-alternative">تعرض المحاكاة التغيّر الموصوف في الجواب، مع وصف نصي مباشر للحالة داخل الإطار.</p>
+          <div class="simulation-bar"><h2 id="simulation-heading" data-i18n="result.try">جرّب بنفسك</h2><div class="simulation-tools"><span class="verified-badge" id="tier-badge" data-i18n="result.autoBadge">فحص آلي مكتمل</span><button class="projector-button" id="projector-result" type="button" aria-label="اعرض المحاكاة بملء الشاشة" data-i18n="result.projector" data-i18n-aria-label="result.projectorLabel">وضع العرض</button></div></div>
+          <iframe id="simulation-frame" title="المحاكاة التفاعلية" sandbox="allow-scripts" data-i18n-title="result.frameTitle"></iframe>
+          <p class="sr-only" id="simulation-alternative" data-i18n="result.alternative">تعرض المحاكاة التغيّر الموصوف في الجواب، مع وصف نصي مباشر للحالة داخل الإطار.</p>
         </section>
         <div class="result-actions">
-          <button class="button button-secondary" id="replay-result" type="button">أعد التجربة</button>
-          <a class="button button-primary" id="download" href="#" download>نزّل نسخة تعمل دون اتصال</a>
-          <button class="button button-quiet" id="ask-another" type="button">اسأل سؤالًا آخر</button>
+          <button class="button button-secondary" id="replay-result" type="button" data-i18n="result.replay">أعد التجربة</button>
+          <a class="button button-primary" id="download" href="#" download data-i18n="result.download">نزّل نسخة تعمل دون اتصال</a>
+          <button class="button button-quiet" id="ask-another" type="button" data-i18n="result.another">اسأل سؤالًا آخر</button>
         </div>
         <details class="receipt" id="verification-receipt">
-          <summary>ما الذي فحصناه؟</summary>
+          <summary data-i18n="receipt.summary">ما الذي فحصناه؟</summary>
           <div class="receipt-grid">
-            <p><span>درجة التحقق</span><strong id="receipt-tier">فئة ب — فحص آلي</strong></p>
-            <p><span>عدد الفحوصات</span><strong id="check-count">٠</strong></p>
-            <p><span>محاولات الإصلاح</span><strong id="heal-count">٠</strong></p>
-            <p><span>زمن البناء</span><strong id="result-elapsed">٠ ثانية</strong></p>
-            <p><span>نموذج البناء</span><bdi id="effective-model" dir="ltr"></bdi></p>
+            <p><span data-i18n="receipt.tier">درجة التحقق</span><strong id="receipt-tier">فئة ب — فحص آلي</strong></p>
+            <p><span data-i18n="receipt.checks">عدد الفحوصات</span><strong id="check-count">٠</strong></p>
+            <p><span data-i18n="receipt.heals">محاولات الإصلاح</span><strong id="heal-count">٠</strong></p>
+            <p><span data-i18n="receipt.elapsed">زمن البناء</span><strong id="result-elapsed">٠ ثانية</strong></p>
+            <p><span data-i18n="receipt.model">نموذج البناء</span><bdi id="effective-model" dir="ltr"></bdi></p>
           </div>
-          <p class="receipt-note">هذا إيصال فحص آلي للعقد والسلوك، وليس ادعاءً بأن كل تفسير علمي معصوم من الخطأ.</p>
+          <p class="receipt-note" data-i18n="receipt.note">هذا إيصال فحص آلي للعقد والسلوك، وليس ادعاءً بأن كل تفسير علمي معصوم من الخطأ.</p>
         </details>
       </section>
 
       <section class="view failure-view" id="failure-view" data-view="failure" aria-labelledby="failure-title" hidden>
         <article class="failure-card" role="status" aria-live="polite">
           <span class="failure-symbol" id="failure-symbol" aria-hidden="true">↺</span>
-          <p class="eyebrow" id="failure-eyebrow">يمكننا المتابعة</p>
-          <h1 id="failure-title">احتفظنا بالجواب</h1>
+          <p class="eyebrow" id="failure-eyebrow" data-i18n="failure.eyebrow">يمكننا المتابعة</p>
+          <h1 id="failure-title" data-i18n="failure.title">احتفظنا بالجواب</h1>
           <p id="failure-copy"></p>
           <div class="preserved-answer" id="preserved-answer" dir="auto" hidden></div>
           <div class="failure-actions">
-            <button class="button button-primary" id="retry-action" type="button">جرّب البناء مرة أخرى</button>
-            <button class="button button-secondary" id="gallery-action" type="button">اذهب إلى التجارب</button>
+            <button class="button button-primary" id="retry-action" type="button" data-i18n="failure.retry">جرّب البناء مرة أخرى</button>
+            <button class="button button-secondary" id="gallery-action" type="button" data-i18n="failure.gallery">اذهب إلى التجارب</button>
           </div>
           <ul class="suggestion-list" id="suggestion-list"></ul>
         </article>
@@ -166,8 +169,8 @@
     </main>
 
     <footer class="site-footer">
-      <p><strong>ليش</strong> يساعدك على الاستكشاف، ولا يستبدل المعلم أو المصدر العلمي الموثوق.</p>
-      <p>لا حسابات، لا إعلانات، ولا تحليلات طرف ثالث في هذه النسخة.</p>
+      <p data-i18n-html="footer.guidance"><strong>ليش</strong> يساعدك على الاستكشاف، ولا يستبدل المعلم أو المصدر العلمي الموثوق.</p>
+      <p data-i18n="footer.privacy">لا حسابات، لا إعلانات، ولا تحليلات طرف ثالث في هذه النسخة.</p>
     </footer>
   </div>
 </body>

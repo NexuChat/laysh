@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import secrets
 import unicodedata
@@ -15,7 +16,13 @@ from server.browser_verify import BrowserVerificationResult, verify_artifact_in_
 from server.cache import VerifiedCache
 from server.codex_backend import CodexBackend, MockCodexBackend
 from server.codex_runtime import CodexExecutor
-from server.goldens import GOLDEN_FIXTURE_IDS, GOLDEN_ROOT, list_pinned_goldens, load_pinned_golden
+from server.goldens import (
+    GOLDEN_FIXTURE_IDS,
+    GOLDEN_ROOT,
+    list_pinned_goldens,
+    load_pinned_golden,
+    localized_pinned_golden,
+)
 from server.jobs import TERMINAL_STATES, JobManager
 from server.ratelimit import GenerationLimiter
 from server.schemas import AskAccepted, AskRequest, PublicResult
@@ -177,21 +184,25 @@ def create_app(
         }
 
     @app.get("/api/gallery/{golden_id}")
-    async def gallery_lesson(golden_id: str) -> dict:
+    async def gallery_lesson(
+        golden_id: str,
+        locale: str = Query(default="ar", pattern="^(ar|en)$"),
+    ) -> dict:
         document = load_pinned_golden(golden_id)
         if document is None:
             raise HTTPException(status_code=404, detail="golden lesson not found")
-        sim_id = "golden_" + document["artifact_sha256"][:16]
-        app.state.jobs.artifacts[sim_id] = document["artifact"]
+        localized = localized_pinned_golden(document, locale)
+        sim_id = "golden_" + hashlib.sha256(localized["artifact"].encode()).hexdigest()[:16]
+        app.state.jobs.artifacts[sim_id] = localized["artifact"]
         return {
             "contract_version": "1.0",
             "id": golden_id,
-            "answer": document["answer"],
+            "answer": localized["answer"],
             "simulation": {
                 "sim_id": sim_id,
-                "title": document["title"],
-                "lang": document["locale"],
-                "direction": document["direction"],
+                "title": localized["title"],
+                "lang": localized["lang"],
+                "direction": localized["direction"],
                 "artifact_url": f"/api/sims/{sim_id}/download",
                 "tier": "A",
                 "effective_model": "verified/golden",

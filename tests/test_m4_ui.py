@@ -53,7 +53,9 @@ def test_result_kicker_has_dedicated_vertical_space_before_title(client):
 
 def test_build_controller_has_replay_watchdog_cancel_and_history_states(client):
     script = client.get("/static/app.js")
+    translations = client.get("/static/translations.js")
     assert script.status_code == 200
+    assert translations.status_code == 200
     source = script.text
 
     assert '"Last-Event-ID"' in source
@@ -62,10 +64,8 @@ def test_build_controller_has_replay_watchdog_cancel_and_history_states(client):
     assert "90_000" in source and "180_000" in source
     assert "heartbeat" in source
     assert "verification" in source
-    assert "إعادة الاتصال" in source
-    assert "ما زلنا نفحص" in source
-    assert "في قائمة البناء" in source
-    assert "إلغاء البناء" in source
+    for arabic_copy in ("إعادة الاتصال", "ما زلنا نفحص", "في قائمة البناء", "إلغاء البناء"):
+        assert arabic_copy in translations.text
     assert "Math.round" not in source
 
 
@@ -78,6 +78,7 @@ def test_public_wait_copy_sets_an_honest_three_minute_expectation(client):
 def test_result_and_every_designed_failure_have_arabic_recovery_copy(client):
     html = client.get("/").text
     source = client.get("/static/app.js").text
+    translations = client.get("/static/translations.js").text
 
     assert 'sandbox="allow-scripts"' in html
     assert "allow-same-origin" not in html
@@ -102,7 +103,7 @@ def test_result_and_every_designed_failure_have_arabic_recovery_copy(client):
         "لا يمكننا متابعة هذا السؤال",
         "حدث خطأ داخل المحاكاة",
     ):
-        assert arabic_copy in source
+        assert arabic_copy in translations
 
 
 def test_m4_semantics_include_skip_link_status_and_text_alternative(client):

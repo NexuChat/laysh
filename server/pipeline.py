@@ -38,6 +38,12 @@ def _fallback(manager: Any, record: Any, reason_code: str, suggestions: list[str
     manager.transition(record, "answer_only", reason_code)
 
 
+def _gallery_suggestions(locale: str | None) -> list[str]:
+    if locale == "en":
+        return ["Why does the Moon change shape?", "Why do some objects float?"]
+    return ["لماذا يتغير شكل القمر؟", "لماذا تطفو بعض الأجسام؟"]
+
+
 def _reject(manager: Any, record: Any, reason_code: str, suggestions: list[str]) -> NoReturn:
     record.fallback = FallbackResult(reason_code=reason_code, suggestions=suggestions[:3])
     manager.emit(
@@ -291,7 +297,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                     manager,
                     record,
                     "fixture_integrity_unresolved",
-                    ["لماذا يتغير شكل القمر؟", "لماذا تطفو بعض الأجسام؟"],
+                    _gallery_suggestions(record.locale),
                 )
                 return
             fixture_refresh_count += 1
@@ -335,7 +341,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 manager,
                 record,
                 "verification_exhausted",
-                ["لماذا يتغير شكل القمر؟", "لماذا تطفو بعض الأجسام؟"],
+                _gallery_suggestions(record.locale),
             )
             return
         heal_count += 1
@@ -430,7 +436,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                         manager,
                         record,
                         "qa_inconclusive",
-                        ["لماذا يتغير شكل القمر؟", "لماذا تطفو بعض الأجسام؟"],
+                        _gallery_suggestions(record.locale),
                     )
                 else:
                     manager.terminal(record, "qa_inconclusive", "qa_inconclusive")
@@ -464,7 +470,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 manager,
                 record,
                 "qa_rejected",
-                ["لماذا يتغير شكل القمر؟", "لماذا تطفو بعض الأجسام؟"],
+                _gallery_suggestions(record.locale),
             )
             return
         qa_outcome = qa_result

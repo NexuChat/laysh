@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import html
 import json
 import re
 from collections.abc import Callable
@@ -44,6 +45,201 @@ MISCONCEPTION_CORRECTIONS = {
     "الصوت الأعلى ترددًا هو بالضرورة أعلى شدة": SOUND_CORRECTION,
     "الصوت الأعلى ترددًا هو بالضرورة أعلى شدة.": SOUND_CORRECTION,
     "الليل يحدث لأن الشمس تنطفئ أو تختفي خلف القمر": DAY_NIGHT_CORRECTION,
+}
+
+PINNED_ENGLISH_LESSONS: dict[str, dict[str, Any]] = {
+    "buoyancy": {
+        "title": "Density and buoyancy in water",
+        "tldr": (
+            "An object floats when its density is lower than water's and sinks when it is "
+            "higher. Buoyant force Fᵦ equals the weight of displaced water, where ρ𝒻 is "
+            "fluid density, V is displaced volume, and g is gravitational acceleration. "
+            "This model uses still water at 1000 kg/m³ and a uniform object, neglects "
+            "surface tension, and starts at 750 kg/m³."
+        ),
+        "learning_objective": (
+            "Explain how an object's density relative to water determines its submerged "
+            "fraction and whether it floats or sinks."
+        ),
+        "primary_label": "Object density",
+        "prediction_prompt": (
+            "What do you predict as the object's density rises from 750 to 1200 kg/m³?"
+        ),
+        "prediction_choices": [
+            "The object sinks",
+            "It floats with a smaller submerged portion",
+            "Its state does not change",
+        ],
+        "misconception": (
+            "Correction: buoyancy depends on density relative to the fluid, not absolute lightness."
+        ),
+        "explanation_prompt": (
+            "Explain how comparing the object's density with water's changes the submerged "
+            "portion and then leads to floating or sinking."
+        ),
+        "transfer_prompt": (
+            "Predict what happens to an object with density 900 kg/m³ when moved from water "
+            "to a liquid with density 800 kg/m³, and explain why."
+        ),
+    },
+    "day_night": {
+        "title": "How Earth's rotation creates day and night",
+        "tldr": (
+            "Earth's rotation turns a fixed location toward the Sun and then away from it. "
+            "θ is the rotation angle, and c measures how well the location aligns with "
+            "sunlight; it is day when c > 0 and night otherwise. The model assumes parallel "
+            "sun rays and a simplified axis without seasons."
+        ),
+        "learning_objective": (
+            "Explain how Earth's rotation changes a fixed location's direction relative to "
+            "sunlight, moving it between day and night."
+        ),
+        "primary_label": "Earth rotation angle",
+        "prediction_prompt": (
+            "What happens to the location as the rotation angle increases from 0° to 180°?"
+        ),
+        "prediction_choices": [
+            "It moves from facing the Sun to facing away from it",
+            "It remains equally illuminated",
+            "The Sun gradually switches off",
+        ],
+        "misconception": (
+            "Correction: night happens because your location rotates away from sunlight, not "
+            "because the Sun switches off or the Moon blocks it."
+        ),
+        "explanation_prompt": (
+            "Explain how changing the location's direction relative to sunlight moves it from "
+            "day into night."
+        ),
+        "transfer_prompt": (
+            "Predict the illumination at 270° and explain your answer using the location's "
+            "direction relative to the Sun."
+        ),
+    },
+    "moon_phases": {
+        "title": "How do the Moon's phases change?",
+        "tldr": (
+            "The lit part of the Moon that we see changes because the Moon's position relative "
+            "to Earth and the Sun changes as it orbits Earth. θ is the phase angle in degrees, "
+            "and f is the visible lit fraction. The model assumes a simplified circular orbit "
+            "and parallel sun rays, neglecting orbital tilt and eclipses."
+        ),
+        "learning_objective": (
+            "Explain how a changing phase angle during the Moon's orbit changes the visible "
+            "lit fraction of its disk."
+        ),
+        "primary_label": "Phase angle",
+        "prediction_prompt": (
+            "What happens to the visible lit fraction as the phase angle changes from 0° to 180°?"
+        ),
+        "prediction_choices": [
+            "It increases from zero to a fully lit disk",
+            "It decreases from a fully lit disk to zero",
+            "It stays constant throughout",
+        ],
+        "misconception": (
+            "Correction: Moon phases come from the Sun–Earth–Moon angle, not Earth's shadow."
+        ),
+        "explanation_prompt": (
+            "Move the phase angle, then explain how the Moon's changing position changes the "
+            "lit part visible from Earth."
+        ),
+        "transfer_prompt": (
+            "At a phase angle of 90°, what visible lit fraction does the Moon have, and why?"
+        ),
+    },
+    "pendulum": {
+        "title": "Pendulum length and period",
+        "tldr": (
+            "The period T increases with pendulum length L according to a square-root relation, "
+            "where g is Earth's gravitational acceleration, 9.81 m/s². The model assumes a "
+            "small angle and a massless string and neglects air resistance."
+        ),
+        "learning_objective": (
+            "Explain how increasing a pendulum's length increases its period at small angles."
+        ),
+        "primary_label": "Pendulum length",
+        "prediction_prompt": (
+            "What happens to the period if the pendulum length grows from one metre to two?"
+        ),
+        "prediction_choices": [
+            "It increases, but by less than double",
+            "It doubles exactly",
+            "It decreases because the pendulum moves faster",
+        ],
+        "misconception": (
+            "Correction: a longer pendulum has a longer period; it does not move faster."
+        ),
+        "explanation_prompt": (
+            "Change the pendulum length and compare the periods. How does the square-root "
+            "relationship explain the pattern?"
+        ),
+        "transfer_prompt": "If a pendulum becomes four times as long, how does its period change?",
+    },
+    "simple_circuit": {
+        "title": "Resistance, current, and bulb brightness",
+        "tldr": (
+            "At constant voltage, increasing resistance lowers current and dissipated power, "
+            "so the bulb becomes dimmer. I is current, V is voltage, R is resistance, and P is "
+            "the power that represents brightness."
+        ),
+        "learning_objective": (
+            "Explain how, at a constant 6 V, increasing resistance lowers current and "
+            "dissipated power and therefore dims the bulb."
+        ),
+        "primary_label": "Resistance",
+        "prediction_prompt": (
+            "If resistance doubles while voltage stays constant, what happens to current and "
+            "bulb brightness?"
+        ),
+        "prediction_choices": [
+            "Current and power decrease, so the bulb becomes dimmer",
+            "Current and power increase, so the bulb becomes brighter",
+            "Current and brightness stay the same",
+        ],
+        "misconception": (
+            "Correction: at constant voltage, increasing resistance lowers current; it does "
+            "not raise it."
+        ),
+        "explanation_prompt": (
+            "Use Ohm's law to explain why the bulb dims when resistance rises at constant voltage."
+        ),
+        "transfer_prompt": (
+            "Predict what happens to circuit current and bulb brightness if the resistor is "
+            "replaced with a smaller one while voltage stays constant."
+        ),
+    },
+    "sound_pitch": {
+        "title": "How frequency changes pitch",
+        "tldr": (
+            "A tone sounds higher when the wave makes more vibrations each second. f is "
+            "frequency, λ is wavelength, v is the sound speed held here at 343 m/s, and T is "
+            "period. Therefore wavelength and period both decrease as frequency rises, without "
+            "implying a louder sound."
+        ),
+        "learning_objective": (
+            "Explain how a higher sound-wave frequency creates a higher pitch while "
+            "distinguishing pitch from loudness."
+        ),
+        "primary_label": "Sound-wave frequency",
+        "prediction_prompt": (
+            "If sound frequency doubles while its speed stays constant, what happens?"
+        ),
+        "prediction_choices": [
+            "The pitch rises while wavelength and period halve",
+            "Only loudness rises while wavelength stays constant",
+            "The pitch becomes lower and period increases",
+        ],
+        "misconception": "Correction: frequency determines pitch, not necessarily loudness.",
+        "explanation_prompt": (
+            "Change the frequency and compare pitch with wavelength and period. Explain why "
+            "both values decrease while pitch rises."
+        ),
+        "transfer_prompt": (
+            "Compare two sounds with the same loudness but different frequencies: which has the "
+            "higher pitch, and how do their periods differ?"
+        ),
+    },
 }
 
 
@@ -310,6 +506,68 @@ def _artifact_lesson_and_module(artifact: str) -> tuple[dict[str, Any], str]:
     except json.JSONDecodeError as error:
         raise ValueError("pinned artifact has malformed lesson JSON") from error
     return lesson, scripts[2]
+
+
+def localized_pinned_golden(document: dict[str, Any], locale: str) -> dict[str, Any]:
+    """Return a direction-correct runtime view without changing the pinned source artifact."""
+    if locale == "ar":
+        return {
+            "answer": document["answer"],
+            "artifact": document["artifact"],
+            "direction": "rtl",
+            "lang": "ar",
+            "title": document["title"],
+        }
+
+    source_lesson, _ = _artifact_lesson_and_module(document["artifact"])
+    copy = PINNED_ENGLISH_LESSONS[document["golden_id"]]
+    lesson = deepcopy(source_lesson)
+    lesson.update(
+        {
+            "lang": "en",
+            "title": copy["title"],
+            "tldr": copy["tldr"],
+            "learning_objective": copy["learning_objective"],
+            "misconception": copy["misconception"],
+            "explanation_prompt": copy["explanation_prompt"],
+            "transfer_prompt": copy["transfer_prompt"],
+            "prediction": {
+                "prompt": copy["prediction_prompt"],
+                "choices": copy["prediction_choices"],
+            },
+            "primary_parameter": {
+                **source_lesson["primary_parameter"],
+                "label": copy["primary_label"],
+            },
+        }
+    )
+    artifact = re.sub(
+        r'<html lang="ar" dir="rtl">',
+        '<html lang="en" dir="ltr">',
+        document["artifact"],
+        count=1,
+    )
+    artifact = re.sub(
+        r"<title>.*?</title>",
+        f"<title>{html.escape(lesson['title'])}</title>",
+        artifact,
+        count=1,
+        flags=re.DOTALL,
+    )
+    artifact = re.sub(
+        r"(?<=window\.__LAYSH_LESSON__ = ).*?(?=;</script>)",
+        json.dumps(lesson, ensure_ascii=False, separators=(",", ":")),
+        artifact,
+        count=1,
+        flags=re.DOTALL,
+    )
+    return {
+        "answer": {"key_formula": lesson["key_formula"], "tldr": lesson["tldr"]},
+        "artifact": artifact,
+        "direction": "ltr",
+        "lang": "en",
+        "title": lesson["title"],
+    }
 
 
 def refresh_pinned_golden_teaching_shells(

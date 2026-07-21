@@ -80,9 +80,11 @@ button:focus-visible, textarea:focus-visible, a:focus-visible, summary:focus-vis
 .star-field i:nth-child(3) { inset-block-start: 61%; inset-inline-start: 4%; transform: scale(1.4); animation-duration: 31s; animation-delay: -16s; }
 .site-shell { width: min(calc(100% - 2rem), 1240px); margin-inline: auto; }
 .site-header { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-block-end: 1px solid var(--line); }
-.brand { display: inline-flex; align-items: center; color: var(--cream); text-decoration: none; font-family: "Laysh Display", serif; font-size: 2rem; font-weight: 700; line-height: 1; }
+.brand { order: 1; display: inline-flex; align-items: center; color: var(--cream); text-decoration: none; font-family: "Laysh Display", serif; font-size: 2rem; font-weight: 700; line-height: 1; }
 .brand-dot { color: var(--moon); text-shadow: 0 0 18px rgb(88 183 255 / 78%); }
-.lab-label { padding: .4rem .8rem; border: 1px solid var(--line-bright); border-radius: 999px; background: rgb(88 183 255 / 7%); color: #b9dcf6; font-size: .82rem; }
+.lab-label { order: 2; margin-inline-start: auto; padding: .4rem .8rem; border: 1px solid var(--line-bright); border-radius: 999px; background: rgb(88 183 255 / 7%); color: #b9dcf6; font-size: .82rem; }
+.locale-control { order: 3; min-width: 44px; min-height: 44px; padding: .4rem .75rem; border: 1px solid var(--line-bright); border-radius: 999px; background: rgb(88 183 255 / 9%); color: var(--cream); cursor: pointer; font-weight: 700; }
+.locale-control:hover { border-color: var(--moon); background: rgb(88 183 255 / 16%); }
 .view { min-height: calc(100vh - 76px); padding-block: clamp(2rem, 4vw, 3.5rem); animation: viewEnter .28s ease both; }
 .hero-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(280px, .8fr); align-items: center; gap: clamp(2rem, 7vw, 7rem); }
 .hero-copy { position: relative; z-index: 1; }

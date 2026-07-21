@@ -299,6 +299,19 @@ def _success_understanding(locale: str) -> dict[str, Any]:
 
 def _non_simulatable(locale: str) -> dict[str, Any]:
     arabic = locale != "en"
+    suggestions = (
+        [
+            "لماذا يتغير شكل القمر؟",
+            "كيف يؤثر طول البندول في زمنه؟",
+            "لماذا تطفو بعض الأجسام؟",
+        ]
+        if arabic
+        else [
+            "Why does the Moon change shape?",
+            "How does pendulum length affect its period?",
+            "Why do some objects float?",
+        ]
+    )
     return validate_understanding(
         {
             "safe": True,
@@ -327,17 +340,26 @@ def _non_simulatable(locale: str) -> dict[str, Any]:
             "transfer_prompt": None,
             "module_spec": {"outputs": [], "actor": None, "action": None},
             "checks": [],
-            "suggestions": [
-                "لماذا يتغير شكل القمر؟",
-                "كيف يؤثر طول البندول في زمنه؟",
-                "لماذا تطفو بعض الأجسام؟",
-            ],
+            "suggestions": suggestions,
         }
     )
 
 
 def _unsafe(locale: str) -> dict[str, Any]:
     arabic = locale != "en"
+    suggestions = (
+        [
+            "لماذا يتغير شكل القمر؟",
+            "كيف تعمل الدائرة الكهربائية البسيطة؟",
+            "لماذا يتغير ارتفاع الصوت؟",
+        ]
+        if arabic
+        else [
+            "Why does the Moon change shape?",
+            "How does a simple circuit work?",
+            "Why does sound pitch change?",
+        ]
+    )
     return validate_understanding(
         {
             "safe": False,
@@ -363,11 +385,7 @@ def _unsafe(locale: str) -> dict[str, Any]:
             "transfer_prompt": None,
             "module_spec": {"outputs": [], "actor": None, "action": None},
             "checks": [],
-            "suggestions": [
-                "لماذا يتغير شكل القمر؟",
-                "كيف تعمل الدائرة الكهربائية البسيطة؟",
-                "لماذا يتغير ارتفاع الصوت؟",
-            ],
+            "suggestions": suggestions,
         }
     )
 
