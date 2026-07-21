@@ -1,0 +1,117 @@
+{
+  "schema_version": "1.0",
+  "acceptance_row": "ROUTE-02",
+  "sanitized": true,
+  "call_cap": 12,
+  "status": "aborted",
+  "active_model": "gpt-5.6-terra",
+  "evaluation_provenance": {
+    "head_commit": "3e231c4951eb75fbe6ed785e3a9bf454a065deb1",
+    "head_tree_sha256": "0d2d5339d29f927f0ffee8ba5590fc57140940aa0fd4dc5561389a41278938dc",
+    "worktree_state_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "worktree_dirty": false,
+    "source_snapshot_sha256": "9294f6c624c96507b9e2563cf0be11d434617c81b6ba8ed773805d616fed32e0",
+    "evaluator_sha256": "05b7cd6195c3a0b6601013aac9cf2c3610662d02269b5d143ae232e2c6bb5093",
+    "runtime_sha256": "47e3450e99d152dc3bd21b0893ba8259586dd83939e06d7dcd94bcc0c019b838",
+    "generate_prompt_sha256": "0f323f6e01efa9a0f588f5562391239613a987b69351fb7cabfbbc7afa02d239",
+    "heal_prompt_sha256": "c236297fbfc720cf6749c925d4afebebd9a5b79162d71e6fc220859309c216ff",
+    "qa_prompt_sha256": "12eb9f8bcc7fe93ac14d43ee9760a89cc50e645ed264d61b2b2853dde307414e",
+    "module_verifier_sha256": "b46736cdf7affc7b711963bf903098f44f16384e74b05469cb3a2fe27323c51c",
+    "server_verifier_sha256": "323ff02dc83b9144b139e6a17089bde808d63b75aa97afe10868801e3fb69246",
+    "fixture_prompt_fingerprints": [
+      {
+        "fixture_id": "moon_phases_ar",
+        "payload_sha256": "2e7c6a1336770a2f781826b18ff27e0cee82bdefabcacd8f6b00f798e21b5fa8"
+      },
+      {
+        "fixture_id": "pendulum_ar",
+        "payload_sha256": "cbc3e49d0dfdda0aee4c5ee132e9b2c74fb171ae47149a49856a8186b34bd683"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "fixture_id": "moon_phases_ar",
+      "spec_sha256": "2e7c6a1336770a2f781826b18ff27e0cee82bdefabcacd8f6b00f798e21b5fa8",
+      "generation_model": "gpt-5.6-terra",
+      "passed": false,
+      "elapsed_ms": 111929,
+      "live_calls": [
+        {
+          "stage": "generate",
+          "model": "gpt-5.6-terra",
+          "effort": "medium",
+          "why_model_was_called": "fixed_spec_candidate",
+          "elapsed_ms": 52926,
+          "outcome": "completed",
+          "thread_id_captured": true,
+          "failure_code": null,
+          "input_tokens": 19722,
+          "cached_input_tokens": 0,
+          "output_tokens": 2668
+        },
+        {
+          "stage": "heal",
+          "model": "gpt-5.6-terra",
+          "effort": "medium",
+          "why_model_was_called": "one_same_model_repair_after_gate_failure",
+          "elapsed_ms": 58850,
+          "outcome": "completed",
+          "thread_id_captured": true,
+          "failure_code": null,
+          "input_tokens": 21921,
+          "cached_input_tokens": 0,
+          "output_tokens": 3054
+        }
+      ],
+      "heal_count": 1,
+      "failure_code": "deterministic_verification_failed"
+    },
+    {
+      "fixture_id": "pendulum_ar",
+      "spec_sha256": "cbc3e49d0dfdda0aee4c5ee132e9b2c74fb171ae47149a49856a8186b34bd683",
+      "generation_model": "gpt-5.6-terra",
+      "passed": false,
+      "elapsed_ms": 97848,
+      "live_calls": [
+        {
+          "stage": "generate",
+          "model": "gpt-5.6-terra",
+          "effort": "medium",
+          "why_model_was_called": "fixed_spec_candidate",
+          "elapsed_ms": 41496,
+          "outcome": "completed",
+          "thread_id_captured": true,
+          "failure_code": null,
+          "input_tokens": 19697,
+          "cached_input_tokens": 0,
+          "output_tokens": 2082
+        },
+        {
+          "stage": "heal",
+          "model": "gpt-5.6-terra",
+          "effort": "medium",
+          "why_model_was_called": "one_same_model_repair_after_gate_failure",
+          "elapsed_ms": 56239,
+          "outcome": "completed",
+          "thread_id_captured": true,
+          "failure_code": null,
+          "input_tokens": 21316,
+          "cached_input_tokens": 17152,
+          "output_tokens": 2887
+        }
+      ],
+      "heal_count": 1,
+      "failure_code": "deterministic_verification_failed"
+    }
+  ],
+  "usage_observations": [],
+  "inflight": {
+    "event": "account_usage_after",
+    "fixture_id": null,
+    "model": "gpt-5.6-terra",
+    "stage": null,
+    "completed_call_count": 4,
+    "partial_live_calls": []
+  }
+}

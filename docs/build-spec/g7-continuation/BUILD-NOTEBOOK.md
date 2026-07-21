@@ -4,14 +4,10 @@
 
 - **Representative root session:** `019f7998-9378-72b2-b590-ee10e632ce81`
 - **Parent session:** none; this is the original root continuation.
-- **Builder model / effort:** `gpt-5.6-terra` / `high` (launcher-profile verified).
-- **Continuation profile exception (2026-07-21):** the effective launcher now
-  reports `gpt-5.6-sol` / `high`; the required profile check reports only
-  `profile model is not gpt-5.6-terra`. The owner explicitly resumed after the
-  discrepancy had been disclosed, so this root session continues on that
-  profile without mutating launcher configuration. This exception applies only
-  to the build lane; product runtime routing remains restricted to the
-  allowlisted GPT-5.6 family and is unchanged by this entry.
+- **Builder model / effort:** `gpt-5.6-sol` / `ultra` (owner-directed active
+  launcher profile). This identifies the root build session only; product
+  runtime subprocess models and efforts remain separately configured,
+  allowlisted, and evidence-gated.
 - **Started (UTC):** `2026-07-20T21:57:44Z`
 - **Starting commit:** `828fe4d99dfd516c3fea7a028fc6e4b306199702`
 - **Starting history count:** 74
@@ -574,3 +570,87 @@ not started, and 0 blocked. This is not the final release query.
 
 Current acceptance ledger after UI-01 and UI-02: 22 passing, 0 failing, 8 not
 started, and 0 blocked. This is not the final release query.
+
+#### SHARE-01 / SHARE-02 — privacy-safe persistent sharing
+
+- Eligible completed artifacts receive opaque, authenticated stable share URLs;
+  raw learner questions are excluded before persistence. Share create, metadata,
+  playback, and download responses are `no-store`, while expiry, tampering, and
+  traversal fail closed. Expired records are removed without racing a replaced
+  file, and the documented retention window is 30 days.
+- Test-first adversarial fixtures initially exposed raw-question echoes through
+  cached artifacts and JavaScript Unicode escapes. The retained cases cover
+  semantic-cache reuse, Unicode escapes, all JavaScript line continuations,
+  identity escapes, non-ASCII decimal digits, and invalid/literal backslash
+  sequences without evaluating candidate source.
+- The final focused sharing/cache suite recorded 36 passed. The previously
+  measured real-browser share journey recorded 1 passed in 55.65s, covering
+  copy/recovery through the public presentation path.
+
+#### LIB-01 / ASSET-01 — controllable motion and compatible static assets
+
+- The trusted shell owns autoplay, pause/resume, reset, reduced-motion, and
+  teardown behavior. Reset restores the declared default through the public
+  module interface rather than relying on lesson-specific timing or constants.
+- Static URLs and the golden manifest are bound to the frozen asset bundle
+  version; the production application applies the same compatibility check as
+  the clean-browser smoke. The affected Python suite recorded 64 passed in
+  5.69s, and the two library/asset browser journeys recorded 2 passed in 51.54s.
+
+#### GOLD-01 — six pinned bilingual release lessons
+
+- Independently regenerated `out/evidence/gold-01.json` records all 6 pinned
+  goldens, 12 Arabic/English locale journeys, 24 accepted mobile/desktop
+  screenshots, 10,335 deterministic checks, and zero model calls. Actor-motion,
+  physics-motion, and shared-state evidence recorded 42, 10,191, and 42 checks
+  respectively; the geometry regression retained a minimum clearance of
+  4.72495px.
+- All six artifacts pass the shared generated-path verifier with no grandfather
+  exemption, and all 12 locale journeys prove the served artifact bytes exactly
+  match their reviewed source. The focused GOLD checks recorded 14 passed; the
+  independent browser proof recorded 1 passed. Screenshots are under
+  `out/evidence/screens/gold-01/`.
+
+#### ROUTE-01 / ROUTE-02 and RELEASE-01 — in progress, not accepted
+
+- Routing evaluation is being hardened to bind the sanitized report to its raw
+  measured evidence, reject malformed or replayed evidence, and prevent an
+  incomplete cohort from authorizing a runtime change. RELEASE-01 is likewise
+  being built from real suite, browser, accessibility, provenance, service, and
+  artifact evidence rather than optimistic notebook prose. Neither row is
+  claimed passing.
+
+The focused and browser evidence above makes SHARE-01, SHARE-02, LIB-01,
+ASSET-01, and GOLD-01 candidates for acceptance, but the integrated full suite
+has not yet been run for this batch and their coherent commits have not yet
+landed. The official committed ledger therefore remains 22 of 30 passing; no
+27-of-30 claim is made here. This is not the final release query.
+
+### Current-batch close-out — source commits and bounded ROUTE-02 attempt
+
+- The source batch landed in five dependency-ordered commits: `fb0ade3`
+  (privacy-safe sharing and immutable static assets), `21d12ac` (curated
+  library shells and scientific motion), `a70a436` (measured public routing),
+  `8e911bb` (hash-bound bilingual GOLD evidence), and `3e231c4` (clean-checkout
+  and release evidence verifier). Each was preceded by the root-session
+  provenance gate; all preserve one root, zero merges, and zero unlinked
+  commits.
+- The final offline source sweep before the commits was
+  `.venv/bin/pytest -q`: **552 passed, 1 opt-in live skipped in 498.18s**.
+  Ruff and `git diff --check` were clean. The clean detached source worktree at
+  `3e231c4951eb75fbe6ed785e3a9bf454a065deb1` then reran the routing-focused
+  suite: **117 passed in 2.43s**, with Ruff and provenance green.
+- ROUTE-01 is accepted from those invocation and configuration contracts.
+  ROUTE-02 is **blocked, not passing**: the bounded Terra cohort made four
+  completed fixture-owned calls (moon phases generate 52.926s + heal 58.850s;
+  pendulum generate 41.496s + heal 56.239s), then the account-usage reader
+  returned no attributable before/after observations and the evaluator raised
+  `account_usage_counter_inconclusive`. No Sol cohort was started, so no
+  Terra-to-Sol double spend or unbounded retry occurred. The retained sanitized
+  raw evidence is `out/evidence/route-02-aborted-account-usage.json`
+  (SHA-256 `571b60ccce3f86a63630fb8bcb4b4784b0314f7467f8d1cc2ed2858f1e67495e`).
+- Current honest ledger: **28 passing, 0 failing, 1 blocked (ROUTE-02), and 1
+  not started (RELEASE-01)**. RELEASE-01 remains unclaimed because it requires
+  a complete measured routing report, an exact clean-checkout capture, service
+  receipt, and 30/30 final report; no release tag or remote push is implied by
+  this record.
