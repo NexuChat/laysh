@@ -80,8 +80,13 @@ def test_every_gallery_simulation_is_visible_and_unclipped_at_supported_sizes():
             "viewport": item["viewport"],
             "iframeHeight": item["parent"]["iframeHeight"],
             "documentHeight": item["child"]["documentHeight"],
-            "panelBottom": item["child"]["panel"].get("bottom"),
-            "controlBottom": item["child"]["control"].get("bottom"),
+            "viewportWidth": item["child"]["viewportWidth"],
+            "viewportHeight": item["child"]["viewportHeight"],
+            "checks": item["checks"],
+            "parent": item["parent"],
+            "panel": item["child"]["panel"],
+            "canvas": item["child"]["canvas"],
+            "control": item["child"]["control"],
         }
         for item in measurements
         if not item["passed"]

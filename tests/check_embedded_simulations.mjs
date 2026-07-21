@@ -129,13 +129,27 @@ try {
     })()`);
   }
 
+  async function currentIframeTargetId() {
+    const { root } = await command("DOM.getDocument", { depth: 1 });
+    const { nodeId } = await command("DOM.querySelector", {
+      nodeId: root.nodeId,
+      selector: "#simulation-frame",
+    });
+    if (!nodeId) return null;
+    const { node } = await command("DOM.describeNode", { nodeId });
+    return node.frameId || null;
+  }
+
   async function currentFrameSession(expectedUrl, expectedTitle) {
     const deadline = Date.now() + 10000;
     while (Date.now() < deadline) {
+      const targetId = await currentIframeTargetId();
       const { targetInfos } = await command("Target.getTargets");
-      const frame = targetInfos.filter(
-        (target) => target.type === "iframe" && target.url === expectedUrl,
-      ).at(-1);
+      const frame = targetInfos.find(
+        (target) => target.type === "iframe"
+          && target.targetId === targetId
+          && target.url === expectedUrl,
+      );
       if (frame) {
         const { sessionId } = await command("Target.attachToTarget", {
           targetId: frame.targetId,
@@ -164,18 +178,27 @@ try {
       throw new Error(`${cardId} at ${viewport.label}: ${error.message}`);
     }
     const convergenceDeadline = Date.now() + 5000;
+    let converged = false;
     while (Date.now() < convergenceDeadline) {
       const frameHeight = await evaluate(
         "document.querySelector('#simulation-frame').getBoundingClientRect().height",
       );
-      const lessonBottom = await evaluate(
-        "Math.ceil(document.querySelector('#lesson').getBoundingClientRect().bottom)",
-        sessionId,
-      );
-      if (frameHeight + 2 >= lessonBottom) break;
+      const childLayout = await evaluate(`(() => ({
+        viewportHeight: innerHeight,
+        lessonBottom: Math.ceil(document.querySelector('#lesson').getBoundingClientRect().bottom),
+      }))()`, sessionId);
+      if (
+        frameHeight + 2 >= childLayout.lessonBottom
+        && childLayout.viewportHeight + 2 >= childLayout.lessonBottom
+      ) {
+        converged = true;
+        break;
+      }
       await delay(100);
     }
-    await delay(100);
+    if (!converged) {
+      throw new Error(`${cardId} at ${viewport.label}: embedded viewport did not converge`);
+    }
 
     const parent = await evaluate(`(() => {
       const frame = document.querySelector('#simulation-frame');
@@ -226,11 +249,25 @@ try {
       };
     })()`, sessionId);
     await command("Target.detachFromTarget", { sessionId });
-    const passed = parent.iframeBottomInsideStage
-      && child.panel.visible && child.panel.insideViewport
-      && child.canvas.visible && child.canvas.insideViewport
-      && child.control.visible && child.control.insideViewport;
-    return { cardId, viewport: viewport.label, scale: viewport.scale, parent, child, passed };
+    const checks = {
+      iframeInsideStage: parent.iframeBottomInsideStage,
+      panelVisible: child.panel.visible,
+      panelInsideViewport: child.panel.insideViewport,
+      canvasVisible: child.canvas.visible,
+      canvasInsideViewport: child.canvas.insideViewport,
+      controlVisible: child.control.visible,
+      controlInsideViewport: child.control.insideViewport,
+    };
+    const passed = Object.values(checks).every(Boolean);
+    return {
+      cardId,
+      viewport: viewport.label,
+      scale: viewport.scale,
+      parent,
+      child,
+      checks,
+      passed,
+    };
   }
 
   async function measure(cardId, viewport) {
@@ -245,6 +282,7 @@ try {
   }
 
   await command("Runtime.enable");
+  await command("DOM.enable");
   await command("Page.enable");
   const viewports = [
     { label: "narrow-mobile-320x844", width: 320, height: 844, mobile: true, scale: 1 },

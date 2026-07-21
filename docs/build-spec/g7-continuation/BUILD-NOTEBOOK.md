@@ -382,3 +382,10 @@ Not started.
   still announces the build queue despite the ready result; content-hash lesson
   IDs broke legacy shared URLs such as `/ar/sims/golden_moon_phases`, and the
   `/ar` locale prefix disappeared from routes.
+- Close-out identified the remaining browser flake in the test harness, not the
+  product: URL-based target selection could attach to a stale OOPIF from an
+  earlier gallery pass, and the parent iframe height could settle before the
+  current child's `innerHeight` applied that resize. The harness now selects the
+  current iframe's CDP `frameId` and waits on both parent height and child
+  viewport containment. Focused Chrome verification passed in 38.82s; the final
+  full suite passed with 276 tests, one opt-in live test skipped, in 288.20s.
