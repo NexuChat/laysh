@@ -14,7 +14,18 @@
       "actor_region": {"x": 0.2, "y": 0.28, "width": 0.74, "height": 0.38},
       "sample_count": 4,
       "sample_interval_ms": 140,
-      "actor_color": {"red": 102, "green": 226, "blue": 255, "tolerance": 68}
+      "actor_color": {"red": 102, "green": 226, "blue": 255, "tolerance": 28}
+    },
+    "physics_motion": {
+      "kind": "sound_pitch",
+      "tolerance": 0.02,
+      "settle_ms": 500,
+      "minimum_spatial_variation": 0.025,
+      "phase_column_count": 16,
+      "control_values": [110, 440, 880],
+      "temporal_runs": [
+        {"control_value": 440, "sample_count": 3, "sample_interval_ms": 180}
+      ]
     },
     "primary_parameter": {"id": "frequency_hz", "min": 110, "max": 880, "default": 440, "step": 10, "unit": "Hz"},
     "units": ["Hz", "m", "ms"],

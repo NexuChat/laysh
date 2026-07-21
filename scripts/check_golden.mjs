@@ -153,16 +153,11 @@ try {
     returnByValue: true,
   });
   const actorSamples = [];
+  const physicsSamples = [];
+  const temporalRuns = [];
   if (motionProfile) {
-    const sampleValues = await command("Runtime.evaluate", {
-      expression: `(() => {
-        const control = document.querySelector('#primary-control');
-        return [control.value, control.min, control.max, control.value].map(Number);
-      })()`,
-      returnByValue: true,
-    });
     const profileLiteral = JSON.stringify(motionProfile);
-    for (const value of sampleValues.result.value) {
+    const setControlValue = async (value) => {
       await command("Runtime.evaluate", {
         expression: `(() => {
           const control = document.querySelector('#primary-control');
@@ -171,73 +166,131 @@ try {
         })()`,
         returnByValue: true,
       });
-      await delay(motionProfile.sample_interval_ms);
+    };
+    const captureMotionSample = async () => {
       const sample = await command("Runtime.evaluate", {
         expression: `(() => {
           const profile = ${profileLiteral};
           const canvas = document.querySelector('#simulation');
           const root = document.documentElement;
-          const region = profile.actor_region;
-          const color = profile.actor_color;
-          const x0 = Math.max(0, Math.floor(region.x * canvas.width));
-          const y0 = Math.max(0, Math.floor(region.y * canvas.height));
-          const x1 = Math.min(canvas.width, Math.ceil((region.x + region.width) * canvas.width));
-          const y1 = Math.min(canvas.height, Math.ceil((region.y + region.height) * canvas.height));
+          const control = document.querySelector('#primary-control');
+          const lesson = window.__LAYSH_LESSON__;
           const data = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
-          const toleranceSquared = color.tolerance * color.tolerance;
-          let count = 0;
-          let sumX = 0;
-          let sumY = 0;
-          let minX = canvas.width;
-          let minY = canvas.height;
-          let maxX = -1;
-          let maxY = -1;
-          let hash = 2166136261;
+          const mask = (region, color, columnCount = 0) => {
+            if (!region || !color) return null;
+            const x0 = Math.max(0, Math.floor(region.x * canvas.width));
+            const y0 = Math.max(0, Math.floor(region.y * canvas.height));
+            const x1 = Math.min(canvas.width, Math.ceil((region.x + region.width) * canvas.width));
+            const y1 = Math.min(canvas.height, Math.ceil((region.y + region.height) * canvas.height));
+            const toleranceSquared = color.tolerance * color.tolerance;
+            const columns = Array.from({ length: columnCount }, () => ({ count: 0, sumY: 0 }));
+            let count = 0;
+            let sumX = 0;
+            let sumY = 0;
+            let minX = canvas.width;
+            let minY = canvas.height;
+            let maxX = -1;
+            let maxY = -1;
+            let hash = 2166136261;
+            for (let y = y0; y < y1; y += 1) {
+              for (let x = x0; x < x1; x += 1) {
+                const offset = (y * canvas.width + x) * 4;
+                const red = data[offset] - color.red;
+                const green = data[offset + 1] - color.green;
+                const blue = data[offset + 2] - color.blue;
+                if (data[offset + 3] === 0 || red * red + green * green + blue * blue > toleranceSquared) continue;
+                count += 1;
+                sumX += x;
+                sumY += y;
+                minX = Math.min(minX, x);
+                minY = Math.min(minY, y);
+                maxX = Math.max(maxX, x);
+                maxY = Math.max(maxY, y);
+                hash = Math.imul(hash ^ ((x - x0) * 4099 + (y - y0)), 16777619) >>> 0;
+                if (columns.length) {
+                  const column = Math.min(columns.length - 1, Math.floor((x - x0) / Math.max(1, x1 - x0) * columns.length));
+                  columns[column].count += 1;
+                  columns[column].sumY += y;
+                }
+              }
+            }
+            return {
+              visible_pixels: count,
+              signature: count ? hash.toString(16) : '',
+              centroid: count ? { x: sumX / count / canvas.width, y: sumY / count / canvas.height } : null,
+              bounds: count ? {
+                x: minX / canvas.width,
+                y: minY / canvas.height,
+                width: (maxX - minX + 1) / canvas.width,
+                height: (maxY - minY + 1) / canvas.height,
+              } : null,
+              phase_columns: columns.length
+                ? columns.map((column) => column.count ? column.sumY / column.count / canvas.height : null)
+                : null,
+            };
+          };
           let canvasHash = 2166136261;
           const stride = Math.max(4, Math.floor(data.length / 4096 / 4) * 4);
           for (let offset = 0; offset < data.length; offset += stride) {
             canvasHash = Math.imul(canvasHash ^ data[offset], 16777619) >>> 0;
           }
-          for (let y = y0; y < y1; y += 1) {
-            for (let x = x0; x < x1; x += 1) {
-              const offset = (y * canvas.width + x) * 4;
-              const red = data[offset] - color.red;
-              const green = data[offset + 1] - color.green;
-              const blue = data[offset + 2] - color.blue;
-              if (data[offset + 3] === 0 || red * red + green * green + blue * blue > toleranceSquared) continue;
-              count += 1;
-              sumX += x;
-              sumY += y;
-              minX = Math.min(minX, x);
-              minY = Math.min(minY, y);
-              maxX = Math.max(maxX, x);
-              maxY = Math.max(maxY, y);
-              hash = Math.imul(hash ^ ((x - x0) * 4099 + (y - y0)), 16777619) >>> 0;
-            }
-          }
-          const actor = count > 0
-            ? {
-                visible_pixels: count,
-                signature: hash.toString(16),
-                centroid: { x: sumX / count / canvas.width, y: sumY / count / canvas.height },
-                bounds: {
-                  x: minX / canvas.width,
-                  y: minY / canvas.height,
-                  width: (maxX - minX + 1) / canvas.width,
-                  height: (maxY - minY + 1) / canvas.height,
-                },
-              }
-            : { visible_pixels: 0, signature: '', centroid: null, bounds: null };
+          const physics = profile.physics || null;
+          const phaseColumns = physics && physics.kind === 'sound_pitch'
+            ? Math.max(3, Number(physics.phase_column_count || 4))
+            : 0;
+          const actor = mask(profile.actor_region, profile.actor_color, phaseColumns);
+          const input = { [lesson.primary_parameter.id]: Number(control.value) };
+          const modelOutputs = window.LayshSimulation.test(input);
+          const illumination = physics && physics.illumination_probe
+            ? mask(physics.illumination_probe.region, physics.illumination_probe.color)
+            : null;
           return {
             time_ms: Math.round(performance.now()),
+            control_value: Number(control.value),
+            model_outputs: modelOutputs,
             frame_count: Number(root.dataset.frameCount || 0),
             canvas_signature: canvasHash,
             actor,
+            illumination,
+            phase_columns: actor ? actor.phase_columns : null,
           };
         })()`,
         returnByValue: true,
       });
-      actorSamples.push(sample.result.value);
+      return sample.result.value;
+    };
+    const actorValues = await command("Runtime.evaluate", {
+      expression: `(() => {
+        const control = document.querySelector('#primary-control');
+        return [control.value, control.min, control.max, control.value].map(Number);
+      })()`,
+      returnByValue: true,
+    });
+    for (const value of actorValues.result.value) {
+      await setControlValue(value);
+      await delay(motionProfile.sample_interval_ms);
+      actorSamples.push(await captureMotionSample());
+    }
+    const physics = motionProfile.physics;
+    if (physics) {
+      const settleMilliseconds = Number(physics.settle_ms || motionProfile.sample_interval_ms);
+      const controlValues = Array.isArray(physics.control_values) ? physics.control_values : [];
+      for (const value of controlValues) {
+        await setControlValue(value);
+        await delay(settleMilliseconds);
+        physicsSamples.push(await captureMotionSample());
+      }
+      const runs = Array.isArray(physics.temporal_runs) ? physics.temporal_runs : [];
+      for (const run of runs) {
+        await setControlValue(run.control_value);
+        await delay(settleMilliseconds);
+        const samples = [];
+        for (let index = 0; index < run.sample_count; index += 1) {
+          samples.push(await captureMotionSample());
+          if (index + 1 < run.sample_count) await delay(run.sample_interval_ms);
+        }
+        temporalRuns.push({ control_value: Number(run.control_value), samples });
+      }
     }
   }
   const idleBefore = await command("Runtime.evaluate", {
@@ -291,6 +344,8 @@ try {
     consoleErrors,
     screenshots,
     actorSamples,
+    physicsSamples,
+    temporalRuns,
   };
   if (reportPath) {
     fs.mkdirSync(path.dirname(reportPath), { recursive: true });

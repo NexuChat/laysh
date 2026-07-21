@@ -11,10 +11,23 @@
     "actor": "pendulum_bob",
     "action": "oscillates",
     "actor_tracking": {
-      "actor_region": {"x": 0.25, "y": 0.1, "width": 0.5, "height": 0.78},
+      "actor_region": {"x": 0.39, "y": 0.18, "width": 0.21, "height": 0.67},
       "sample_count": 4,
       "sample_interval_ms": 140,
-      "actor_color": {"red": 255, "green": 241, "blue": 189, "tolerance": 88}
+      "actor_color": {"red": 239, "green": 174, "blue": 72, "tolerance": 35}
+    },
+    "physics_motion": {
+      "kind": "pendulum",
+      "gravity_m_s2": 9.81,
+      "settle_ms": 500,
+      "period_tolerance_ratio": 0.1,
+      "pivot_x": 0.5,
+      "position_tolerance": 0.007,
+      "endpoint_tolerance": 0.025,
+      "control_values": [0.25, 1.0, 2.0],
+      "temporal_runs": [
+        {"control_value": 1.0, "sample_count": 5, "sample_interval_ms": 480}
+      ]
     },
     "primary_parameter": {"id": "length_m", "min": 0.25, "max": 2.0, "default": 1.0, "step": 0.05, "unit": "m"},
     "units": ["m", "s"],

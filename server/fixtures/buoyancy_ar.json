@@ -16,6 +16,13 @@
       "sample_interval_ms": 140,
       "actor_color": {"red": 255, "green": 224, "blue": 138, "tolerance": 94}
     },
+    "physics_motion": {
+      "kind": "buoyancy",
+      "tolerance": 0.01,
+      "settle_ms": 500,
+      "waterline_y": 0.39,
+      "control_values": [250, 750, 1200]
+    },
     "primary_parameter": {"id": "density_kg_m3", "min": 200, "max": 1400, "default": 750, "step": 10, "unit": "kg/m³"},
     "units": ["kg/m³", "N", "ratio"],
     "assumptions": ["ماء ساكن كثافته 1000 kg/m³", "جسم متجانس", "إهمال التوتر السطحي"],

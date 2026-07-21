@@ -44,6 +44,9 @@
   let frameCount = 0;
   let idleFrameId = 0;
   let previousIdleAt = 0;
+  let idlePhaseBudget = 0;
+  const pendulumPhaseIncrement = 0.085;
+  const maxIdleStepMs = 100;
 
   document.body.dataset.direction = dir === "rtl" ? "rtl" : "ltr";
   byId("lesson-label").textContent = labels.lesson;
@@ -119,6 +122,8 @@
   }
 
   control.addEventListener("input", () => {
+    previousIdleAt = 0;
+    idlePhaseBudget = 0;
     update(control.value);
     byId("explain").hidden = false;
   });
@@ -157,6 +162,27 @@
 
   function scheduleIdleFrame(timestamp = 0) {
     if (reducedMotion) return;
+    if (lesson.module_spec.action === "oscillates") {
+      if (previousIdleAt > 0) {
+        const elapsedMs = Math.min(maxIdleStepMs, Math.max(0, timestamp - previousIdleAt));
+        const model = simulation.test({ [parameter.id]: Number(control.value) });
+        const periodSeconds = Number(model && model.period_s);
+        if (Number.isFinite(periodSeconds) && periodSeconds > 0) {
+          idlePhaseBudget += (elapsedMs / (periodSeconds * 1000)) * Math.PI * 2;
+          const redrawCount = Math.min(
+            8,
+            Math.floor(idlePhaseBudget / pendulumPhaseIncrement),
+          );
+          for (let index = 0; index < redrawCount; index += 1) {
+            simulation.setParameter(parameter.id, Number(control.value));
+          }
+          idlePhaseBudget -= redrawCount * pendulumPhaseIncrement;
+        }
+      }
+      previousIdleAt = timestamp;
+      idleFrameId = requestAnimationFrame(scheduleIdleFrame);
+      return;
+    }
     if (timestamp - previousIdleAt >= 80) {
       previousIdleAt = timestamp;
       simulation.setParameter(parameter.id, Number(control.value));

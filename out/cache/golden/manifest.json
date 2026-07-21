@@ -11,7 +11,7 @@
       ],
       "instant": true,
       "tier": "A",
-      "artifact_sha256": "bf4521c93f174a157d6343e7293d4eb9c444e705f0247679fc0ce91f6815596c",
+      "artifact_sha256": "6dfed2d4fe04ba61750202741b92e46a7fb0bc1c59520a6bb575ad222747b4fc",
       "metadata": {
         "ar": {
           "title": "لماذا تطفو بعض الأجسام؟",
@@ -34,7 +34,7 @@
       ],
       "instant": true,
       "tier": "A",
-      "artifact_sha256": "f6abc6cb212554f08980e2eb78b20d1644da35cc264dbfe3e33258b3ebc65306",
+      "artifact_sha256": "dae0bebfd7afe57d9ca6cf2671ce1f296ed7a11bbdaadcdb5af6964e9ec8f2f2",
       "metadata": {
         "ar": {
           "title": "دوران الأرض والنهار والليل",
@@ -57,7 +57,7 @@
       ],
       "instant": true,
       "tier": "A",
-      "artifact_sha256": "2b0bece8f55356f0f65cb85601b5c05d92d078aab21f5567a90d1ea8ef29306b",
+      "artifact_sha256": "31b29d4803fe204b8977239db6778d7f0e3e27efd7527826a731517bb03648d4",
       "metadata": {
         "ar": {
           "title": "أطوار القمر",
@@ -80,7 +80,7 @@
       ],
       "instant": true,
       "tier": "A",
-      "artifact_sha256": "00629ee82df746eab4f2353cf6c473eb6d88bf740bdd1a8def4044a4f89cf3b6",
+      "artifact_sha256": "b177d9d18976cb5fd0d8697199ddf5d9b50e06fb229c6e9693b2d307694e069f",
       "metadata": {
         "ar": {
           "title": "طول البندول وزمنه",
@@ -103,7 +103,7 @@
       ],
       "instant": true,
       "tier": "A",
-      "artifact_sha256": "616414dc40c2b0209f1054f2ed9f2ac6a38aba5d7c09f2b9c34888b15142b39d",
+      "artifact_sha256": "8e4748a360f9fbc73e00441e7eb5e5ff6790cbcf4d79d8ce4148c9ab47c90057",
       "metadata": {
         "ar": {
           "title": "المقاومة وسطوع المصباح",
@@ -126,7 +126,7 @@
       ],
       "instant": true,
       "tier": "A",
-      "artifact_sha256": "f0b2c1aaa4ab647cd56990b33f61e657a74034f653e595c5aeafb547cb6f3ba8",
+      "artifact_sha256": "29a4690fb8b49e8c802287549096b1c18c1204afce900e471595947cb472f5a2",
       "metadata": {
         "ar": {
           "title": "التردد وحدّة الصوت",

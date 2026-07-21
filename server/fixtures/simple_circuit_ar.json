@@ -16,6 +16,17 @@
       "sample_interval_ms": 140,
       "actor_color": {"red": 146, "green": 231, "blue": 255, "tolerance": 68}
     },
+    "physics_motion": {
+      "kind": "simple_circuit",
+      "tolerance": 0.02,
+      "settle_ms": 500,
+      "minimum_speed_ratio": 1.1,
+      "control_values": [2, 6, 12],
+      "temporal_runs": [
+        {"control_value": 2, "sample_count": 6, "sample_interval_ms": 180},
+        {"control_value": 12, "sample_count": 6, "sample_interval_ms": 180}
+      ]
+    },
     "primary_parameter": {"id": "resistance_ohm", "min": 2, "max": 20, "default": 6, "step": 1, "unit": "Ω"},
     "units": ["V", "Ω", "A", "W"],
     "assumptions": ["مصدر مثالي جهده 6 V", "مقاومة أومية", "السطوع يمثله تبديد القدرة"],

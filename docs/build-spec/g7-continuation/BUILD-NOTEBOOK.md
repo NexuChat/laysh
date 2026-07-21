@@ -33,9 +33,9 @@ opt-in live skip, six browser passes plus its live skip, and coverage above the
 
 - **Rows total:** 30
 - **Passing:** BASE-01, BASE-02, TEST-01, CONTRACT-01, TEACH-01, TEACH-02,
-  MOTION-01, MOTION-02
+  MOTION-01, MOTION-02, MOTION-03
 - **Failing:** none
-- **Not started:** EVID-01, EVID-02, MOTION-03, MOTION-04, VQA-01, VISUAL-01, SHARE-01,
+- **Not started:** EVID-01, EVID-02, MOTION-04, VQA-01, VISUAL-01, SHARE-01,
   SHARE-02, LIB-01, I18N-01, I18N-02, UI-01, UI-02, ASSET-01, REL-01, REL-02,
   GEN-01, EXP-01, GOLD-01, ROUTE-01, ROUTE-02, RELEASE-01
 - **Blocked:** none
@@ -95,12 +95,42 @@ Completed locally; source changes and this evidence record are committed togethe
   counter with no actor change. The six pinned artifacts each pass four ordered
   control-driven samples locally.
 - Profiles use four samples at 140 ms intervals. The documented color-distance
-  tolerances are 68–94 RGB units, selected from the locally rendered actor
+  tolerances are 28–94 RGB units, selected from the locally rendered actor
   colors rather than from a visual model.
 - `scripts/verify_golden_motion.py` produced
   `out/evidence/motion-02.json`: six of six passed, 42 checks, zero model calls.
   The affected suite recorded 20 passed, zero skipped, zero failures in 56.728s;
   Ruff and `node --check scripts/check_golden.mjs` were clean.
+
+#### MOTION-03 — action-specific physics evidence
+
+- Added an offline browser probe that records the module's real
+  `test(inputs)` output beside actor-only samples and fixed-interval temporal
+  runs. Canvas hashes and frame counts remain diagnostic only; they do not
+  satisfy a physics check.
+- Moon phases prove the `(1 − cos θ) / 2` output, distinct orbital positions,
+  and changing illuminated geometry. Day/night proves the fixed-light
+  `cos θ` relation and a moving surface landmark. Buoyancy proves the
+  waterline equilibrium at densities 250, 750, and 1200 kg/m³.
+- Pendulum evidence uses a shell cadence derived from `period_s`, a 100 ms
+  clamped idle step, and five fixed temporal states at 480 ms intervals. Its
+  declared direction threshold is 0.007 normalized canvas widths and its
+  independent full-cycle endpoint tolerance is 0.025; the check detects a
+  reversal from signed horizontal trajectory changes, avoiding a known
+  highlight-centroid offset inside the rendered bob.
+- Sound evidence samples 16 narrow phase columns (minimum spatial variation
+  0.025) so a propagating waveform cannot pass as a whole-wave amplitude
+  pulse. Circuit evidence compares two carrier traces against `I = 6/R` with
+  a declared 1.1 minimum speed ratio.
+- The trusted shell and all six pinned artifacts were reassembled locally via
+  `scripts/refresh_pinned_goldens.py`; no model call was made. The final
+  deterministic evidence is `out/evidence/motion-03.json`: six of six
+  goldens passed, 83 checks, zero model calls.
+- Focused physics unit tests: 9 passed in 0.02s. The six-golden browser proof:
+  1 passed in 46.12s. The affected suite (physics, actor tracking, trusted
+  refresh, and min/default/max browser checks): 27 passed, zero skipped, zero
+  failures in 103.269s. `.venv/bin/ruff check .`, `node --check
+  scripts/check_golden.mjs`, and `node --check sim_shell/shell.js` were clean.
 
 ### Batch C — sharing, library, localization, and presentation
 
