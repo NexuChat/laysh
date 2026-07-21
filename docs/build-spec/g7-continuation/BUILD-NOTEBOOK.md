@@ -300,6 +300,28 @@ the Moon-geometry defect without double-counting an already accepted row.
 Current acceptance ledger after I18N-01 and I18N-02: 15 passing, 0 failing, 15
 not started, and 0 blocked. This is not the final release query.
 
+### Unified-generation foundation — phase 1 inventory and ADR
+
+- Read the complete owner directive and all 2,810 lines of `end-plan.md` before
+  writing. Audited HEAD `049f6fa` and froze new lesson/slug/question-specific
+  correctness code, coordinates, prompts, validators, and artifact rewrites.
+- The measured pre-extraction call graph proves two disjoint paths. Learner jobs
+  call `run_pipeline -> verify_candidate -> verify_module.mjs -> assembly ->
+  check_artifact.mjs`; curated Moon evidence calls
+  `verify_golden_physics_motion -> check_golden.mjs ->
+  evaluate_body_geometry`. `server/verify.py` has no geometry call.
+- `UNIFIED-GEOMETRY-INVENTORY.md` classifies every relevant symbol as a general
+  rule, scientific oracle, reusable asset, example-specific runtime, manually
+  patched artifact, or obsolete temporary fix, and names its destination,
+  replacement test, removal condition, and current status.
+- ADR-0001 records the real sequence: a reference defect, a correct but custom
+  first repair, discovery of the generated-path gap, freeze, general invariant
+  extraction, shared-path wiring, and an AST/import-boundary CI gate. It
+  explicitly defers Canary and six-reference regeneration.
+- Full commit gate: 264 passed and the single opt-in live test skipped in
+  266.83s. No GPT call, service mutation, Canary, or artifact regeneration
+  occurred.
+
 ### Batch D — reliability, routing, and release evidence
 
 Not started.
