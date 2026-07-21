@@ -66,7 +66,8 @@
     "understand_fallback_model": "gpt-5.6-sol",
     "generate_model": "gpt-5.6-sol",
     "heal_model": "gpt-5.6-sol",
-    "qa_model": "gpt-5.6-sol"
+    "qa_model": "gpt-5.6-sol",
+    "visual_qa_model": "gpt-5.6-terra"
   },
   "release_confirmations": {
     "account_workspace_type": "ChatGPT login; workspace tier not exposed by CLI",

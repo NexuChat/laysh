@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.0",
+  "gate": "VQA-01",
+  "passed": true,
+  "live_model_calls": 0,
+  "route": {
+    "model": "gpt-5.6-terra",
+    "effort": "low",
+    "mode": "curated_evidence_only"
+  },
+  "verdict_contract": {
+    "additional_properties": false,
+    "required": [
+      "actor_visible",
+      "action_performed",
+      "physically_consistent",
+      "defects"
+    ]
+  },
+  "image_policy": {
+    "count": 3,
+    "maximum_bytes_each": 5242880,
+    "repository_evidence_root_required": true,
+    "public_path_allowed": false
+  },
+  "authority": {
+    "deterministic_gates_can_be_overridden": false,
+    "browser_gate_can_be_overridden": false,
+    "passing_model_verdict_promotes_failed_candidate": false
+  },
+  "tests": {
+    "focused_passed": 7,
+    "affected_passed": 76,
+    "full_passed": 250,
+    "full_skipped": 1,
+    "full_elapsed_seconds": 191.34,
+    "ruff": "passed"
+  }
+}

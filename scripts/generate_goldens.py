@@ -178,6 +178,25 @@ def _qa_visual_richness_passed(qa: dict[str, Any] | None) -> bool:
     )
 
 
+def _semantic_visual_qa_passed(
+    verdict: dict[str, Any] | None,
+    *,
+    deterministic_passed: bool,
+    browser_passed: bool,
+) -> bool:
+    from server.visual_qa import semantic_visual_qa_report
+
+    if not isinstance(verdict, dict):
+        return False
+    return bool(
+        semantic_visual_qa_report(
+            verdict,
+            deterministic_passed=deterministic_passed,
+            browser_passed=browser_passed,
+        )["passed"]
+    )
+
+
 def build_manifest() -> dict[str, Any]:
     lessons: list[dict[str, Any]] = []
     for path in sorted(GOLDEN_ROOT.glob("*.json")):
@@ -260,6 +279,11 @@ def promote_candidate(fixture_id: str, revision: str | None = None) -> int:
         raise ValueError("candidate has not passed the complete builder review checklist")
     if not _qa_visual_richness_passed(outputs.get("qa")):
         raise ValueError("candidate has not passed the structured visual_richness review")
+    authoritative_verification = verify_candidate(
+        outputs["module_output"], outputs["understanding"]
+    )
+    if not authoritative_verification.passed or authoritative_verification.artifact is None:
+        raise ValueError("candidate failed authoritative deterministic promotion gates")
     screenshot_root = (
         ROOT / "out" / "evidence" / "screens" / "v1.1"
         if revision == "v1.1"
@@ -285,6 +309,12 @@ def promote_candidate(fixture_id: str, revision: str | None = None) -> int:
         and browser_report.get("reactiveFrameVariants", 0) >= 2
     ):
         raise ValueError("golden browser evidence did not pass")
+    if not _semantic_visual_qa_passed(
+        outputs.get("visual_qa"),
+        deterministic_passed=authoritative_verification.passed,
+        browser_passed=True,
+    ):
+        raise ValueError("candidate has not passed authoritative semantic visual QA")
     understanding = outputs["understanding"]
     verification = outputs["verification"]
     cache = VerifiedCache(

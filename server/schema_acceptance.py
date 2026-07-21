@@ -61,6 +61,15 @@ OUTPUT_SCHEMA_PROBES: dict[str, tuple[str, dict[str, Any]]] = {
             },
         },
     ),
+    "visual_qa": (
+        "visual_qa",
+        {
+            "actor_visible": True,
+            "action_performed": True,
+            "physically_consistent": True,
+            "defects": [],
+        },
+    ),
 }
 
 

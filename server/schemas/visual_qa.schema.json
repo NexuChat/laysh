@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://laysh.local/schemas/visual-qa-1.0.json",
+  "title": "Laysh curated semantic visual QA verdict v1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "actor_visible",
+    "action_performed",
+    "physically_consistent",
+    "defects"
+  ],
+  "properties": {
+    "actor_visible": {"type": "boolean"},
+    "action_performed": {"type": "boolean"},
+    "physically_consistent": {"type": "boolean"},
+    "defects": {
+      "type": "array",
+      "maxItems": 3,
+      "items": {"type": "string", "minLength": 1, "maxLength": 180}
+    }
+  }
+}

@@ -28,6 +28,7 @@ ENV_ALLOWLIST = (
     "HTTPS_PROXY",
     "NO_PROXY",
 )
+MAX_VISUAL_EVIDENCE_IMAGE_BYTES = 5 * 1024 * 1024
 FORBIDDEN_OUTPUT_SCHEMA_KEYWORDS = frozenset(
     {
         "oneOf",
@@ -149,6 +150,7 @@ class CodexExecutor:
         evidence_stage_timeout_seconds: float | None = None,
         record_runtime: bool = False,
         evidence_allowlist: frozenset[str] = frozenset(),
+        evidence_image_roots: tuple[Path, ...] = (),
     ) -> None:
         self.process_factory = process_factory or asyncio.create_subprocess_exec
         self.codex_path = codex_path or shutil.which("codex") or "/home/dev/bin/codex"
@@ -160,6 +162,7 @@ class CodexExecutor:
         )
         self.record_runtime = record_runtime
         self.evidence_allowlist = evidence_allowlist
+        self.evidence_image_roots = tuple(root.resolve() for root in evidence_image_roots)
 
     def _enforce_policy(
         self,
@@ -183,6 +186,34 @@ class CodexExecutor:
     @staticmethod
     def _minimal_environment() -> dict[str, str]:
         return {key: os.environ[key] for key in ENV_ALLOWLIST if key in os.environ}
+
+    def _validated_image_paths(
+        self,
+        image_paths: tuple[Path, ...],
+        *,
+        public: bool,
+    ) -> tuple[Path, ...]:
+        if not image_paths:
+            return ()
+        if public:
+            raise CodexPolicyError("visual_evidence_curated_only")
+        if len(image_paths) != 3:
+            raise CodexPolicyError("visual_evidence_image_count")
+        resolved: list[Path] = []
+        for path in image_paths:
+            candidate = path.resolve()
+            if not any(candidate.is_relative_to(root) for root in self.evidence_image_roots):
+                raise CodexPolicyError("visual_evidence_path_not_allowlisted")
+            if candidate.suffix.lower() not in {".png", ".jpg", ".jpeg", ".webp"}:
+                raise CodexPolicyError("visual_evidence_type_not_allowed")
+            try:
+                image_size = candidate.stat().st_size
+            except OSError as error:
+                raise CodexPolicyError("visual_evidence_unavailable") from error
+            if image_size <= 0 or image_size > MAX_VISUAL_EVIDENCE_IMAGE_BYTES:
+                raise CodexPolicyError("visual_evidence_size_out_of_bounds")
+            resolved.append(candidate)
+        return tuple(resolved)
 
     @staticmethod
     async def _terminate_process_group(process: asyncio.subprocess.Process) -> None:
@@ -287,6 +318,7 @@ class CodexExecutor:
         public: bool = True,
         evidence_fixture_id: str | None = None,
         timeout_seconds: float | None = None,
+        image_paths: tuple[Path, ...] = (),
     ) -> StageExecution:
         try:
             output_schema = json.loads(schema_path.read_text(encoding="utf-8"))
@@ -306,6 +338,7 @@ class CodexExecutor:
             public=public,
             evidence_fixture_id=evidence_fixture_id,
         )
+        validated_images = self._validated_image_paths(image_paths, public=public)
         started = time.monotonic()
         with tempfile.TemporaryDirectory(prefix="laysh-codex-") as runtime_directory:
             args = [
@@ -327,6 +360,8 @@ class CodexExecutor:
                 "--cd",
                 runtime_directory,
             ]
+            if validated_images:
+                args.extend(["--image", *(str(path) for path in validated_images)])
             if public:
                 args.append("--ephemeral")
             try:

@@ -48,9 +48,10 @@ async def test_acceptance_probe_keeps_builder_diagnostic_and_continues_other_sch
     executor = ProbeExecutor(failing_schema="module.schema.json")
     outcomes = await run_schema_probes(executor)
 
-    assert len(executor.calls) == 3
+    assert len(executor.calls) == 4
     assert outcomes["module"].accepted is False
     assert outcomes["module"].error_code == "nonzero_exit"
     assert "invalid_json_schema" in outcomes["module"].builder_detail
     assert outcomes["understand"].accepted is True
     assert outcomes["qa"].accepted is True
+    assert outcomes["visual_qa"].accepted is True

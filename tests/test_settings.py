@@ -14,6 +14,7 @@ def test_runtime_defaults_are_gpt_5_6_family_only():
         settings.generate_model,
         settings.heal_model,
         settings.qa_model,
+        settings.visual_qa_model,
     } <= ALLOWED_RUNTIME_MODELS
     assert settings.public_job_timeout_seconds == 180
     assert settings.evidence_job_timeout_seconds == 600

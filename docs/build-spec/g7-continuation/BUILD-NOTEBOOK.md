@@ -181,6 +181,35 @@ started, and 0 blocked. This is not the final release query.
 Current acceptance ledger after EVID-01: 11 passing, 0 failing, 19 not started,
 and 0 blocked. This is not the final release query.
 
+#### VQA-01 — closed curated semantic visual QA
+
+- The first focused run failed six tests because no visual-verdict schema,
+  image-capable evidence adapter, Terra route, promotion authority check, or
+  model setting existed. The implemented contract is closed and requires only
+  `actor_visible`, `action_performed`, `physically_consistent`, and a bounded
+  `defects` list.
+- Curated visual QA accepts exactly three allowlisted repository screenshots,
+  keeps the prompt on stdin, and attaches images only as argument-array paths.
+  Public learner jobs and non-allowlisted, missing, oversized, wrong-count, or
+  wrong-type evidence are rejected before process creation.
+- Added a distinct `gpt-5.6-terra` / low route because this is the bounded
+  semantic screenshot review specified by `MODEL-ROUTING.md`; ordinary healed-
+  module QA remains on `gpt-5.6-sol` / medium. No Sol escalation and no live
+  model call occurred in VQA-01.
+- Promotion recomputes authoritative deterministic verification before reading
+  the model verdict. A passing visual verdict cannot override a deterministic
+  or browser failure; the actual promotion-path regression test proves the
+  failure stops before cache construction.
+- The reconciled `sim-quality` skill already carries the 96 KiB UTF-8 limit,
+  unlocked prediction control, concept actor/action, one pivotal model state,
+  and reduced-motion contract, so no stale rule was invoked.
+- Evidence: `out/evidence/vqa-01.json`. Focused: 7 passed. Affected: 76 passed
+  in 3.39s. Full: 250 passed and the single opt-in live G4 test skipped in
+  191.34s. Ruff and `git diff --check` were clean.
+
+Current acceptance ledger after VQA-01: 12 passing, 0 failing, 18 not started,
+and 0 blocked. This is not the final release query.
+
 ### Batch C — sharing, library, localization, and presentation
 
 Not started.

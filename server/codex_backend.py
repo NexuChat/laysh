@@ -21,6 +21,7 @@ CODEX_OUTPUT_SCHEMA_BY_STAGE = {
     "generate": SCHEMA_DIR / "module.schema.json",
     "heal": SCHEMA_DIR / "module.schema.json",
     "qa": SCHEMA_DIR / "qa.schema.json",
+    "visual_qa": SCHEMA_DIR / "visual_qa.schema.json",
 }
 CODEX_OUTPUT_SCHEMAS = tuple(sorted(set(CODEX_OUTPUT_SCHEMA_BY_STAGE.values())))
 LOGGER = logging.getLogger(__name__)
@@ -186,6 +187,35 @@ class CodexBackend:
                 if selected_context.public
                 else self.settings.evidence_qa_timeout_seconds
             ),
+            **self._execution_policy(selected_context),
+        )
+
+    async def visual_qa(
+        self,
+        understanding: dict[str, Any],
+        screenshots: tuple[Path, Path, Path],
+        gate_outcome: dict[str, Any],
+        *,
+        runtime_context: RuntimeContext | None = None,
+    ) -> StageExecution:
+        selected_context = runtime_context or RuntimeContext()
+        if selected_context.public or selected_context.evidence_fixture_id is None:
+            raise CodexPolicyError("visual_qa_curated_only")
+        if gate_outcome.get("passed") is not True:
+            raise CodexPolicyError("visual_qa_requires_passing_gates")
+        payload = {
+            "module_spec": understanding["module_spec"],
+            "primary_parameter": understanding["primary_parameter"],
+            "key_formula": understanding["key_formula"],
+            "gate_outcome": gate_outcome,
+            "screenshot_order": ["initial", "mid_action", "parameter_changed"],
+        }
+        return await self.executor.execute_stage(
+            prompt=self._render_prompt("visual_qa.md", payload),
+            schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["visual_qa"],
+            model=self.settings.visual_qa_model,
+            effort="low",
+            image_paths=screenshots,
             **self._execution_policy(selected_context),
         )
 

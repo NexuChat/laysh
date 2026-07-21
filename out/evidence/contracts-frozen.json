@@ -6,12 +6,14 @@
     "server/prompts/heal_module.md": "d7d23691e6603259af23c0fec371e0f23c924180e6c0ffe6f962a22f58eb376b",
     "server/prompts/qa.md": "03c432eae9f4126a71e472530dd92af59b6d0da0fd08fd4cdc2b29e603ed504a",
     "server/prompts/understand.md": "2207e388e3c1ff39348d62df5f6af077d7d4be20dc17cd80be8582d4b22d7d17",
+    "server/prompts/visual_qa.md": "8b738e0d4d55c69466470f808d9efdbc62f7bab7a87f8de27150702e986db654",
     "server/schemas.py": "79a124ef529efe88507f289ec777f19d8d4e91e34203d5bd2cdfe3c431b5e134",
     "server/schemas/module.schema.json": "d3b68cc0a4f0ac656f963c95d5fb3726200520156cd873ca199023fe2668b739",
     "server/schemas/module_fixture.schema.json": "1191f30e60aee78ae02f92440421a3175c63af080ce9d14d3453a8f3f27d447e",
     "server/schemas/qa.schema.json": "36754ea08cad302d908f29cba270df9e2f807581a16ddf3b9b246c1042109511",
     "server/schemas/understand.schema.json": "aa8776fa20d21ad749c966ceef21c98b59ef5cf630b9061090c1a7c16c98cb58",
     "server/schemas/verification_report.schema.json": "5fa54e7d4cbe52fe10bc114532fe8fa5085c4cfb21534fb134e333cc95728a81",
+    "server/schemas/visual_qa.schema.json": "433a60f403351ef7b5ae527178d2d91a3916f3479607b4c7c004d673a2e71311",
     "sim_shell/contract.js": "06c9037adeb87e135ab03209fbb71d173b57e5a0622133fe46e5c586fd0d70c3"
   },
   "schema_version": "1.0"
