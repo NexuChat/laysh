@@ -1,6 +1,7 @@
 (() => {
   "use strict";
 
+  const GALLERY_CONTRACT_VERSION = "1.0";
   const t = (key, values) => window.LayshLocale.t(key, values);
   let currentLocale = window.LayshLocale.current();
   let number = new Intl.NumberFormat(currentLocale, { maximumFractionDigits: 0 });
@@ -29,6 +30,7 @@
     result: null,
     connectionKey: null,
     failure: null,
+    shareFeedbackKey: null,
   };
 
   const byId = (id) => document.getElementById(id);
@@ -249,6 +251,10 @@
     delete simulationFrame.dataset.contentHeight;
     simulationFrame.src = `${simulation.artifact_url}?inline=1`;
     byId("download").href = simulation.artifact_url;
+    const shareButton = byId("share-result");
+    shareButton.disabled = false;
+    delete shareButton.dataset.shareUrl;
+    setShareFeedback(null);
     byId("receipt-tier").textContent = t(simulation.tier === "A" ? "result.tierA" : "result.tierB");
     byId("tier-badge").textContent = t(
       simulation.tier === "A" ? "result.humanBadge" : "result.autoBadge",
@@ -260,6 +266,40 @@
     });
     byId("effective-model").textContent = simulation.effective_model;
     setView("result", { push: true });
+  }
+
+  function setShareFeedback(key) {
+    state.shareFeedbackKey = key;
+    const status = byId("share-status");
+    status.textContent = key ? t(key) : "";
+    if (key === "result.shareFailure") status.dataset.state = "failed";
+    else if (key) status.dataset.state = "complete";
+    else delete status.dataset.state;
+  }
+
+  async function shareResult() {
+    const simulation = state.result?.simulation;
+    if (!simulation) return;
+    const button = byId("share-result");
+    button.disabled = true;
+    setShareFeedback("result.sharePending");
+    try {
+      const response = await fetch(
+        `/api/sims/${encodeURIComponent(simulation.sim_id)}/share`,
+        { method: "POST", headers: { accept: "application/json" } },
+      );
+      if (!response.ok) throw new Error("share_unavailable");
+      const shared = await response.json();
+      const shareUrl = new URL(shared.share_url, window.location.origin).href;
+      if (!navigator.clipboard?.writeText) throw new Error("clipboard_unavailable");
+      await navigator.clipboard.writeText(shareUrl);
+      button.dataset.shareUrl = shareUrl;
+      setShareFeedback("result.shareSuccess");
+    } catch {
+      setShareFeedback("result.shareFailure");
+    } finally {
+      button.disabled = false;
+    }
   }
 
   async function loadResult() {
@@ -277,6 +317,9 @@
     );
     if (!response.ok) throw new Error("golden_unavailable");
     const golden = await response.json();
+    if (golden.contract_version !== GALLERY_CONTRACT_VERSION) {
+      throw new Error("golden_contract_incompatible");
+    }
     pinAnswer(golden.answer);
     displayResult({ status: "complete", answer: golden.answer, simulation: golden.simulation });
   }
@@ -288,6 +331,9 @@
       });
       if (!response.ok) return;
       const gallery = await response.json();
+      if (gallery.contract_version !== GALLERY_CONTRACT_VERSION) {
+        throw new Error("gallery_contract_incompatible");
+      }
       for (const lesson of gallery.lessons) {
         const card = document.querySelector(`[data-golden-id="${lesson.id}"]`);
         if (!card || !lesson.instant) continue;
@@ -471,6 +517,7 @@
     frame.src = frame.src;
     frame.focus();
   });
+  byId("share-result").addEventListener("click", shareResult);
   byId("projector-result").addEventListener("click", async () => {
     const frame = byId("simulation-frame");
     try {
@@ -541,6 +588,7 @@
       byId("failure-title").textContent = selected.title;
       byId("failure-copy").textContent = selected.copy;
     }
+    if (state.shareFeedbackKey) setShareFeedback(state.shareFeedbackKey);
     hydrateGallery();
   });
 

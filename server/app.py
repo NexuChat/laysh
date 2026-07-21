@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import secrets
 import unicodedata
 from collections.abc import Callable
 from pathlib import Path
 
 from fastapi import FastAPI, Header, HTTPException, Query, Request, Response, status
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from server.assemble import PORTABLE_CSP
@@ -27,6 +28,12 @@ from server.jobs import TERMINAL_STATES, JobManager
 from server.ratelimit import GenerationLimiter
 from server.schemas import AskAccepted, AskRequest, PublicResult
 from server.settings import Settings
+from server.share_store import (
+    DEFAULT_SHARE_RETENTION_SECONDS,
+    ShareLink,
+    ShareStore,
+)
+from server.static_assets import StaticAssetVersionMiddleware
 
 ROOT = Path(__file__).parents[1]
 EMBED_BRIDGE_MARKER = "data-laysh-embed-bridge"
@@ -50,6 +57,9 @@ def create_app(
     backend: MockCodexBackend | CodexBackend | None = None,
     job_timeout_seconds: float | None = None,
     browser_verifier: Callable[[str], BrowserVerificationResult] = verify_artifact_in_browser,
+    share_root: Path | None = None,
+    share_retention_seconds: int = DEFAULT_SHARE_RETENTION_SECONDS,
+    share_clock: Callable[[], float] | None = None,
 ) -> FastAPI:
     settings = Settings.from_env()
     if backend is not None:
@@ -70,6 +80,7 @@ def create_app(
         settings.public_job_timeout_seconds if job_timeout_seconds is None else job_timeout_seconds
     )
     app = FastAPI(title="Laysh", version="1.1.0")
+    app.add_middleware(StaticAssetVersionMiddleware)
     app.mount("/static", StaticFiles(directory=ROOT / "web"), name="static")
     verified_cache = (
         VerifiedCache(
@@ -90,6 +101,20 @@ def create_app(
         max_concurrent_jobs=settings.max_concurrent_jobs,
         max_queued_jobs=settings.max_queued_jobs,
     )
+    configured_share_root = os.getenv("LAYSH_SHARE_ROOT")
+    selected_share_root = (
+        share_root
+        or (Path(configured_share_root) if configured_share_root else None)
+        or ROOT / "out" / "cache" / "live" / "shares"
+    )
+    share_store_options = {
+        "root": selected_share_root,
+        "retention_seconds": share_retention_seconds,
+    }
+    if share_clock is not None:
+        share_store_options["clock"] = share_clock
+    app.state.share_store = ShareStore(**share_store_options)
+    app.state.share_candidates = {}
     limiter_secret = (
         settings.rate_limit_key_secret.encode()
         if settings.rate_limit_key_secret
@@ -109,6 +134,7 @@ def create_app(
             headers={
                 "X-Content-Type-Options": "nosniff",
                 "Referrer-Policy": "no-referrer",
+                "Cache-Control": "no-store",
             },
         )
 
@@ -209,6 +235,12 @@ def create_app(
         localized = localized_pinned_golden(document, locale)
         sim_id = "golden_" + hashlib.sha256(localized["artifact"].encode()).hexdigest()[:16]
         app.state.jobs.artifacts[sim_id] = localized["artifact"]
+        app.state.share_candidates[sim_id] = {
+            "title": localized["title"],
+            "lang": localized["lang"],
+            "direction": localized["direction"],
+            "tier": "A",
+        }
         return {
             "contract_version": "1.0",
             "id": golden_id,
@@ -241,6 +273,134 @@ def create_app(
                 "Content-Security-Policy": PORTABLE_CSP,
                 "X-Content-Type-Options": "nosniff",
             },
+        )
+
+    def eligible_share_candidate(sim_id: str) -> dict | None:
+        if sim_id not in app.state.jobs.artifacts:
+            return None
+        for record in app.state.jobs.records.values():
+            simulation = record.simulation
+            if (
+                record.status == "complete"
+                and simulation is not None
+                and simulation.sim_id == sim_id
+                and simulation.tier in {"A", "B"}
+                and record.share_eligible
+            ):
+                return {
+                    "title": simulation.title,
+                    "lang": simulation.lang,
+                    "direction": simulation.direction,
+                    "tier": simulation.tier,
+                }
+        candidate = app.state.share_candidates.get(sim_id)
+        return candidate if isinstance(candidate, dict) else None
+
+    @app.post(
+        "/api/sims/{sim_id}/share",
+        response_model=ShareLink,
+        status_code=status.HTTP_201_CREATED,
+    )
+    async def create_share(sim_id: str, response: Response) -> ShareLink:
+        response.headers["Cache-Control"] = "no-store"
+        metadata = eligible_share_candidate(sim_id)
+        if metadata is None:
+            raise HTTPException(
+                status_code=404,
+                detail="simulation unavailable",
+                headers={"Cache-Control": "no-store"},
+            )
+        artifact = app.state.jobs.artifacts[sim_id]
+        try:
+            shared = app.state.share_store.create(artifact=artifact, **metadata)
+        except (OSError, ValueError):
+            raise HTTPException(
+                status_code=503,
+                detail="share unavailable",
+                headers={"Cache-Control": "no-store"},
+            ) from None
+        return shared.public_link()
+
+    @app.post("/api/sims/{invalid_path:path}/share", include_in_schema=False)
+    async def reject_invalid_simulation_share(invalid_path: str) -> None:
+        del invalid_path
+        raise HTTPException(
+            status_code=404,
+            detail="simulation unavailable",
+            headers={"Cache-Control": "no-store"},
+        )
+
+    def resolve_share(share_id: str):
+        try:
+            shared = app.state.share_store.resolve(share_id)
+        except (OSError, ValueError):
+            shared = None
+        if shared is None:
+            raise HTTPException(
+                status_code=404,
+                detail="share unavailable",
+                headers={"Cache-Control": "no-store"},
+            )
+        return shared
+
+    @app.get("/api/shares/{share_id}", response_model=ShareLink)
+    async def share_metadata(share_id: str, response: Response) -> ShareLink:
+        response.headers["Cache-Control"] = "no-store"
+        return resolve_share(share_id).public_link()
+
+    @app.get("/api/shares/{share_id}/download")
+    async def download_share(share_id: str) -> Response:
+        shared = resolve_share(share_id)
+        return HTMLResponse(
+            shared.artifact,
+            headers={
+                "Content-Disposition": f'attachment; filename="laysh-{share_id}.html"',
+                "Content-Security-Policy": PORTABLE_CSP,
+                "X-Content-Type-Options": "nosniff",
+                "Referrer-Policy": "no-referrer",
+                "Cache-Control": "no-store",
+            },
+        )
+
+    @app.get("/api/shares/{invalid_path:path}", include_in_schema=False)
+    async def reject_invalid_share_path(invalid_path: str) -> None:
+        del invalid_path
+        raise HTTPException(
+            status_code=404,
+            detail="share unavailable",
+            headers={"Cache-Control": "no-store"},
+        )
+
+    @app.get("/s/{share_id}")
+    async def play_share(share_id: str) -> Response:
+        try:
+            shared = app.state.share_store.resolve(share_id)
+        except (OSError, ValueError):
+            shared = None
+        if shared is None:
+            return RedirectResponse(
+                url="/#gallery",
+                status_code=status.HTTP_303_SEE_OTHER,
+                headers={"Cache-Control": "no-store"},
+            )
+        return HTMLResponse(
+            shared.artifact,
+            headers={
+                "Content-Disposition": f'inline; filename="laysh-{share_id}.html"',
+                "Content-Security-Policy": PORTABLE_CSP,
+                "X-Content-Type-Options": "nosniff",
+                "Referrer-Policy": "no-referrer",
+                "Cache-Control": "no-store",
+            },
+        )
+
+    @app.get("/s/{invalid_path:path}", include_in_schema=False)
+    async def redirect_invalid_share_path(invalid_path: str) -> Response:
+        del invalid_path
+        return RedirectResponse(
+            url="/#gallery",
+            status_code=status.HTTP_303_SEE_OTHER,
+            headers={"Cache-Control": "no-store"},
         )
 
     @app.get("/healthz")

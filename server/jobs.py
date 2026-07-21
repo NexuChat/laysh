@@ -79,6 +79,7 @@ class JobRecord:
     builder_diagnostics: list[dict[str, Any]] = field(default_factory=list)
     builder_outputs: dict[str, Any] = field(default_factory=dict)
     promote_golden: bool = False
+    share_eligible: bool = False
 
     def public_result(self) -> PublicResult:
         return PublicResult(

@@ -9,6 +9,7 @@ from jsonschema import ValidationError
 from server.cache import VerificationReceipt
 from server.codex_backend import RuntimeContext
 from server.codex_runtime import CodexRuntimeError, StageExecution
+from server.privacy import contains_learner_question_echo
 from server.promotion import STABLE_ROUTE
 from server.schemas import (
     AnswerPayload,
@@ -331,6 +332,14 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             )
             sim_id = "sim_" + cached.artifact_sha256[:16]
             manager.artifacts[sim_id] = cached.artifact
+            # A semantic hit originated from a different raw question. Because raw
+            # questions are intentionally never persisted, only an exact-key hit
+            # can carry a question-relative zero-echo proof into sharing.
+            record.share_eligible = (
+                cached.exact_key
+                == cache.exact_key(question, understanding["lang"])
+                and not contains_learner_question_echo(cached.artifact, question)
+            )
             record.artifact = cached.artifact
             record.simulation = SimulationMetadata(
                 sim_id=sim_id,
@@ -613,7 +622,8 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             ],
         },
     )
-    if cache is not None:
+    privacy_safe = not contains_learner_question_echo(artifact, question)
+    if cache is not None and privacy_safe:
         try:
             cache.write_verified(
                 question=question,
@@ -639,6 +649,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 )
     sim_id = "sim_" + hashlib.sha256(artifact.encode("utf-8")).hexdigest()[:16]
     manager.artifacts[sim_id] = artifact
+    record.share_eligible = privacy_safe
     record.artifact = artifact
     if not record.public:
         record.builder_outputs = {

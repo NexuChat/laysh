@@ -1,20 +1,20 @@
 @font-face {
   font-family: "Laysh FreeSans";
-  src: url("/static/fonts/free-sans-arabic-latin.woff2") format("woff2");
+  src: url("/static/fonts/free-sans-arabic-latin.woff2?v=a9c9fd75a18114353b5d024666ec6425d5648549f891ca1d6452947430dd23b9") format("woff2");
   font-style: normal;
   font-weight: 400;
   font-display: swap;
 }
 @font-face {
   font-family: "Laysh FreeSans";
-  src: url("/static/fonts/free-sans-arabic-latin-bold.woff2") format("woff2");
+  src: url("/static/fonts/free-sans-arabic-latin-bold.woff2?v=5ef6a22298d506426eec2a808eb5d7dd6d9923d53070cce1c90411ad8b1c7519") format("woff2");
   font-style: normal;
   font-weight: 600 700;
   font-display: swap;
 }
 @font-face {
   font-family: "Laysh Display";
-  src: url("/static/fonts/free-serif-arabic-display.woff2") format("woff2");
+  src: url("/static/fonts/free-serif-arabic-display.woff2?v=fb8a66bbffc510c67c0d3a592abd276667f08d97b0bdc5f2f68a98932cb67922") format("woff2");
   font-style: normal;
   font-weight: 400 700;
   font-display: swap;
@@ -198,6 +198,8 @@ textarea[aria-invalid="true"] { border-color: var(--danger); }
 .projector-button { min-height: 38px; padding: .4rem .65rem; font-size: .8rem; }
 iframe { display: block; width: 100%; min-height: 0; border: 0; background: #05080b; overflow: auto; }
 .result-actions, .failure-actions { display: flex; flex-wrap: wrap; gap: .7rem; margin-block: 1rem; }
+.share-status { min-height: 1.6em; margin: -.35rem 0 1rem; color: #9af2cf; font-size: .9rem; }
+.share-status[data-state="failed"] { color: #ffaaaa; }
 .receipt { padding: 1rem; border-radius: 1rem; box-shadow: none; }
 .receipt summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 700; }
 .receipt-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .7rem; }

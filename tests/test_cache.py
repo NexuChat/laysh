@@ -200,6 +200,91 @@ async def test_pipeline_writes_cache_only_after_browser_pass(tmp_path):
 
 
 @pytest.mark.asyncio
+async def test_pipeline_never_caches_or_shares_an_artifact_echoing_its_question(tmp_path):
+    from server.browser_verify import BrowserVerificationResult
+    from server.cache import VerifiedCache
+    from server.codex_backend import MockCodexBackend
+    from server.jobs import JobManager
+
+    learner_question = "private learner phrasing 829104 about orbital light"
+
+    class EchoingBackend(MockCodexBackend):
+        async def understand(self, question, locale, *, runtime_context=None):
+            understanding = await super().understand(
+                question,
+                locale,
+                runtime_context=runtime_context,
+            )
+            understanding["title"] = question
+            return understanding
+
+    cache = VerifiedCache(
+        root=tmp_path / "live",
+        golden_root=tmp_path / "golden",
+        secret=b"test-cache-secret",
+        contract_version="1.0",
+    )
+    manager = JobManager(
+        EchoingBackend(),
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+        cache=cache,
+    )
+
+    record = manager.start(learner_question, "en")
+    await record.task
+
+    assert record.status == "complete"
+    assert record.share_eligible is False
+    assert cache.list_entries() == []
+
+
+@pytest.mark.asyncio
+async def test_semantic_cache_hit_cannot_requalify_an_artifact_echoing_another_question(
+    tmp_path,
+):
+    from server.browser_verify import BrowserVerificationResult
+    from server.cache import VerifiedCache
+    from server.codex_backend import MockCodexBackend
+    from server.jobs import JobManager
+
+    first_question = "private learner phrasing 829104 about orbital light"
+    second_question = "Why does the illuminated part change?"
+    cache = VerifiedCache(
+        root=tmp_path / "live",
+        golden_root=tmp_path / "golden",
+        secret=b"test-cache-secret",
+        contract_version="1.0",
+    )
+    cache.write_verified(
+        question=first_question,
+        locale="en",
+        domain=VALID_UNDERSTANDING["domain"],
+        canonical_intent=VALID_UNDERSTANDING["canonical_intent"],
+        artifact=f"<!doctype html><title>{first_question}</title>",
+        title=first_question,
+        direction="ltr",
+        tier="B",
+        receipt=verified_receipt(),
+        route_label="stable",
+    )
+    backend = MockCodexBackend()
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+        cache=cache,
+    )
+
+    record = manager.start(second_question, "en")
+    await record.task
+
+    assert record.status == "complete"
+    assert backend.generate_calls == 0
+    assert record.share_eligible is False
+
+
+@pytest.mark.asyncio
 async def test_adversarial_candidate_never_reaches_cache(tmp_path):
     from server.browser_verify import BrowserVerificationResult
     from server.cache import VerifiedCache

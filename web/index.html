@@ -6,12 +6,12 @@
   <meta name="theme-color" content="#05080b">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%2305080b'/%3E%3Ccircle cx='40' cy='37' r='7' fill='%2358b7ff'/%3E%3Cpath d='M14 31a18 18 0 1 0 36 0' fill='none' stroke='%23f6a94a' stroke-width='4'/%3E%3C/svg%3E">
   <title>ليش — اسأل، افهم، وجرّب</title>
-  <link rel="preload" href="/static/fonts/free-sans-arabic-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="/static/fonts/free-serif-arabic-display.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/static/app.css">
-  <script src="/static/translations.js" defer></script>
-  <script src="/static/locale.js" defer></script>
-  <script src="/static/app.js" defer></script>
+  <link rel="preload" href="/static/fonts/free-sans-arabic-latin.woff2?v=ea3dd03ef0d0cfe83dadad22a57028a4d8a33cb9a95d249a963f41aefa7e3d05" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/static/fonts/free-serif-arabic-display.woff2?v=ea3dd03ef0d0cfe83dadad22a57028a4d8a33cb9a95d249a963f41aefa7e3d05" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/static/app.css?v=ea3dd03ef0d0cfe83dadad22a57028a4d8a33cb9a95d249a963f41aefa7e3d05">
+  <script src="/static/translations.js?v=ea3dd03ef0d0cfe83dadad22a57028a4d8a33cb9a95d249a963f41aefa7e3d05" defer></script>
+  <script src="/static/locale.js?v=ea3dd03ef0d0cfe83dadad22a57028a4d8a33cb9a95d249a963f41aefa7e3d05" defer></script>
+  <script src="/static/app.js?v=ea3dd03ef0d0cfe83dadad22a57028a4d8a33cb9a95d249a963f41aefa7e3d05" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main-content" data-i18n="nav.skip">انتقل إلى المحتوى</a>
@@ -136,9 +136,11 @@
         </section>
         <div class="result-actions">
           <button class="button button-secondary" id="replay-result" type="button" data-i18n="result.replay">أعد التجربة</button>
+          <button class="button button-secondary" id="share-result" type="button" data-i18n="result.share">شارك التجربة</button>
           <a class="button button-primary" id="download" href="#" download data-i18n="result.download">نزّل نسخة تعمل دون اتصال</a>
           <button class="button button-quiet" id="ask-another" type="button" data-i18n="result.another">اسأل سؤالًا آخر</button>
         </div>
+        <p class="share-status" id="share-status" role="status" aria-live="polite" aria-atomic="true"></p>
         <details class="receipt" id="verification-receipt">
           <summary data-i18n="receipt.summary">ما الذي فحصناه؟</summary>
           <div class="receipt-grid">
