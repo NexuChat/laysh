@@ -29,6 +29,21 @@ from server.schemas import AskAccepted, AskRequest, PublicResult
 from server.settings import Settings
 
 ROOT = Path(__file__).parents[1]
+EMBED_BRIDGE_MARKER = "data-laysh-embed-bridge"
+
+
+def _artifact_for_embed(artifact: str) -> str:
+    if EMBED_BRIDGE_MARKER in artifact:
+        return artifact
+    bridge = (ROOT / "sim_shell" / "embed_bridge.js").read_text(encoding="utf-8")
+    closing_body = "</body>"
+    if closing_body not in artifact:
+        raise ValueError("verified artifact has no closing body element")
+    return artifact.replace(
+        closing_body,
+        f'<script {EMBED_BRIDGE_MARKER}>{bridge}</script>{closing_body}',
+        1,
+    )
 
 
 def create_app(
@@ -218,8 +233,9 @@ def create_app(
         if artifact is None:
             raise HTTPException(status_code=404, detail="simulation not found")
         disposition = "inline" if inline else "attachment"
+        delivered_artifact = _artifact_for_embed(artifact) if inline else artifact
         return HTMLResponse(
-            artifact,
+            delivered_artifact,
             headers={
                 "Content-Disposition": f'{disposition}; filename="laysh-{sim_id}.html"',
                 "Content-Security-Policy": PORTABLE_CSP,

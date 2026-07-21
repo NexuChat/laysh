@@ -243,8 +243,11 @@
     byId("result-title").textContent = simulation.title;
     byId("result-answer").textContent = state.answer || result.answer?.tldr || "";
     byId("simulation-alternative").textContent = state.answer || t("result.alternativeShort");
-    byId("simulation-frame").hidden = false;
-    byId("simulation-frame").src = `${simulation.artifact_url}?inline=1`;
+    const simulationFrame = byId("simulation-frame");
+    simulationFrame.hidden = false;
+    simulationFrame.style.height = "150px";
+    delete simulationFrame.dataset.contentHeight;
+    simulationFrame.src = `${simulation.artifact_url}?inline=1`;
     byId("download").href = simulation.artifact_url;
     byId("receipt-tier").textContent = t(simulation.tier === "A" ? "result.tierA" : "result.tierB");
     byId("tier-badge").textContent = t(
@@ -495,11 +498,36 @@
     if (event.source !== frame.contentWindow || event.origin !== "null") return;
     const payload = event.data;
     if (!payload || payload.source !== "laysh-artifact") return;
+    if (
+      payload.type === "layout-height"
+      && payload.version === 1
+      && Number.isFinite(payload.height)
+      && payload.height >= 100
+      && payload.height <= 100_000
+    ) {
+      const height = Math.ceil(payload.height);
+      frame.style.height = `${height}px`;
+      frame.dataset.contentHeight = String(height);
+      return;
+    }
     if (payload.type === "runtime-error" && payload.code === "SIM_RUNTIME_ERROR") {
       frame.hidden = true;
       showFailure("simulation_runtime_error");
     }
   });
+
+  let frameResizeId = 0;
+  window.addEventListener("resize", () => {
+    cancelAnimationFrame(frameResizeId);
+    frameResizeId = requestAnimationFrame(() => {
+      const frame = byId("simulation-frame");
+      if (!frame.src) return;
+      frame.contentWindow?.postMessage(
+        { source: "laysh-host", type: "measure-layout", version: 1 },
+        "*",
+      );
+    });
+  }, { passive: true });
 
   document.addEventListener("laysh:locale-changed", (event) => {
     currentLocale = event.detail.locale;

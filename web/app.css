@@ -190,13 +190,13 @@ textarea[aria-invalid="true"] { border-color: var(--danger); }
 .result-header .eyebrow { display: block; margin-block-end: 1rem; line-height: 1.8; }
 .result-header h1 { max-width: 18ch; margin-block-start: 0; font-size: clamp(2.5rem, 5vw, 5.2rem); line-height: 1.2; }
 .result-answer { max-width: 65ch; font-size: 1.15rem; line-height: 1.9; color: #b8c7d3; }
-.simulation-stage { overflow: hidden; margin-block-start: 2rem; border-radius: 1.25rem; }
+.simulation-stage { overflow: visible; margin-block-start: 2rem; border-radius: 1.25rem; }
 .simulation-bar { min-height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .8rem 1rem; border-block-end: 1px solid var(--line); background: rgb(4 12 19 / 52%); }
 .simulation-bar h2 { margin: 0; font-family: "Laysh FreeSans", sans-serif; }
 .simulation-tools { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: .5rem; }
 .verified-badge { padding: .35rem .65rem; border: 1px solid rgb(101 223 177 / 42%); border-radius: 999px; background: rgb(101 223 177 / 9%); color: #98efcd; font-size: .8rem; font-weight: 700; }
 .projector-button { min-height: 38px; padding: .4rem .65rem; font-size: .8rem; }
-iframe { display: block; width: 100%; height: min(74vh, 760px); min-height: 560px; border: 0; background: #05080b; }
+iframe { display: block; width: 100%; height: 150px; min-height: 0; border: 0; background: #05080b; overflow: auto; }
 .result-actions, .failure-actions { display: flex; flex-wrap: wrap; gap: .7rem; margin-block: 1rem; }
 .receipt { padding: 1rem; border-radius: 1rem; box-shadow: none; }
 .receipt summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 700; }
@@ -261,7 +261,6 @@ iframe { display: block; width: 100%; height: min(74vh, 760px); min-height: 560p
   .simulation-bar { align-items: flex-start; flex-direction: column; }
   .simulation-tools { width: 100%; justify-content: space-between; }
   .receipt-grid { grid-template-columns: 1fr; }
-  iframe { min-height: 590px; height: 72vh; }
   .result-actions .button, .failure-actions .button { width: 100%; }
 }
 

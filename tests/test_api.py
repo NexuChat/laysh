@@ -1,5 +1,9 @@
+from pathlib import Path
+
 from tests.conftest import wait_for_terminal
 from tests.test_pipeline import ask
+
+ROOT = Path(__file__).parents[1]
 
 
 def test_root_is_arabic_first_ask_build_result_application(client):
@@ -22,6 +26,20 @@ def test_parent_accepts_only_narrow_origin_checked_runtime_error_beacon(client):
     assert "event.source !== frame.contentWindow" in source
     assert 'payload.source !== "laysh-artifact"' in source
     assert 'payload.code === "SIM_RUNTIME_ERROR"' in source
+
+
+def test_embed_height_protocol_is_bounded_and_keeps_a_scroll_fallback(client):
+    page = client.get("/").text
+    parent = client.get("/static/app.js").text
+    bridge = (ROOT / "sim_shell" / "embed_bridge.js").read_text(encoding="utf-8")
+
+    assert 'scrolling="auto"' in page
+    assert 'payload.type === "layout-height"' in parent
+    assert "Number.isFinite(payload.height)" in parent
+    assert "payload.height >= 100" in parent
+    assert "payload.height <= 100_000" in parent
+    assert 'type: "layout-height"' in bridge
+    assert "new ResizeObserver(scheduleHeightReport)" in bridge
 
 
 def test_ask_normalizes_and_validates_question(client):
@@ -56,7 +74,11 @@ def test_result_artifact_can_be_rendered_inline_or_downloaded(client):
     download = client.get(url)
     assert inline.headers["content-disposition"].startswith("inline")
     assert download.headers["content-disposition"].startswith("attachment")
-    assert inline.text == download.text
+    assert 'data-laysh-embed-bridge' in inline.text
+    assert 'data-laysh-embed-bridge' not in download.text
+    bridge_start = inline.text.index('<script data-laysh-embed-bridge')
+    bridge_end = inline.text.index('</script></body>') + len('</script>')
+    assert inline.text.replace(inline.text[bridge_start:bridge_end], "", 1) == download.text
     assert download.text.startswith("<!doctype html>")
 
 

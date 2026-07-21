@@ -351,3 +351,34 @@ Not started.
   final full suite, 274 passed and the single opt-in live test skipped in
   263.34s. `ruff check .` and `git diff --check` were clean. No GPT call,
   Canary, golden regeneration, service change, or external publish occurred.
+
+### Embedded simulation content sizing regression
+
+- The red browser measurement reproduced silent clipping across all six gallery
+  lessons: the iframe was 607.67 px tall at 320/390 px mobile widths while the
+  lesson documents reached 1,573–1,668 px, and it was 666 px tall at desktop
+  while documents reached 1,221–1,330 px. The stage hid overflow and the iframe
+  exposed no scrolling fallback.
+- The host now accepts a bounded, versioned `layout-height` message only from
+  its own sandboxed iframe. A fixed trusted embed bridge observes content and
+  viewport changes, reports the measured lesson height, and the iframe retains
+  explicit internal scrolling as a fallback. Downloaded verified artifacts are
+  unchanged; the bridge is added only to the inline representation.
+- The focused real-Chrome gate passed once in 44.78s. It traversed all six
+  gallery launches at 320x844, 390x844, 1440x900, and 200% zoom, plus a live
+  desktop-to-320 resize. A separate measured pass recorded expanded iframe
+  ranges of 1,620–1,738 px at 320, 1,531–1,609 px at 390, and 1,224–1,333 px
+  at desktop; that evidence pass also exposed an intermittent late-layout race
+  at 200% zoom, so it is not recorded as a final green full-suite result.
+- The latest fully captured suite result was 274 passed, 1 skipped, and 2
+  failed in 268.54s. One failure was the embed visibility race subsequently
+  narrowed to the required panel/canvas/control bounds. The other was the
+  pre-existing nondeterministic circuit carrier-speed browser sample; no lesson,
+  fixture, physics threshold, or golden artifact was changed. A later full run
+  lost its terminal output when the build thread was interrupted, so no result
+  is claimed for it.
+- Deferred product findings, recorded without expanding this fix: opening a
+  lesson leaves the page-level `h1` on the landing title while the live region
+  still announces the build queue despite the ready result; content-hash lesson
+  IDs broke legacy shared URLs such as `/ar/sims/golden_moon_phases`, and the
+  `/ar` locale prefix disappeared from routes.
