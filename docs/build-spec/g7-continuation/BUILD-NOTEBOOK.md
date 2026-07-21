@@ -210,6 +210,33 @@ and 0 blocked. This is not the final release query.
 Current acceptance ledger after VQA-01: 12 passing, 0 failing, 18 not started,
 and 0 blocked. This is not the final release query.
 
+#### VISUAL-01 — readable small deltas and honest visual scale
+
+- The retained package RED evidence records four baseline failures: no shared
+  measurement formatter, no `readout_visibility` gate, fixed two-decimal shell
+  output, and no disclosed magnification-factor policy. The package applied
+  cleanly at this root-session HEAD as seven files with 288 insertions and 10
+  deletions; no three-way application was needed.
+- The trusted shell now selects the smallest precision from two through eight
+  fractional digits that distinguishes declared extreme numeric fixtures. The
+  measured thermal endpoints therefore render as `1.000` and `1.002` rather
+  than the identical `1.00` and `1.00`, without changing model outputs or units.
+- Deterministic verification now emits the structured `readout_visibility` /
+  `formatted_endpoints_indistinguishable` failure when both formatted extremes
+  remain equal at the eight-digit cap. The report includes the parameter,
+  output, inputs, and both formatted values.
+- Generation requires an on-canvas numeric factor whenever geometry is
+  magnified, and QA rejects undisclosed visual distortion. The previously
+  inspected thermal artifact remains a regeneration/promotion concern; this
+  package did not deploy or restart a service.
+- Locally measured verification: focused/affected contract suite, 8 passed in
+  0.22s; full suite, 254 passed and the single opt-in live G4 test skipped in
+  172.77s. Ruff, `git diff --check`, and syntax checks for `contract.js`,
+  `shell.js`, and `verify_module.mjs` were clean.
+
+Current acceptance ledger after VISUAL-01: 13 passing, 0 failing, 17 not
+started, and 0 blocked. This is not the final release query.
+
 ### Batch C — sharing, library, localization, and presentation
 
 Not started.

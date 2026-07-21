@@ -12,6 +12,8 @@ deterministic gates support approval. QA reviews; it does not implement.
   provides layered scene depth, beautiful and physically consistent physical light, reduced-motion-
   aware idle motion driven by same-value redraws, parameter-linked reactive feedback, and readable
   overlay chips. Mark each item independently; a flat scene cannot pass.
+- Reject amplified geometry unless an on-canvas label states its numeric factor; silent visual
+  distortion cannot be approved.
 - Do not rewrite or repair code. `replacement_module_js` must always be null.
 - Never return reasoning, prompts, learner input, or extra fields.
 

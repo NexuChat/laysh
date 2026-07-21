@@ -22,9 +22,9 @@ Shared pivotal-state contract:
   disagree with `test(inputs)` is rejected.
 
 Use only the supplied canvas/context, Math, Number, arrays, and plain objects. No document, network,
-storage, navigation, dynamic code, workers, timers, sensors, audio, clipboard, console, external URLs,
-or `requestAnimationFrame`. Keep source at or below 96 KiB measured in UTF-8 bytes. Physics, fixtures, units, assumptions, security,
-and the spec are immutable.
+storage, navigation, dynamic code, workers, timers, sensors, audio, clipboard, console, URLs, or
+`requestAnimationFrame`. Keep source ≤96 KiB in UTF-8 bytes. Physics, fixtures, units,
+assumptions, security, and the spec are immutable.
 
 Visual contract:
 
@@ -38,8 +38,9 @@ Visual contract:
 - Add smooth reactive feedback tied to parameter changes—eased geometry, a fading trail, ripples, or
   quantity-linked particles. Preserve the previous display value locally; changing a parameter must
   alter more than text.
-- Draw at least one rounded translucent readout chip beside the phenomenon with concise Arabic or
-  English labels; never leave raw corner numbers.
+- Draw a rounded translucent readout chip with concise locale labels, no raw numbers. If geometry is
+  amplified, label its numeric factor (e.g. `×100`) on-canvas;
+  never distort silently.
 - Shade continuous bodies with smooth fills or gradients, never golf-ball dot patterns. Illuminated spheres
   need a curved terminator or equivalent physical mask, never a rectangular clip.
 - If schematic and observer views share a canvas, label them `منظر علوي` / `كما يبدو من الأرض` or

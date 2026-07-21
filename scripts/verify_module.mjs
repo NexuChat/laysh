@@ -4,6 +4,10 @@ import vm from "node:vm";
 const [sourcePath, understandingPath] = process.argv.slice(2);
 const source = fs.readFileSync(sourcePath, "utf8");
 const understanding = JSON.parse(fs.readFileSync(understandingPath, "utf8"));
+const trustedRuntimeSource = fs.readFileSync(
+  new URL("../sim_shell/contract.js", import.meta.url),
+  "utf8",
+);
 const permittedAbi = ["destroy", "init", "resize", "setParameter", "test", "version"];
 const failures = [];
 const passingNumericFixtures = [];
@@ -69,6 +73,9 @@ const context2d = {
 const canvas = { width: 720, height: 400 };
 const sandbox = { window: {}, Math, Number, Object, Array, JSON };
 vm.createContext(sandbox, { codeGeneration: { strings: false, wasm: false } });
+new vm.Script(trustedRuntimeSource, { filename: "trusted-runtime.js" })
+  .runInContext(sandbox, { timeout: 250 });
+const trustedReadout = sandbox.window.LayshReadout;
 
 let simulation = null;
 try {
@@ -248,6 +255,59 @@ if (simulation) {
       }
       checkCount += 1;
     }
+
+    const parameter = understanding.primary_parameter;
+    const output = understanding.module_spec.outputs[0];
+    const formatter = trustedReadout.forLesson(understanding);
+    const [minimumEndpoint, maximumEndpoint] = formatter.endpoints;
+    let minimumResult;
+    let maximumResult;
+    try {
+      sandbox.inputs = minimumEndpoint.inputs;
+      minimumResult = new vm.Script("window.LayshSimulation.test(inputs)")
+        .runInContext(sandbox, { timeout: 250 });
+      sandbox.inputs = maximumEndpoint.inputs;
+      maximumResult = new vm.Script("window.LayshSimulation.test(inputs)")
+        .runInContext(sandbox, { timeout: 250 });
+      const minimumFormatted = formatter.format(minimumResult?.[output]);
+      const maximumFormatted = formatter.format(maximumResult?.[output]);
+      if (minimumFormatted === maximumFormatted) {
+        addFailure(
+          "readout_visibility",
+          "formatted_endpoints_indistinguishable",
+          {
+            distinct_formatted_endpoints: true,
+            maximum_fraction_digits: trustedReadout.maximumFractionDigits,
+          },
+          {
+            minimum_input: minimumEndpoint.parameterValue,
+            maximum_input: maximumEndpoint.parameterValue,
+            minimum_formatted: minimumFormatted,
+            maximum_formatted: maximumFormatted,
+          },
+          {
+            parameter: parameter.id,
+            output,
+            message: `Readout for parameter ${parameter.id} formats both endpoints as `
+              + `"${minimumFormatted}" and "${maximumFormatted}".`,
+          },
+        );
+      }
+    } catch (error) {
+      addFailure(
+        "readout_visibility",
+        "endpoint_execution_failed",
+        {
+          evaluates_extreme_inputs: [
+            minimumEndpoint.parameterValue,
+            maximumEndpoint.parameterValue,
+          ],
+        },
+        { error_type: error?.name || "Error" },
+        { parameter: parameter.id, output },
+      );
+    }
+    checkCount += 1;
   }
 }
 

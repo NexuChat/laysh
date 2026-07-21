@@ -74,6 +74,7 @@
   compactLayout.addEventListener("change", syncCompactAnswer);
 
   const parameter = lesson.primary_parameter;
+  const readout = window.LayshReadout.forLesson(lesson);
   byId("primary-label").textContent = parameter.label;
   Object.assign(control, {
     min: String(parameter.min),
@@ -85,7 +86,7 @@
   function formatState(value) {
     const tested = simulation.test({ [parameter.id]: Number(value) });
     const observed = tested[lesson.module_spec.outputs[0]];
-    const valueText = Number.isFinite(observed) ? Number(observed).toFixed(2) : String(observed);
+    const valueText = readout.format(observed);
     return ar
       ? `${parameter.label}: ${value} ${parameter.unit} — النتيجة المحسوبة: ${valueText}`
       : `${parameter.label}: ${value} ${parameter.unit} — calculated outcome: ${valueText}`;
