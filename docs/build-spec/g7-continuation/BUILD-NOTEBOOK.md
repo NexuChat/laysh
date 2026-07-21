@@ -654,3 +654,15 @@ landed. The official committed ledger therefore remains 22 of 30 passing; no
   a complete measured routing report, an exact clean-checkout capture, service
   receipt, and 30/30 final report; no release tag or remote push is implied by
   this record.
+
+#### Release-document link contract
+
+- Owner-authorized public repository and demo links replaced their former
+  placeholders in the release documents. The corresponding contract test now
+  requires `https://github.com/NexuChat/laysh` and `https://laysh.mlki.app`,
+  rather than stale placeholder text.
+- Measured after that correction: the focused document contract passed, the
+  full offline suite recorded **552 passed, 1 skipped in 498.14s**, Ruff was
+  clean, and the provenance gate retained one root, zero merges, and zero
+  unlinked commits. This records documentation correctness only; it does not
+  change the blocked ROUTE-02 or unstarted RELEASE-01 statuses above.

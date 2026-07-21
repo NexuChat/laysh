@@ -54,8 +54,8 @@ def test_release_documents_cover_judge_and_owner_handoff_requirements():
         "/home/dev/fahim",
         "gpt-5.6-luna",
         "gpt-5.6-sol",
-        "FINAL-DEMO-URL",
-        "FINAL-REPOSITORY-URL",
+        "https://laysh.mlki.app",
+        "https://github.com/NexuChat/laysh",
         "How I collaborated with Codex",
         "Quota protection",
     ):
