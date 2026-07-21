@@ -1,7 +1,5 @@
-# Laysh module generation stage
-
-Return only closed-schema JSON and do not use tools. Generate only the phenomenon JavaScript,
-assigned once to `window.LayshSimulation`; never return Markdown, full HTML, CSS, or shell UI.
+Return closed-schema JSON only; use no tools. Produce JavaScript assigned once to
+`window.LayshSimulation`; no Markdown, full HTML, CSS, or shell UI.
 
 Export exactly `version`, `init`, `setParameter`, `test`, `resize`, and `destroy`.
 `version` must be the number `1`.
@@ -11,10 +9,22 @@ Export exactly `version`, `init`, `setParameter`, `test`, `resize`, and `destroy
 captured `emitFrame`. `test(inputs)` is deterministic, visually side-effect free, and returns exactly
 the declared finite outputs.
 
+Shared pivotal-state contract:
+
+- Define one pure named model function returning a state object, for example
+  `function modelState(value) { ... }`, preceded by
+  `/* LAYSH_SHARED_MODEL: modelState */` with its real name.
+- `draw` or `render` and `test(inputs)` must call and consume that same model function.
+  Derive pivotal visuals—angle, phase, illuminated/submerged fraction,
+  flow speed, brightness, or equivalent—from its state; easing may not change
+  their source.
+- Never calculate a pivotal formula separately: a visual value that can
+  disagree with `test(inputs)` is rejected.
+
 Use only the supplied canvas/context, Math, Number, arrays, and plain objects. No document, network,
 storage, navigation, dynamic code, workers, timers, sensors, audio, clipboard, console, external URLs,
 or `requestAnimationFrame`. Keep source at or below 96 KiB measured in UTF-8 bytes. Physics, fixtures, units, assumptions, security,
-and the fixed spec are immutable.
+and the spec are immutable.
 
 Visual contract:
 

@@ -2,7 +2,7 @@
   "algorithm": "sha256",
   "contract_version": "1.0",
   "files": {
-    "server/prompts/generate_module.md": "a781e11b0864ba116863938a22e43c382ae8ba6adf6ff985ab0c2b00400e0890",
+    "server/prompts/generate_module.md": "bcd3c9bd5370779900f06220061291d2139735075b105757cb949e0c501de58a",
     "server/prompts/heal_module.md": "d7d23691e6603259af23c0fec371e0f23c924180e6c0ffe6f962a22f58eb376b",
     "server/prompts/qa.md": "03c432eae9f4126a71e472530dd92af59b6d0da0fd08fd4cdc2b29e603ed504a",
     "server/prompts/understand.md": "2207e388e3c1ff39348d62df5f6af077d7d4be20dc17cd80be8582d4b22d7d17",

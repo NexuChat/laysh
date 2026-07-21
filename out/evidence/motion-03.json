@@ -8,7 +8,7 @@
   "goldens": [
     {
       "golden_id": "moon_phases",
-      "artifact_sha256": "31b29d4803fe204b8977239db6778d7f0e3e27efd7527826a731517bb03648d4",
+      "artifact_sha256": "b62f82acf339ca7eb1fa36153d7cd262beea930b0ace79a0cbad06976bbf5663",
       "actor": "moon",
       "action": "orbits",
       "passed": true,
@@ -19,17 +19,17 @@
           {
             "value": 0,
             "frameChanged": true,
-            "visualSignature": 2507369338
+            "visualSignature": 3911052668
           },
           {
             "value": 90,
             "frameChanged": true,
-            "visualSignature": 3069519251
+            "visualSignature": 3123009321
           },
           {
             "value": 360,
             "frameChanged": true,
-            "visualSignature": 4016568162
+            "visualSignature": 14712280
           }
         ],
         "lang": "ar",
@@ -47,13 +47,13 @@
         ],
         "actorSamples": [
           {
-            "time_ms": 429,
+            "time_ms": 376,
             "control_value": 90,
             "model_outputs": {
               "lit_fraction": 0.49999999999999994
             },
-            "frame_count": 11,
-            "canvas_signature": 369010636,
+            "frame_count": 12,
+            "canvas_signature": 1513914653,
             "actor": {
               "visible_pixels": 312,
               "signature": "593d8380",
@@ -87,13 +87,13 @@
             "phase_columns": null
           },
           {
-            "time_ms": 589,
+            "time_ms": 526,
             "control_value": 0,
             "model_outputs": {
               "lit_fraction": 0
             },
-            "frame_count": 14,
-            "canvas_signature": 3538599533,
+            "frame_count": 15,
+            "canvas_signature": 437541397,
             "actor": {
               "visible_pixels": 342,
               "signature": "9759fdd",
@@ -119,13 +119,13 @@
             "phase_columns": null
           },
           {
-            "time_ms": 746,
+            "time_ms": 684,
             "control_value": 360,
             "model_outputs": {
               "lit_fraction": 0
             },
-            "frame_count": 17,
-            "canvas_signature": 687828374,
+            "frame_count": 18,
+            "canvas_signature": 2812691110,
             "actor": {
               "visible_pixels": 348,
               "signature": "339cdee1",
@@ -151,13 +151,13 @@
             "phase_columns": null
           },
           {
-            "time_ms": 898,
+            "time_ms": 837,
             "control_value": 90,
             "model_outputs": {
               "lit_fraction": 0.49999999999999994
             },
-            "frame_count": 20,
-            "canvas_signature": 3492706041,
+            "frame_count": 21,
+            "canvas_signature": 3730834187,
             "actor": {
               "visible_pixels": 331,
               "signature": "e6d0965",
@@ -185,13 +185,13 @@
         ],
         "physicsSamples": [
           {
-            "time_ms": 1407,
+            "time_ms": 1347,
             "control_value": 0,
             "model_outputs": {
               "lit_fraction": 0
             },
-            "frame_count": 27,
-            "canvas_signature": 1948989830,
+            "frame_count": 28,
+            "canvas_signature": 1652073241,
             "actor": {
               "visible_pixels": 346,
               "signature": "8777a3eb",
@@ -217,53 +217,53 @@
             "phase_columns": null
           },
           {
-            "time_ms": 1936,
+            "time_ms": 1864,
             "control_value": 90,
             "model_outputs": {
               "lit_fraction": 0.49999999999999994
             },
-            "frame_count": 35,
-            "canvas_signature": 2297557569,
+            "frame_count": 36,
+            "canvas_signature": 426174447,
             "actor": {
-              "visible_pixels": 308,
-              "signature": "1a506e9e",
+              "visible_pixels": 309,
+              "signature": "d2b51c83",
               "centroid": {
-                "x": 0.47105429292929296,
-                "y": 0.4673701298701299
+                "x": 0.4716918374685365,
+                "y": 0.4671035598705502
               },
               "bounds": {
-                "x": 0.3013888888888889,
+                "x": 0.30694444444444446,
                 "y": 0.3125,
-                "width": 0.23194444444444445,
+                "width": 0.2263888888888889,
                 "height": 0.2225
               },
               "phase_columns": null
             },
             "illumination": {
-              "visible_pixels": 75,
-              "signature": "240fa4a7",
+              "visible_pixels": 39,
+              "signature": "e994519",
               "centroid": {
-                "x": 0.8029999999999999,
-                "y": 0.4359666666666666
+                "x": 0.8007478632478633,
+                "y": 0.428974358974359
               },
               "bounds": {
                 "x": 0.6388888888888888,
-                "y": 0.38,
+                "y": 0.385,
                 "width": 0.17777777777777778,
-                "height": 0.13
+                "height": 0.12
               },
               "phase_columns": null
             },
             "phase_columns": null
           },
           {
-            "time_ms": 2457,
+            "time_ms": 2384,
             "control_value": 180,
             "model_outputs": {
               "lit_fraction": 1
             },
-            "frame_count": 42,
-            "canvas_signature": 2862990850,
+            "frame_count": 44,
+            "canvas_signature": 103333670,
             "actor": {
               "visible_pixels": 243,
               "signature": "c3122330",
@@ -297,39 +297,39 @@
             "phase_columns": null
           },
           {
-            "time_ms": 2986,
+            "time_ms": 2906,
             "control_value": 270,
             "model_outputs": {
               "lit_fraction": 0.5000000000000001
             },
-            "frame_count": 51,
-            "canvas_signature": 2611923299,
+            "frame_count": 52,
+            "canvas_signature": 3500009656,
             "actor": {
-              "visible_pixels": 282,
-              "signature": "84df2943",
+              "visible_pixels": 279,
+              "signature": "97a5f9a5",
               "centroid": {
-                "x": 0.4809347911741529,
-                "y": 0.5457712765957446
+                "x": 0.48232277976901633,
+                "y": 0.5437724014336918
               },
               "bounds": {
-                "x": 0.2708333333333333,
+                "x": 0.2652777777777778,
                 "y": 0.49,
-                "width": 0.2625,
-                "height": 0.245
+                "width": 0.26805555555555555,
+                "height": 0.2425
               },
               "phase_columns": null
             },
             "illumination": {
-              "visible_pixels": 3505,
-              "signature": "211ff3f1",
+              "visible_pixels": 3315,
+              "signature": "ecfed028",
               "centroid": {
-                "x": 0.7513254873989539,
-                "y": 0.452077032810271
+                "x": 0.7496153846153847,
+                "y": 0.4518612368024133
               },
               "bounds": {
                 "x": 0.6388888888888888,
                 "y": 0.35,
-                "width": 0.14722222222222223,
+                "width": 0.14444444444444443,
                 "height": 0.2075
               },
               "phase_columns": null
@@ -342,7 +342,7 @@
     },
     {
       "golden_id": "buoyancy",
-      "artifact_sha256": "6dfed2d4fe04ba61750202741b92e46a7fb0bc1c59520a6bb575ad222747b4fc",
+      "artifact_sha256": "3441947df69027b0925de20ee38e8cd7fd2c9ffc7e9fa208fc7cb7ef2d9ad485",
       "actor": "floating_body",
       "action": "floats_sinks",
       "passed": true,
@@ -381,7 +381,7 @@
         ],
         "actorSamples": [
           {
-            "time_ms": 306,
+            "time_ms": 294,
             "control_value": 750,
             "model_outputs": {
               "submerged_fraction": 0.75,
@@ -408,7 +408,7 @@
             "phase_columns": null
           },
           {
-            "time_ms": 465,
+            "time_ms": 455,
             "control_value": 200,
             "model_outputs": {
               "submerged_fraction": 0.2,
@@ -435,7 +435,7 @@
             "phase_columns": null
           },
           {
-            "time_ms": 621,
+            "time_ms": 608,
             "control_value": 1400,
             "model_outputs": {
               "submerged_fraction": 1,
@@ -462,7 +462,7 @@
             "phase_columns": null
           },
           {
-            "time_ms": 774,
+            "time_ms": 758,
             "control_value": 750,
             "model_outputs": {
               "submerged_fraction": 0.75,
@@ -491,24 +491,24 @@
         ],
         "physicsSamples": [
           {
-            "time_ms": 1291,
+            "time_ms": 1282,
             "control_value": 250,
             "model_outputs": {
               "submerged_fraction": 0.25,
               "floats": 1
             },
-            "frame_count": 27,
-            "canvas_signature": 1165209681,
+            "frame_count": 28,
+            "canvas_signature": 111129900,
             "actor": {
-              "visible_pixels": 2673,
-              "signature": "1c50f7e8",
+              "visible_pixels": 2699,
+              "signature": "2871cb9b",
               "centroid": {
-                "x": 0.47351342644552524,
-                "y": 0.2970426487093154
+                "x": 0.473731526079618,
+                "y": 0.2980020377917747
               },
               "bounds": {
                 "x": 0.43472222222222223,
-                "y": 0.235,
+                "y": 0.2325,
                 "width": 0.13194444444444445,
                 "height": 0.2375
               },
@@ -518,26 +518,26 @@
             "phase_columns": null
           },
           {
-            "time_ms": 1818,
+            "time_ms": 1800,
             "control_value": 750,
             "model_outputs": {
               "submerged_fraction": 0.75,
               "floats": 1
             },
-            "frame_count": 36,
-            "canvas_signature": 696006408,
+            "frame_count": 35,
+            "canvas_signature": 1504981782,
             "actor": {
-              "visible_pixels": 2634,
-              "signature": "15738a03",
+              "visible_pixels": 2719,
+              "signature": "30671cda",
               "centroid": {
-                "x": 0.4765033113979583,
-                "y": 0.37220482156416096
+                "x": 0.47688335172244695,
+                "y": 0.36867966164030896
               },
               "bounds": {
                 "x": 0.43333333333333335,
-                "y": 0.3175,
+                "y": 0.3125,
                 "width": 0.13333333333333333,
-                "height": 0.235
+                "height": 0.2375
               },
               "phase_columns": null
             },
@@ -545,26 +545,26 @@
             "phase_columns": null
           },
           {
-            "time_ms": 2331,
+            "time_ms": 2321,
             "control_value": 1200,
             "model_outputs": {
               "submerged_fraction": 1,
               "floats": 0
             },
-            "frame_count": 43,
-            "canvas_signature": 3459367666,
+            "frame_count": 44,
+            "canvas_signature": 378670063,
             "actor": {
-              "visible_pixels": 1072,
-              "signature": "71e3c130",
+              "visible_pixels": 951,
+              "signature": "5795599a",
               "centroid": {
-                "x": 0.47128809079601985,
-                "y": 0.572714552238806
+                "x": 0.470208260310784,
+                "y": 0.590651945320715
               },
               "bounds": {
                 "x": 0.43472222222222223,
-                "y": 0.54,
+                "y": 0.56,
                 "width": 0.13055555555555556,
-                "height": 0.2375
+                "height": 0.23
               },
               "phase_columns": null
             },
@@ -577,7 +577,7 @@
     },
     {
       "golden_id": "pendulum",
-      "artifact_sha256": "b177d9d18976cb5fd0d8697199ddf5d9b50e06fb229c6e9693b2d307694e069f",
+      "artifact_sha256": "c04002bd7a53840084c976374d39f4700f68eec09946567807d298b3b81136e3",
       "actor": "pendulum_bob",
       "action": "oscillates",
       "passed": true,
@@ -588,17 +588,17 @@
           {
             "value": 0.25,
             "frameChanged": true,
-            "visualSignature": 926446220
+            "visualSignature": 2302330405
           },
           {
             "value": 1,
             "frameChanged": true,
-            "visualSignature": 3786473365
+            "visualSignature": 2621375202
           },
           {
             "value": 2,
             "frameChanged": true,
-            "visualSignature": 3479463025
+            "visualSignature": 1609783812
           }
         ],
         "lang": "ar",
@@ -616,22 +616,22 @@
         ],
         "actorSamples": [
           {
-            "time_ms": 353,
+            "time_ms": 415,
             "control_value": 1,
             "model_outputs": {
               "period_s": 2.0060666807106475
             },
-            "frame_count": 13,
-            "canvas_signature": 282541187,
+            "frame_count": 14,
+            "canvas_signature": 1755168231,
             "actor": {
-              "visible_pixels": 186,
-              "signature": "439ffc0e",
+              "visible_pixels": 223,
+              "signature": "eb80591",
               "centroid": {
-                "x": 0.5408303464755078,
-                "y": 0.4534274193548387
+                "x": 0.5454035874439461,
+                "y": 0.4539461883408072
               },
               "bounds": {
-                "x": 0.5,
+                "x": 0.5013888888888889,
                 "y": 0.4075,
                 "width": 0.06388888888888888,
                 "height": 0.1
@@ -642,19 +642,19 @@
             "phase_columns": null
           },
           {
-            "time_ms": 514,
+            "time_ms": 570,
             "control_value": 0.25,
             "model_outputs": {
               "period_s": 1.0030333403553238
             },
-            "frame_count": 25,
-            "canvas_signature": 4210869224,
+            "frame_count": 24,
+            "canvas_signature": 1716775263,
             "actor": {
-              "visible_pixels": 211,
-              "signature": "13e70eb",
+              "visible_pixels": 207,
+              "signature": "5bd4c9c8",
               "centroid": {
-                "x": 0.5351698262243286,
-                "y": 0.2177132701421801
+                "x": 0.5360171765968867,
+                "y": 0.2184903381642512
               },
               "bounds": {
                 "x": 0.4930555555555556,
@@ -668,22 +668,22 @@
             "phase_columns": null
           },
           {
-            "time_ms": 670,
+            "time_ms": 721,
             "control_value": 2,
             "model_outputs": {
               "period_s": 2.837006706885775
             },
-            "frame_count": 30,
-            "canvas_signature": 2982069482,
+            "frame_count": 28,
+            "canvas_signature": 110472348,
             "actor": {
-              "visible_pixels": 188,
-              "signature": "d3068b84",
+              "visible_pixels": 189,
+              "signature": "36efc104",
               "centroid": {
-                "x": 0.5589908392434988,
-                "y": 0.6874734042553192
+                "x": 0.5602807172251617,
+                "y": 0.6875396825396826
               },
               "bounds": {
-                "x": 0.5180555555555556,
+                "x": 0.5194444444444445,
                 "y": 0.6425,
                 "width": 0.06388888888888888,
                 "height": 0.0975
@@ -694,22 +694,22 @@
             "phase_columns": null
           },
           {
-            "time_ms": 820,
+            "time_ms": 868,
             "control_value": 1,
             "model_outputs": {
               "period_s": 2.0060666807106475
             },
-            "frame_count": 35,
-            "canvas_signature": 2152076109,
+            "frame_count": 33,
+            "canvas_signature": 1058311172,
             "actor": {
-              "visible_pixels": 226,
-              "signature": "601ca980",
+              "visible_pixels": 191,
+              "signature": "becc936c",
               "centroid": {
-                "x": 0.546374139626352,
-                "y": 0.46501106194690267
+                "x": 0.5446116928446771,
+                "y": 0.4643979057591623
               },
               "bounds": {
-                "x": 0.5027777777777778,
+                "x": 0.5041666666666667,
                 "y": 0.42,
                 "width": 0.06388888888888888,
                 "height": 0.0975
@@ -722,25 +722,25 @@
         ],
         "physicsSamples": [
           {
-            "time_ms": 1328,
+            "time_ms": 1375,
             "control_value": 0.25,
             "model_outputs": {
               "period_s": 1.0030333403553238
             },
-            "frame_count": 71,
-            "canvas_signature": 1408840992,
+            "frame_count": 69,
+            "canvas_signature": 1827142231,
             "actor": {
-              "visible_pixels": 205,
-              "signature": "6d31ab96",
+              "visible_pixels": 173,
+              "signature": "772af83e",
               "centroid": {
-                "x": 0.5274864498644987,
-                "y": 0.21726829268292683
+                "x": 0.5227119460500963,
+                "y": 0.21604046242774566
               },
               "bounds": {
-                "x": 0.4847222222222222,
+                "x": 0.48333333333333334,
                 "y": 0.18,
                 "width": 0.06388888888888888,
-                "height": 0.0875
+                "height": 0.085
               },
               "phase_columns": null
             },
@@ -748,25 +748,25 @@
             "phase_columns": null
           },
           {
-            "time_ms": 1844,
+            "time_ms": 1887,
             "control_value": 1,
             "model_outputs": {
               "period_s": 2.0060666807106475
             },
-            "frame_count": 90,
-            "canvas_signature": 3967525934,
+            "frame_count": 88,
+            "canvas_signature": 2795478992,
             "actor": {
               "visible_pixels": 183,
-              "signature": "74565f5e",
+              "signature": "b717f53a",
               "centroid": {
-                "x": 0.5386991499696419,
-                "y": 0.44543715846994536
+                "x": 0.5359289617486339,
+                "y": 0.44596994535519124
               },
               "bounds": {
-                "x": 0.49722222222222223,
+                "x": 0.49444444444444446,
                 "y": 0.4,
                 "width": 0.06388888888888888,
-                "height": 0.0975
+                "height": 0.1
               },
               "phase_columns": null
             },
@@ -774,24 +774,24 @@
             "phase_columns": null
           },
           {
-            "time_ms": 2357,
+            "time_ms": 2405,
             "control_value": 2,
             "model_outputs": {
               "period_s": 2.837006706885775
             },
-            "frame_count": 103,
-            "canvas_signature": 3778290009,
+            "frame_count": 102,
+            "canvas_signature": 2677389021,
             "actor": {
-              "visible_pixels": 193,
-              "signature": "cfd2bd8c",
+              "visible_pixels": 192,
+              "signature": "e974d0c4",
               "centroid": {
-                "x": 0.5639248704663212,
-                "y": 0.7512953367875648
+                "x": 0.5639178240740741,
+                "y": 0.7521744791666667
               },
               "bounds": {
                 "x": 0.5236111111111111,
                 "y": 0.7075,
-                "width": 0.06527777777777778,
+                "width": 0.06388888888888888,
                 "height": 0.0975
               },
               "phase_columns": null
@@ -805,22 +805,74 @@
             "control_value": 1,
             "samples": [
               {
-                "time_ms": 2876,
+                "time_ms": 2918,
                 "control_value": 1,
                 "model_outputs": {
                   "period_s": 2.0060666807106475
                 },
-                "frame_count": 123,
-                "canvas_signature": 968844384,
+                "frame_count": 121,
+                "canvas_signature": 2400043865,
                 "actor": {
-                  "visible_pixels": 189,
-                  "signature": "2d6822dc",
+                  "visible_pixels": 223,
+                  "signature": "6dd7ad87",
                   "centroid": {
-                    "x": 0.5281158142269253,
-                    "y": 0.4457010582010582
+                    "x": 0.5350336322869955,
+                    "y": 0.4463116591928251
                   },
                   "bounds": {
-                    "x": 0.4875,
+                    "x": 0.49027777777777776,
+                    "y": 0.4,
+                    "width": 0.06527777777777778,
+                    "height": 0.1
+                  },
+                  "phase_columns": null
+                },
+                "illumination": null,
+                "phase_columns": null
+              },
+              {
+                "time_ms": 3404,
+                "control_value": 1,
+                "model_outputs": {
+                  "period_s": 2.0060666807106475
+                },
+                "frame_count": 139,
+                "canvas_signature": 2607509076,
+                "actor": {
+                  "visible_pixels": 224,
+                  "signature": "278f752c",
+                  "centroid": {
+                    "x": 0.5144779265873016,
+                    "y": 0.44484375
+                  },
+                  "bounds": {
+                    "x": 0.4708333333333333,
+                    "y": 0.4,
+                    "width": 0.06388888888888888,
+                    "height": 0.0975
+                  },
+                  "phase_columns": null
+                },
+                "illumination": null,
+                "phase_columns": null
+              },
+              {
+                "time_ms": 3895,
+                "control_value": 1,
+                "model_outputs": {
+                  "period_s": 2.0060666807106475
+                },
+                "frame_count": 157,
+                "canvas_signature": 4133875320,
+                "actor": {
+                  "visible_pixels": 188,
+                  "signature": "86904af1",
+                  "centroid": {
+                    "x": 0.5241873522458629,
+                    "y": 0.44569148936170216
+                  },
+                  "bounds": {
+                    "x": 0.48333333333333334,
                     "y": 0.4,
                     "width": 0.06388888888888888,
                     "height": 0.1
@@ -831,71 +883,19 @@
                 "phase_columns": null
               },
               {
-                "time_ms": 3364,
+                "time_ms": 4383,
                 "control_value": 1,
                 "model_outputs": {
                   "period_s": 2.0060666807106475
                 },
-                "frame_count": 141,
-                "canvas_signature": 2625521213,
+                "frame_count": 175,
+                "canvas_signature": 3415391272,
                 "actor": {
-                  "visible_pixels": 224,
-                  "signature": "92b05c65",
+                  "visible_pixels": 188,
+                  "signature": "507f1347",
                   "centroid": {
-                    "x": 0.5131324404761906,
-                    "y": 0.44441964285714286
-                  },
-                  "bounds": {
-                    "x": 0.46944444444444444,
-                    "y": 0.4,
-                    "width": 0.06527777777777778,
-                    "height": 0.0975
-                  },
-                  "phase_columns": null
-                },
-                "illumination": null,
-                "phase_columns": null
-              },
-              {
-                "time_ms": 3849,
-                "control_value": 1,
-                "model_outputs": {
-                  "period_s": 2.0060666807106475
-                },
-                "frame_count": 159,
-                "canvas_signature": 2909534413,
-                "actor": {
-                  "visible_pixels": 223,
-                  "signature": "93c04dd0",
-                  "centroid": {
-                    "x": 0.5309043348281016,
-                    "y": 0.4463340807174888
-                  },
-                  "bounds": {
-                    "x": 0.4861111111111111,
-                    "y": 0.4,
-                    "width": 0.06527777777777778,
-                    "height": 0.1
-                  },
-                  "phase_columns": null
-                },
-                "illumination": null,
-                "phase_columns": null
-              },
-              {
-                "time_ms": 4340,
-                "control_value": 1,
-                "model_outputs": {
-                  "period_s": 2.0060666807106475
-                },
-                "frame_count": 177,
-                "canvas_signature": 1271805463,
-                "actor": {
-                  "visible_pixels": 196,
-                  "signature": "ec2266cb",
-                  "centroid": {
-                    "x": 0.5450751133786849,
-                    "y": 0.444094387755102
+                    "x": 0.5460328014184397,
+                    "y": 0.44432180851063824
                   },
                   "bounds": {
                     "x": 0.5055555555555555,
@@ -909,24 +909,24 @@
                 "phase_columns": null
               },
               {
-                "time_ms": 4829,
+                "time_ms": 4872,
                 "control_value": 1,
                 "model_outputs": {
                   "period_s": 2.0060666807106475
                 },
-                "frame_count": 195,
-                "canvas_signature": 3008560180,
+                "frame_count": 193,
+                "canvas_signature": 2375351525,
                 "actor": {
-                  "visible_pixels": 188,
-                  "signature": "80edcfb6",
+                  "visible_pixels": 225,
+                  "signature": "4ab1a649",
                   "centroid": {
-                    "x": 0.5310948581560284,
-                    "y": 0.44574468085106383
+                    "x": 0.5380246913580247,
+                    "y": 0.4462888888888889
                   },
                   "bounds": {
-                    "x": 0.49027777777777776,
+                    "x": 0.4930555555555556,
                     "y": 0.4,
-                    "width": 0.06388888888888888,
+                    "width": 0.06527777777777778,
                     "height": 0.1
                   },
                   "phase_columns": null
@@ -941,7 +941,7 @@
     },
     {
       "golden_id": "simple_circuit",
-      "artifact_sha256": "8e4748a360f9fbc73e00441e7eb5e5ff6790cbcf4d79d8ce4148c9ab47c90057",
+      "artifact_sha256": "be857e789827646a68baa70fba8da4056fb7d54d5b493346ed4f49d15077b11a",
       "actor": "charge_carrier",
       "action": "flows",
       "passed": true,
@@ -980,7 +980,7 @@
         ],
         "actorSamples": [
           {
-            "time_ms": 421,
+            "time_ms": 347,
             "control_value": 6,
             "model_outputs": {
               "current_a": 1,
@@ -1007,7 +1007,7 @@
             "phase_columns": null
           },
           {
-            "time_ms": 588,
+            "time_ms": 502,
             "control_value": 2,
             "model_outputs": {
               "current_a": 3,
@@ -1034,7 +1034,7 @@
             "phase_columns": null
           },
           {
-            "time_ms": 745,
+            "time_ms": 656,
             "control_value": 20,
             "model_outputs": {
               "current_a": 0.3,
@@ -1061,7 +1061,7 @@
             "phase_columns": null
           },
           {
-            "time_ms": 909,
+            "time_ms": 809,
             "control_value": 6,
             "model_outputs": {
               "current_a": 1,
@@ -1090,26 +1090,26 @@
         ],
         "physicsSamples": [
           {
-            "time_ms": 1444,
+            "time_ms": 1330,
             "control_value": 2,
             "model_outputs": {
               "current_a": 3,
               "power_w": 18
             },
-            "frame_count": 28,
-            "canvas_signature": 883240407,
+            "frame_count": 27,
+            "canvas_signature": 2446154673,
             "actor": {
-              "visible_pixels": 76,
-              "signature": "f5ff4484",
+              "visible_pixels": 86,
+              "signature": "33215739",
               "centroid": {
-                "x": 0.2706140350877193,
-                "y": 0.44299342105263156
+                "x": 0.3059108527131783,
+                "y": 0.4500581395348837
               },
               "bounds": {
                 "x": 0.11388888888888889,
                 "y": 0.31,
-                "width": 0.6958333333333333,
-                "height": 0.225
+                "width": 0.7055555555555556,
+                "height": 0.2275
               },
               "phase_columns": null
             },
@@ -1117,7 +1117,7 @@
             "phase_columns": null
           },
           {
-            "time_ms": 1964,
+            "time_ms": 1847,
             "control_value": 6,
             "model_outputs": {
               "current_a": 1,
@@ -1144,7 +1144,7 @@
             "phase_columns": null
           },
           {
-            "time_ms": 2513,
+            "time_ms": 2391,
             "control_value": 12,
             "model_outputs": {
               "current_a": 0.5,
@@ -1176,7 +1176,7 @@
             "control_value": 2,
             "samples": [
               {
-                "time_ms": 3031,
+                "time_ms": 2924,
                 "control_value": 2,
                 "model_outputs": {
                   "current_a": 3,
@@ -1203,7 +1203,7 @@
                 "phase_columns": null
               },
               {
-                "time_ms": 3220,
+                "time_ms": 3113,
                 "control_value": 2,
                 "model_outputs": {
                   "current_a": 3,
@@ -1230,7 +1230,7 @@
                 "phase_columns": null
               },
               {
-                "time_ms": 3411,
+                "time_ms": 3301,
                 "control_value": 2,
                 "model_outputs": {
                   "current_a": 3,
@@ -1257,25 +1257,25 @@
                 "phase_columns": null
               },
               {
-                "time_ms": 3623,
+                "time_ms": 3492,
                 "control_value": 2,
                 "model_outputs": {
                   "current_a": 3,
                   "power_w": 18
                 },
-                "frame_count": 58,
-                "canvas_signature": 2685414879,
+                "frame_count": 59,
+                "canvas_signature": 1647597808,
                 "actor": {
                   "visible_pixels": 67,
-                  "signature": "ffdefd00",
+                  "signature": "1e30091c",
                   "centroid": {
-                    "x": 0.25868573797678274,
-                    "y": 0.43134328358208956
+                    "x": 0.25849917081260365,
+                    "y": 0.4248880597014925
                   },
                   "bounds": {
                     "x": 0.11388888888888889,
                     "y": 0.31,
-                    "width": 0.6875,
+                    "width": 0.6902777777777778,
                     "height": 0.225
                   },
                   "phase_columns": null
@@ -1284,7 +1284,7 @@
                 "phase_columns": null
               },
               {
-                "time_ms": 3820,
+                "time_ms": 3685,
                 "control_value": 2,
                 "model_outputs": {
                   "current_a": 3,
@@ -1311,7 +1311,7 @@
                 "phase_columns": null
               },
               {
-                "time_ms": 4020,
+                "time_ms": 3881,
                 "control_value": 2,
                 "model_outputs": {
                   "current_a": 3,
@@ -1343,25 +1343,25 @@
             "control_value": 12,
             "samples": [
               {
-                "time_ms": 4560,
+                "time_ms": 4394,
                 "control_value": 12,
                 "model_outputs": {
                   "current_a": 0.5,
                   "power_w": 3
                 },
-                "frame_count": 72,
-                "canvas_signature": 1014999028,
+                "frame_count": 70,
+                "canvas_signature": 3098811658,
                 "actor": {
-                  "visible_pixels": 75,
-                  "signature": "2a430faf",
+                  "visible_pixels": 78,
+                  "signature": "7e481c8d",
                   "centroid": {
-                    "x": 0.30383333333333334,
-                    "y": 0.41283333333333333
+                    "x": 0.31132478632478633,
+                    "y": 0.43403846153846154
                   },
                   "bounds": {
                     "x": 0.11388888888888889,
                     "y": 0.31,
-                    "width": 0.6972222222222222,
+                    "width": 0.6958333333333333,
                     "height": 0.225
                   },
                   "phase_columns": null
@@ -1370,25 +1370,25 @@
                 "phase_columns": null
               },
               {
-                "time_ms": 4759,
+                "time_ms": 4598,
                 "control_value": 12,
                 "model_outputs": {
                   "current_a": 0.5,
                   "power_w": 3
                 },
-                "frame_count": 74,
-                "canvas_signature": 3912381077,
+                "frame_count": 73,
+                "canvas_signature": 1921884537,
                 "actor": {
-                  "visible_pixels": 70,
-                  "signature": "403006b1",
+                  "visible_pixels": 74,
+                  "signature": "299f0ade",
                   "centroid": {
-                    "x": 0.27996031746031746,
-                    "y": 0.4200714285714286
+                    "x": 0.296996996996997,
+                    "y": 0.414222972972973
                   },
                   "bounds": {
                     "x": 0.11388888888888889,
                     "y": 0.31,
-                    "width": 0.5319444444444444,
+                    "width": 0.6958333333333333,
                     "height": 0.225
                   },
                   "phase_columns": null
@@ -1397,25 +1397,25 @@
                 "phase_columns": null
               },
               {
-                "time_ms": 4958,
+                "time_ms": 4797,
                 "control_value": 12,
                 "model_outputs": {
                   "current_a": 0.5,
                   "power_w": 3
                 },
-                "frame_count": 76,
-                "canvas_signature": 1121357271,
+                "frame_count": 75,
+                "canvas_signature": 3942310596,
                 "actor": {
-                  "visible_pixels": 65,
-                  "signature": "b69f2b6",
+                  "visible_pixels": 69,
+                  "signature": "74aa6e76",
                   "centroid": {
-                    "x": 0.26690170940170943,
-                    "y": 0.4316923076923077
+                    "x": 0.277073268921095,
+                    "y": 0.4215942028985507
                   },
                   "bounds": {
                     "x": 0.11388888888888889,
                     "y": 0.31,
-                    "width": 0.5347222222222222,
+                    "width": 0.5333333333333333,
                     "height": 0.225
                   },
                   "phase_columns": null
@@ -1424,25 +1424,25 @@
                 "phase_columns": null
               },
               {
-                "time_ms": 5153,
+                "time_ms": 5000,
                 "control_value": 12,
                 "model_outputs": {
                   "current_a": 0.5,
                   "power_w": 3
                 },
-                "frame_count": 79,
-                "canvas_signature": 53947329,
+                "frame_count": 78,
+                "canvas_signature": 462867136,
                 "actor": {
                   "visible_pixels": 57,
-                  "signature": "655e7f0",
+                  "signature": "592a7839",
                   "centroid": {
-                    "x": 0.21359649122807017,
-                    "y": 0.4445175438596491
+                    "x": 0.21388888888888888,
+                    "y": 0.4444736842105263
                   },
                   "bounds": {
                     "x": 0.11388888888888889,
                     "y": 0.4125,
-                    "width": 0.4888888888888889,
+                    "width": 0.49166666666666664,
                     "height": 0.1225
                   },
                   "phase_columns": null
@@ -1451,26 +1451,26 @@
                 "phase_columns": null
               },
               {
-                "time_ms": 5347,
+                "time_ms": 5203,
                 "control_value": 12,
                 "model_outputs": {
                   "current_a": 0.5,
                   "power_w": 3
                 },
-                "frame_count": 81,
-                "canvas_signature": 2216173884,
+                "frame_count": 80,
+                "canvas_signature": 3828542622,
                 "actor": {
-                  "visible_pixels": 72,
-                  "signature": "6bb5566b",
+                  "visible_pixels": 62,
+                  "signature": "3570e50c",
                   "centroid": {
-                    "x": 0.2247878086419753,
-                    "y": 0.4284375
+                    "x": 0.210752688172043,
+                    "y": 0.4384274193548387
                   },
                   "bounds": {
                     "x": 0.11388888888888889,
-                    "y": 0.31,
-                    "width": 0.4861111111111111,
-                    "height": 0.225
+                    "y": 0.3675,
+                    "width": 0.4875,
+                    "height": 0.1675
                   },
                   "phase_columns": null
                 },
@@ -1478,25 +1478,25 @@
                 "phase_columns": null
               },
               {
-                "time_ms": 5541,
+                "time_ms": 5395,
                 "control_value": 12,
                 "model_outputs": {
                   "current_a": 0.5,
                   "power_w": 3
                 },
-                "frame_count": 83,
-                "canvas_signature": 2946393901,
+                "frame_count": 82,
+                "canvas_signature": 2086682836,
                 "actor": {
-                  "visible_pixels": 80,
-                  "signature": "2a349585",
+                  "visible_pixels": 77,
+                  "signature": "8c33e5cf",
                   "centroid": {
-                    "x": 0.2420138888888889,
-                    "y": 0.41481250000000003
+                    "x": 0.2364177489177489,
+                    "y": 0.418474025974026
                   },
                   "bounds": {
                     "x": 0.11388888888888889,
                     "y": 0.31,
-                    "width": 0.48194444444444445,
+                    "width": 0.48333333333333334,
                     "height": 0.225
                   },
                   "phase_columns": null
@@ -1511,7 +1511,7 @@
     },
     {
       "golden_id": "sound_pitch",
-      "artifact_sha256": "29a4690fb8b49e8c802287549096b1c18c1204afce900e471595947cb472f5a2",
+      "artifact_sha256": "a5ea03cd5a4634c3b1fb929de45d2a13d6736246109cd0041420dd82ddb63793",
       "actor": "wavefront",
       "action": "propagates",
       "passed": true,
@@ -1522,17 +1522,17 @@
           {
             "value": 110,
             "frameChanged": true,
-            "visualSignature": 3466224217
+            "visualSignature": 2653317491
           },
           {
             "value": 440,
             "frameChanged": true,
-            "visualSignature": 2642402979
+            "visualSignature": 556536679
           },
           {
             "value": 880,
             "frameChanged": true,
-            "visualSignature": 2500664136
+            "visualSignature": 1527718310
           }
         ],
         "lang": "ar",
@@ -1550,14 +1550,14 @@
         ],
         "actorSamples": [
           {
-            "time_ms": 337,
+            "time_ms": 311,
             "control_value": 440,
             "model_outputs": {
               "wavelength_m": 0.7795454545454545,
               "period_ms": 2.272727272727273
             },
             "frame_count": 11,
-            "canvas_signature": 340357430,
+            "canvas_signature": 1009596247,
             "actor": {
               "visible_pixels": 1955,
               "signature": "e9783bc1",
@@ -1611,14 +1611,14 @@
             ]
           },
           {
-            "time_ms": 488,
+            "time_ms": 464,
             "control_value": 110,
             "model_outputs": {
               "wavelength_m": 3.118181818181818,
               "period_ms": 9.090909090909092
             },
             "frame_count": 14,
-            "canvas_signature": 2775132857,
+            "canvas_signature": 4255888613,
             "actor": {
               "visible_pixels": 1434,
               "signature": "2553e3f1",
@@ -1672,14 +1672,14 @@
             ]
           },
           {
-            "time_ms": 643,
+            "time_ms": 615,
             "control_value": 880,
             "model_outputs": {
               "wavelength_m": 0.38977272727272727,
               "period_ms": 1.1363636363636365
             },
             "frame_count": 17,
-            "canvas_signature": 184712922,
+            "canvas_signature": 3652891541,
             "actor": {
               "visible_pixels": 2559,
               "signature": "8646b2a4",
@@ -1733,14 +1733,14 @@
             ]
           },
           {
-            "time_ms": 799,
+            "time_ms": 775,
             "control_value": 440,
             "model_outputs": {
               "wavelength_m": 0.7795454545454545,
               "period_ms": 2.272727272727273
             },
             "frame_count": 20,
-            "canvas_signature": 3375300244,
+            "canvas_signature": 194678261,
             "actor": {
               "visible_pixels": 2074,
               "signature": "e29dc0b9",
@@ -1796,14 +1796,14 @@
         ],
         "physicsSamples": [
           {
-            "time_ms": 1317,
+            "time_ms": 1291,
             "control_value": 110,
             "model_outputs": {
               "wavelength_m": 3.118181818181818,
               "period_ms": 9.090909090909092
             },
             "frame_count": 27,
-            "canvas_signature": 1029371605,
+            "canvas_signature": 257512230,
             "actor": {
               "visible_pixels": 1412,
               "signature": "f1c1b8a1",
@@ -1857,20 +1857,20 @@
             ]
           },
           {
-            "time_ms": 1850,
+            "time_ms": 1811,
             "control_value": 440,
             "model_outputs": {
               "wavelength_m": 0.7795454545454545,
               "period_ms": 2.272727272727273
             },
-            "frame_count": 36,
-            "canvas_signature": 4040785536,
+            "frame_count": 35,
+            "canvas_signature": 1415496419,
             "actor": {
-              "visible_pixels": 1940,
-              "signature": "47acdcd9",
+              "visible_pixels": 1928,
+              "signature": "30d12689",
               "centroid": {
-                "x": 0.542381156930126,
-                "y": 0.5244046391752577
+                "x": 0.5419332065467958,
+                "y": 0.5243620331950207
               },
               "bounds": {
                 "x": 0.2,
@@ -1879,53 +1879,53 @@
                 "height": 0.2825
               },
               "phase_columns": [
-                0.55275,
-                0.5558252427184466,
-                0.46252192982456136,
-                0.5099855491329479,
-                0.63375,
-                0.5259375,
-                0.4071715328467153,
-                0.559786432160804,
-                0.6080476190476191,
-                0.47418238993710693,
-                0.4753392857142857,
-                0.5806930693069307,
-                0.5500467289719626,
-                0.5157926829268292,
+                0.5528260869565217,
+                0.5540625,
+                0.4617324561403509,
+                0.5101470588235294,
+                0.6336436170212766,
+                0.5261374407582938,
+                0.40568345323741006,
+                0.5593527918781726,
+                0.6097794117647058,
+                0.4785377358490566,
+                0.4728308823529412,
+                0.5786915887850467,
+                0.5507107843137254,
+                0.5164506172839506,
                 0.52875,
                 0.52875
               ]
             },
             "illumination": null,
             "phase_columns": [
-              0.55275,
-              0.5558252427184466,
-              0.46252192982456136,
-              0.5099855491329479,
-              0.63375,
-              0.5259375,
-              0.4071715328467153,
-              0.559786432160804,
-              0.6080476190476191,
-              0.47418238993710693,
-              0.4753392857142857,
-              0.5806930693069307,
-              0.5500467289719626,
-              0.5157926829268292,
+              0.5528260869565217,
+              0.5540625,
+              0.4617324561403509,
+              0.5101470588235294,
+              0.6336436170212766,
+              0.5261374407582938,
+              0.40568345323741006,
+              0.5593527918781726,
+              0.6097794117647058,
+              0.4785377358490566,
+              0.4728308823529412,
+              0.5786915887850467,
+              0.5507107843137254,
+              0.5164506172839506,
               0.52875,
               0.52875
             ]
           },
           {
-            "time_ms": 2370,
+            "time_ms": 2333,
             "control_value": 880,
             "model_outputs": {
               "wavelength_m": 0.38977272727272727,
               "period_ms": 1.1363636363636365
             },
             "frame_count": 44,
-            "canvas_signature": 2974221217,
+            "canvas_signature": 2110086335,
             "actor": {
               "visible_pixels": 2833,
               "signature": "d52248b5",
@@ -1984,14 +1984,14 @@
             "control_value": 440,
             "samples": [
               {
-                "time_ms": 2904,
+                "time_ms": 2853,
                 "control_value": 440,
                 "model_outputs": {
                   "wavelength_m": 0.7795454545454545,
                   "period_ms": 2.272727272727273
                 },
                 "frame_count": 52,
-                "canvas_signature": 2304420516,
+                "canvas_signature": 328644074,
                 "actor": {
                   "visible_pixels": 1960,
                   "signature": "a9aeec74",
@@ -2045,14 +2045,14 @@
                 ]
               },
               {
-                "time_ms": 3092,
+                "time_ms": 3046,
                 "control_value": 440,
                 "model_outputs": {
                   "wavelength_m": 0.7795454545454545,
                   "period_ms": 2.272727272727273
                 },
                 "frame_count": 54,
-                "canvas_signature": 1094606025,
+                "canvas_signature": 1607314477,
                 "actor": {
                   "visible_pixels": 1941,
                   "signature": "348ce812",
@@ -2106,14 +2106,14 @@
                 ]
               },
               {
-                "time_ms": 3281,
+                "time_ms": 3238,
                 "control_value": 440,
                 "model_outputs": {
                   "wavelength_m": 0.7795454545454545,
                   "period_ms": 2.272727272727273
                 },
                 "frame_count": 56,
-                "canvas_signature": 517890627,
+                "canvas_signature": 4229943063,
                 "actor": {
                   "visible_pixels": 1936,
                   "signature": "48c66d9c",
@@ -2173,7 +2173,7 @@
     },
     {
       "golden_id": "day_night",
-      "artifact_sha256": "dae0bebfd7afe57d9ca6cf2671ce1f296ed7a11bbdaadcdb5af6964e9ec8f2f2",
+      "artifact_sha256": "dfd5664c66d770cb435b2d1eff0308c556e02033b7ffe7fcce98c1b042841a92",
       "actor": "earth_landmark",
       "action": "rotates",
       "passed": true,
@@ -2212,7 +2212,7 @@
         ],
         "actorSamples": [
           {
-            "time_ms": 399,
+            "time_ms": 406,
             "control_value": 60,
             "model_outputs": {
               "light_alignment": 0.5000000000000001,
@@ -2245,20 +2245,20 @@
               "light_alignment": 1,
               "daylight": 1
             },
-            "frame_count": 15,
-            "canvas_signature": 2141254876,
+            "frame_count": 14,
+            "canvas_signature": 330540626,
             "actor": {
-              "visible_pixels": 156,
-              "signature": "bd72d639",
+              "visible_pixels": 152,
+              "signature": "335e195e",
               "centroid": {
-                "x": 0.6493233618233618,
-                "y": 0.5977884615384615
+                "x": 0.651343201754386,
+                "y": 0.6021052631578947
               },
               "bounds": {
-                "x": 0.5902777777777778,
-                "y": 0.37,
-                "width": 0.1527777777777778,
-                "height": 0.41
+                "x": 0.5916666666666667,
+                "y": 0.3675,
+                "width": 0.15138888888888888,
+                "height": 0.4125
               },
               "phase_columns": null
             },
@@ -2266,20 +2266,20 @@
             "phase_columns": null
           },
           {
-            "time_ms": 717,
+            "time_ms": 715,
             "control_value": 360,
             "model_outputs": {
               "light_alignment": 1,
               "daylight": 1
             },
-            "frame_count": 18,
-            "canvas_signature": 1008208437,
+            "frame_count": 17,
+            "canvas_signature": 3199625404,
             "actor": {
               "visible_pixels": 185,
-              "signature": "ae5ef16d",
+              "signature": "6e258261",
               "centroid": {
-                "x": 0.693948948948949,
-                "y": 0.7068378378378378
+                "x": 0.6928678678678678,
+                "y": 0.7084324324324324
               },
               "bounds": {
                 "x": 0.6208333333333333,
@@ -2293,26 +2293,26 @@
             "phase_columns": null
           },
           {
-            "time_ms": 875,
+            "time_ms": 867,
             "control_value": 60,
             "model_outputs": {
               "light_alignment": 0.5000000000000001,
               "daylight": 1
             },
-            "frame_count": 21,
-            "canvas_signature": 3888149712,
+            "frame_count": 20,
+            "canvas_signature": 2383583609,
             "actor": {
-              "visible_pixels": 170,
-              "signature": "e70948a",
+              "visible_pixels": 172,
+              "signature": "175e6f3d",
               "centroid": {
-                "x": 0.6997549019607843,
-                "y": 0.6233088235294117
+                "x": 0.7002018733850129,
+                "y": 0.6199563953488372
               },
               "bounds": {
                 "x": 0.6222222222222222,
-                "y": 0.3125,
+                "y": 0.31,
                 "width": 0.12361111111111112,
-                "height": 0.4675
+                "height": 0.47
               },
               "phase_columns": null
             },
@@ -2322,20 +2322,20 @@
         ],
         "physicsSamples": [
           {
-            "time_ms": 1388,
+            "time_ms": 1380,
             "control_value": 0,
             "model_outputs": {
               "light_alignment": 1,
               "daylight": 1
             },
-            "frame_count": 28,
-            "canvas_signature": 1547457509,
+            "frame_count": 27,
+            "canvas_signature": 375329092,
             "actor": {
               "visible_pixels": 159,
-              "signature": "9a376f9f",
+              "signature": "fda9a935",
               "centroid": {
-                "x": 0.6460167714884696,
-                "y": 0.6125471698113207
+                "x": 0.6459818308874913,
+                "y": 0.6124213836477987
               },
               "bounds": {
                 "x": 0.5833333333333334,
@@ -2349,14 +2349,14 @@
             "phase_columns": null
           },
           {
-            "time_ms": 1902,
+            "time_ms": 1910,
             "control_value": 90,
             "model_outputs": {
               "light_alignment": 0,
               "daylight": 0
             },
-            "frame_count": 36,
-            "canvas_signature": 3955445614,
+            "frame_count": 35,
+            "canvas_signature": 972803887,
             "actor": {
               "visible_pixels": 147,
               "signature": "a39c19f3",
@@ -2376,26 +2376,26 @@
             "phase_columns": null
           },
           {
-            "time_ms": 2413,
+            "time_ms": 2437,
             "control_value": 180,
             "model_outputs": {
               "light_alignment": -1,
               "daylight": 0
             },
             "frame_count": 44,
-            "canvas_signature": 4186733426,
+            "canvas_signature": 1577833786,
             "actor": {
               "visible_pixels": 172,
-              "signature": "1a6c78f6",
+              "signature": "13f1b337",
               "centroid": {
-                "x": 0.712483850129199,
-                "y": 0.6496366279069767
+                "x": 0.7110384366925064,
+                "y": 0.655828488372093
               },
               "bounds": {
                 "x": 0.6222222222222222,
-                "y": 0.415,
+                "y": 0.425,
                 "width": 0.15555555555555556,
-                "height": 0.365
+                "height": 0.355
               },
               "phase_columns": null
             },
@@ -2403,26 +2403,26 @@
             "phase_columns": null
           },
           {
-            "time_ms": 2940,
+            "time_ms": 2952,
             "control_value": 270,
             "model_outputs": {
               "light_alignment": 0,
               "daylight": 0
             },
-            "frame_count": 52,
-            "canvas_signature": 1135969041,
+            "frame_count": 51,
+            "canvas_signature": 2180712059,
             "actor": {
-              "visible_pixels": 172,
-              "signature": "75a1cee7",
+              "visible_pixels": 176,
+              "signature": "b1dfd26b",
               "centroid": {
-                "x": 0.6874515503875969,
-                "y": 0.7136046511627907
+                "x": 0.6878472222222223,
+                "y": 0.7126136363636364
               },
               "bounds": {
                 "x": 0.6208333333333333,
-                "y": 0.6175,
+                "y": 0.615,
                 "width": 0.125,
-                "height": 0.1625
+                "height": 0.165
               },
               "phase_columns": null
             },

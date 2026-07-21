@@ -329,6 +329,11 @@ def verify_candidate(
     source_failures, source_checks = _source_report(source)
     failures.extend(source_failures)
     check_count += source_checks
+    from server.shared_state import shared_model_report
+
+    shared_model = shared_model_report(source)
+    failures.extend(shared_model["failures"])
+    check_count += int(shared_model["check_count"])
     node_report: dict[str, Any] = {
         "passed": False,
         "check_count": 0,

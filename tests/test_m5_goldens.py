@@ -92,7 +92,7 @@ def test_builder_reference_review_rejects_wrong_formula_and_reference_outputs():
     module_output = {
         **VALID_MODULE_OUTPUT,
         "module_js": good_source.replace(
-            "return { lit_fraction: litFraction(Number(inputs.angle_deg)) };",
+            "return { lit_fraction: state.lit_fraction };",
             "return { lit_fraction: 0 };",
         ),
     }

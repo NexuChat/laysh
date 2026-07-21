@@ -132,6 +132,31 @@ Completed locally; source changes and this evidence record are committed togethe
   failures in 103.269s. `.venv/bin/ruff check .`, `node --check
   scripts/check_golden.mjs`, and `node --check sim_shell/shell.js` were clean.
 
+#### MOTION-04 — one pivotal model state
+
+- Added a bounded static contract requiring exactly one named
+  `LAYSH_SHARED_MODEL` function that returns a state object consumed by both
+  `test(inputs)` and the render path. A deliberately divergent visual formula,
+  a no-op shared-model call beside drift, a scalar model return, and missing
+  render/test consumption all fail with machine-readable diagnostics.
+- Updated all six pinned goldens through a deterministic local transformer.
+  The refresh test replaces `CodexBackend` construction with a hard failure and
+  proves the operation is offline and idempotent. No runtime or visual model was
+  called.
+- `out/evidence/motion-04.json` records six of six goldens passing, 42 checks,
+  zero failures, and zero model calls. The independent MOTION-03 browser proof
+  was rerun after refresh and remains six of six, 83 checks, zero model calls in
+  `out/evidence/motion-03.json`.
+- The generation prompt now requires the same shared-state contract while
+  retaining the complete visual contract; the rendered fixture prompt is 4,783
+  characters against the 4,800-character bound.
+- Focused affected suite: 58 passed in 6.38s. Full suite: 238 passed and the
+  single opt-in live G4 test skipped in 172.89s. Ruff, `git diff --check`, Python
+  compilation, and both JavaScript syntax checks were clean.
+
+Current acceptance ledger after MOTION-04: 10 passing, 0 failing, 20 not
+started, and 0 blocked. This is not the final release query.
+
 ### Batch C — sharing, library, localization, and presentation
 
 Not started.

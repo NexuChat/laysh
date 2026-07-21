@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from collections.abc import Callable
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
@@ -315,6 +316,9 @@ def refresh_pinned_golden_teaching_shells(
     *,
     root: Path = GOLDEN_ROOT,
     browser_verifier: Any | None = None,
+    module_transformer: Callable[[str, str], str] | None = None,
+    refresh_evidence_key: str = "teaching_shell_refresh",
+    report_flag: str = "shell_refreshed",
 ) -> list[dict[str, Any]]:
     """Reassemble the six pinned lessons after a trusted teaching-shell revision."""
     from server.browser_verify import verify_artifact_in_browser
@@ -330,6 +334,8 @@ def refresh_pinned_golden_teaching_shells(
             continue
         document = json.loads(path.read_text(encoding="utf-8"))
         lesson, module_js = _artifact_lesson_and_module(document["artifact"])
+        if module_transformer is not None:
+            module_js = module_transformer(document["golden_id"], module_js)
         misconception = lesson.get("misconception")
         if not isinstance(misconception, str):
             raise ValueError("pinned lesson has no approved misconception correction")
@@ -376,7 +382,7 @@ def refresh_pinned_golden_teaching_shells(
         }
         document["evidence"] = {
             **document.get("evidence", {}),
-            "teaching_shell_refresh": {
+            refresh_evidence_key: {
                 "deterministic_check_count": candidate.check_count,
                 "browser_check_count": browser.check_count,
             },
@@ -386,7 +392,7 @@ def refresh_pinned_golden_teaching_shells(
             {
                 "golden_id": document["golden_id"],
                 "artifact_sha256": document["artifact_sha256"],
-                "shell_refreshed": True,
+                report_flag: True,
             }
         )
     manifest = {
@@ -419,3 +425,21 @@ def refresh_pinned_golden_teaching_shells(
     for temporary, path in temporary_paths:
         temporary.replace(path)
     return reports
+
+
+def refresh_pinned_golden_shared_model_states(
+    *,
+    root: Path = GOLDEN_ROOT,
+    browser_verifier: Any | None = None,
+) -> list[dict[str, Any]]:
+    """Upgrade all pinned sources to one verified pivotal-state function offline."""
+
+    from server.golden_shared_state import upgrade_golden_module
+
+    return refresh_pinned_golden_teaching_shells(
+        root=root,
+        browser_verifier=browser_verifier,
+        module_transformer=upgrade_golden_module,
+        refresh_evidence_key="shared_model_refresh",
+        report_flag="shared_model_refreshed",
+    )

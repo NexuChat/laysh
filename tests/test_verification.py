@@ -38,7 +38,7 @@ def test_numeric_fixture_failure_reports_id_inputs_expected_actual_and_tolerance
     from server.verify import verify_candidate
 
     source = GOOD_MODULE_OUTPUT["module_js"].replace(
-        "return { lit_fraction: litFraction(Number(inputs.angle_deg)) };",
+        "return { lit_fraction: state.lit_fraction };",
         "return { lit_fraction: 0 };",
     )
     result = verify_candidate(

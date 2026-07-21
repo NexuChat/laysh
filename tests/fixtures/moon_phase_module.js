@@ -7,12 +7,19 @@ window.LayshSimulation = (() => {
   let emitFrame;
   let angleDeg = 90;
 
-  function litFraction(angle) {
-    return (1 - Math.cos((angle * Math.PI) / 180)) / 2;
+  /* LAYSH_SHARED_MODEL: moonState */
+  function moonState(value) {
+    const numeric = Number(value);
+    const angle = Number.isFinite(numeric) ? Math.max(0, Math.min(360, numeric)) : 90;
+    return {
+      angle_deg: angle,
+      lit_fraction: (1 - Math.cos((angle * Math.PI) / 180)) / 2,
+    };
   }
 
   function draw() {
-    const fraction = litFraction(angleDeg);
+    const state = moonState(angleDeg);
+    const fraction = state.lit_fraction;
     context.clearRect(0, 0, width, height);
     context.fillStyle = "#071520";
     context.fillRect(0, 0, width, height);
@@ -35,7 +42,8 @@ window.LayshSimulation = (() => {
       draw();
     },
     test(inputs) {
-      return { lit_fraction: litFraction(Number(inputs.angle_deg)) };
+      const state = moonState(Number(inputs.angle_deg));
+      return { lit_fraction: state.lit_fraction };
     },
     resize(nextWidth, nextHeight) {
       width = nextWidth;
@@ -50,4 +58,3 @@ window.LayshSimulation = (() => {
     },
   };
 })();
-
