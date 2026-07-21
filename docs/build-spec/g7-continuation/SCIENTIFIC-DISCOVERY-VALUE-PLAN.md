@@ -486,14 +486,14 @@ copied into the shared implementation.
 |---|---|---|---|
 | UNIFY-INV-01 | passing | Classify existing general rules, scientific oracles, reusable assets, custom runtime, patched artifacts, and temporary fixes. | `UNIFIED-GEOMETRY-INVENTORY.md` at audited HEAD `049f6fa`. |
 | UNIFY-ADR-01 | passing | Record the reference defect, first custom correction, generated-path gap, freeze, extraction, and CI decision. | `docs/architecture/ADR-0001-unified-scene-geometry-validation.md`. |
-| UNIFY-CONTRACT-01 | not-started | Closed shared overlap/contact/occlusion/clipping/clearance contract with safe defaults and fail-closed unsupported geometry. | Shared contract schema/module and focused red/green tests. |
-| UNIFY-VALIDATOR-01 | not-started | One deterministic validator used by generated and curated paths. | Call-graph test plus validator reports. |
-| UNIFY-CLAMP-01 | not-started | Candidate -> clamp/fit -> recompute -> validate all -> alternative or reject. | Post-clamp regression independent of lesson names. |
-| UNIFY-CI-01 | not-started | Production learner runtime cannot import or branch on example-specific code. | AST/import-boundary `no_example_specific_runtime` gate. |
-| UNIFY-GEN-COLLISION-01 | not-started | A colliding generated fixture is rejected through `verify_candidate`. | Generated-path integration test. |
-| UNIFY-OCCLUSION-01 | not-started | Explicit scientific occlusion is accepted by the same path. | Policy positive test and generated-path integration. |
-| UNIFY-RESPONSIVE-01 | not-started | Generated viewport/state samples catch responsive and dynamic collision defects. | Deterministic property matrix and temporal sample tests. |
-| UNIFY-MOON-REGRESSION-01 | not-started | Moon remains only a fixture and passes without a custom production branch. | Legacy artifact regression plus AST/import gate. |
+| UNIFY-CONTRACT-01 | passing | Closed shared overlap/contact/occlusion/clipping/clearance contract with safe defaults and fail-closed unsupported geometry. | `server/schemas/scene_geometry.schema.json`, `server/scene_geometry.py`, and `tests/test_scene_geometry.py`. |
+| UNIFY-VALIDATOR-01 | passing | One deterministic validator used by generated and curated paths. | `tests/test_scene_geometry_wiring.py`, `tests/test_scene_geometry_ci_wiring.py`, and the AST call-boundary gate. |
+| UNIFY-CLAMP-01 | passing | Candidate -> clamp/fit -> recompute -> validate all -> alternative or reject. | `tests/test_scene_geometry_properties.py` rejects missing or stale post-fit evidence and an invalid final clamp. |
+| UNIFY-CI-01 | passing | Production learner runtime cannot import or branch on example-specific code. | `scripts/check_no_example_specific_runtime.py` returned `[]`; its focused suite passed 10 tests. |
+| UNIFY-GEN-COLLISION-01 | passing | A colliding generated fixture is rejected through `verify_candidate`. | Example-agnostic real-path tests in `tests/test_scene_geometry_ci_wiring.py`. |
+| UNIFY-OCCLUSION-01 | passing | Explicit scientific occlusion is accepted by the same path. | Shared policy unit test and generated-path integration both pass. |
+| UNIFY-RESPONSIVE-01 | passing | Generated viewport/state samples catch responsive and dynamic collision defects. | 39 deterministic viewports and 11 temporal samples in `tests/test_scene_geometry_properties.py`. |
+| UNIFY-MOON-REGRESSION-01 | passing | Moon remains only a fixture and passes without a custom production branch. | Legacy browser regression in the 303-pass full suite plus the zero-finding AST/import gate; the custom refresher remains frozen offline only. |
 | UNIFY-REPRO-01 | blocked | A reference artifact is reproducibly generated with unified provenance and no manual patch. | Deliberately deferred until the owner-authorized Canary phase. |
 
 The blocked reproducibility row is an explicit phase boundary, not a hidden

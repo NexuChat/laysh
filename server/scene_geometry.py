@@ -11,16 +11,12 @@ OVERLAP_POLICIES = frozenset({"forbid", "allow", "scientific_occlusion"})
 CONTACT_POLICIES = frozenset({"forbid", "allow", "required"})
 CLIPPING_POLICIES = frozenset({"forbid", "allow"})
 
-_ROOT_FIELDS = frozenset(
-    {"schemaVersion", "phase", "viewport", "state", "objects", "relations"}
-)
+_ROOT_FIELDS = frozenset({"schemaVersion", "phase", "viewport", "state", "objects", "relations"})
 _VIEWPORT_FIELDS = frozenset({"width", "height", "safeInset"})
 _STATE_FIELDS = frozenset({"id", "timeMs"})
 _OBJECT_FIELDS = frozenset({"id", "scientific", "geometry", "clippingPolicy"})
 _CIRCLE_FIELDS = frozenset({"type", "cx", "cy", "radius"})
-_RELATION_FIELDS = frozenset(
-    {"objects", "overlapPolicy", "contactPolicy", "minimumClearance"}
-)
+_RELATION_FIELDS = frozenset({"objects", "overlapPolicy", "contactPolicy", "minimumClearance"})
 _PHASES = frozenset({"candidate", "clamped", "post_fit"})
 _CONTACT_TOLERANCE_PX = 1e-6
 
@@ -142,6 +138,19 @@ def _validated_sample(
             actual={"state": state},
         )
         return None
+    state_id = state.get("id")
+    time_ms = _finite_number(state.get("timeMs"))
+    if not isinstance(state_id, str) or not state_id or time_ms is None or time_ms < 0:
+        _contract_failure(
+            failures,
+            sample_index=sample_index,
+            state=state,
+            code="scene_contract_invalid_state",
+            expected={"id": "nonempty_string", "timeMs": "finite_nonnegative"},
+            actual={"state": state},
+        )
+        return None
+    state = {"id": state_id, "timeMs": time_ms}
 
     viewport = sample.get("viewport")
     if not isinstance(viewport, dict) or _unknown_fields(viewport, _VIEWPORT_FIELDS):
@@ -237,9 +246,7 @@ def _validated_sample(
                     actual={"object": object_id, "geometryType": geometry_type},
                 )
             continue
-        values = {
-            key: _finite_number(geometry.get(key)) for key in ("cx", "cy", "radius")
-        }
+        values = {key: _finite_number(geometry.get(key)) for key in ("cx", "cy", "radius")}
         if (
             _unknown_fields(geometry, _CIRCLE_FIELDS)
             or any(value is None for value in values.values())
@@ -333,6 +340,7 @@ def _validated_sample(
         {
             **sample,
             "viewport": {"width": width, "height": height, "safeInset": safe_inset},
+            "state": state,
         },
         objects_by_id,
         relations_by_pair,
@@ -364,6 +372,14 @@ def validate_scene_geometry(samples: object) -> GeometryValidationResult:
             minimum_clearance_px=None,
         )
 
+    validated_samples: list[
+        tuple[
+            int,
+            dict[str, Any],
+            dict[str, dict[str, Any]],
+            dict[tuple[str, str], dict[str, Any]],
+        ]
+    ] = []
     for sample_index, original_sample in enumerate(samples):
         check_count += 1
         validated = _validated_sample(
@@ -374,6 +390,67 @@ def validate_scene_geometry(samples: object) -> GeometryValidationResult:
         if validated is None:
             continue
         sample, objects_by_id, relations_by_pair = validated
+        validated_samples.append((sample_index, sample, objects_by_id, relations_by_pair))
+
+    phase_groups: dict[
+        tuple[float, float, float, str, float],
+        list[tuple[int, dict[str, Any]]],
+    ] = {}
+    for sample_index, sample, _objects_by_id, _relations_by_pair in validated_samples:
+        state = sample["state"]
+        viewport = sample["viewport"]
+        group_key = (
+            viewport["width"],
+            viewport["height"],
+            viewport["safeInset"],
+            state["id"],
+            state["timeMs"],
+        )
+        phase_groups.setdefault(group_key, []).append((sample_index, sample))
+
+    for group in phase_groups.values():
+        phases = list(dict.fromkeys(sample["phase"] for _index, sample in group))
+        post_fit_indexes = [
+            sample_index for sample_index, sample in group if sample["phase"] == "post_fit"
+        ]
+        layout_indexes = [
+            sample_index for sample_index, sample in group if sample["phase"] != "post_fit"
+        ]
+        sample_index, sample = group[0]
+        if not post_fit_indexes:
+            failures.append(
+                _failure(
+                    "post_fit_scene_sample_missing",
+                    {"phase": "post_fit"},
+                    {
+                        "phases": phases,
+                        "group": {
+                            "viewport": sample["viewport"],
+                            "state": sample["state"],
+                        },
+                    },
+                    sample_index=sample_index,
+                    state=sample["state"],
+                )
+            )
+        elif layout_indexes and max(post_fit_indexes) < max(layout_indexes):
+            failures.append(
+                _failure(
+                    "post_fit_scene_sample_out_of_order",
+                    {"post_fit_after_last_layout_sample": True},
+                    {
+                        "phases": phases,
+                        "last_layout_sample_index": max(layout_indexes),
+                        "last_post_fit_sample_index": max(post_fit_indexes),
+                    },
+                    sample_index=max(layout_indexes),
+                    state=sample["state"],
+                )
+            )
+
+    for sample_index, sample, objects_by_id, relations_by_pair in validated_samples:
+        if sample["phase"] != "post_fit":
+            continue
         state = sample["state"]
         viewport = sample["viewport"]
         for object_id, item in objects_by_id.items():

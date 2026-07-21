@@ -107,3 +107,36 @@ Generated modules that declare scientific scene geometry can be rejected before
 publication with actionable, policy-specific diagnostics. Curated evidence and
 new learner work share the same minimum. Legacy artifacts remain a disclosed
 migration risk until Canary and reproducible regeneration are implemented.
+
+## Implemented call graph after phases 2–4
+
+```text
+POST /api/ask
+  -> JobManager._run
+     -> run_pipeline
+        -> verify_candidate
+           -> _run_node_report
+              -> scripts/verify_module.mjs
+                 -> canvas.__layshSceneGeometry samples
+           -> validate_scene_geometry
+              -> structural and supported-geometry checks on every sample
+              -> require final post_fit evidence after any fit/clamp
+              -> validate bounds and pair policies on every post_fit state
+           -> assemble_artifact only when all deterministic gates pass
+        -> verify_artifact_in_browser
+
+Offline curated evidence
+  -> verify_golden_physics_motion
+     -> scripts/check_golden.mjs
+     -> evaluate_body_geometry
+        -> validate_scene_geometry
+```
+
+The runnable AST/import-boundary gate in
+`scripts/check_no_example_specific_runtime.py` protects both shared-validator
+edges and rejects example-keyed correctness logic in the learner runtime. The
+phase-4 repository scan produced zero findings. Synthetic generated-path tests
+prove forbidden collision rejection, explicit scientific-occlusion acceptance,
+unsupported-geometry fail-closed behavior, post-fit sequencing, responsive
+viewport coverage, and temporal collision detection without a lesson-specific
+branch. Canary generation and legacy artifact retirement remain deferred.

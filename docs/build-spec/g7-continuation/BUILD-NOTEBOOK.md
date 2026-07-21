@@ -352,6 +352,48 @@ Not started.
   263.34s. `ruff check .` and `git diff --check` were clean. No GPT call,
   Canary, golden regeneration, service change, or external publish occurred.
 
+### Unified-generation foundation — phase 4 general regressions and CI gate
+
+- The after-call graph is now executable and guarded:
+  `run_pipeline -> verify_candidate -> _run_node_report ->
+  scripts/verify_module.mjs -> validate_scene_geometry`. Geometry failures are
+  merged before assembly or browser verification can mark a generated result
+  trusted. Curated geometry evidence delegates to that same validator through
+  `golden_physics_motion.evaluate_body_geometry`.
+- The shared validator groups evidence by viewport and scientific state. It
+  validates every sample structurally, fails closed on unsupported scientific
+  geometry, and uses only the final `post_fit` bounds for publishability. A
+  candidate or clamp without a later `post_fit` sample fails, as does stale
+  `post_fit` evidence followed by another fit/clamp. A repaired candidate may
+  pass only when the recomputed final sample passes every declared policy.
+- General property evidence covers 39 deterministic viewports (seven critical
+  screen classes plus 32 arithmetic samples), 11 temporal samples at 80 ms
+  intervals, explicit scientific occlusion/contact, forbidden overlap,
+  clipping, clearance, and unsupported geometry. The generated-path fixture is
+  synthetic and contains no reference-lesson name or coordinates.
+- `scripts/check_no_example_specific_runtime.py` is an AST/import-boundary CI
+  gate. It rejects lesson/question-keyed branches, custom lesson identifiers,
+  slug-keyed coordinates, per-lesson prompts, and imports from `golden_*` into
+  production. It also proves that generated and curated verification both
+  import and call `validate_scene_geometry`; the repository scan returned
+  `[]`. Reference data and frozen offline migration tooling remain outside the
+  learner-runtime boundary.
+- Red evidence: the geometry property suite had 3 failures and 5 passes before
+  post-fit enforcement; the real generated-path suite had 2 failures and 2
+  passes because candidate/clamped-only evidence was accepted; the root review
+  added a separate failing regression for stale, out-of-order post-fit
+  evidence. The AST suite initially failed collection before the gate existed,
+  then exposed 3 failures in its first implementation.
+- Green evidence: 51 focused/affected tests passed in 1.11s. Non-browser
+  coverage ran 288 tests with 16 deselected in 9.28s and remained above policy
+  at 81%. The full suite passed 303 tests with one opt-in live skip in 302.72s;
+  Ruff and `git diff --check` were clean. Machine-readable evidence is in
+  `out/evidence/unify-phase4.json`.
+- Foundation status is now 10 passing, 0 failing, 0 not-started, and 1 blocked:
+  only reproducible unified regeneration remains deliberately blocked until
+  the owner-authorized Canary phase. No GPT call, Canary, artifact rewrite,
+  golden regeneration, service change, or external publish occurred.
+
 ### Embedded simulation content sizing regression
 
 - The red browser measurement reproduced silent clipping across all six gallery

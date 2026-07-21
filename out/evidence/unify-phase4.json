@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "gate": "UNIFY_PHASE_4",
+  "session_id": "019f7998-9378-72b2-b590-ee10e632ce81",
+  "model_calls": 0,
+  "canary_run": false,
+  "goldens_regenerated": false,
+  "red": {
+    "no_example_specific_runtime": "collection failed before the AST gate existed; the first implementation then had 3 failed and 7 passed",
+    "scene_geometry_properties": "3 failed and 5 passed before post-fit sequencing was enforced",
+    "generated_path_wiring": "2 failed and 2 passed because candidate/clamped-only evidence was accepted",
+    "stale_post_fit": "1 failed because post-fit evidence preceding a later clamp was accepted"
+  },
+  "green": {
+    "focused": "51 passed in 1.11s",
+    "non_browser_coverage": "288 passed, 16 deselected in 9.28s; 81% total coverage",
+    "full_suite": "303 passed, 1 skipped in 302.72s",
+    "ruff": "All checks passed!",
+    "ast_findings": []
+  },
+  "property_evidence": {
+    "responsive_viewports": 39,
+    "temporal_samples": 11,
+    "temporal_step_ms": 80,
+    "contact_tolerance_px": 0.000001
+  },
+  "generated_call_graph": [
+    "run_pipeline",
+    "verify_candidate",
+    "_run_node_report",
+    "scripts/verify_module.mjs",
+    "validate_scene_geometry",
+    "assemble_artifact",
+    "verify_artifact_in_browser"
+  ],
+  "curated_geometry_validator": "server.golden_physics_motion.evaluate_body_geometry delegates to server.scene_geometry.validate_scene_geometry"
+}
