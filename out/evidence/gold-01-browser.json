@@ -1,0 +1,3789 @@
+{
+  "schema_version": "1.0",
+  "gate": "golden_browser_review",
+  "model_calls": 0,
+  "passed": true,
+  "journey_count": 12,
+  "journeys": [
+    {
+      "golden_id": "buoyancy",
+      "locale": "ar",
+      "lang": "ar",
+      "dir": "rtl",
+      "artifact_sha256": "5a878506c8f5a520a430bbc4abbb50b1be71b5880184a09d12d533765dcc9ec1",
+      "passed": true,
+      "checks": {
+        "actor_visible": true,
+        "primary_control_reachable": true,
+        "pause_stops_motion": true,
+        "resume_restarts_motion": true,
+        "reset_restores_default": true,
+        "reduced_motion_stops_automatic_motion": true,
+        "state_alternative_present": true,
+        "keyboard_controls_named": true,
+        "no_duplicate_ids": true,
+        "no_horizontal_clip": true
+      },
+      "responsive": [
+        {
+          "name": "mobile-320x844",
+          "passed": true,
+          "viewport": {
+            "width": 320,
+            "height": 844,
+            "dpr": 1,
+            "documentClientWidth": 320,
+            "documentScrollWidth": 320
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 9.6,
+              "right": 310.4,
+              "scrollWidth": 347,
+              "clientWidth": 299
+            },
+            {
+              "tag": "div",
+              "id": "prediction-choices",
+              "className": "choices",
+              "left": 26.6,
+              "right": 293.4,
+              "scrollWidth": 613,
+              "clientWidth": 267
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": -111.9,
+              "right": 85.6,
+              "scrollWidth": 195,
+              "clientWidth": 195
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": -319.7,
+              "right": -122.2,
+              "scrollWidth": 195,
+              "clientWidth": 195
+            },
+            {
+              "tag": "div",
+              "id": "",
+              "className": "control-row",
+              "left": 38.8,
+              "right": 281.2,
+              "scrollWidth": 244,
+              "clientWidth": 242
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 281.2,
+              "right": 282.2,
+              "scrollWidth": 95,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "mobile-390x844",
+          "passed": true,
+          "viewport": {
+            "width": 390,
+            "height": 844,
+            "dpr": 1,
+            "documentClientWidth": 390,
+            "documentScrollWidth": 390
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 9.6,
+              "right": 380.4,
+              "scrollWidth": 417,
+              "clientWidth": 369
+            },
+            {
+              "tag": "div",
+              "id": "prediction-choices",
+              "className": "choices",
+              "left": 26.6,
+              "right": 363.4,
+              "scrollWidth": 768,
+              "clientWidth": 337
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": -145.5,
+              "right": 103.8,
+              "scrollWidth": 247,
+              "clientWidth": 247
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": -405.1,
+              "right": -155.8,
+              "scrollWidth": 247,
+              "clientWidth": 247
+            },
+            {
+              "tag": "div",
+              "id": "",
+              "className": "control-row",
+              "left": 38.8,
+              "right": 351.2,
+              "scrollWidth": 314,
+              "clientWidth": 312
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 351.2,
+              "right": 352.2,
+              "scrollWidth": 95,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "desktop-1440x900",
+          "passed": true,
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "dpr": 1,
+            "documentClientWidth": 1425,
+            "documentScrollWidth": 1425
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 895.7,
+              "right": 1270.5,
+              "scrollWidth": 421,
+              "clientWidth": 373
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 784.1,
+              "right": 785.1,
+              "scrollWidth": 95,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "zoom-200",
+          "passed": true,
+          "viewport": {
+            "width": 720,
+            "height": 450,
+            "dpr": 2,
+            "documentClientWidth": 705,
+            "documentScrollWidth": 705
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 21.6,
+              "right": 683.4,
+              "scrollWidth": 708,
+              "clientWidth": 660
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 593.4,
+              "right": 594.4,
+              "scrollWidth": 95,
+              "clientWidth": 1
+            }
+          ]
+        }
+      ],
+      "a11y": {
+        "unnamed_interactive_nodes": 0,
+        "duplicate_ids": [],
+        "state_alternative_present": true
+      },
+      "console_errors": [],
+      "external_requests": 0,
+      "screenshots": [
+        "out/evidence/screens/gold-01/buoyancy-ar-mobile-390x844.png",
+        "out/evidence/screens/gold-01/buoyancy-ar-desktop-1440x900.png"
+      ],
+      "timing_evidence": {
+        "autoplay_frame_delta": 5,
+        "pause_frame_delta": 0,
+        "resume_frame_delta": 6,
+        "reduced_motion_frame_delta": 0
+      },
+      "screenshot_sha256": {
+        "out/evidence/screens/gold-01/buoyancy-ar-mobile-390x844.png": "640891cf241575c2a44d6e6a98dde1a5328bc21013ad66bd1a8fdb7069b510f5",
+        "out/evidence/screens/gold-01/buoyancy-ar-desktop-1440x900.png": "d30d56707bab471ce559817932b98a008f17ba5e8649a644ed121ab232ee28e2"
+      }
+    },
+    {
+      "golden_id": "buoyancy",
+      "locale": "en",
+      "lang": "en",
+      "dir": "ltr",
+      "artifact_sha256": "53bd0e31e021bf74482b8c7d0a8b82680ad8ba280973c966cb75bd22a1ff501c",
+      "passed": true,
+      "checks": {
+        "actor_visible": true,
+        "primary_control_reachable": true,
+        "pause_stops_motion": true,
+        "resume_restarts_motion": true,
+        "reset_restores_default": true,
+        "reduced_motion_stops_automatic_motion": true,
+        "state_alternative_present": true,
+        "keyboard_controls_named": true,
+        "no_duplicate_ids": true,
+        "no_horizontal_clip": true
+      },
+      "responsive": [
+        {
+          "name": "mobile-320x844",
+          "passed": true,
+          "viewport": {
+            "width": 320,
+            "height": 844,
+            "dpr": 1,
+            "documentClientWidth": 320,
+            "documentScrollWidth": 320
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 9.6,
+              "right": 310.4,
+              "scrollWidth": 347,
+              "clientWidth": 299
+            },
+            {
+              "tag": "div",
+              "id": "prediction-choices",
+              "className": "choices",
+              "left": 26.6,
+              "right": 293.4,
+              "scrollWidth": 613,
+              "clientWidth": 267
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": 234.4,
+              "right": 431.9,
+              "scrollWidth": 195,
+              "clientWidth": 195
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": 442.3,
+              "right": 639.7,
+              "scrollWidth": 195,
+              "clientWidth": 195
+            },
+            {
+              "tag": "div",
+              "id": "",
+              "className": "control-row",
+              "left": 38.8,
+              "right": 281.2,
+              "scrollWidth": 244,
+              "clientWidth": 242
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 37.8,
+              "right": 38.8,
+              "scrollWidth": 117,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "mobile-390x844",
+          "passed": true,
+          "viewport": {
+            "width": 390,
+            "height": 844,
+            "dpr": 1,
+            "documentClientWidth": 390,
+            "documentScrollWidth": 390
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 9.6,
+              "right": 380.4,
+              "scrollWidth": 417,
+              "clientWidth": 369
+            },
+            {
+              "tag": "div",
+              "id": "prediction-choices",
+              "className": "choices",
+              "left": 26.6,
+              "right": 363.4,
+              "scrollWidth": 768,
+              "clientWidth": 337
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": 286.2,
+              "right": 535.5,
+              "scrollWidth": 247,
+              "clientWidth": 247
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": 545.8,
+              "right": 795.1,
+              "scrollWidth": 247,
+              "clientWidth": 247
+            },
+            {
+              "tag": "div",
+              "id": "",
+              "className": "control-row",
+              "left": 38.8,
+              "right": 351.2,
+              "scrollWidth": 314,
+              "clientWidth": 312
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 37.8,
+              "right": 38.8,
+              "scrollWidth": 117,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "desktop-1440x900",
+          "passed": true,
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "dpr": 1,
+            "documentClientWidth": 1425,
+            "documentScrollWidth": 1425
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 154.5,
+              "right": 529.3,
+              "scrollWidth": 421,
+              "clientWidth": 373
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 639.9,
+              "right": 640.9,
+              "scrollWidth": 117,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "zoom-200",
+          "passed": true,
+          "viewport": {
+            "width": 720,
+            "height": 450,
+            "dpr": 2,
+            "documentClientWidth": 705,
+            "documentScrollWidth": 705
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 21.6,
+              "right": 683.4,
+              "scrollWidth": 708,
+              "clientWidth": 660
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 110.6,
+              "right": 111.6,
+              "scrollWidth": 117,
+              "clientWidth": 1
+            }
+          ]
+        }
+      ],
+      "a11y": {
+        "unnamed_interactive_nodes": 0,
+        "duplicate_ids": [],
+        "state_alternative_present": true
+      },
+      "console_errors": [],
+      "external_requests": 0,
+      "screenshots": [
+        "out/evidence/screens/gold-01/buoyancy-en-mobile-390x844.png",
+        "out/evidence/screens/gold-01/buoyancy-en-desktop-1440x900.png"
+      ],
+      "timing_evidence": {
+        "autoplay_frame_delta": 6,
+        "pause_frame_delta": 0,
+        "resume_frame_delta": 6,
+        "reduced_motion_frame_delta": 0
+      },
+      "screenshot_sha256": {
+        "out/evidence/screens/gold-01/buoyancy-en-mobile-390x844.png": "cab323c239c61ce9c7a0b8d0c00f83e5f9ce10825d989d82c01609f36543cfc0",
+        "out/evidence/screens/gold-01/buoyancy-en-desktop-1440x900.png": "0a694436502c112158418df0c5081346e97202f1a2c713e89a11ff9f732bd91e"
+      }
+    },
+    {
+      "golden_id": "day_night",
+      "locale": "ar",
+      "lang": "ar",
+      "dir": "rtl",
+      "artifact_sha256": "2faa32e175de6f8996ae4764f9102118bc1319a012dcf010aaa774e207e27ee0",
+      "passed": true,
+      "checks": {
+        "actor_visible": true,
+        "primary_control_reachable": true,
+        "pause_stops_motion": true,
+        "resume_restarts_motion": true,
+        "reset_restores_default": true,
+        "reduced_motion_stops_automatic_motion": true,
+        "state_alternative_present": true,
+        "keyboard_controls_named": true,
+        "no_duplicate_ids": true,
+        "no_horizontal_clip": true
+      },
+      "responsive": [
+        {
+          "name": "mobile-320x844",
+          "passed": true,
+          "viewport": {
+            "width": 320,
+            "height": 844,
+            "dpr": 1,
+            "documentClientWidth": 320,
+            "documentScrollWidth": 320
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 9.6,
+              "right": 310.4,
+              "scrollWidth": 347,
+              "clientWidth": 299
+            },
+            {
+              "tag": "div",
+              "id": "prediction-choices",
+              "className": "choices",
+              "left": 26.6,
+              "right": 293.4,
+              "scrollWidth": 613,
+              "clientWidth": 267
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": -111.9,
+              "right": 85.6,
+              "scrollWidth": 195,
+              "clientWidth": 195
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": -319.7,
+              "right": -122.2,
+              "scrollWidth": 195,
+              "clientWidth": 195
+            },
+            {
+              "tag": "div",
+              "id": "",
+              "className": "control-row",
+              "left": 38.8,
+              "right": 281.2,
+              "scrollWidth": 244,
+              "clientWidth": 242
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 281.2,
+              "right": 282.2,
+              "scrollWidth": 95,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "mobile-390x844",
+          "passed": true,
+          "viewport": {
+            "width": 390,
+            "height": 844,
+            "dpr": 1,
+            "documentClientWidth": 390,
+            "documentScrollWidth": 390
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 9.6,
+              "right": 380.4,
+              "scrollWidth": 417,
+              "clientWidth": 369
+            },
+            {
+              "tag": "div",
+              "id": "prediction-choices",
+              "className": "choices",
+              "left": 26.6,
+              "right": 363.4,
+              "scrollWidth": 768,
+              "clientWidth": 337
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": -145.5,
+              "right": 103.8,
+              "scrollWidth": 247,
+              "clientWidth": 247
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": -405.1,
+              "right": -155.8,
+              "scrollWidth": 247,
+              "clientWidth": 247
+            },
+            {
+              "tag": "div",
+              "id": "",
+              "className": "control-row",
+              "left": 38.8,
+              "right": 351.2,
+              "scrollWidth": 314,
+              "clientWidth": 312
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 351.2,
+              "right": 352.2,
+              "scrollWidth": 95,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "desktop-1440x900",
+          "passed": true,
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "dpr": 1,
+            "documentClientWidth": 1425,
+            "documentScrollWidth": 1425
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 895.7,
+              "right": 1270.5,
+              "scrollWidth": 421,
+              "clientWidth": 373
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 784.1,
+              "right": 785.1,
+              "scrollWidth": 95,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "zoom-200",
+          "passed": true,
+          "viewport": {
+            "width": 720,
+            "height": 450,
+            "dpr": 2,
+            "documentClientWidth": 705,
+            "documentScrollWidth": 705
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 21.6,
+              "right": 683.4,
+              "scrollWidth": 708,
+              "clientWidth": 660
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 593.4,
+              "right": 594.4,
+              "scrollWidth": 95,
+              "clientWidth": 1
+            }
+          ]
+        }
+      ],
+      "a11y": {
+        "unnamed_interactive_nodes": 0,
+        "duplicate_ids": [],
+        "state_alternative_present": true
+      },
+      "console_errors": [],
+      "external_requests": 0,
+      "screenshots": [
+        "out/evidence/screens/gold-01/day_night-ar-mobile-390x844.png",
+        "out/evidence/screens/gold-01/day_night-ar-desktop-1440x900.png"
+      ],
+      "timing_evidence": {
+        "autoplay_frame_delta": 6,
+        "pause_frame_delta": 0,
+        "resume_frame_delta": 6,
+        "reduced_motion_frame_delta": 0
+      },
+      "screenshot_sha256": {
+        "out/evidence/screens/gold-01/day_night-ar-mobile-390x844.png": "8c1a6a3a65ca763c0bf2d96270a76130ddbbccaebba59f941e1de133844440d8",
+        "out/evidence/screens/gold-01/day_night-ar-desktop-1440x900.png": "2119d177ed455eed5cec81322bc6cdc517fb758ea52534112dadee5472c26358"
+      }
+    },
+    {
+      "golden_id": "day_night",
+      "locale": "en",
+      "lang": "en",
+      "dir": "ltr",
+      "artifact_sha256": "03d868f43a787897c8b1d7eac50679b479ad31501d44cda102eed3b2282b3551",
+      "passed": true,
+      "checks": {
+        "actor_visible": true,
+        "primary_control_reachable": true,
+        "pause_stops_motion": true,
+        "resume_restarts_motion": true,
+        "reset_restores_default": true,
+        "reduced_motion_stops_automatic_motion": true,
+        "state_alternative_present": true,
+        "keyboard_controls_named": true,
+        "no_duplicate_ids": true,
+        "no_horizontal_clip": true
+      },
+      "responsive": [
+        {
+          "name": "mobile-320x844",
+          "passed": true,
+          "viewport": {
+            "width": 320,
+            "height": 844,
+            "dpr": 1,
+            "documentClientWidth": 320,
+            "documentScrollWidth": 320
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 9.6,
+              "right": 310.4,
+              "scrollWidth": 347,
+              "clientWidth": 299
+            },
+            {
+              "tag": "div",
+              "id": "prediction-choices",
+              "className": "choices",
+              "left": 26.6,
+              "right": 293.4,
+              "scrollWidth": 613,
+              "clientWidth": 267
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": 234.4,
+              "right": 431.9,
+              "scrollWidth": 195,
+              "clientWidth": 195
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": 442.3,
+              "right": 639.7,
+              "scrollWidth": 195,
+              "clientWidth": 195
+            },
+            {
+              "tag": "div",
+              "id": "",
+              "className": "control-row",
+              "left": 38.8,
+              "right": 281.2,
+              "scrollWidth": 244,
+              "clientWidth": 242
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 37.8,
+              "right": 38.8,
+              "scrollWidth": 117,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "mobile-390x844",
+          "passed": true,
+          "viewport": {
+            "width": 390,
+            "height": 844,
+            "dpr": 1,
+            "documentClientWidth": 390,
+            "documentScrollWidth": 390
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 9.6,
+              "right": 380.4,
+              "scrollWidth": 417,
+              "clientWidth": 369
+            },
+            {
+              "tag": "div",
+              "id": "prediction-choices",
+              "className": "choices",
+              "left": 26.6,
+              "right": 363.4,
+              "scrollWidth": 768,
+              "clientWidth": 337
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": 286.2,
+              "right": 535.5,
+              "scrollWidth": 247,
+              "clientWidth": 247
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": 545.8,
+              "right": 795.1,
+              "scrollWidth": 247,
+              "clientWidth": 247
+            },
+            {
+              "tag": "div",
+              "id": "",
+              "className": "control-row",
+              "left": 38.8,
+              "right": 351.2,
+              "scrollWidth": 314,
+              "clientWidth": 312
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 37.8,
+              "right": 38.8,
+              "scrollWidth": 117,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "desktop-1440x900",
+          "passed": true,
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "dpr": 1,
+            "documentClientWidth": 1425,
+            "documentScrollWidth": 1425
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 154.5,
+              "right": 529.3,
+              "scrollWidth": 421,
+              "clientWidth": 373
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 639.9,
+              "right": 640.9,
+              "scrollWidth": 117,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "zoom-200",
+          "passed": true,
+          "viewport": {
+            "width": 720,
+            "height": 450,
+            "dpr": 2,
+            "documentClientWidth": 705,
+            "documentScrollWidth": 705
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 21.6,
+              "right": 683.4,
+              "scrollWidth": 708,
+              "clientWidth": 660
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 110.6,
+              "right": 111.6,
+              "scrollWidth": 117,
+              "clientWidth": 1
+            }
+          ]
+        }
+      ],
+      "a11y": {
+        "unnamed_interactive_nodes": 0,
+        "duplicate_ids": [],
+        "state_alternative_present": true
+      },
+      "console_errors": [],
+      "external_requests": 0,
+      "screenshots": [
+        "out/evidence/screens/gold-01/day_night-en-mobile-390x844.png",
+        "out/evidence/screens/gold-01/day_night-en-desktop-1440x900.png"
+      ],
+      "timing_evidence": {
+        "autoplay_frame_delta": 6,
+        "pause_frame_delta": 0,
+        "resume_frame_delta": 6,
+        "reduced_motion_frame_delta": 0
+      },
+      "screenshot_sha256": {
+        "out/evidence/screens/gold-01/day_night-en-mobile-390x844.png": "9064378b4f929d1d2dc77845c24252e0c30350797cc913d901aac8f0513e3c89",
+        "out/evidence/screens/gold-01/day_night-en-desktop-1440x900.png": "080f37f4a9c087c3c27455fc556819799158de7979c5ba177fc65dfdbdc1a5f9"
+      }
+    },
+    {
+      "golden_id": "moon_phases",
+      "locale": "ar",
+      "lang": "ar",
+      "dir": "rtl",
+      "artifact_sha256": "9205eb45f7ffdcb7e501a926b6d17f2409c1f1f9dd09a0dccc585cee1481480b",
+      "passed": true,
+      "checks": {
+        "actor_visible": true,
+        "primary_control_reachable": true,
+        "pause_stops_motion": true,
+        "resume_restarts_motion": true,
+        "reset_restores_default": true,
+        "reduced_motion_stops_automatic_motion": true,
+        "state_alternative_present": true,
+        "keyboard_controls_named": true,
+        "no_duplicate_ids": true,
+        "no_horizontal_clip": true
+      },
+      "responsive": [
+        {
+          "name": "mobile-320x844",
+          "passed": true,
+          "viewport": {
+            "width": 320,
+            "height": 844,
+            "dpr": 1,
+            "documentClientWidth": 320,
+            "documentScrollWidth": 320
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 9.6,
+              "right": 310.4,
+              "scrollWidth": 347,
+              "clientWidth": 299
+            },
+            {
+              "tag": "div",
+              "id": "prediction-choices",
+              "className": "choices",
+              "left": 26.6,
+              "right": 293.4,
+              "scrollWidth": 613,
+              "clientWidth": 267
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": -111.9,
+              "right": 85.6,
+              "scrollWidth": 195,
+              "clientWidth": 195
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": -319.7,
+              "right": -122.2,
+              "scrollWidth": 195,
+              "clientWidth": 195
+            },
+            {
+              "tag": "div",
+              "id": "",
+              "className": "control-row",
+              "left": 38.8,
+              "right": 281.2,
+              "scrollWidth": 244,
+              "clientWidth": 242
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 281.2,
+              "right": 282.2,
+              "scrollWidth": 95,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "mobile-390x844",
+          "passed": true,
+          "viewport": {
+            "width": 390,
+            "height": 844,
+            "dpr": 1,
+            "documentClientWidth": 390,
+            "documentScrollWidth": 390
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 9.6,
+              "right": 380.4,
+              "scrollWidth": 417,
+              "clientWidth": 369
+            },
+            {
+              "tag": "div",
+              "id": "prediction-choices",
+              "className": "choices",
+              "left": 26.6,
+              "right": 363.4,
+              "scrollWidth": 768,
+              "clientWidth": 337
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": -145.5,
+              "right": 103.8,
+              "scrollWidth": 247,
+              "clientWidth": 247
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": -405.1,
+              "right": -155.8,
+              "scrollWidth": 247,
+              "clientWidth": 247
+            },
+            {
+              "tag": "div",
+              "id": "",
+              "className": "control-row",
+              "left": 38.8,
+              "right": 351.2,
+              "scrollWidth": 314,
+              "clientWidth": 312
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 351.2,
+              "right": 352.2,
+              "scrollWidth": 95,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "desktop-1440x900",
+          "passed": true,
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "dpr": 1,
+            "documentClientWidth": 1425,
+            "documentScrollWidth": 1425
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 895.7,
+              "right": 1270.5,
+              "scrollWidth": 421,
+              "clientWidth": 373
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 784.1,
+              "right": 785.1,
+              "scrollWidth": 95,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "zoom-200",
+          "passed": true,
+          "viewport": {
+            "width": 720,
+            "height": 450,
+            "dpr": 2,
+            "documentClientWidth": 705,
+            "documentScrollWidth": 705
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 21.6,
+              "right": 683.4,
+              "scrollWidth": 708,
+              "clientWidth": 660
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 593.4,
+              "right": 594.4,
+              "scrollWidth": 95,
+              "clientWidth": 1
+            }
+          ]
+        }
+      ],
+      "a11y": {
+        "unnamed_interactive_nodes": 0,
+        "duplicate_ids": [],
+        "state_alternative_present": true
+      },
+      "console_errors": [],
+      "external_requests": 0,
+      "screenshots": [
+        "out/evidence/screens/gold-01/moon_phases-ar-mobile-390x844.png",
+        "out/evidence/screens/gold-01/moon_phases-ar-desktop-1440x900.png"
+      ],
+      "timing_evidence": {
+        "autoplay_frame_delta": 6,
+        "pause_frame_delta": 0,
+        "resume_frame_delta": 6,
+        "reduced_motion_frame_delta": 0
+      },
+      "screenshot_sha256": {
+        "out/evidence/screens/gold-01/moon_phases-ar-mobile-390x844.png": "9962c7f7df9f6ced1d72c3c79ec350e7bbd37b79298ba3d1dea074acf9ffc831",
+        "out/evidence/screens/gold-01/moon_phases-ar-desktop-1440x900.png": "bd32dd14c4c9acc518d803da7ec663ad2ca3f3a97443fb2b01cd7abc07f8135e"
+      }
+    },
+    {
+      "golden_id": "moon_phases",
+      "locale": "en",
+      "lang": "en",
+      "dir": "ltr",
+      "artifact_sha256": "cc790a0c72517762df58aa98cf360532eb5d37595df2f0ad92735e9cfa94db41",
+      "passed": true,
+      "checks": {
+        "actor_visible": true,
+        "primary_control_reachable": true,
+        "pause_stops_motion": true,
+        "resume_restarts_motion": true,
+        "reset_restores_default": true,
+        "reduced_motion_stops_automatic_motion": true,
+        "state_alternative_present": true,
+        "keyboard_controls_named": true,
+        "no_duplicate_ids": true,
+        "no_horizontal_clip": true
+      },
+      "responsive": [
+        {
+          "name": "mobile-320x844",
+          "passed": true,
+          "viewport": {
+            "width": 320,
+            "height": 844,
+            "dpr": 1,
+            "documentClientWidth": 320,
+            "documentScrollWidth": 320
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 9.6,
+              "right": 310.4,
+              "scrollWidth": 347,
+              "clientWidth": 299
+            },
+            {
+              "tag": "div",
+              "id": "prediction-choices",
+              "className": "choices",
+              "left": 26.6,
+              "right": 293.4,
+              "scrollWidth": 613,
+              "clientWidth": 267
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": 234.4,
+              "right": 431.9,
+              "scrollWidth": 195,
+              "clientWidth": 195
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": 442.3,
+              "right": 639.7,
+              "scrollWidth": 195,
+              "clientWidth": 195
+            },
+            {
+              "tag": "div",
+              "id": "",
+              "className": "control-row",
+              "left": 38.8,
+              "right": 281.2,
+              "scrollWidth": 244,
+              "clientWidth": 242
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 37.8,
+              "right": 38.8,
+              "scrollWidth": 117,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "mobile-390x844",
+          "passed": true,
+          "viewport": {
+            "width": 390,
+            "height": 844,
+            "dpr": 1,
+            "documentClientWidth": 390,
+            "documentScrollWidth": 390
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 9.6,
+              "right": 380.4,
+              "scrollWidth": 417,
+              "clientWidth": 369
+            },
+            {
+              "tag": "div",
+              "id": "prediction-choices",
+              "className": "choices",
+              "left": 26.6,
+              "right": 363.4,
+              "scrollWidth": 768,
+              "clientWidth": 337
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": 286.2,
+              "right": 535.5,
+              "scrollWidth": 247,
+              "clientWidth": 247
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": 545.8,
+              "right": 795.1,
+              "scrollWidth": 247,
+              "clientWidth": 247
+            },
+            {
+              "tag": "div",
+              "id": "",
+              "className": "control-row",
+              "left": 38.8,
+              "right": 351.2,
+              "scrollWidth": 314,
+              "clientWidth": 312
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 37.8,
+              "right": 38.8,
+              "scrollWidth": 117,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "desktop-1440x900",
+          "passed": true,
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "dpr": 1,
+            "documentClientWidth": 1425,
+            "documentScrollWidth": 1425
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 154.5,
+              "right": 529.3,
+              "scrollWidth": 421,
+              "clientWidth": 373
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 639.9,
+              "right": 640.9,
+              "scrollWidth": 117,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "zoom-200",
+          "passed": true,
+          "viewport": {
+            "width": 720,
+            "height": 450,
+            "dpr": 2,
+            "documentClientWidth": 705,
+            "documentScrollWidth": 705
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 21.6,
+              "right": 683.4,
+              "scrollWidth": 708,
+              "clientWidth": 660
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 110.6,
+              "right": 111.6,
+              "scrollWidth": 117,
+              "clientWidth": 1
+            }
+          ]
+        }
+      ],
+      "a11y": {
+        "unnamed_interactive_nodes": 0,
+        "duplicate_ids": [],
+        "state_alternative_present": true
+      },
+      "console_errors": [],
+      "external_requests": 0,
+      "screenshots": [
+        "out/evidence/screens/gold-01/moon_phases-en-mobile-390x844.png",
+        "out/evidence/screens/gold-01/moon_phases-en-desktop-1440x900.png"
+      ],
+      "timing_evidence": {
+        "autoplay_frame_delta": 6,
+        "pause_frame_delta": 0,
+        "resume_frame_delta": 6,
+        "reduced_motion_frame_delta": 0
+      },
+      "screenshot_sha256": {
+        "out/evidence/screens/gold-01/moon_phases-en-mobile-390x844.png": "90f71ae32886576d7d4bd57e482f42d5f377f08840c6f7b7b2daef6415f024fa",
+        "out/evidence/screens/gold-01/moon_phases-en-desktop-1440x900.png": "21a6b42957c1803452b553f30af277e3b118bcd5ada8a9d9f642dc4f0b5caa56"
+      }
+    },
+    {
+      "golden_id": "pendulum",
+      "locale": "ar",
+      "lang": "ar",
+      "dir": "rtl",
+      "artifact_sha256": "bf405874ba30186d7b8e33835efa8b9bd1e1fa26144a83700ee779c7fa01fa9e",
+      "passed": true,
+      "checks": {
+        "actor_visible": true,
+        "primary_control_reachable": true,
+        "pause_stops_motion": true,
+        "resume_restarts_motion": true,
+        "reset_restores_default": true,
+        "reduced_motion_stops_automatic_motion": true,
+        "state_alternative_present": true,
+        "keyboard_controls_named": true,
+        "no_duplicate_ids": true,
+        "no_horizontal_clip": true
+      },
+      "responsive": [
+        {
+          "name": "mobile-320x844",
+          "passed": true,
+          "viewport": {
+            "width": 320,
+            "height": 844,
+            "dpr": 1,
+            "documentClientWidth": 320,
+            "documentScrollWidth": 320
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 9.6,
+              "right": 310.4,
+              "scrollWidth": 347,
+              "clientWidth": 299
+            },
+            {
+              "tag": "div",
+              "id": "prediction-choices",
+              "className": "choices",
+              "left": 26.6,
+              "right": 293.4,
+              "scrollWidth": 613,
+              "clientWidth": 267
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": -111.9,
+              "right": 85.6,
+              "scrollWidth": 195,
+              "clientWidth": 195
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": -319.7,
+              "right": -122.2,
+              "scrollWidth": 195,
+              "clientWidth": 195
+            },
+            {
+              "tag": "div",
+              "id": "",
+              "className": "control-row",
+              "left": 38.8,
+              "right": 281.2,
+              "scrollWidth": 244,
+              "clientWidth": 242
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 281.2,
+              "right": 282.2,
+              "scrollWidth": 95,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "mobile-390x844",
+          "passed": true,
+          "viewport": {
+            "width": 390,
+            "height": 844,
+            "dpr": 1,
+            "documentClientWidth": 390,
+            "documentScrollWidth": 390
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 9.6,
+              "right": 380.4,
+              "scrollWidth": 417,
+              "clientWidth": 369
+            },
+            {
+              "tag": "div",
+              "id": "prediction-choices",
+              "className": "choices",
+              "left": 26.6,
+              "right": 363.4,
+              "scrollWidth": 768,
+              "clientWidth": 337
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": -145.5,
+              "right": 103.8,
+              "scrollWidth": 247,
+              "clientWidth": 247
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": -405.1,
+              "right": -155.8,
+              "scrollWidth": 247,
+              "clientWidth": 247
+            },
+            {
+              "tag": "div",
+              "id": "",
+              "className": "control-row",
+              "left": 38.8,
+              "right": 351.2,
+              "scrollWidth": 314,
+              "clientWidth": 312
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 351.2,
+              "right": 352.2,
+              "scrollWidth": 95,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "desktop-1440x900",
+          "passed": true,
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "dpr": 1,
+            "documentClientWidth": 1425,
+            "documentScrollWidth": 1425
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 895.7,
+              "right": 1270.5,
+              "scrollWidth": 421,
+              "clientWidth": 373
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 784.1,
+              "right": 785.1,
+              "scrollWidth": 95,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "zoom-200",
+          "passed": true,
+          "viewport": {
+            "width": 720,
+            "height": 450,
+            "dpr": 2,
+            "documentClientWidth": 705,
+            "documentScrollWidth": 705
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 21.6,
+              "right": 683.4,
+              "scrollWidth": 708,
+              "clientWidth": 660
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 593.4,
+              "right": 594.4,
+              "scrollWidth": 95,
+              "clientWidth": 1
+            }
+          ]
+        }
+      ],
+      "a11y": {
+        "unnamed_interactive_nodes": 0,
+        "duplicate_ids": [],
+        "state_alternative_present": true
+      },
+      "console_errors": [],
+      "external_requests": 0,
+      "screenshots": [
+        "out/evidence/screens/gold-01/pendulum-ar-mobile-390x844.png",
+        "out/evidence/screens/gold-01/pendulum-ar-desktop-1440x900.png"
+      ],
+      "timing_evidence": {
+        "autoplay_frame_delta": 18,
+        "pause_frame_delta": 0,
+        "resume_frame_delta": 16,
+        "reduced_motion_frame_delta": 0
+      },
+      "screenshot_sha256": {
+        "out/evidence/screens/gold-01/pendulum-ar-mobile-390x844.png": "e2a314c32c21e9666e65f8d6e02527e84203303306d74904c6894705d73671fb",
+        "out/evidence/screens/gold-01/pendulum-ar-desktop-1440x900.png": "581291b9c1afdfe3a0935bc96cec7eaf2279fa269be4a1fe0439b6b9bcb9f32d"
+      }
+    },
+    {
+      "golden_id": "pendulum",
+      "locale": "en",
+      "lang": "en",
+      "dir": "ltr",
+      "artifact_sha256": "405ee4ca6c8fc92479190c9c1fd6720b5a5d23a63867a048e65ace9a2f134a78",
+      "passed": true,
+      "checks": {
+        "actor_visible": true,
+        "primary_control_reachable": true,
+        "pause_stops_motion": true,
+        "resume_restarts_motion": true,
+        "reset_restores_default": true,
+        "reduced_motion_stops_automatic_motion": true,
+        "state_alternative_present": true,
+        "keyboard_controls_named": true,
+        "no_duplicate_ids": true,
+        "no_horizontal_clip": true
+      },
+      "responsive": [
+        {
+          "name": "mobile-320x844",
+          "passed": true,
+          "viewport": {
+            "width": 320,
+            "height": 844,
+            "dpr": 1,
+            "documentClientWidth": 320,
+            "documentScrollWidth": 320
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 9.6,
+              "right": 310.4,
+              "scrollWidth": 347,
+              "clientWidth": 299
+            },
+            {
+              "tag": "div",
+              "id": "prediction-choices",
+              "className": "choices",
+              "left": 26.6,
+              "right": 293.4,
+              "scrollWidth": 613,
+              "clientWidth": 267
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": 234.4,
+              "right": 431.9,
+              "scrollWidth": 195,
+              "clientWidth": 195
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": 442.3,
+              "right": 639.7,
+              "scrollWidth": 195,
+              "clientWidth": 195
+            },
+            {
+              "tag": "div",
+              "id": "",
+              "className": "control-row",
+              "left": 38.8,
+              "right": 281.2,
+              "scrollWidth": 244,
+              "clientWidth": 242
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 37.8,
+              "right": 38.8,
+              "scrollWidth": 117,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "mobile-390x844",
+          "passed": true,
+          "viewport": {
+            "width": 390,
+            "height": 844,
+            "dpr": 1,
+            "documentClientWidth": 390,
+            "documentScrollWidth": 390
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 9.6,
+              "right": 380.4,
+              "scrollWidth": 417,
+              "clientWidth": 369
+            },
+            {
+              "tag": "div",
+              "id": "prediction-choices",
+              "className": "choices",
+              "left": 26.6,
+              "right": 363.4,
+              "scrollWidth": 768,
+              "clientWidth": 337
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": 286.2,
+              "right": 535.5,
+              "scrollWidth": 247,
+              "clientWidth": 247
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": 545.8,
+              "right": 795.1,
+              "scrollWidth": 247,
+              "clientWidth": 247
+            },
+            {
+              "tag": "div",
+              "id": "",
+              "className": "control-row",
+              "left": 38.8,
+              "right": 351.2,
+              "scrollWidth": 314,
+              "clientWidth": 312
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 37.8,
+              "right": 38.8,
+              "scrollWidth": 117,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "desktop-1440x900",
+          "passed": true,
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "dpr": 1,
+            "documentClientWidth": 1425,
+            "documentScrollWidth": 1425
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 154.5,
+              "right": 529.3,
+              "scrollWidth": 421,
+              "clientWidth": 373
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 639.9,
+              "right": 640.9,
+              "scrollWidth": 117,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "zoom-200",
+          "passed": true,
+          "viewport": {
+            "width": 720,
+            "height": 450,
+            "dpr": 2,
+            "documentClientWidth": 705,
+            "documentScrollWidth": 705
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 21.6,
+              "right": 683.4,
+              "scrollWidth": 708,
+              "clientWidth": 660
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 110.6,
+              "right": 111.6,
+              "scrollWidth": 117,
+              "clientWidth": 1
+            }
+          ]
+        }
+      ],
+      "a11y": {
+        "unnamed_interactive_nodes": 0,
+        "duplicate_ids": [],
+        "state_alternative_present": true
+      },
+      "console_errors": [],
+      "external_requests": 0,
+      "screenshots": [
+        "out/evidence/screens/gold-01/pendulum-en-mobile-390x844.png",
+        "out/evidence/screens/gold-01/pendulum-en-desktop-1440x900.png"
+      ],
+      "timing_evidence": {
+        "autoplay_frame_delta": 17,
+        "pause_frame_delta": 0,
+        "resume_frame_delta": 16,
+        "reduced_motion_frame_delta": 0
+      },
+      "screenshot_sha256": {
+        "out/evidence/screens/gold-01/pendulum-en-mobile-390x844.png": "57bce53d6f852adbbd618ecbb1c366222f8d4f9f7b8590d65796ad8da788f449",
+        "out/evidence/screens/gold-01/pendulum-en-desktop-1440x900.png": "5b7cc6e21f1cf887a17ca5a744d19b4444f7b28eb02f986e81bfc8201a7a2872"
+      }
+    },
+    {
+      "golden_id": "simple_circuit",
+      "locale": "ar",
+      "lang": "ar",
+      "dir": "rtl",
+      "artifact_sha256": "48c5eef46d6f680e296dda2d76793c18e320d73a7f7b5f87e9a81fde146fb09a",
+      "passed": true,
+      "checks": {
+        "actor_visible": true,
+        "primary_control_reachable": true,
+        "pause_stops_motion": true,
+        "resume_restarts_motion": true,
+        "reset_restores_default": true,
+        "reduced_motion_stops_automatic_motion": true,
+        "state_alternative_present": true,
+        "keyboard_controls_named": true,
+        "no_duplicate_ids": true,
+        "no_horizontal_clip": true
+      },
+      "responsive": [
+        {
+          "name": "mobile-320x844",
+          "passed": true,
+          "viewport": {
+            "width": 320,
+            "height": 844,
+            "dpr": 1,
+            "documentClientWidth": 320,
+            "documentScrollWidth": 320
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 9.6,
+              "right": 310.4,
+              "scrollWidth": 347,
+              "clientWidth": 299
+            },
+            {
+              "tag": "div",
+              "id": "prediction-choices",
+              "className": "choices",
+              "left": 26.6,
+              "right": 293.4,
+              "scrollWidth": 613,
+              "clientWidth": 267
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": -111.9,
+              "right": 85.6,
+              "scrollWidth": 195,
+              "clientWidth": 195
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": -319.7,
+              "right": -122.2,
+              "scrollWidth": 195,
+              "clientWidth": 195
+            },
+            {
+              "tag": "div",
+              "id": "",
+              "className": "control-row",
+              "left": 38.8,
+              "right": 281.2,
+              "scrollWidth": 244,
+              "clientWidth": 242
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 281.2,
+              "right": 282.2,
+              "scrollWidth": 95,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "mobile-390x844",
+          "passed": true,
+          "viewport": {
+            "width": 390,
+            "height": 844,
+            "dpr": 1,
+            "documentClientWidth": 390,
+            "documentScrollWidth": 390
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 9.6,
+              "right": 380.4,
+              "scrollWidth": 417,
+              "clientWidth": 369
+            },
+            {
+              "tag": "div",
+              "id": "prediction-choices",
+              "className": "choices",
+              "left": 26.6,
+              "right": 363.4,
+              "scrollWidth": 768,
+              "clientWidth": 337
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": -145.5,
+              "right": 103.8,
+              "scrollWidth": 247,
+              "clientWidth": 247
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": -405.1,
+              "right": -155.8,
+              "scrollWidth": 247,
+              "clientWidth": 247
+            },
+            {
+              "tag": "div",
+              "id": "",
+              "className": "control-row",
+              "left": 38.8,
+              "right": 351.2,
+              "scrollWidth": 314,
+              "clientWidth": 312
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 351.2,
+              "right": 352.2,
+              "scrollWidth": 95,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "desktop-1440x900",
+          "passed": true,
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "dpr": 1,
+            "documentClientWidth": 1425,
+            "documentScrollWidth": 1425
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 895.7,
+              "right": 1270.5,
+              "scrollWidth": 421,
+              "clientWidth": 373
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 784.1,
+              "right": 785.1,
+              "scrollWidth": 95,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "zoom-200",
+          "passed": true,
+          "viewport": {
+            "width": 720,
+            "height": 450,
+            "dpr": 2,
+            "documentClientWidth": 705,
+            "documentScrollWidth": 705
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 21.6,
+              "right": 683.4,
+              "scrollWidth": 708,
+              "clientWidth": 660
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 593.4,
+              "right": 594.4,
+              "scrollWidth": 95,
+              "clientWidth": 1
+            }
+          ]
+        }
+      ],
+      "a11y": {
+        "unnamed_interactive_nodes": 0,
+        "duplicate_ids": [],
+        "state_alternative_present": true
+      },
+      "console_errors": [],
+      "external_requests": 0,
+      "screenshots": [
+        "out/evidence/screens/gold-01/simple_circuit-ar-mobile-390x844.png",
+        "out/evidence/screens/gold-01/simple_circuit-ar-desktop-1440x900.png"
+      ],
+      "timing_evidence": {
+        "autoplay_frame_delta": 6,
+        "pause_frame_delta": 0,
+        "resume_frame_delta": 6,
+        "reduced_motion_frame_delta": 0
+      },
+      "screenshot_sha256": {
+        "out/evidence/screens/gold-01/simple_circuit-ar-mobile-390x844.png": "01a41818fc4c4b53ce7b6d236ef32c04539f261fbca3125ac956a84cc5c49f1d",
+        "out/evidence/screens/gold-01/simple_circuit-ar-desktop-1440x900.png": "d7296efc31061d003c1d60d687ee6760119f3de1c7ee4b4faa6ef274e4a715d0"
+      }
+    },
+    {
+      "golden_id": "simple_circuit",
+      "locale": "en",
+      "lang": "en",
+      "dir": "ltr",
+      "artifact_sha256": "88ab386327c2694e5cb508ee381f0da73862a7c4ad7c712ae0fc2d0c91db1177",
+      "passed": true,
+      "checks": {
+        "actor_visible": true,
+        "primary_control_reachable": true,
+        "pause_stops_motion": true,
+        "resume_restarts_motion": true,
+        "reset_restores_default": true,
+        "reduced_motion_stops_automatic_motion": true,
+        "state_alternative_present": true,
+        "keyboard_controls_named": true,
+        "no_duplicate_ids": true,
+        "no_horizontal_clip": true
+      },
+      "responsive": [
+        {
+          "name": "mobile-320x844",
+          "passed": true,
+          "viewport": {
+            "width": 320,
+            "height": 844,
+            "dpr": 1,
+            "documentClientWidth": 320,
+            "documentScrollWidth": 320
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 9.6,
+              "right": 310.4,
+              "scrollWidth": 347,
+              "clientWidth": 299
+            },
+            {
+              "tag": "div",
+              "id": "prediction-choices",
+              "className": "choices",
+              "left": 26.6,
+              "right": 293.4,
+              "scrollWidth": 613,
+              "clientWidth": 267
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": 234.4,
+              "right": 431.9,
+              "scrollWidth": 195,
+              "clientWidth": 195
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": 442.3,
+              "right": 639.7,
+              "scrollWidth": 195,
+              "clientWidth": 195
+            },
+            {
+              "tag": "div",
+              "id": "",
+              "className": "control-row",
+              "left": 38.8,
+              "right": 281.2,
+              "scrollWidth": 244,
+              "clientWidth": 242
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 37.8,
+              "right": 38.8,
+              "scrollWidth": 117,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "mobile-390x844",
+          "passed": true,
+          "viewport": {
+            "width": 390,
+            "height": 844,
+            "dpr": 1,
+            "documentClientWidth": 390,
+            "documentScrollWidth": 390
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 9.6,
+              "right": 380.4,
+              "scrollWidth": 417,
+              "clientWidth": 369
+            },
+            {
+              "tag": "div",
+              "id": "prediction-choices",
+              "className": "choices",
+              "left": 26.6,
+              "right": 363.4,
+              "scrollWidth": 768,
+              "clientWidth": 337
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": 286.2,
+              "right": 535.5,
+              "scrollWidth": 247,
+              "clientWidth": 247
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": 545.8,
+              "right": 795.1,
+              "scrollWidth": 247,
+              "clientWidth": 247
+            },
+            {
+              "tag": "div",
+              "id": "",
+              "className": "control-row",
+              "left": 38.8,
+              "right": 351.2,
+              "scrollWidth": 314,
+              "clientWidth": 312
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 37.8,
+              "right": 38.8,
+              "scrollWidth": 117,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "desktop-1440x900",
+          "passed": true,
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "dpr": 1,
+            "documentClientWidth": 1425,
+            "documentScrollWidth": 1425
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 154.5,
+              "right": 529.3,
+              "scrollWidth": 421,
+              "clientWidth": 373
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 639.9,
+              "right": 640.9,
+              "scrollWidth": 117,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "zoom-200",
+          "passed": true,
+          "viewport": {
+            "width": 720,
+            "height": 450,
+            "dpr": 2,
+            "documentClientWidth": 705,
+            "documentScrollWidth": 705
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 21.6,
+              "right": 683.4,
+              "scrollWidth": 708,
+              "clientWidth": 660
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 110.6,
+              "right": 111.6,
+              "scrollWidth": 117,
+              "clientWidth": 1
+            }
+          ]
+        }
+      ],
+      "a11y": {
+        "unnamed_interactive_nodes": 0,
+        "duplicate_ids": [],
+        "state_alternative_present": true
+      },
+      "console_errors": [],
+      "external_requests": 0,
+      "screenshots": [
+        "out/evidence/screens/gold-01/simple_circuit-en-mobile-390x844.png",
+        "out/evidence/screens/gold-01/simple_circuit-en-desktop-1440x900.png"
+      ],
+      "timing_evidence": {
+        "autoplay_frame_delta": 6,
+        "pause_frame_delta": 0,
+        "resume_frame_delta": 6,
+        "reduced_motion_frame_delta": 0
+      },
+      "screenshot_sha256": {
+        "out/evidence/screens/gold-01/simple_circuit-en-mobile-390x844.png": "801e5e832f0487a1e1a5ac81397e3bd814d8de59e2744b5c4dc53ed3b91ef568",
+        "out/evidence/screens/gold-01/simple_circuit-en-desktop-1440x900.png": "12a35cb897f74f26de47ed6100d337f1ef6ee0c5f4e56d834c4d3773ab899b10"
+      }
+    },
+    {
+      "golden_id": "sound_pitch",
+      "locale": "ar",
+      "lang": "ar",
+      "dir": "rtl",
+      "artifact_sha256": "07d43e091e144011761ae06403c494e5099263aabdabc310df41c4e87672d631",
+      "passed": true,
+      "checks": {
+        "actor_visible": true,
+        "primary_control_reachable": true,
+        "pause_stops_motion": true,
+        "resume_restarts_motion": true,
+        "reset_restores_default": true,
+        "reduced_motion_stops_automatic_motion": true,
+        "state_alternative_present": true,
+        "keyboard_controls_named": true,
+        "no_duplicate_ids": true,
+        "no_horizontal_clip": true
+      },
+      "responsive": [
+        {
+          "name": "mobile-320x844",
+          "passed": true,
+          "viewport": {
+            "width": 320,
+            "height": 844,
+            "dpr": 1,
+            "documentClientWidth": 320,
+            "documentScrollWidth": 320
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 9.6,
+              "right": 310.4,
+              "scrollWidth": 347,
+              "clientWidth": 299
+            },
+            {
+              "tag": "div",
+              "id": "prediction-choices",
+              "className": "choices",
+              "left": 26.6,
+              "right": 293.4,
+              "scrollWidth": 613,
+              "clientWidth": 267
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": -111.9,
+              "right": 85.6,
+              "scrollWidth": 195,
+              "clientWidth": 195
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": -319.7,
+              "right": -122.2,
+              "scrollWidth": 195,
+              "clientWidth": 195
+            },
+            {
+              "tag": "div",
+              "id": "",
+              "className": "control-row",
+              "left": 38.8,
+              "right": 281.2,
+              "scrollWidth": 244,
+              "clientWidth": 242
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 281.2,
+              "right": 282.2,
+              "scrollWidth": 95,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "mobile-390x844",
+          "passed": true,
+          "viewport": {
+            "width": 390,
+            "height": 844,
+            "dpr": 1,
+            "documentClientWidth": 390,
+            "documentScrollWidth": 390
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 9.6,
+              "right": 380.4,
+              "scrollWidth": 417,
+              "clientWidth": 369
+            },
+            {
+              "tag": "div",
+              "id": "prediction-choices",
+              "className": "choices",
+              "left": 26.6,
+              "right": 363.4,
+              "scrollWidth": 768,
+              "clientWidth": 337
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": -145.5,
+              "right": 103.8,
+              "scrollWidth": 247,
+              "clientWidth": 247
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": -405.1,
+              "right": -155.8,
+              "scrollWidth": 247,
+              "clientWidth": 247
+            },
+            {
+              "tag": "div",
+              "id": "",
+              "className": "control-row",
+              "left": 38.8,
+              "right": 351.2,
+              "scrollWidth": 314,
+              "clientWidth": 312
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 351.2,
+              "right": 352.2,
+              "scrollWidth": 95,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "desktop-1440x900",
+          "passed": true,
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "dpr": 1,
+            "documentClientWidth": 1425,
+            "documentScrollWidth": 1425
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 895.7,
+              "right": 1270.5,
+              "scrollWidth": 421,
+              "clientWidth": 373
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 784.1,
+              "right": 785.1,
+              "scrollWidth": 95,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "zoom-200",
+          "passed": true,
+          "viewport": {
+            "width": 720,
+            "height": 450,
+            "dpr": 2,
+            "documentClientWidth": 705,
+            "documentScrollWidth": 705
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 21.6,
+              "right": 683.4,
+              "scrollWidth": 708,
+              "clientWidth": 660
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 593.4,
+              "right": 594.4,
+              "scrollWidth": 95,
+              "clientWidth": 1
+            }
+          ]
+        }
+      ],
+      "a11y": {
+        "unnamed_interactive_nodes": 0,
+        "duplicate_ids": [],
+        "state_alternative_present": true
+      },
+      "console_errors": [],
+      "external_requests": 0,
+      "screenshots": [
+        "out/evidence/screens/gold-01/sound_pitch-ar-mobile-390x844.png",
+        "out/evidence/screens/gold-01/sound_pitch-ar-desktop-1440x900.png"
+      ],
+      "timing_evidence": {
+        "autoplay_frame_delta": 6,
+        "pause_frame_delta": 0,
+        "resume_frame_delta": 6,
+        "reduced_motion_frame_delta": 0
+      },
+      "screenshot_sha256": {
+        "out/evidence/screens/gold-01/sound_pitch-ar-mobile-390x844.png": "d8f2e919d185fcf6726ffcf617b79501c115161dceb0d1f890b445da7c660878",
+        "out/evidence/screens/gold-01/sound_pitch-ar-desktop-1440x900.png": "e0fbfeb4ff4ecb556640ce366bec2019a72ec6bcf04acc0367becc7cdaf494b3"
+      }
+    },
+    {
+      "golden_id": "sound_pitch",
+      "locale": "en",
+      "lang": "en",
+      "dir": "ltr",
+      "artifact_sha256": "843cdd4ec317eae5ce0bc1d3c50136d30ea1767bd902555e182b536675d8df1c",
+      "passed": true,
+      "checks": {
+        "actor_visible": true,
+        "primary_control_reachable": true,
+        "pause_stops_motion": true,
+        "resume_restarts_motion": true,
+        "reset_restores_default": true,
+        "reduced_motion_stops_automatic_motion": true,
+        "state_alternative_present": true,
+        "keyboard_controls_named": true,
+        "no_duplicate_ids": true,
+        "no_horizontal_clip": true
+      },
+      "responsive": [
+        {
+          "name": "mobile-320x844",
+          "passed": true,
+          "viewport": {
+            "width": 320,
+            "height": 844,
+            "dpr": 1,
+            "documentClientWidth": 320,
+            "documentScrollWidth": 320
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 9.6,
+              "right": 310.4,
+              "scrollWidth": 347,
+              "clientWidth": 299
+            },
+            {
+              "tag": "div",
+              "id": "prediction-choices",
+              "className": "choices",
+              "left": 26.6,
+              "right": 293.4,
+              "scrollWidth": 613,
+              "clientWidth": 267
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": 234.4,
+              "right": 431.9,
+              "scrollWidth": 195,
+              "clientWidth": 195
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": 442.3,
+              "right": 639.7,
+              "scrollWidth": 195,
+              "clientWidth": 195
+            },
+            {
+              "tag": "div",
+              "id": "",
+              "className": "control-row",
+              "left": 38.8,
+              "right": 281.2,
+              "scrollWidth": 244,
+              "clientWidth": 242
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 37.8,
+              "right": 38.8,
+              "scrollWidth": 117,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "mobile-390x844",
+          "passed": true,
+          "viewport": {
+            "width": 390,
+            "height": 844,
+            "dpr": 1,
+            "documentClientWidth": 390,
+            "documentScrollWidth": 390
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 9.6,
+              "right": 380.4,
+              "scrollWidth": 417,
+              "clientWidth": 369
+            },
+            {
+              "tag": "div",
+              "id": "prediction-choices",
+              "className": "choices",
+              "left": 26.6,
+              "right": 363.4,
+              "scrollWidth": 768,
+              "clientWidth": 337
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": 286.2,
+              "right": 535.5,
+              "scrollWidth": 247,
+              "clientWidth": 247
+            },
+            {
+              "tag": "button",
+              "id": "",
+              "className": "",
+              "left": 545.8,
+              "right": 795.1,
+              "scrollWidth": 247,
+              "clientWidth": 247
+            },
+            {
+              "tag": "div",
+              "id": "",
+              "className": "control-row",
+              "left": 38.8,
+              "right": 351.2,
+              "scrollWidth": 314,
+              "clientWidth": 312
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 37.8,
+              "right": 38.8,
+              "scrollWidth": 117,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "desktop-1440x900",
+          "passed": true,
+          "viewport": {
+            "width": 1440,
+            "height": 900,
+            "dpr": 1,
+            "documentClientWidth": 1425,
+            "documentScrollWidth": 1425
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 154.5,
+              "right": 529.3,
+              "scrollWidth": 421,
+              "clientWidth": 373
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 639.9,
+              "right": 640.9,
+              "scrollWidth": 117,
+              "clientWidth": 1
+            }
+          ]
+        },
+        {
+          "name": "zoom-200",
+          "passed": true,
+          "viewport": {
+            "width": 720,
+            "height": 450,
+            "dpr": 2,
+            "documentClientWidth": 705,
+            "documentScrollWidth": 705
+          },
+          "elements": {
+            "#simulation": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#primary-control": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#play-pause": {
+              "visible": true,
+              "horizontallyClipped": false
+            },
+            "#reset": {
+              "visible": true,
+              "horizontallyClipped": false
+            }
+          },
+          "horizontalOverflow": false,
+          "overflowSources": [
+            {
+              "tag": "header",
+              "id": "",
+              "className": "",
+              "left": 21.6,
+              "right": 683.4,
+              "scrollWidth": 708,
+              "clientWidth": 660
+            },
+            {
+              "tag": "p",
+              "id": "playback-status",
+              "className": "sr-only",
+              "left": 110.6,
+              "right": 111.6,
+              "scrollWidth": 117,
+              "clientWidth": 1
+            }
+          ]
+        }
+      ],
+      "a11y": {
+        "unnamed_interactive_nodes": 0,
+        "duplicate_ids": [],
+        "state_alternative_present": true
+      },
+      "console_errors": [],
+      "external_requests": 0,
+      "screenshots": [
+        "out/evidence/screens/gold-01/sound_pitch-en-mobile-390x844.png",
+        "out/evidence/screens/gold-01/sound_pitch-en-desktop-1440x900.png"
+      ],
+      "timing_evidence": {
+        "autoplay_frame_delta": 5,
+        "pause_frame_delta": 0,
+        "resume_frame_delta": 6,
+        "reduced_motion_frame_delta": 0
+      },
+      "screenshot_sha256": {
+        "out/evidence/screens/gold-01/sound_pitch-en-mobile-390x844.png": "433f9972c9051a62c07a2e54fcf841b79bb3ee53ace3e985a27c65baee9eef14",
+        "out/evidence/screens/gold-01/sound_pitch-en-desktop-1440x900.png": "4ea918e1f85ef8ca6cb92915719edfd7043cb804a7af86a782f4aa7f32543e32"
+      }
+    }
+  ]
+}

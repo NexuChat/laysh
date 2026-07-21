@@ -4,11 +4,68 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+from typing import Any
 
 from server.golden_physics_motion import verify_golden_physics_motion
 from server.goldens import load_golden_fixtures, load_pinned_golden
 
 ROOT = Path(__file__).parents[1]
+
+
+def _json_sha256(value: object) -> str:
+    encoded = json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _bounded_evidence_summary(
+    evidence: dict[str, Any],
+    *,
+    actor_profile: dict[str, Any],
+    physics_profile: dict[str, Any],
+    geometry_profile: dict[str, Any] | None,
+) -> dict[str, object]:
+    """Retain auditable counts/contracts/hashes without raw canvas trajectories."""
+
+    actor_samples = evidence.get("actorSamples", [])
+    physics_samples = evidence.get("physicsSamples", [])
+    temporal_runs = evidence.get("temporalRuns", [])
+    geometry_samples = evidence.get("geometrySamples", [])
+    temporal_sample_count = sum(
+        len(run.get("samples", []))
+        for run in temporal_runs
+        if isinstance(run, dict) and isinstance(run.get("samples", []), list)
+    )
+    return {
+        "browser": {
+            "ready": evidence.get("ready"),
+            "runtime_error": bool(evidence.get("runtimeError")),
+            "external_requests": evidence.get("externalRequests"),
+            "console_error_count": len(evidence.get("consoleErrors", [])),
+        },
+        "contracts": {
+            "actor": actor_profile,
+            "physics": physics_profile,
+            "geometry": geometry_profile,
+        },
+        "sample_counts": {
+            "actor": len(actor_samples) if isinstance(actor_samples, list) else 0,
+            "physics": len(physics_samples) if isinstance(physics_samples, list) else 0,
+            "temporal_runs": len(temporal_runs) if isinstance(temporal_runs, list) else 0,
+            "temporal_samples": temporal_sample_count,
+            "geometry": len(geometry_samples) if isinstance(geometry_samples, list) else 0,
+        },
+        "evidence_sha256": {
+            "actor": _json_sha256(actor_samples),
+            "physics": _json_sha256(physics_samples),
+            "temporal": _json_sha256(temporal_runs),
+            "geometry": _json_sha256(geometry_samples),
+        },
+    }
 
 
 def build_report(*, screenshot_root: Path | None = None) -> dict[str, object]:
@@ -42,6 +99,12 @@ def build_report(*, screenshot_root: Path | None = None) -> dict[str, object]:
             geometry_profile=fixture["review_contract"].get("body_geometry"),
             screenshot_root=(screenshot_root / golden_id) if screenshot_root else None,
         )
+        bounded_evidence = _bounded_evidence_summary(
+            report.get("evidence", {}),
+            actor_profile=fixture["review_contract"]["actor_tracking"],
+            physics_profile=fixture["review_contract"]["physics_motion"],
+            geometry_profile=fixture["review_contract"].get("body_geometry"),
+        )
         reports.append(
             {
                 "golden_id": golden_id,
@@ -49,6 +112,7 @@ def build_report(*, screenshot_root: Path | None = None) -> dict[str, object]:
                 "actor": fixture["review_contract"]["actor"],
                 "action": fixture["review_contract"]["action"],
                 **report,
+                "evidence": bounded_evidence,
             }
         )
     return {
