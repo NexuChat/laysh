@@ -5,7 +5,7 @@ candidate commit from a new source checkout. They do not need an OpenAI account
 and do not spend model quota. Replace both placeholders before running them.
 
 ```bash
-git clone https://<FINAL-REPOSITORY-URL>/laysh.git
+git clone https://github.com/NexuChat/laysh.git
 cd laysh
 git checkout --detach <FINAL-RELEASE-COMMIT>
 uv sync --frozen --extra dev

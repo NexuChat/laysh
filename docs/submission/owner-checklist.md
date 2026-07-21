@@ -12,7 +12,8 @@ explicit owner approval; the build session does not perform them.
 - [ ] Add that remote locally and push the default branch plus the owner-approved tag.
 - [ ] Confirm the public repository shows README, MIT license, font notice, and dated commits.
 - [ ] Start the owner-managed Cloudflare tunnel or stable host; keep it available through judging.
-- [ ] Replace `FINAL-DEMO-URL` and `FINAL-REPOSITORY-URL` placeholders before the final push.
+- [ ] Recheck the live demo (`https://laysh.mlki.app`) and public repository
+  (`https://github.com/NexuChat/laysh`) immediately before the final push.
 - [ ] Test the public demo in a fresh browser with no Laysh account or payment.
 
 ## Share-link retention

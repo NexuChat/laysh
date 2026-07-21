@@ -7,8 +7,8 @@
 An Arabic-first learning experience that answers a learner's question, then builds a
 small verified simulation for prediction, observation, and explanation.
 
-**Live demo:** `https://<FINAL-DEMO-URL>` **(owner placeholder; replace before submission)**  
-**Public repository:** `https://<FINAL-REPOSITORY-URL>` **(owner placeholder; replace after push)**
+**Live demo:** [`laysh.mlki.app`](https://laysh.mlki.app)
+**Public repository:** [`github.com/NexuChat/laysh`](https://github.com/NexuChat/laysh)
 
 <img src="out/evidence/screens/goldens/moon_phases-desktop-1440x900.png" alt="Laysh showing the Arabic Moon phases interactive lesson and its verification receipt" width="920">
 
@@ -32,7 +32,7 @@ The hosted demo will require no Laysh account or payment. Until the owner insert
 final URL, the complete local judging path is:
 
 ```bash
-git clone https://<FINAL-REPOSITORY-URL>/laysh.git
+git clone https://github.com/NexuChat/laysh.git
 cd laysh
 uv sync --frozen --extra dev
 npm install
