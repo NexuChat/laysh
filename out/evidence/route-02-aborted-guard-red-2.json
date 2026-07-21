@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "acceptance_row": "ROUTE-02",
+  "sanitized": true,
+  "recorded_at": "2026-07-21T20:22:44Z",
+  "passed": false,
+  "outcome": "aborted_by_confirmation_guard_red",
+  "stage": "generate",
+  "model": "gpt-5.6-terra",
+  "effort": "medium",
+  "elapsed_ms_approximate": 11000,
+  "structured_output": false,
+  "token_usage": null,
+  "live_call_count_conservative": 1,
+  "remaining_processes_after_root_check": 0,
+  "reason": "A red confirmation-guard test entered the pre-guard path before the test process was terminated. No output was observed; whether inference began is unknown, so the evidence counts one possible live attempt conservatively."
+}

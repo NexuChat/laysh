@@ -15,5 +15,6 @@ out/logs/
 out/tmp/
 out/evidence/*-diagnostic.json
 out/evidence/*.html
+out/evidence/.route-02-live.lock
 *.log
 .DS_Store

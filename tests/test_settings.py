@@ -6,7 +6,12 @@ def test_runtime_defaults_are_gpt_5_6_family_only():
 
     settings = Settings()
     assert settings.understand_model == "gpt-5.6-luna"
+    assert settings.understand_fallback_model == "gpt-5.6-terra"
     assert settings.evidence_understand_model == "gpt-5.6-sol"
+    assert settings.generate_model == "gpt-5.6-sol"
+    assert settings.heal_model == "gpt-5.6-sol"
+    assert settings.qa_model == "gpt-5.6-sol"
+    assert settings.terra_generation_tiers == ()
     assert {
         settings.understand_model,
         settings.understand_fallback_model,
@@ -52,3 +57,66 @@ def test_non_gpt_5_6_runtime_override_is_rejected(monkeypatch):
     monkeypatch.setenv("LAYSH_UNDERSTAND_MODEL", "legacy-non-gpt-5.6-model")
     with pytest.raises(ValueError, match="GPT-5.6"):
         Settings.from_env()
+
+
+def test_terra_generation_tiers_are_explicit_and_closed(tmp_path, monkeypatch):
+    import json
+
+    import server.model_routing as routing
+    from server.settings import Settings
+
+    decision_path = tmp_path / "routing-decision.json"
+    decision_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "terra_generation_tiers": [routing.BOUNDED_SINGLE_PARAMETER],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(routing, "ROUTING_DECISION_PATH", decision_path)
+    monkeypatch.setenv(
+        "LAYSH_TERRA_GENERATION_TIERS", routing.BOUNDED_SINGLE_PARAMETER
+    )
+    assert Settings.from_env().terra_generation_tiers == (
+        routing.BOUNDED_SINGLE_PARAMETER,
+    )
+
+    monkeypatch.setenv("LAYSH_TERRA_GENERATION_TIERS", "unmeasured-tier")
+    with pytest.raises(ValueError, match="unknown Terra generation tiers"):
+        Settings.from_env()
+
+
+def test_environment_cannot_override_the_measured_routing_decision(monkeypatch):
+    from server.model_routing import BOUNDED_SINGLE_PARAMETER
+    from server.settings import Settings
+
+    monkeypatch.setenv("LAYSH_TERRA_GENERATION_TIERS", BOUNDED_SINGLE_PARAMETER)
+
+    with pytest.raises(ValueError, match="runtime routing decision mismatch"):
+        Settings.from_env()
+
+
+def test_blank_environment_defers_to_the_closed_routing_decision(tmp_path, monkeypatch):
+    import json
+
+    import server.model_routing as routing
+    from server.settings import Settings
+
+    decision_path = tmp_path / "routing-decision.json"
+    decision_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "terra_generation_tiers": [routing.BOUNDED_SINGLE_PARAMETER],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(routing, "ROUTING_DECISION_PATH", decision_path)
+    monkeypatch.setenv("LAYSH_TERRA_GENERATION_TIERS", "")
+
+    assert Settings.from_env().terra_generation_tiers == (
+        routing.BOUNDED_SINGLE_PARAMETER,
+    )

@@ -1,20 +1,29 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 ALLOWED_RUNTIME_MODELS = frozenset({"gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna"})
+
+
+def _default_terra_generation_tiers() -> tuple[str, ...]:
+    from server.model_routing import load_routing_decision
+
+    return load_routing_decision()
 
 
 @dataclass(frozen=True, slots=True)
 class Settings:
     understand_model: str = "gpt-5.6-luna"
-    understand_fallback_model: str = "gpt-5.6-sol"
+    understand_fallback_model: str = "gpt-5.6-terra"
     evidence_understand_model: str = "gpt-5.6-sol"
     generate_model: str = "gpt-5.6-sol"
     heal_model: str = "gpt-5.6-sol"
     qa_model: str = "gpt-5.6-sol"
     visual_qa_model: str = "gpt-5.6-terra"
+    terra_generation_tiers: tuple[str, ...] = field(
+        default_factory=_default_terra_generation_tiers
+    )
     backend: str = "mock"
     public_job_timeout_seconds: float = 180.0
     evidence_job_timeout_seconds: float = 600.0
@@ -42,6 +51,13 @@ class Settings:
         }
         if not configured <= ALLOWED_RUNTIME_MODELS:
             raise ValueError("every Laysh runtime stage must use an approved GPT-5.6 model")
+        from server.model_routing import GENERATION_TIERS, load_routing_decision
+
+        unknown_tiers = set(self.terra_generation_tiers) - GENERATION_TIERS
+        if unknown_tiers:
+            raise ValueError(f"unknown Terra generation tiers: {sorted(unknown_tiers)}")
+        if tuple(self.terra_generation_tiers) != load_routing_decision():
+            raise ValueError("runtime routing decision mismatch")
         timeout_values = (
             self.public_job_timeout_seconds,
             self.evidence_job_timeout_seconds,
@@ -60,6 +76,7 @@ class Settings:
     @classmethod
     def from_env(cls) -> Settings:
         defaults = cls()
+        configured_tiers = os.getenv("LAYSH_TERRA_GENERATION_TIERS", "").strip()
         return cls(
             understand_model=os.getenv("LAYSH_UNDERSTAND_MODEL", defaults.understand_model),
             understand_fallback_model=os.getenv(
@@ -73,6 +90,15 @@ class Settings:
             qa_model=os.getenv("LAYSH_QA_MODEL", defaults.qa_model),
             visual_qa_model=os.getenv(
                 "LAYSH_VISUAL_QA_MODEL", defaults.visual_qa_model
+            ),
+            terra_generation_tiers=tuple(
+                tier.strip()
+                for tier in (
+                    configured_tiers.split(",")
+                    if configured_tiers
+                    else defaults.terra_generation_tiers
+                )
+                if tier.strip()
             ),
             backend=os.getenv("LAYSH_CODEX_BACKEND", defaults.backend),
             public_job_timeout_seconds=float(

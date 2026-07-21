@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "acceptance_row": "ROUTE-02",
+  "sanitized": true,
+  "recorded_at": "2026-07-21T19:55:39Z",
+  "passed": false,
+  "outcome": "aborted_by_test_guard_red",
+  "stage": "generate",
+  "model": "gpt-5.6-sol",
+  "effort": "medium",
+  "elapsed_ms_approximate": 25000,
+  "structured_output": false,
+  "token_usage": null,
+  "live_call_count_conservative": 1,
+  "reason": "A red guard test accidentally crossed the live boundary; the process group was terminated and the attempt produced no structured result."
+}

@@ -44,9 +44,57 @@ def success_jsonl(document: dict, thread_id: str = "thread-curated-123") -> str:
                     "item": {"type": "agent_message", "text": json.dumps(document)},
                 }
             ),
-            json.dumps({"type": "turn.completed", "usage": {"input_tokens": 2}}),
+            json.dumps(
+                {
+                    "type": "turn.completed",
+                    "usage": {
+                        "input_tokens": 2,
+                        "cached_input_tokens": 1,
+                        "output_tokens": 3,
+                    },
+                }
+            ),
         ]
     )
+
+
+def test_runtime_usage_parser_rejects_boolean_token_counts():
+    from server.codex_backend import CODEX_OUTPUT_SCHEMA_BY_STAGE
+    from server.codex_runtime import CodexExecutor
+
+    stdout = "\n".join(
+        [
+            json.dumps(
+                {
+                    "type": "item.completed",
+                    "item": {
+                        "type": "agent_message",
+                        "text": json.dumps(VALID_MODULE_OUTPUT),
+                    },
+                }
+            ),
+            json.dumps(
+                {
+                    "type": "turn.completed",
+                    "usage": {
+                        "input_tokens": True,
+                        "cached_input_tokens": False,
+                        "output_tokens": True,
+                    },
+                }
+            ),
+        ]
+    ).encode()
+
+    _, _, usage = CodexExecutor._parse_output(
+        stdout, CODEX_OUTPUT_SCHEMA_BY_STAGE["generate"]
+    )
+
+    assert usage == {
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "output_tokens": 0,
+    }
 
 
 def executor_with_process(process, captured, **overrides):
@@ -253,6 +301,9 @@ async def test_public_stage_uses_stdin_argument_array_isolated_cwd_and_ephemeral
     assert result.thread_id == "thread-curated-123"
     assert result.model == "gpt-5.6-sol"
     assert result.elapsed_ms >= 0
+    assert result.input_tokens == 2
+    assert result.cached_input_tokens == 1
+    assert result.output_tokens == 3
 
 
 @pytest.mark.asyncio

@@ -138,6 +138,9 @@ class StageExecution:
     elapsed_ms: int
     attempted_models: tuple[str, ...] = ()
     prior_failure_codes: tuple[str, ...] = ()
+    input_tokens: int = 0
+    cached_input_tokens: int = 0
+    output_tokens: int = 0
 
 
 class CodexExecutor:
@@ -275,9 +278,12 @@ class CodexExecutor:
         return {"kind": "process_exit", "returncode": returncode}
 
     @staticmethod
-    def _parse_output(stdout: bytes, schema_path: Path) -> tuple[dict[str, Any], str | None]:
+    def _parse_output(
+        stdout: bytes, schema_path: Path
+    ) -> tuple[dict[str, Any], str | None, dict[str, int]]:
         thread_id = None
         final_text = None
+        usage = {"input_tokens": 0, "cached_input_tokens": 0, "output_tokens": 0}
         for raw_line in stdout.decode("utf-8", errors="replace").splitlines():
             if not raw_line.strip():
                 continue
@@ -290,6 +296,13 @@ class CodexExecutor:
             if event.get("type") == "thread.started":
                 candidate = event.get("thread_id")
                 thread_id = candidate if isinstance(candidate, str) else None
+            if event.get("type") == "turn.completed" and isinstance(
+                event.get("usage"), dict
+            ):
+                for name in usage:
+                    candidate = event["usage"].get(name)
+                    if type(candidate) is int and candidate >= 0:
+                        usage[name] = candidate
             item = event.get("item", {})
             if event.get("type") == "item.completed" and item.get("type") == "agent_message":
                 candidate = item.get("text")
@@ -306,7 +319,7 @@ class CodexExecutor:
             validate_document(document, schema)
         except (ValidationError, OSError, json.JSONDecodeError) as error:
             raise CodexRuntimeError("schema_validation_failed") from error
-        return document, thread_id
+        return document, thread_id, usage
 
     async def execute_stage(
         self,
@@ -407,7 +420,7 @@ class CodexExecutor:
                     },
                 )
         try:
-            data, thread_id = self._parse_output(stdout, schema_path)
+            data, thread_id, usage = self._parse_output(stdout, schema_path)
         except CodexRuntimeError as error:
             if error.safe_detail == {"kind": "runtime_error"}:
                 error.safe_detail = self._safe_upstream_detail(stdout, process.returncode)
@@ -422,4 +435,7 @@ class CodexExecutor:
             thread_id=thread_id,
             model=model,
             elapsed_ms=max(0, int((time.monotonic() - started) * 1000)),
+            input_tokens=usage["input_tokens"],
+            cached_input_tokens=usage["cached_input_tokens"],
+            output_tokens=usage["output_tokens"],
         )

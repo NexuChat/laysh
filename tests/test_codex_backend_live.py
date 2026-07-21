@@ -39,15 +39,15 @@ class RecordingExecutor:
         )
 
 
-class FailingLunaExecutor(RecordingExecutor):
+class SchemaFailingLunaExecutor(RecordingExecutor):
     async def execute_stage(self, **kwargs):
         from server.codex_runtime import CodexRuntimeError
 
         self.calls.append(kwargs)
         if kwargs["model"] == "gpt-5.6-luna":
             raise CodexRuntimeError(
-                "nonzero_exit",
-                safe_detail={"kind": "upstream_error", "code": "service_unavailable"},
+                "schema_validation_failed",
+                safe_detail={"kind": "runtime_error", "model": kwargs["model"]},
             )
         return StageExecution(
             data=VALID_UNDERSTANDING,
@@ -83,11 +83,11 @@ async def test_understand_is_one_luna_call_with_closed_schema_and_zero_echo_prom
 
 
 @pytest.mark.asyncio
-async def test_public_understand_retries_configured_sol_fallback_after_luna_nonzero(caplog):
+async def test_public_understand_retries_terra_only_after_luna_schema_failure(caplog):
     from server.codex_backend import CodexBackend, RuntimeContext
     from server.settings import Settings
 
-    executor = FailingLunaExecutor()
+    executor = SchemaFailingLunaExecutor()
     backend = CodexBackend(executor=executor, settings=Settings())
     result = await backend.understand(
         "ليش تزيد السرعة مسافة التوقف؟",
@@ -97,17 +97,17 @@ async def test_public_understand_retries_configured_sol_fallback_after_luna_nonz
 
     assert [call["model"] for call in executor.calls] == [
         "gpt-5.6-luna",
-        "gpt-5.6-sol",
+        "gpt-5.6-terra",
     ]
     assert all(call["public"] is True for call in executor.calls)
     assert all(call["effort"] == "low" for call in executor.calls)
     assert executor.calls[0]["prompt"] == executor.calls[1]["prompt"]
-    assert result.model == "gpt-5.6-sol"
-    assert result.attempted_models == ("gpt-5.6-luna", "gpt-5.6-sol")
-    assert result.prior_failure_codes == ("nonzero_exit",)
+    assert result.model == "gpt-5.6-terra"
+    assert result.attempted_models == ("gpt-5.6-luna", "gpt-5.6-terra")
+    assert result.prior_failure_codes == ("schema_validation_failed",)
     assert "ليش تزيد" not in caplog.text
     assert "gpt-5.6-luna" in caplog.text
-    assert "nonzero_exit" in caplog.text
+    assert "schema_validation_failed" in caplog.text
 
 
 @pytest.mark.asyncio
@@ -150,7 +150,7 @@ async def test_public_understand_never_receives_builder_fixture_contract():
 
 
 @pytest.mark.asyncio
-async def test_generate_heal_and_qa_route_only_to_sol_with_bounded_effort(monkeypatch):
+async def test_curated_generate_heal_and_ordinary_qa_stay_sol(monkeypatch):
     from server.codex_backend import CodexBackend, RuntimeContext
     from server.settings import Settings
 
@@ -185,7 +185,12 @@ async def test_generate_heal_and_qa_route_only_to_sol_with_bounded_effort(monkey
         runtime_context=context,
     )
 
-    assert [call["model"] for call in executor.calls] == ["gpt-5.6-sol"] * 4
+    assert [call["model"] for call in executor.calls] == [
+        "gpt-5.6-sol",
+        "gpt-5.6-sol",
+        "gpt-5.6-sol",
+        "gpt-5.6-sol",
+    ]
     assert [call["effort"] for call in executor.calls] == ["medium", "medium", "high", "medium"]
     assert [call["schema_path"].name for call in executor.calls] == [
         "module.schema.json",

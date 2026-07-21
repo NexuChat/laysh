@@ -22,7 +22,11 @@ def test_deployment_units_are_secret_free_persistent_and_health_checked():
     assert "ReadWritePaths=%h/.codex" in service
     assert "EnvironmentFile=-%h/.config/laysh/service.env" in service
     assert "LAYSH_CODEX_BACKEND=codex" in service
-    assert "gpt-5.6-luna" in service and service.count("gpt-5.6-sol") >= 4
+    assert "gpt-5.6-luna" in service
+    assert service.count("gpt-5.6-sol") >= 3
+    assert "LAYSH_UNDERSTAND_FALLBACK_MODEL=gpt-5.6-terra" in service
+    assert "LAYSH_QA_MODEL=gpt-5.6-sol" in service
+    assert "LAYSH_TERRA_GENERATION_TIERS=" in service
     assert "LAYSH_CACHE_KEY_SECRET=" not in service
     assert "127.0.0.1:8765/healthz" in health_service
     assert "scripts/healthcheck.py" in health_service

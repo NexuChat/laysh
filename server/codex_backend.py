@@ -9,8 +9,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from jsonschema import ValidationError
+
 from server.codex_runtime import CodexExecutor, CodexPolicyError, CodexRuntimeError, StageExecution
-from server.schemas import validate_module_output, validate_understanding
+from server.model_routing import ModelRoutingPolicy
+from server.schemas import ContractError, validate_module_output, validate_understanding
 from server.settings import Settings
 
 ROOT = Path(__file__).parents[1]
@@ -38,9 +41,18 @@ class CodexBackend:
 
     backend_name = "codex"
 
-    def __init__(self, *, executor: CodexExecutor, settings: Settings) -> None:
+    def __init__(
+        self,
+        *,
+        executor: CodexExecutor,
+        settings: Settings,
+        routing_policy: ModelRoutingPolicy | None = None,
+    ) -> None:
         self.executor = executor
         self.settings = settings
+        self.routing_policy = routing_policy or ModelRoutingPolicy(
+            terra_eligible_tiers=frozenset(settings.terra_generation_tiers)
+        )
 
     @staticmethod
     def _render_prompt(name: str, payload: dict[str, Any]) -> str:
@@ -79,44 +91,89 @@ class CodexBackend:
         prompt = self._render_prompt("understand.md", input_payload)
         policy = self._execution_policy(selected_context)
         started = time.monotonic()
+        primary_timeout: float | None = None
+        fallback_timeout: float | None = None
+        if selected_context.public:
+            retry_budget = min(
+                self.settings.public_stage_timeout_seconds,
+                self.settings.public_job_timeout_seconds / 2,
+            )
+            primary_timeout = retry_budget * (2 / 3)
+            fallback_timeout = retry_budget - primary_timeout
+        failure_code: str | None = None
         try:
-            return await self.executor.execute_stage(
+            result = await self.executor.execute_stage(
                 prompt=prompt,
                 schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["understand"],
                 model=model,
                 effort="low",
+                timeout_seconds=primary_timeout,
                 **policy,
             )
         except CodexPolicyError:
             raise
         except CodexRuntimeError as error:
             fallback = self.settings.understand_fallback_model
-            if not selected_context.public or fallback == model:
+            if (
+                not selected_context.public
+                or fallback == model
+                or error.code != "schema_validation_failed"
+            ):
                 raise
             failure_code = error.code
-            LOGGER.warning(
-                "public understand retry: primary_model=%s failure=%s upstream_kind=%s "
-                "upstream_code=%s fallback_model=%s",
-                model,
-                error.code,
-                error.safe_detail.get("kind"),
-                error.safe_detail.get("code"),
-                fallback,
+        else:
+            try:
+                validate_understanding(result.data)
+            except (ContractError, ValidationError) as error:
+                fallback = self.settings.understand_fallback_model
+                if not selected_context.public or fallback == model:
+                    raise CodexRuntimeError(
+                        "classification_validation_failed",
+                        safe_detail={"kind": "contract_error", "model": model},
+                    ) from error
+                failure_code = "classification_validation_failed"
+            else:
+                return result
+        LOGGER.warning(
+            "public understand classification retry: primary_model=%s failure=%s "
+            "fallback_model=%s",
+            model,
+            failure_code,
+            fallback,
+        )
+        if selected_context.public and fallback_timeout is not None:
+            retry_deadline = started + min(
+                self.settings.public_stage_timeout_seconds,
+                self.settings.public_job_timeout_seconds / 2,
             )
+            fallback_timeout = min(fallback_timeout, retry_deadline - time.monotonic())
+            if fallback_timeout <= 0:
+                raise CodexRuntimeError("understand_retry_budget_exhausted")
         result = await self.executor.execute_stage(
             prompt=prompt,
             schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["understand"],
             model=fallback,
             effort="low",
+            timeout_seconds=fallback_timeout,
             **policy,
         )
+        try:
+            validated_fallback = validate_understanding(result.data)
+        except (ContractError, ValidationError) as error:
+            raise CodexRuntimeError(
+                "classification_validation_failed",
+                safe_detail={"kind": "contract_error", "model": fallback},
+            ) from error
         return StageExecution(
-            data=result.data,
+            data=validated_fallback,
             thread_id=result.thread_id,
             model=result.model,
             elapsed_ms=max(result.elapsed_ms, int((time.monotonic() - started) * 1000)),
             attempted_models=(model, fallback),
-            prior_failure_codes=(failure_code,),
+            prior_failure_codes=(failure_code or "classification_validation_failed",),
+            input_tokens=result.input_tokens,
+            cached_input_tokens=result.cached_input_tokens,
+            output_tokens=result.output_tokens,
         )
 
     async def generate(
@@ -127,12 +184,18 @@ class CodexBackend:
         runtime_context: RuntimeContext | None = None,
     ) -> StageExecution:
         del scenario
+        selected_context = runtime_context or RuntimeContext()
+        model = (
+            self.routing_policy.generation_model(understanding)
+            if selected_context.public
+            else self.settings.generate_model
+        )
         return await self.executor.execute_stage(
             prompt=self._render_prompt("generate_module.md", understanding),
             schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["generate"],
-            model=self.settings.generate_model,
+            model=model,
             effort="medium",
-            **self._execution_policy(runtime_context),
+            **self._execution_policy(selected_context),
         )
 
     async def heal(
@@ -144,6 +207,12 @@ class CodexBackend:
         *,
         runtime_context: RuntimeContext | None = None,
     ) -> StageExecution:
+        selected_context = runtime_context or RuntimeContext()
+        model = (
+            self.routing_policy.heal_model(understanding, attempt)
+            if selected_context.public
+            else self.settings.heal_model
+        )
         return await self.executor.execute_stage(
             prompt=self._render_prompt(
                 "heal_module.md",
@@ -155,9 +224,9 @@ class CodexBackend:
                 },
             ),
             schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["heal"],
-            model=self.settings.heal_model,
+            model=model,
             effort="high" if attempt == 2 else "medium",
-            **self._execution_policy(runtime_context),
+            **self._execution_policy(selected_context),
         )
 
     async def qa(
