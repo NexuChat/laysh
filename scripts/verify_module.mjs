@@ -11,6 +11,7 @@ const trustedRuntimeSource = fs.readFileSync(
 const permittedAbi = ["destroy", "init", "resize", "setParameter", "test", "version"];
 const failures = [];
 const passingNumericFixtures = [];
+const sceneGeometrySamples = [];
 let checkCount = 0;
 let frames = 0;
 let drawOperations = 0;
@@ -30,6 +31,16 @@ function safeValue(value) {
 
 function drawOperation() {
   drawOperations += 1;
+}
+
+function captureSceneGeometry() {
+  if (!Array.isArray(canvas.__layshSceneGeometry)) return;
+  try {
+    const copied = JSON.parse(JSON.stringify(canvas.__layshSceneGeometry));
+    if (Array.isArray(copied)) sceneGeometrySamples.push(...copied);
+  } catch {
+    // The Python validator fails closed when usable samples are absent.
+  }
 }
 
 const context2d = {
@@ -131,6 +142,7 @@ if (simulation) {
     try {
       new vm.Script("window.LayshSimulation.init(options)")
         .runInContext(sandbox, { timeout: 500 });
+      captureSceneGeometry();
     } catch (error) {
       addFailure(
         "runtime_init",
@@ -317,5 +329,6 @@ process.stdout.write(JSON.stringify({
   fixture_count: understanding.checks.length,
   first_frame: frames > 0,
   passing_numeric_fixtures: passingNumericFixtures,
+  scene_geometry_samples: sceneGeometrySamples,
   failures,
 }));

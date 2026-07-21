@@ -9,6 +9,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from server.scene_geometry import validate_scene_geometry
+
 
 class ModuleSecurityError(ValueError):
     """The generated source requests a capability outside the module contract."""
@@ -135,10 +137,25 @@ def verify_module_source(source: str) -> dict[str, Any]:
 
 
 def _run_node_report(source: str, understanding: dict[str, Any]) -> dict[str, Any]:
+    def with_scene_geometry(report: dict[str, Any]) -> dict[str, Any]:
+        geometry = validate_scene_geometry(report.get("scene_geometry_samples"))
+        failures = [*report.get("failures", []), *geometry.failures]
+        return {
+            **report,
+            "passed": bool(report.get("passed")) and geometry.passed,
+            "check_count": int(report.get("check_count", 0)) + geometry.check_count,
+            "failures": failures,
+            "scene_geometry": {
+                "passed": geometry.passed,
+                "check_count": geometry.check_count,
+                "minimum_clearance_px": geometry.minimum_clearance_px,
+            },
+        }
+
     verifier = Path(__file__).parents[1] / "scripts" / "verify_module.mjs"
     node = shutil.which("node")
     if node is None:
-        return {
+        return with_scene_geometry({
             "passed": False,
             "check_count": 0,
             "fixture_count": 0,
@@ -151,7 +168,7 @@ def _run_node_report(source: str, understanding: dict[str, Any]) -> dict[str, An
                     "actual": {"node_runtime_available": False},
                 }
             ],
-        }
+        })
     with tempfile.TemporaryDirectory(prefix="laysh-verify-") as temporary:
         temporary_path = Path(temporary)
         source_path = temporary_path / "module.js"
@@ -167,7 +184,7 @@ def _run_node_report(source: str, understanding: dict[str, Any]) -> dict[str, An
                 timeout=5,
             )
         except subprocess.TimeoutExpired:
-            return {
+            return with_scene_geometry({
                 "passed": False,
                 "check_count": 0,
                 "fixture_count": 0,
@@ -180,9 +197,9 @@ def _run_node_report(source: str, understanding: dict[str, Any]) -> dict[str, An
                         "actual": {"timed_out": True},
                     }
                 ],
-            }
+            })
     if completed.returncode != 0:
-        return {
+        return with_scene_geometry({
             "passed": False,
             "check_count": 0,
             "fixture_count": 0,
@@ -195,11 +212,11 @@ def _run_node_report(source: str, understanding: dict[str, Any]) -> dict[str, An
                     "actual": {"exit_code": completed.returncode},
                 }
             ],
-        }
+        })
     try:
-        return json.loads(completed.stdout)
+        return with_scene_geometry(json.loads(completed.stdout))
     except json.JSONDecodeError:
-        return {
+        return with_scene_geometry({
             "passed": False,
             "check_count": 0,
             "fixture_count": 0,
@@ -212,7 +229,7 @@ def _run_node_report(source: str, understanding: dict[str, Any]) -> dict[str, An
                     "actual": {"valid_json_report": False},
                 }
             ],
-        }
+        })
 
 
 def verify_module_with_node(source: str, understanding: dict[str, Any]) -> dict[str, Any]:

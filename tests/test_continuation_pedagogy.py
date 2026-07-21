@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import re
 import shutil
 from copy import deepcopy
 from pathlib import Path
@@ -75,7 +74,7 @@ def _passing_browser(_artifact):
     return BrowserVerificationResult.passing()
 
 
-def test_pinned_goldens_can_refresh_the_trusted_teaching_shell_offline_and_idempotently(
+def test_legacy_pinned_goldens_cannot_refresh_without_shared_scene_evidence(
     tmp_path, monkeypatch
 ):
     import server.codex_backend
@@ -89,42 +88,19 @@ def test_pinned_goldens_can_refresh_the_trusted_teaching_shell_offline_and_idemp
     source_root = ROOT / "out/cache/golden"
     golden_root = tmp_path / "golden"
     shutil.copytree(source_root, golden_root)
+    before = {path.name: path.read_bytes() for path in golden_root.glob("*.json")}
 
-    reports = refresh_pinned_golden_teaching_shells(
-        root=golden_root, browser_verifier=_passing_browser
-    )
-
-    assert {report["golden_id"] for report in reports} == {
-        "moon_phases",
-        "buoyancy",
-        "pendulum",
-        "simple_circuit",
-        "sound_pitch",
-        "day_night",
-    }
-    assert all(report["shell_refreshed"] is True for report in reports)
-    for report in reports:
-        document = json.loads((golden_root / f'{report["golden_id"]}.json').read_text("utf-8"))
-        lesson_match = re.search(
-            r"window\.__LAYSH_LESSON__ = (.*?);</script>",
-            document["artifact"],
-            flags=re.DOTALL,
+    with pytest.raises(ValueError, match="deterministic refresh verification"):
+        refresh_pinned_golden_teaching_shells(
+            root=golden_root, browser_verifier=_passing_browser
         )
-        assert lesson_match is not None
-        lesson = json.loads(lesson_match.group(1))
-        assert lesson["misconception"].startswith("تصحيح:")
-        assert document["review"]["automated"]["checks"][
-            "misconception_explicitly_corrected"
-        ] is True
-        assert 'id="primary-control" type="range" disabled' not in document["artifact"]
-        assert 'id="misconception-label"' in document["artifact"]
-    assert refresh_pinned_golden_teaching_shells(
-        root=golden_root, browser_verifier=_passing_browser
-    ) == reports
+
+    assert {path.name: path.read_bytes() for path in golden_root.glob("*.json")} == before
 
 
-def test_pinned_golden_refresh_writes_nothing_when_any_browser_gate_fails(tmp_path):
-    from server.browser_verify import BrowserVerificationResult
+def test_pinned_golden_refresh_stops_before_browser_when_scene_evidence_is_missing(
+    tmp_path,
+):
     from server.goldens import refresh_pinned_golden_teaching_shells
 
     golden_root = tmp_path / "golden"
@@ -132,16 +108,15 @@ def test_pinned_golden_refresh_writes_nothing_when_any_browser_gate_fails(tmp_pa
     before = {path.name: path.read_bytes() for path in golden_root.glob("*.json")}
     calls = 0
 
-    def fail_second_browser(_artifact):
+    def recording_browser(_artifact):
         nonlocal calls
         calls += 1
-        if calls == 2:
-            return BrowserVerificationResult(False, 5, [{"gate": "browser"}], {})
-        return BrowserVerificationResult.passing()
+        return _passing_browser(_artifact)
 
-    with pytest.raises(ValueError, match="browser refresh verification"):
+    with pytest.raises(ValueError, match="deterministic refresh verification"):
         refresh_pinned_golden_teaching_shells(
-            root=golden_root, browser_verifier=fail_second_browser
+            root=golden_root, browser_verifier=recording_browser
         )
 
+    assert calls == 0
     assert {path.name: path.read_bytes() for path in golden_root.glob("*.json")} == before

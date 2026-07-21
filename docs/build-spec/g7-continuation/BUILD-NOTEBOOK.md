@@ -325,3 +325,29 @@ not started, and 0 blocked. This is not the final release query.
 ### Batch D — reliability, routing, and release evidence
 
 Not started.
+
+### Unified-generation foundation — phase 3 shared geometry wiring
+
+- The generated learner path is now closed through one deterministic route:
+  `verify_candidate -> _run_node_report -> validate_scene_geometry`. Node
+  verification captures only the module-published post-fit scene samples, and
+  verification merges the geometry failures and check count before any artifact
+  can be marked passed.
+- The curated browser geometry adapter in `golden_physics_motion` delegates to
+  that same shared validator; it no longer contains its own collision math.
+  The adapter preserves explicit contact declarations as allowed relations and
+  otherwise uses the safe default.
+- New API-path regressions prove that an overlapping synthetic generated scene
+  is withheld with structured `scene_geometry/undeclared_overlap`, a declared
+  `scientific_occlusion` remains eligible, and missing scene evidence fails
+  closed. Legacy pinned artifacts without the new evidence are likewise
+  rejected before a refresh can write or invoke browser verification; no stale
+  snapshot is allowed to bypass the shared gate.
+- Prompts require `canvas.__layshSceneGeometry` after fit/clamp using
+  `phase: "post_fit"`, and the frozen contract manifest was updated. The
+  generation prompt remains within its enforced rendered bound (4,744
+  characters for the representative contract).
+- Locally measured evidence: focused wiring/legacy suite, 33 passed in 1.23s;
+  final full suite, 274 passed and the single opt-in live test skipped in
+  263.34s. `ruff check .` and `git diff --check` were clean. No GPT call,
+  Canary, golden regeneration, service change, or external publish occurred.

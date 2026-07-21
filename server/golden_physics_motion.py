@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import math
 import shutil
 import subprocess
 import tempfile
@@ -12,6 +11,7 @@ from typing import Any
 
 from server.motion import evaluate_actor_trajectory
 from server.physics_motion import evaluate_action_physics
+from server.scene_geometry import validate_scene_geometry
 
 ROOT = Path(__file__).parents[1]
 
@@ -52,114 +52,69 @@ def _browser_failures(evidence: Mapping[str, object]) -> list[dict[str, Any]]:
 
 
 def evaluate_body_geometry(samples: list[dict[str, Any]]) -> dict[str, Any]:
-    """Reject undeclared intersections between rendered circular bodies."""
+    """Adapt curated browser evidence to the shared scene geometry contract."""
 
-    failures: list[dict[str, Any]] = []
-    check_count = 0
-    minimum_clearance = math.inf
-    for sample in samples:
+    shared_samples: list[dict[str, Any]] = []
+    for sample_index, sample in enumerate(samples):
         bodies = sample.get("bodies")
-        if not isinstance(bodies, list) or len(bodies) < 2:
-            failures.append(
+        if not isinstance(bodies, list):
+            bodies = []
+        objects = [
+            {
+                "id": body.get("name"),
+                "scientific": True,
+                "clippingPolicy": "forbid",
+                "geometry": {
+                    "type": body.get("shape"),
+                    "cx": body.get("x"),
+                    "cy": body.get("y"),
+                    "radius": body.get("radius"),
+                },
+            }
+            for body in bodies
+            if isinstance(body, dict)
+        ]
+        relations = []
+        for left, right in combinations(
+            [body for body in bodies if isinstance(body, dict)], 2
+        ):
+            left_contacts = left.get("contacts", [])
+            right_contacts = right.get("contacts", [])
+            contact_declared = (
+                right.get("name") in left_contacts or left.get("name") in right_contacts
+            )
+            relations.append(
                 {
-                    "gate": "body_geometry",
-                    "code": "drawn_body_geometry_missing",
-                    "expected": {"minimum_named_bodies": 2},
-                    "actual": {"bodies": bodies},
-                    "message": "Rendered body geometry is missing or incomplete.",
+                    "objects": [left.get("name"), right.get("name")],
+                    "overlapPolicy": "allow" if contact_declared else "forbid",
+                    "contactPolicy": "allow" if contact_declared else "forbid",
+                    "minimumClearance": 0,
                 }
             )
-            check_count += 1
-            continue
-        for body_a, body_b in combinations(bodies, 2):
-            check_count += 1
-            contacts_a = body_a.get("contacts", [])
-            contacts_b = body_b.get("contacts", [])
-            if body_b.get("name") in contacts_a or body_a.get("name") in contacts_b:
-                continue
-            if body_a.get("shape") != "circle" or body_b.get("shape") != "circle":
-                failures.append(
-                    {
-                        "gate": "body_geometry",
-                        "code": "unsupported_body_shape",
-                        "expected": {"shape": "circle"},
-                        "actual": {
-                            "body_a": body_a.get("name"),
-                            "shape_a": body_a.get("shape"),
-                            "body_b": body_b.get("name"),
-                            "shape_b": body_b.get("shape"),
-                        },
-                        "message": "Rendered bodies must declare supported circle geometry.",
-                    }
-                )
-                continue
-            try:
-                center_distance = math.hypot(
-                    float(body_a["x"]) - float(body_b["x"]),
-                    float(body_a["y"]) - float(body_b["y"]),
-                )
-                clearance = center_distance - float(body_a["radius"]) - float(
-                    body_b["radius"]
-                )
-            except (KeyError, TypeError, ValueError):
-                failures.append(
-                    {
-                        "gate": "body_geometry",
-                        "code": "invalid_body_geometry",
-                        "expected": {"finite_circle_geometry": True},
-                        "actual": {"body_a": body_a, "body_b": body_b},
-                        "message": "Rendered body geometry is not a finite circle.",
-                    }
-                )
-                continue
-            if not math.isfinite(clearance):
-                failures.append(
-                    {
-                        "gate": "body_geometry",
-                        "code": "invalid_body_geometry",
-                        "expected": {"finite_circle_geometry": True},
-                        "actual": {"body_a": body_a, "body_b": body_b},
-                        "message": "Rendered body geometry is not a finite circle.",
-                    }
-                )
-                continue
-            minimum_clearance = min(minimum_clearance, clearance)
-            if clearance >= 0:
-                continue
-            overlap = round(-clearance, 3)
-            viewport = sample.get("viewport")
-            canvas = sample.get("canvas")
-            parameter = sample.get("parameter")
-            viewport_text = f'{viewport.get("width")}x{viewport.get("height")}'
-            canvas_text = f'{canvas.get("width")}x{canvas.get("height")}'
-            parameter_text = f'{parameter.get("name")}={parameter.get("value")}'
-            failures.append(
-                {
-                    "gate": "body_geometry",
-                    "code": "drawn_bodies_overlap",
-                    "expected": {"overlap_px": 0, "contact_declared": False},
-                    "actual": {
-                        "body_a": body_a["name"],
-                        "body_b": body_b["name"],
-                        "viewport": viewport,
-                        "canvas": canvas,
-                        "parameter": parameter,
-                        "overlap_px": overlap,
-                    },
-                    "message": (
-                        f'{body_a["name"]} and {body_b["name"]} overlap by '
-                        f"{overlap:.2f}px at viewport {viewport_text} "
-                        f"(canvas {canvas_text}, {parameter_text})."
-                    ),
-                }
-            )
+        canvas = sample.get("canvas")
+        if not isinstance(canvas, dict):
+            canvas = {}
+        shared_samples.append(
+            {
+                "schemaVersion": "1.0",
+                "phase": "post_fit",
+                "viewport": {
+                    "width": canvas.get("width"),
+                    "height": canvas.get("height"),
+                    "safeInset": 0,
+                },
+                "state": {"id": f"sample-{sample_index}", "timeMs": sample_index},
+                "objects": objects,
+                "relations": relations,
+            }
+        )
+
+    report = validate_scene_geometry(shared_samples)
     return {
-        "passed": not failures,
-        "check_count": check_count,
-        "minimum_clearance_px": (
-            round(minimum_clearance, 3) if math.isfinite(minimum_clearance) else None
-        ),
-        "failures": failures,
+        "passed": report.passed,
+        "check_count": report.check_count,
+        "minimum_clearance_px": report.minimum_clearance_px,
+        "failures": report.failures,
     }
 
 

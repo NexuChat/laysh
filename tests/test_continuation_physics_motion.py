@@ -6,6 +6,8 @@ import shutil
 from copy import deepcopy
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).parents[1]
 
 
@@ -338,22 +340,23 @@ def test_body_geometry_rejects_undeclared_overlap_with_actionable_measurement():
     )
 
     assert report["passed"] is False
-    assert report["check_count"] == 1
+    assert report["check_count"] == 4
     assert report["minimum_clearance_px"] == -8.1
-    failure = report["failures"][0]
-    assert failure["code"] == "drawn_bodies_overlap"
-    assert failure["actual"] == {
-        "body_a": "Sun",
-        "body_b": "Moon",
-        "viewport": {"width": 700, "height": 900},
-        "canvas": {"width": 672, "height": 376},
-        "parameter": {"name": "angle_deg", "value": 180},
-        "overlap_px": 8.1,
-    }
-    assert failure["message"] == (
-        "Sun and Moon overlap by 8.10px at viewport 700x900 "
-        "(canvas 672x376, angle_deg=180)."
+    failure = next(
+        item for item in report["failures"] if item["code"] == "undeclared_overlap"
     )
+    assert failure["gate"] == "scene_geometry"
+    assert failure["code"] == "undeclared_overlap"
+    assert failure["expected"] == {
+        "overlapPolicy": "forbid",
+        "minimumClearance": 0,
+    }
+    assert failure["actual"] == {
+        "objects": ["Moon", "Sun"],
+        "clearancePx": -8.1,
+        "overlapPx": 8.1,
+    }
+    assert failure["sample_index"] == 0
 
 
 def test_body_geometry_allows_only_explicitly_declared_contact():
@@ -379,7 +382,7 @@ def test_body_geometry_allows_only_explicitly_declared_contact():
     report = evaluate_body_geometry([sample])
 
     assert report["passed"] is True
-    assert report["check_count"] == 1
+    assert report["check_count"] == 4
     assert report["failures"] == []
 
 
@@ -416,11 +419,12 @@ def test_moon_geometry_upgrade_is_deterministic_and_removes_independent_body_cla
     assert "var clearance = scale * .03" in upgraded
 
 
-def test_moon_geometry_refresh_is_offline_targeted_and_idempotent(tmp_path, monkeypatch):
+def test_legacy_geometry_refresh_cannot_bypass_shared_scene_evidence(
+    tmp_path, monkeypatch
+):
     import server.codex_backend
     from server.browser_verify import BrowserVerificationResult
     from server.golden_geometry import refresh_pinned_moon_geometry
-    from server.goldens import _artifact_lesson_and_module
 
     monkeypatch.setattr(
         server.codex_backend.CodexBackend,
@@ -431,32 +435,15 @@ def test_moon_geometry_refresh_is_offline_targeted_and_idempotent(tmp_path, monk
     )
     golden_root = tmp_path / "golden"
     shutil.copytree(ROOT / "out/cache/golden", golden_root)
-    before = {
-        path.name: path.read_bytes()
-        for path in golden_root.glob("*.json")
-        if path.name not in {"moon_phases.json", "manifest.json"}
-    }
+    before = {path.name: path.read_bytes() for path in golden_root.glob("*.json")}
 
-    reports = refresh_pinned_moon_geometry(
-        root=golden_root,
-        browser_verifier=lambda _artifact: BrowserVerificationResult.passing(),
-    )
+    with pytest.raises(ValueError, match="deterministic refresh verification"):
+        refresh_pinned_moon_geometry(
+            root=golden_root,
+            browser_verifier=lambda _artifact: BrowserVerificationResult.passing(),
+        )
 
-    assert reports[0]["golden_id"] == "moon_phases"
-    assert reports[0]["geometry_refreshed"] is True
-    document = json.loads((golden_root / "moon_phases.json").read_text("utf-8"))
-    _, source = _artifact_lesson_and_module(document["artifact"])
-    assert "function sceneLayout(state)" in source
-    assert document["evidence"]["geometry_refresh"] == {
-        "deterministic_check_count": 31,
-        "browser_check_count": 5,
-    }
     assert before == {
         path.name: path.read_bytes()
         for path in golden_root.glob("*.json")
-        if path.name not in {"moon_phases.json", "manifest.json"}
     }
-    assert refresh_pinned_moon_geometry(
-        root=golden_root,
-        browser_verifier=lambda _artifact: BrowserVerificationResult.passing(),
-    ) == reports

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-import json
 import shutil
 from copy import deepcopy
 from pathlib import Path
+
+import pytest
 
 from tests.golden_cases import VALID_MODULE_OUTPUT, VALID_UNDERSTANDING
 
@@ -14,7 +15,7 @@ SHARED_MODEL_SOURCE = """
 /* LAYSH_SHARED_MODEL: modelState */
 window.LayshSimulation = (() => {
   "use strict";
-  let context, width, height, emitFrame, angleDeg = 90;
+  let canvas, context, width, height, emitFrame, angleDeg = 90;
   function modelState(value) {
     const angle = Math.max(0, Math.min(360, Number(value)));
     return { angle, lit_fraction: (1 - Math.cos(angle * Math.PI / 180)) / 2 };
@@ -24,11 +25,24 @@ window.LayshSimulation = (() => {
     context.clearRect(0, 0, width, height);
     context.fillStyle = `rgb(${Math.round(state.lit_fraction * 255)} 80 120)`;
     context.fillRect(0, 0, width, height);
+    canvas.__layshSceneGeometry = [{
+      schemaVersion: "1.0",
+      phase: "post_fit",
+      viewport: { width, height, safeInset: 0 },
+      state: { id: "rendered", timeMs: 0 },
+      objects: [{
+        id: "actor",
+        scientific: true,
+        clippingPolicy: "forbid",
+        geometry: { type: "circle", cx: width / 2, cy: height / 2, radius: 20 },
+      }],
+      relations: [],
+    }];
     emitFrame();
   }
   return {
     version: 1,
-    init(options) { ({ context, width, height, emitFrame } = options); draw(); },
+    init(options) { ({ canvas, context, width, height, emitFrame } = options); draw(); },
     setParameter(name, value) { if (name === "angle_deg") { angleDeg = Number(value); draw(); } },
     test(inputs) {
       const state = modelState(inputs.angle_deg);
@@ -174,16 +188,12 @@ def test_golden_shared_state_upgrade_is_deterministic_and_satisfies_the_contract
         assert shared_model_report(upgraded)["passed"] is True
 
 
-def test_pinned_goldens_refresh_shared_model_states_offline_and_idempotently(
+def test_legacy_shared_model_refresh_fails_closed_without_scene_evidence(
     tmp_path, monkeypatch
 ):
     import server.codex_backend
     from server.browser_verify import BrowserVerificationResult
-    from server.goldens import (
-        _artifact_lesson_and_module,
-        refresh_pinned_golden_shared_model_states,
-    )
-    from server.shared_state import shared_model_report
+    from server.goldens import refresh_pinned_golden_shared_model_states
 
     monkeypatch.setattr(
         server.codex_backend.CodexBackend,
@@ -192,30 +202,15 @@ def test_pinned_goldens_refresh_shared_model_states_offline_and_idempotently(
     )
     golden_root = tmp_path / "golden"
     shutil.copytree(ROOT / "out/cache/golden", golden_root)
+    before = {path.name: path.read_bytes() for path in golden_root.glob("*.json")}
 
-    reports = refresh_pinned_golden_shared_model_states(
-        root=golden_root,
-        browser_verifier=lambda _artifact: BrowserVerificationResult.passing(),
-    )
+    with pytest.raises(ValueError, match="deterministic refresh verification"):
+        refresh_pinned_golden_shared_model_states(
+            root=golden_root,
+            browser_verifier=lambda _artifact: BrowserVerificationResult.passing(),
+        )
 
-    assert {report["golden_id"] for report in reports} == {
-        "moon_phases",
-        "buoyancy",
-        "pendulum",
-        "simple_circuit",
-        "sound_pitch",
-        "day_night",
-    }
-    assert all(report["shared_model_refreshed"] is True for report in reports)
-    for report in reports:
-        document = (golden_root / f'{report["golden_id"]}.json').read_text("utf-8")
-        _, source = _artifact_lesson_and_module(json.loads(document)["artifact"])
-        assert shared_model_report(source)["passed"] is True
-
-    assert refresh_pinned_golden_shared_model_states(
-        root=golden_root,
-        browser_verifier=lambda _artifact: BrowserVerificationResult.passing(),
-    ) == reports
+    assert {path.name: path.read_bytes() for path in golden_root.glob("*.json")} == before
 
 
 def test_generation_prompt_requires_the_shared_model_state_contract():

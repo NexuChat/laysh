@@ -27,6 +27,24 @@ window.LayshSimulation = (() => {
     context.arc(width / 2, height / 2, Math.min(width, height) * 0.27, 0, Math.PI * 2);
     context.fillStyle = `rgb(${Math.round(42 + fraction * 213)} ${Math.round(51 + fraction * 184)} ${Math.round(61 + fraction * 102)})`;
     context.fill();
+    canvas.__layshSceneGeometry = [{
+      schemaVersion: "1.0",
+      phase: "post_fit",
+      viewport: { width, height, safeInset: 0 },
+      state: { id: "rendered", timeMs: 0 },
+      objects: [{
+        id: "actor",
+        scientific: true,
+        clippingPolicy: "forbid",
+        geometry: {
+          type: "circle",
+          cx: width / 2,
+          cy: height / 2,
+          radius: Math.min(width, height) * 0.27,
+        },
+      }],
+      relations: [],
+    }];
     emitFrame();
   }
 
