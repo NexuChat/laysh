@@ -136,6 +136,17 @@ class SimulationMetadata(ClosedModel):
     heal_count: int = Field(ge=0)
 
 
+class RuntimeStageReceipt(ClosedModel):
+    """A sanitized, ordered receipt for one runtime-model attempt."""
+
+    stage: Literal["understand", "generate", "heal", "qa"]
+    attempt: int = Field(ge=1)
+    model: Literal["gpt-5.6-luna", "gpt-5.6-terra", "gpt-5.6-sol"]
+    outcome: Literal["completed", "failed"]
+    elapsed_ms: int | None = Field(default=None, ge=0)
+    failure_code: str | None = None
+
+
 class FallbackResult(ClosedModel):
     reason_code: str
     suggestions: list[str] = Field(max_length=3)
@@ -165,6 +176,7 @@ class PublicResult(ClosedModel):
     answer: AnswerPayload | None
     simulation: SimulationMetadata | None
     fallback: FallbackResult | None
+    runtime_receipts: list[RuntimeStageReceipt] = Field(default_factory=list)
 
 
 class AskRequest(ClosedModel):

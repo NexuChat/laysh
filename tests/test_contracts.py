@@ -90,6 +90,20 @@ def test_public_result_rejects_unknown_contract_version():
         )
 
 
+def test_runtime_stage_receipt_is_closed_to_allowed_gpt_5_6_models():
+    from server.schemas import RuntimeStageReceipt
+
+    with pytest.raises(PydanticValidationError):
+        RuntimeStageReceipt(
+            stage="generate",
+            attempt=1,
+            model="unapproved-model",
+            outcome="completed",
+            elapsed_ms=1,
+            failure_code=None,
+        )
+
+
 @pytest.mark.parametrize(
     ("schema_name", "document"),
     [

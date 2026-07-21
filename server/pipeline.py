@@ -10,6 +10,7 @@ from server.codex_runtime import CodexRuntimeError, StageExecution
 from server.schemas import (
     AnswerPayload,
     FallbackResult,
+    RuntimeStageReceipt,
     SimulationMetadata,
     validate_module_output,
     validate_understanding,
@@ -64,21 +65,92 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         evidence_fixture_id=record.evidence_fixture_id,
     )
 
+    def receipt_stage_name(stage: str) -> str:
+        return {
+            "understand": "understand",
+            "understand_retry": "understand",
+            "generate": "generate",
+            "heal_1": "heal",
+            "heal_2": "heal",
+            "qa": "qa",
+            "qa_retry": "qa",
+        }[stage]
+
+    def next_receipt_attempt(stage: str) -> int:
+        return sum(receipt.stage == stage for receipt in record.runtime_receipts) + 1
+
+    def record_stage_attempt(
+        *,
+        stage: str,
+        model: str,
+        outcome: str,
+        elapsed_ms: int | None,
+        failure_code: str | None,
+        thread_id: str | None,
+    ) -> None:
+        attempt = next_receipt_attempt(stage)
+        execution = {
+            "stage": stage,
+            "attempt": attempt,
+            "model": model,
+            "outcome": outcome,
+            "elapsed_ms": elapsed_ms,
+            "failure_code": failure_code,
+            "thread_id": thread_id,
+        }
+        record.stage_executions.append(execution)
+        record.runtime_receipts.append(
+            RuntimeStageReceipt(
+                stage=stage,
+                attempt=attempt,
+                model=model,
+                outcome=outcome,
+                elapsed_ms=elapsed_ms,
+                failure_code=failure_code,
+            )
+        )
+
     def stage_data(
         result: dict[str, Any] | StageExecution,
         stage: str,
     ) -> dict[str, Any]:
         if isinstance(result, StageExecution):
-            record.stage_executions.append(
-                {
-                    "stage": stage,
-                    "model": result.model,
-                    "elapsed_ms": result.elapsed_ms,
-                    "thread_id": result.thread_id,
-                }
-            )
+            stage_name = receipt_stage_name(stage)
+            attempted_models = result.attempted_models or (result.model,)
+            prior_failure_codes = result.prior_failure_codes
+            for index, model in enumerate(attempted_models):
+                completed = index == len(attempted_models) - 1
+                failure_code = (
+                    None
+                    if completed
+                    else prior_failure_codes[index]
+                    if index < len(prior_failure_codes)
+                    else "runtime_error"
+                )
+                elapsed_ms = result.elapsed_ms if completed else None
+                record_stage_attempt(
+                    stage=stage_name,
+                    model=model,
+                    outcome="completed" if completed else "failed",
+                    elapsed_ms=elapsed_ms,
+                    failure_code=failure_code,
+                    thread_id=result.thread_id if completed else None,
+                )
             return result.data
         return result
+
+    def record_stage_failure(stage: str, error: CodexRuntimeError) -> None:
+        model = error.safe_detail.get("model")
+        if not isinstance(model, str):
+            return
+        record_stage_attempt(
+            stage=receipt_stage_name(stage),
+            model=model,
+            outcome="failed",
+            elapsed_ms=None,
+            failure_code=error.code,
+            thread_id=None,
+        )
 
     def record_verification_failure(
         result: VerificationResult,
@@ -399,6 +471,10 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 )
                 break
             except CodexRuntimeError as error:
+                record_stage_failure(
+                    "qa" if qa_attempt == 1 else "qa_retry",
+                    error,
+                )
                 if error.code != "stage_timeout":
                     raise
                 if not record.public:
@@ -538,8 +614,9 @@ async def run_pipeline(manager: Any, record: Any) -> None:
     generated_execution = next(
         (
             execution
-            for execution in reversed(record.stage_executions)
-            if execution["model"] != manager.backend.__class__.__name__
+            for execution in record.stage_executions
+            if execution["stage"] == "generate"
+            and execution["outcome"] == "completed"
         ),
         None,
     )

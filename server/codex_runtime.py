@@ -375,7 +375,10 @@ class CodexExecutor:
                     start_new_session=True,
                 )
             except (OSError, ValueError) as error:
-                raise CodexRuntimeError("spawn_failed") from error
+                raise CodexRuntimeError(
+                    "spawn_failed",
+                    safe_detail={"kind": "runtime_error", "model": model},
+                ) from error
             try:
                 stage_timeout = timeout_seconds or (
                     self.stage_timeout_seconds if public else self.evidence_stage_timeout_seconds
@@ -386,7 +389,10 @@ class CodexExecutor:
                 )
             except TimeoutError as error:
                 await self._terminate_process_group(process)
-                raise CodexRuntimeError("stage_timeout") from error
+                raise CodexRuntimeError(
+                    "stage_timeout",
+                    safe_detail={"kind": "runtime_error", "model": model},
+                ) from error
             except asyncio.CancelledError:
                 await self._terminate_process_group(process)
                 raise
@@ -395,13 +401,17 @@ class CodexExecutor:
                 raise CodexRuntimeError(
                     "nonzero_exit",
                     builder_detail=detail,
-                    safe_detail=self._safe_upstream_detail(stdout, process.returncode),
+                    safe_detail={
+                        **self._safe_upstream_detail(stdout, process.returncode),
+                        "model": model,
+                    },
                 )
         try:
             data, thread_id = self._parse_output(stdout, schema_path)
         except CodexRuntimeError as error:
             if error.safe_detail == {"kind": "runtime_error"}:
                 error.safe_detail = self._safe_upstream_detail(stdout, process.returncode)
+            error.safe_detail = {**error.safe_detail, "model": model}
             if not public:
                 error.builder_detail = self._builder_stream_detail(stdout, stderr)
             else:

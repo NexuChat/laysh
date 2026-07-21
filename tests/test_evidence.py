@@ -10,13 +10,21 @@ def test_g2_evidence_contains_stage_receipts_without_raw_question():
         status="complete",
         stage_executions=[
             {
+                "stage": "understand",
+                "attempt": 1,
                 "model": "gpt-5.6-luna",
-                "elapsed_ms": 1200,
-                "thread_id": "thread-understand",
+                "outcome": "failed",
+                "elapsed_ms": None,
+                "failure_code": "stage_timeout",
+                "thread_id": None,
             },
             {
+                "stage": "understand",
+                "attempt": 2,
                 "model": "gpt-5.6-sol",
+                "outcome": "completed",
                 "elapsed_ms": 4200,
+                "failure_code": None,
                 "thread_id": "thread-generate",
             },
         ],
@@ -39,10 +47,27 @@ def test_g2_evidence_contains_stage_receipts_without_raw_question():
     )
 
     assert evidence["runtime_family"] == "GPT-5.6"
-    assert [stage["model"] for stage in evidence["stages"]] == [
-        "gpt-5.6-luna",
-        "gpt-5.6-sol",
+    assert evidence["stages"] == [
+        {
+            "stage": "understand",
+            "attempt": 1,
+            "model": "gpt-5.6-luna",
+            "outcome": "failed",
+            "elapsed_ms": None,
+            "failure_code": "stage_timeout",
+            "thread_id": None,
+            "evidence_mode": True,
+        },
+        {
+            "stage": "understand",
+            "attempt": 2,
+            "model": "gpt-5.6-sol",
+            "outcome": "completed",
+            "elapsed_ms": 4200,
+            "failure_code": None,
+            "thread_id": "thread-generate",
+            "evidence_mode": True,
+        },
     ]
-    assert evidence["stages"][0]["thread_id"] == "thread-understand"
     assert "PRIVATE-QUESTION" not in str(evidence)
     assert "question" not in evidence

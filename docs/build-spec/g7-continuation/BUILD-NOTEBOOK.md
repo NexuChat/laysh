@@ -5,6 +5,13 @@
 - **Representative root session:** `019f7998-9378-72b2-b590-ee10e632ce81`
 - **Parent session:** none; this is the original root continuation.
 - **Builder model / effort:** `gpt-5.6-terra` / `high` (launcher-profile verified).
+- **Continuation profile exception (2026-07-21):** the effective launcher now
+  reports `gpt-5.6-sol` / `high`; the required profile check reports only
+  `profile model is not gpt-5.6-terra`. The owner explicitly resumed after the
+  discrepancy had been disclosed, so this root session continues on that
+  profile without mutating launcher configuration. This exception applies only
+  to the build lane; product runtime routing remains restricted to the
+  allowlisted GPT-5.6 family and is unchanged by this entry.
 - **Started (UTC):** `2026-07-20T21:57:44Z`
 - **Starting commit:** `828fe4d99dfd516c3fea7a028fc6e4b306199702`
 - **Starting history count:** 74
@@ -324,7 +331,37 @@ not started, and 0 blocked. This is not the final release query.
 
 ### Batch D — reliability, routing, and release evidence
 
-Not started.
+#### EVID-02 — truthful ordered runtime receipts
+
+- The first public-result regression used distinct Luna, Terra, Sol, and QA
+  stage executions. It failed red because `effective_model` reported the final
+  Luna QA stage instead of the Terra generation stage. A second red fixture
+  showed that a timed-out QA attempt disappeared from the receipt, and five
+  runtime protocol shapes lacked the model that had actually been invoked.
+- `PublicResult.runtime_receipts` is now a closed, ordered, sanitized contract:
+  `stage`, `attempt`, GPT-5.6 `model`, `outcome`, optional elapsed time, and
+  safe failure code. It never exposes runtime thread IDs or learner input. The
+  private builder evidence retains its thread receipt and now includes the same
+  attempt/outcome/failure fields.
+- Pipeline recording expands an understand fallback into its failed primary
+  attempt and its completed fallback attempt, records a timed-out QA attempt
+  before a retry, and preserves the generation model for the backward-compatible
+  `effective_model` field. Runtime protocol errors carry the invoked model in
+  their internal sanitized detail, so a failed attempt is not silently erased;
+  the closed receipt rejects any model outside Luna, Terra, or Sol.
+- Red/green focused evidence: 9 receipt/runtime tests passed in 0.41s; affected
+  pipeline, runtime, evidence, API, and contract suite: 66 passed in 4.82s.
+  The frozen-contract regression was red immediately after the closed public
+  schema change and green after its hash was refreshed.
+- Final full offline suite recorded through
+  `/tmp/laysh-evid02-final.YjWFFL/results.xml`: 306 passed, 1 opt-in live test
+  skipped, 0 failures/errors, 302.509s. Non-browser coverage: 291 passed,
+  16 deselected, 82% total coverage. No live
+  model call, cache promotion, service mutation, Canary, regeneration, push,
+  or publish occurred.
+
+Current acceptance ledger after EVID-02: 16 passing, 0 failing, 14 not started,
+and 0 blocked. This is not the final release query.
 
 ### Unified-generation foundation — phase 3 shared geometry wiring
 

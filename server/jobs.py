@@ -14,6 +14,7 @@ from server.schemas import (
     FallbackResult,
     PublicEvent,
     PublicResult,
+    RuntimeStageReceipt,
     SimulationMetadata,
 )
 
@@ -67,6 +68,7 @@ class JobRecord:
     public: bool = True
     evidence_fixture_id: str | None = None
     stage_executions: list[dict[str, Any]] = field(default_factory=list)
+    runtime_receipts: list[RuntimeStageReceipt] = field(default_factory=list)
     builder_diagnostics: list[dict[str, Any]] = field(default_factory=list)
     builder_outputs: dict[str, Any] = field(default_factory=dict)
     promote_golden: bool = False
@@ -78,6 +80,7 @@ class JobRecord:
             answer=self.answer,
             simulation=self.simulation,
             fallback=self.fallback,
+            runtime_receipts=self.runtime_receipts,
         )
 
 

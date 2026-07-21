@@ -135,7 +135,7 @@ async def test_qa_timeout_retries_once_with_same_slim_input_then_completes():
 
     from server.browser_verify import BrowserVerificationResult
     from server.codex_backend import MockCodexBackend
-    from server.codex_runtime import CodexRuntimeError
+    from server.codex_runtime import CodexRuntimeError, StageExecution
     from server.jobs import JobManager
 
     class TransientQaBackend(MockCodexBackend):
@@ -149,19 +149,27 @@ async def test_qa_timeout_retries_once_with_same_slim_input_then_completes():
                 (deepcopy(module_output), deepcopy(understanding), deepcopy(gate_outcome))
             )
             if self.qa_calls == 1:
-                raise CodexRuntimeError("stage_timeout")
-            return {
-                "approved": True,
-                "issues": [],
-                "replacement_module_js": None,
-                "visual_richness": {
-                    "scene_depth": True,
-                    "physical_light": True,
-                    "idle_motion": True,
-                    "reactive_feedback": True,
-                    "readable_overlays": True,
+                raise CodexRuntimeError(
+                    "stage_timeout",
+                    safe_detail={"kind": "runtime_error", "model": "gpt-5.6-sol"},
+                )
+            return StageExecution(
+                data={
+                    "approved": True,
+                    "issues": [],
+                    "replacement_module_js": None,
+                    "visual_richness": {
+                        "scene_depth": True,
+                        "physical_light": True,
+                        "idle_motion": True,
+                        "reactive_feedback": True,
+                        "readable_overlays": True,
+                    },
                 },
-            }
+                thread_id="private-qa-thread",
+                model="gpt-5.6-sol",
+                elapsed_ms=20,
+            )
 
     backend = TransientQaBackend()
     manager = JobManager(
@@ -180,6 +188,13 @@ async def test_qa_timeout_retries_once_with_same_slim_input_then_completes():
     assert backend.qa_inputs[0][2]["check_count"] > 0
     assert backend.qa_inputs[0][2]["gate_names"]
     assert any(item.get("type") == "qa_timeout" for item in record.builder_diagnostics)
+    assert [
+        (receipt.stage, receipt.attempt, receipt.model, receipt.outcome, receipt.failure_code)
+        for receipt in record.runtime_receipts
+    ] == [
+        ("qa", 1, "gpt-5.6-sol", "failed", "stage_timeout"),
+        ("qa", 2, "gpt-5.6-sol", "completed", None),
+    ]
 
 
 @pytest.mark.asyncio
@@ -430,6 +445,123 @@ def test_timeout_reaches_truthful_terminal_state_and_discards_question(backend):
         result = wait_for_terminal(test_client, job_id)
         assert result["status"] == "timed_out"
         assert test_client.app.state.jobs.get(job_id).question is None
+
+
+def test_public_runtime_receipts_preserve_every_stage_without_mislabeling_generation():
+    """A later heal or QA model must never masquerade as the generation model."""
+    from fastapi.testclient import TestClient
+
+    from server.app import create_app
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend
+    from server.codex_runtime import StageExecution
+
+    class ReceiptBackend(MockCodexBackend):
+        async def understand(self, *args, **kwargs):
+            return StageExecution(
+                data=await super().understand(*args, **kwargs),
+                thread_id="private-understand-thread",
+                model="gpt-5.6-luna",
+                elapsed_ms=11,
+            )
+
+        async def generate(self, *args, **kwargs):
+            return StageExecution(
+                data=await super().generate(*args, **kwargs),
+                thread_id="private-generate-thread",
+                model="gpt-5.6-terra",
+                elapsed_ms=22,
+            )
+
+        async def heal(self, *args, **kwargs):
+            return StageExecution(
+                data=await super().heal(*args, **kwargs),
+                thread_id="private-heal-thread",
+                model="gpt-5.6-sol",
+                elapsed_ms=33,
+            )
+
+        async def qa(self, *args, **kwargs):
+            return StageExecution(
+                data=await super().qa(*args, **kwargs),
+                thread_id="private-qa-thread",
+                model="gpt-5.6-luna",
+                elapsed_ms=44,
+            )
+
+    with TestClient(
+        create_app(
+            backend=ReceiptBackend(),
+            job_timeout_seconds=2,
+            browser_verifier=lambda _: BrowserVerificationResult.passing(),
+        )
+    ) as test_client:
+        job_id = ask(test_client, "broken first draft")
+        result = wait_for_terminal(test_client, job_id)
+
+    assert result["status"] == "complete"
+    assert result["simulation"]["effective_model"] == "gpt-5.6-terra"
+    assert [
+        (receipt["stage"], receipt["attempt"], receipt["model"], receipt["outcome"])
+        for receipt in result["runtime_receipts"]
+    ] == [
+        ("understand", 1, "gpt-5.6-luna", "completed"),
+        ("generate", 1, "gpt-5.6-terra", "completed"),
+        ("heal", 1, "gpt-5.6-sol", "completed"),
+        ("qa", 1, "gpt-5.6-luna", "completed"),
+    ]
+    public_surface = json.dumps(result, ensure_ascii=False)
+    assert "private-" not in public_surface
+    assert "broken first draft" not in public_surface
+
+
+def test_public_runtime_receipts_retain_a_sanitized_understand_fallback_attempt():
+    from fastapi.testclient import TestClient
+
+    from server.app import create_app
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend
+    from server.codex_runtime import StageExecution
+
+    class FallbackReceiptBackend(MockCodexBackend):
+        async def understand(self, *args, **kwargs):
+            return StageExecution(
+                data=await super().understand(*args, **kwargs),
+                thread_id="private-fallback-thread",
+                model="gpt-5.6-sol",
+                elapsed_ms=27,
+                attempted_models=("gpt-5.6-luna", "gpt-5.6-sol"),
+                prior_failure_codes=("nonzero_exit",),
+            )
+
+        async def generate(self, *args, **kwargs):
+            return StageExecution(
+                data=await super().generate(*args, **kwargs),
+                thread_id="private-generate-thread",
+                model="gpt-5.6-sol",
+                elapsed_ms=31,
+            )
+
+    with TestClient(
+        create_app(
+            backend=FallbackReceiptBackend(),
+            job_timeout_seconds=2,
+            browser_verifier=lambda _: BrowserVerificationResult.passing(),
+        )
+    ) as test_client:
+        job_id = ask(test_client, "success")
+        result = wait_for_terminal(test_client, job_id)
+
+    assert [
+        (receipt["stage"], receipt["attempt"], receipt["model"], receipt["outcome"])
+        for receipt in result["runtime_receipts"]
+    ] == [
+        ("understand", 1, "gpt-5.6-luna", "failed"),
+        ("understand", 2, "gpt-5.6-sol", "completed"),
+        ("generate", 1, "gpt-5.6-sol", "completed"),
+    ]
+    assert result["runtime_receipts"][0]["failure_code"] == "nonzero_exit"
+    assert "thread_id" not in str(result["runtime_receipts"])
 
 
 @pytest.mark.asyncio

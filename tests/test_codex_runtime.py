@@ -327,6 +327,7 @@ async def test_protocol_failures_are_sanitized(stdout, returncode, code):
             effort="medium",
         )
     assert "SECRET" not in str(captured.value)
+    assert captured.value.safe_detail["model"] == "gpt-5.6-sol"
 
 
 @pytest.mark.asyncio
@@ -365,6 +366,7 @@ async def test_public_nonzero_extracts_only_allowlisted_upstream_classification(
         "type": "server_error",
         "code": "service_unavailable",
         "status": 503,
+        "model": "gpt-5.6-sol",
     }
     assert "PRIVATE" not in json.dumps(captured.value.safe_detail)
 

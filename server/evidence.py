@@ -21,8 +21,11 @@ def build_g2_evidence(
         stages.append(
             {
                 "stage": execution.get("stage", f"stage_{index + 1}"),
+                "attempt": execution.get("attempt", 1),
                 "model": model,
+                "outcome": execution.get("outcome", "completed"),
                 "elapsed_ms": execution["elapsed_ms"],
+                "failure_code": execution.get("failure_code"),
                 "thread_id": execution["thread_id"],
                 "evidence_mode": True,
             }
@@ -63,4 +66,3 @@ def build_g2_evidence(
         "browser": browser_evidence,
         "gate_g2_passed": record.status == "complete" and browser_passed,
     }
-
