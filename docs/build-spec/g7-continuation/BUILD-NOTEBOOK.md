@@ -363,6 +363,34 @@ not started, and 0 blocked. This is not the final release query.
 Current acceptance ledger after EVID-02: 16 passing, 0 failing, 14 not started,
 and 0 blocked. This is not the final release query.
 
+#### REL-01 — answer-first downstream failure containment
+
+- The first red public-path fixture emitted a safe answer then raised a
+  generation `nonzero_exit`; the old job manager ended it as `failed`.
+  The corrected manager transitions any post-answer timeout, runtime error, or
+  internal downstream error to `answer_only`, emits an intentionally bounded
+  fallback with retry/gallery suggestions, clears any candidate artifact, and
+  leaves the already-emitted answer intact. Failures before a safe answer still
+  retain their truthful terminal status.
+- The transition contract now explicitly permits that honest fallback from
+  cache lookup, generation, healing, verification, and browser-check states.
+  Runtime calls flow through one receipt wrapper, so failed generate/heal/QA
+  attempts retain their safe stage/model/outcome receipt instead of vanishing.
+- Deterministic failure matrix: generate, heal, non-timeout QA, cache lookup,
+  browser runtime, and a post-answer total timeout all end answer-only with no
+  artifact or cache entry. Permanent assembly failure exhausts its bounded
+  repairs without losing the answer; a cache-write OSError keeps the already
+  verified playable result rather than withholding it.
+- Focused/affected tests: 69 passed in local reruns. Final full suite recorded
+  through `/tmp/laysh-rel01-final.SY06Hf/results.xml`: 315 passed, 1 opt-in live
+  test skipped, 0 failures/errors, 303.927s. Non-browser coverage: 300 passed,
+  16 deselected, 82% total coverage. Ruff, diff check, and the general-runtime
+  import-boundary gate were clean. No live model call, service mutation, cache
+  promotion, Canary, regeneration, push, or publish occurred.
+
+Current acceptance ledger after REL-01: 17 passing, 0 failing, 13 not started,
+and 0 blocked. This is not the final release query.
+
 ### Unified-generation foundation — phase 3 shared geometry wiring
 
 - The generated learner path is now closed through one deterministic route:

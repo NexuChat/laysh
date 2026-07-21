@@ -152,6 +152,13 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             thread_id=None,
         )
 
+    async def stage_result(stage: str, operation: Any) -> dict[str, Any]:
+        try:
+            return stage_data(await operation, stage)
+        except CodexRuntimeError as error:
+            record_stage_failure(stage, error)
+            raise
+
     def record_verification_failure(
         result: VerificationResult,
         heal_count: int,
@@ -186,13 +193,13 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         emit_event=False,
     )
     understanding = validate_understanding(
-        stage_data(
-            await manager.backend.understand(
+        await stage_result(
+            "understand",
+            manager.backend.understand(
                 question,
                 record.locale,
                 runtime_context=runtime_context,
             ),
-            "understand",
         )
     )
 
@@ -214,13 +221,13 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             }
         )
         understanding = validate_understanding(
-            stage_data(
-                await manager.backend.understand(
+            await stage_result(
+                "understand_retry",
+                manager.backend.understand(
                     question,
                     record.locale,
                     runtime_context=runtime_context,
                 ),
-                "understand_retry",
             )
         )
         formula_failures, _ = formula_presentation_report(understanding)
@@ -316,12 +323,16 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             manager.transition(record, "complete", "verified_cache_result")
             return
     manager.transition(record, "generating", "بناء وحدة المحاكاة")
-    generated = await manager.backend.generate(
-        understanding,
-        scenario,
-        runtime_context=runtime_context,
+    module_output = validate_module_output(
+        await stage_result(
+            "generate",
+            manager.backend.generate(
+                understanding,
+                scenario,
+                runtime_context=runtime_context,
+            ),
+        )
     )
-    module_output = validate_module_output(stage_data(generated, "generate"))
     if scenario == "exhausted_heal":
         module_output = manager.backend.mark_exhausted(module_output)
 
@@ -390,13 +401,13 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 },
             )
             understanding = validate_understanding(
-                stage_data(
-                    await manager.backend.understand(
+                await stage_result(
+                    "understand_retry",
+                    manager.backend.understand(
                         question,
                         record.locale,
                         runtime_context=runtime_context,
                     ),
-                    "understand_retry",
                 )
             )
             if not understanding["safe"] or not understanding["simulatable"]:
@@ -419,15 +430,15 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         heal_count += 1
         manager.transition(record, "healing", "إصلاح فشل تحقق محدد")
         module_output = validate_module_output(
-            stage_data(
-                await manager.backend.heal(
+            await stage_result(
+                f"heal_{heal_count}",
+                manager.backend.heal(
                     module_output,
                     understanding,
                     verification.failures,
                     heal_count,
                     runtime_context=runtime_context,
                 ),
-                f"heal_{heal_count}",
             )
         )
 
@@ -460,21 +471,17 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         qa_result = None
         for qa_attempt in (1, 2):
             try:
-                qa_result = stage_data(
-                    await manager.backend.qa(
+                qa_result = await stage_result(
+                    "qa" if qa_attempt == 1 else "qa_retry",
+                    manager.backend.qa(
                         module_output,
                         understanding,
                         gate_outcome,
                         runtime_context=runtime_context,
                     ),
-                    "qa" if qa_attempt == 1 else "qa_retry",
                 )
                 break
             except CodexRuntimeError as error:
-                record_stage_failure(
-                    "qa" if qa_attempt == 1 else "qa_retry",
-                    error,
-                )
                 if error.code != "stage_timeout":
                     raise
                 if not record.public:

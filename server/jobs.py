@@ -35,8 +35,15 @@ ALLOWED_TRANSITIONS = {
     "filtering": {"understanding", "cancelled", "timed_out", "failed"},
     "understanding": {"answered", "rejected", "cancelled", "timed_out", "failed"},
     "answered": {"cache_lookup", "answer_only", "cancelled", "timed_out", "failed"},
-    "cache_lookup": {"generating", "browser_check", "cancelled", "timed_out", "failed"},
-    "generating": {"verifying", "cancelled", "timed_out", "failed"},
+    "cache_lookup": {
+        "generating",
+        "browser_check",
+        "answer_only",
+        "cancelled",
+        "timed_out",
+        "failed",
+    },
+    "generating": {"verifying", "answer_only", "cancelled", "timed_out", "failed"},
     "verifying": {
         "healing",
         "browser_check",
@@ -46,7 +53,7 @@ ALLOWED_TRANSITIONS = {
         "timed_out",
         "failed",
     },
-    "healing": {"verifying", "cancelled", "timed_out", "failed"},
+    "healing": {"verifying", "answer_only", "cancelled", "timed_out", "failed"},
     "browser_check": {"complete", "answer_only", "cancelled", "timed_out", "failed"},
 }
 
@@ -202,7 +209,8 @@ class JobManager:
 
             await asyncio.wait_for(run_in_slot(), timeout=timeout)
         except TimeoutError:
-            self.terminal(record, "timed_out", "job_timeout")
+            if not self.preserve_answer_after_failure(record, "timed_out"):
+                self.terminal(record, "timed_out", "job_timeout")
         except (asyncio.CancelledError, PipelineCancelled):
             self.terminal(record, "cancelled", "cancelled_by_user")
         except CodexRuntimeError as error:
@@ -210,9 +218,17 @@ class JobManager:
                 record.builder_diagnostics.append(
                     {"code": error.code, "upstream_detail": error.builder_detail}
                 )
-            self.terminal(record, "failed", error.code)
+            if not self.preserve_answer_after_failure(
+                record,
+                self.after_answer_failure_reason(record),
+            ):
+                self.terminal(record, "failed", error.code)
         except Exception:
-            self.terminal(record, "failed", "internal_pipeline_error")
+            if not self.preserve_answer_after_failure(
+                record,
+                self.after_answer_failure_reason(record),
+            ):
+                self.terminal(record, "failed", "internal_pipeline_error")
         finally:
             heartbeat_task.cancel()
             try:
@@ -277,6 +293,31 @@ class JobManager:
         self.transition(record, status, reason_code)
         if status in {"cancelled", "failed", "timed_out", "rejected", "qa_inconclusive"}:
             self.emit(record, "terminal", {"status": status, "reason_code": reason_code})
+
+    @staticmethod
+    def after_answer_failure_reason(record: JobRecord) -> str:
+        if record.status in {"verifying", "browser_check"}:
+            return "simulation_runtime_error"
+        return "generation_failed"
+
+    def preserve_answer_after_failure(self, record: JobRecord, reason_code: str) -> bool:
+        if record.answer is None or record.status in TERMINAL_STATES:
+            return False
+        language = record.locale if record.locale in {"ar", "en"} else "ar"
+        suggestions = (
+            ["Open an instant gallery lesson", "Try building again"]
+            if language == "en"
+            else ["شغّل تجربة فورية من المعرض", "حاول البناء مرة أخرى"]
+        )
+        record.simulation = None
+        record.artifact = None
+        record.fallback = FallbackResult(
+            reason_code=reason_code,
+            suggestions=suggestions,
+        )
+        self.emit(record, "fallback", record.fallback.model_dump(mode="json"))
+        self.transition(record, "answer_only", reason_code)
+        return True
 
     async def cancel(self, record: JobRecord) -> PublicResult:
         if record.task is not None and not record.task.done():

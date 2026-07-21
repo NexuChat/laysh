@@ -51,6 +51,184 @@ def test_non_simulatable_is_successful_answer_only_without_generation(client, ba
     assert backend.generate_calls == 0
 
 
+def test_generate_failure_after_answer_preserves_the_safe_answer_as_answer_only():
+    from fastapi.testclient import TestClient
+
+    from server.app import create_app
+    from server.codex_backend import MockCodexBackend
+    from server.codex_runtime import CodexRuntimeError
+
+    class FailingGenerateBackend(MockCodexBackend):
+        async def generate(self, *args, **kwargs):
+            self.generate_calls += 1
+            raise CodexRuntimeError(
+                "nonzero_exit",
+                safe_detail={"kind": "runtime_error", "model": "gpt-5.6-sol"},
+            )
+
+    with TestClient(
+        create_app(backend=FailingGenerateBackend(), job_timeout_seconds=2)
+    ) as test_client:
+        job_id = ask(test_client, "success")
+        result = wait_for_terminal(test_client, job_id)
+        record = test_client.app.state.jobs.get(job_id)
+
+    assert result["status"] == "answer_only"
+    assert result["answer"]["tldr"]
+    assert result["simulation"] is None
+    assert result["fallback"]["reason_code"] == "generation_failed"
+    assert [event.type for event in record.events][:2] == ["answer", "stage"]
+    assert record.events[-1].type == "fallback"
+    assert [
+        (receipt.stage, receipt.model, receipt.outcome, receipt.failure_code)
+        for receipt in record.runtime_receipts
+    ] == [("generate", "gpt-5.6-sol", "failed", "nonzero_exit")]
+    assert record.question is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("failure_stage", "expected_reason"),
+    [
+        ("generate", "generation_failed"),
+        ("heal", "generation_failed"),
+        ("qa", "simulation_runtime_error"),
+        ("cache_lookup", "generation_failed"),
+        ("browser", "simulation_runtime_error"),
+        ("timeout", "timed_out"),
+    ],
+)
+async def test_every_downstream_failure_after_answer_falls_back_without_artifact(
+    failure_stage,
+    expected_reason,
+):
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend
+    from server.codex_runtime import CodexRuntimeError
+    from server.jobs import JobManager
+
+    class DownstreamFailureBackend(MockCodexBackend):
+        async def generate(self, *args, **kwargs):
+            if failure_stage == "timeout":
+                await asyncio.sleep(60)
+            if failure_stage == "generate":
+                raise CodexRuntimeError(
+                    "nonzero_exit",
+                    safe_detail={"kind": "runtime_error", "model": "gpt-5.6-sol"},
+                )
+            return await super().generate(*args, **kwargs)
+
+        async def heal(self, *args, **kwargs):
+            if failure_stage == "heal":
+                raise CodexRuntimeError(
+                    "nonzero_exit",
+                    safe_detail={"kind": "runtime_error", "model": "gpt-5.6-sol"},
+                )
+            return await super().heal(*args, **kwargs)
+
+        async def qa(self, *args, **kwargs):
+            if failure_stage == "qa":
+                raise CodexRuntimeError(
+                    "nonzero_exit",
+                    safe_detail={"kind": "runtime_error", "model": "gpt-5.6-sol"},
+                )
+            return await super().qa(*args, **kwargs)
+
+    class FailingCache:
+        def lookup(self, **kwargs):
+            del kwargs
+            raise OSError("cache unavailable")
+
+        def write_verified(self, **kwargs):
+            raise AssertionError("a downstream failure must not write cache")
+
+    def browser_verifier(_artifact):
+        if failure_stage == "browser":
+            raise RuntimeError("browser unavailable")
+        return BrowserVerificationResult.passing()
+
+    manager = JobManager(
+        DownstreamFailureBackend(),
+        public_job_timeout_seconds=0.02 if failure_stage == "timeout" else 2,
+        browser_verifier=browser_verifier,
+        cache=FailingCache() if failure_stage == "cache_lookup" else None,
+    )
+    question = "broken first draft" if failure_stage in {"heal", "qa"} else "success"
+    record = manager.start(question, "ar")
+    await record.task
+
+    assert record.status == "answer_only"
+    assert record.answer is not None and record.answer.tldr
+    assert record.simulation is None
+    assert record.artifact is None
+    assert record.fallback is not None and record.fallback.reason_code == expected_reason
+    assert manager.artifacts == {}
+    assert [event.type for event in record.events][:2] == ["answer", "stage"]
+    assert record.events[-1].type == "fallback"
+    assert record.question is None
+
+
+@pytest.mark.asyncio
+async def test_assembly_failure_after_answer_exhausts_repairs_without_losing_the_answer(
+    monkeypatch,
+):
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend
+    from server.jobs import JobManager
+
+    def fail_assembly(*_args, **_kwargs):
+        raise ValueError("trusted shell unavailable")
+
+    monkeypatch.setattr("server.assemble.assemble_artifact", fail_assembly)
+    manager = JobManager(
+        MockCodexBackend(),
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+    )
+    record = manager.start("success", "ar")
+    await record.task
+
+    assert record.status == "answer_only"
+    assert record.answer is not None and record.answer.tldr
+    assert record.simulation is None
+    assert record.artifact is None
+    assert record.fallback is not None
+    assert record.fallback.reason_code == "verification_exhausted"
+    assert manager.artifacts == {}
+
+
+@pytest.mark.asyncio
+async def test_cache_write_failure_keeps_a_verified_playable_result_after_answer():
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend
+    from server.jobs import JobManager
+
+    class WriteFailingCache:
+        def lookup(self, **kwargs):
+            del kwargs
+            return None
+
+        def write_verified(self, **kwargs):
+            del kwargs
+            raise OSError("cache unavailable")
+
+    manager = JobManager(
+        MockCodexBackend(),
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+        cache=WriteFailingCache(),
+    )
+    record = manager.start("success", "ar")
+    await record.task
+
+    assert record.status == "complete"
+    assert record.answer is not None and record.answer.tldr
+    assert record.simulation is not None
+    assert record.artifact is not None
+    assert record.fallback is None
+    assert record.simulation.sim_id in manager.artifacts
+
+
 def test_unsafe_fixture_is_zero_echo_and_spends_no_generation(client, backend):
     canary = "unsafe PRIVATE-CANARY-9182"
     job_id = ask(client, canary)
