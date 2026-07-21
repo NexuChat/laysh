@@ -157,6 +157,30 @@ Completed locally; source changes and this evidence record are committed togethe
 Current acceptance ledger after MOTION-04: 10 passing, 0 failing, 20 not
 started, and 0 blocked. This is not the final release query.
 
+### EVID-01 — append-only root-session provenance
+
+- The focused test first failed at collection because the provenance module did
+  not exist. A second red case proved that merely mentioning a session ID in a
+  commit body could spoof the initial parser; the corrected parser accepts the
+  exact ID only in the final trailer block.
+- `SESSION-PROVENANCE.json` fixes the owner-accepted 74-commit G7 boundary and
+  the eight-commit root-session continuation prefix through MOTION-04. The
+  copied owner requirements are identified as inputs inside the root-session
+  documentation commit, not as Codex-authored implementation.
+- Every future commit must carry
+  `Laysh-Session: 019f7998-9378-72b2-b590-ee10e632ce81`. The verifier rejects
+  multiple roots, merges, changed attested hashes or subjects, missing/wrong
+  session trailers, delegated-agent trailers, and co-author trailers. Runtime
+  GPT-5.6 thread IDs remain evidence receipts with no implementation authority.
+- Pre-commit `scripts/verify_session_provenance.py` result at 82 commits: one
+  root, zero merges, eight attested continuation commits, zero unlinked commits.
+  Focused provenance tests: 5 passed. Affected tests: 13 passed in 0.11s. Full
+  suite: 243 passed and the single opt-in live G4 test skipped in 172.99s. Ruff
+  and `git diff --check` were clean.
+
+Current acceptance ledger after EVID-01: 11 passing, 0 failing, 19 not started,
+and 0 blocked. This is not the final release query.
+
 ### Batch C — sharing, library, localization, and presentation
 
 Not started.

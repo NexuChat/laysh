@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0",
+  "representative_session_id": "019f7998-9378-72b2-b590-ee10e632ce81",
+  "accepted_g7": {
+    "commit": "828fe4d99dfd516c3fea7a028fc6e4b306199702",
+    "commit_count": 74,
+    "authority": "owner-accepted clean G7 boundary"
+  },
+  "attested_through": "c47a6b7bc835ef754b3efac00bb0d5fc1862fb10",
+  "attested_continuation": [
+    {
+      "commit": "3a03c44324ebf3958dbebc00ee4000e8c31063ab",
+      "subject": "docs: initialize G7 continuation ledger",
+      "classification": "root_session_documentation",
+      "owner_requirement_paths": [
+        "docs/build-spec/g7-continuation/ACCEPTANCE-MATRIX.md",
+        "docs/build-spec/g7-continuation/BUILD-NOTEBOOK-TEMPLATE.md",
+        "docs/build-spec/g7-continuation/CAPABILITY-STAGES.md",
+        "docs/build-spec/g7-continuation/CONTINUATION-BRIEF.md",
+        "docs/build-spec/g7-continuation/MODEL-ROUTING.md",
+        "docs/build-spec/g7-continuation/PROVENANCE.md",
+        "docs/build-spec/g7-continuation/README.md",
+        "docs/build-spec/g7-continuation/REQUIREMENTS-AUDIT.md",
+        "docs/build-spec/g7-continuation/ROOT-RESUME-PROMPT.md"
+      ]
+    },
+    {
+      "commit": "e570c17aebfdbdae92d0dc4f4df1b5ed4c666149",
+      "subject": "fix: unify generated source limit contract",
+      "classification": "root_session_implementation"
+    },
+    {
+      "commit": "1d5fa018b269d2ccc5171388ab60c07fd7b08e47",
+      "subject": "feat: complete Batch A pedagogy contracts",
+      "classification": "root_session_implementation"
+    },
+    {
+      "commit": "a76d46e715362e6737ff2e4bb4850ec77aa91983",
+      "subject": "docs: record Batch A verification",
+      "classification": "root_session_evidence"
+    },
+    {
+      "commit": "672422bf937a85968e01012d0bf030854a9efe0e",
+      "subject": "feat: require scientific actor actions",
+      "classification": "root_session_implementation"
+    },
+    {
+      "commit": "25f5ed535be622295e5ead2bbd675f358c3365ab",
+      "subject": "feat: verify scientific actor trajectories",
+      "classification": "root_session_implementation"
+    },
+    {
+      "commit": "f0c7124fa9b429839315ed6344d9ca84c1b84edf",
+      "subject": "feat: prove golden physics motion",
+      "classification": "root_session_implementation"
+    },
+    {
+      "commit": "c47a6b7bc835ef754b3efac00bb0d5fc1862fb10",
+      "subject": "feat: unify golden model state",
+      "classification": "root_session_implementation"
+    }
+  ],
+  "future_commit_policy": {
+    "required_trailer": "Laysh-Session",
+    "required_value": "019f7998-9378-72b2-b590-ee10e632ce81",
+    "forbidden_trailers": [
+      "Co-authored-by",
+      "Delegated-Agent"
+    ],
+    "history_mode": "single-root-linear-no-rewrites"
+  },
+  "runtime_evidence_policy": {
+    "gpt_5_6_thread_ids_are_subordinate_runtime_receipts": true,
+    "implementation_authority": false
+  }
+}

@@ -30,3 +30,9 @@ addendum documents must not drive implementation.
 
 Use imperative conventional commit messages. Commit only coherent changes with green offline tests.
 
+- Every commit after `c47a6b7bc835ef754b3efac00bb0d5fc1862fb10` must include the exact
+  trailer `Laysh-Session: 019f7998-9378-72b2-b590-ee10e632ce81`.
+- Do not add `Co-authored-by` or `Delegated-Agent` trailers. Owner-authored
+  requirements remain identified as requirements, not implementation.
+- Run `python scripts/verify_session_provenance.py` before each commit. It must
+  report one root, no merges, and zero unlinked commits.

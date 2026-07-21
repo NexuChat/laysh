@@ -58,3 +58,21 @@ commits, and verification evidence.
 
 Changing between GPT-5.6 Sol, Terra, and Luna does not require a new thread.
 Model changes must be recorded in the build notebook with a reason.
+
+## Append-only root-session enforcement
+
+`SESSION-PROVENANCE.json` attests the accepted 74-commit G7 boundary and the
+exact continuation prefix through MOTION-04. This is an append-only record: it
+does not amend, rebase, or otherwise rewrite an earlier commit.
+
+Every later commit must end with the exact trailer
+`Laysh-Session: 019f7998-9378-72b2-b590-ee10e632ce81`. The repository verifier
+rejects a second root, a merge, a changed attested hash or subject, a missing or
+different session trailer, and delegated/co-author trailers. Run
+`python scripts/verify_session_provenance.py` before committing.
+
+The copied build-pack paths are identified separately as owner-authored
+requirements inside the root-session documentation commit; they are not
+misrepresented as Codex-authored implementation. GPT-5.6 runtime thread IDs in
+curated evidence remain subordinate model-call receipts and carry no
+implementation authority.
