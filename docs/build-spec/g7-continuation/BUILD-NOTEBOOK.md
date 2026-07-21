@@ -391,6 +391,28 @@ and 0 blocked. This is not the final release query.
 Current acceptance ledger after REL-01: 17 passing, 0 failing, 13 not started,
 and 0 blocked. This is not the final release query.
 
+#### REL-02 — invalid simulation slices fail closed
+
+- Red evidence: a response with `safe: true` and a valid short answer but an
+  invalid closed `module_spec` used to fail before emitting anything. The
+  pipeline now extracts only the independently safe `tldr` and a
+  presentation-valid formula, emits that answer, and falls back before any
+  generation call. A malformed slice with `safe: false` is never salvaged.
+- A partial generated module now reaches the same honest answer-only result:
+  no artifact, verified label, cache write, or runtime frame is produced.
+  A contradictory numeric fixture continues through the bounded repair loop
+  and is withheld after exhaustion; its cache writer is explicitly asserted
+  unreachable.
+- Focused/affected tests: 88 passed in 5.17s. Final full suite recorded through
+  `/tmp/laysh-rel02-final.WE23sE/results.xml`: 319 passed, 1 opt-in live test
+  skipped, 0 failures/errors, 303.524s. Non-browser coverage: 304 passed,
+  16 deselected, 82% total coverage. Ruff, diff check, and the general-runtime
+  import-boundary gate were clean. No live model call, service mutation, cache
+  promotion, Canary, regeneration, push, or publish occurred.
+
+Current acceptance ledger after REL-02: 18 passing, 0 failing, 12 not started,
+and 0 blocked. This is not the final release query.
+
 ### Unified-generation foundation — phase 3 shared geometry wiring
 
 - The generated learner path is now closed through one deterministic route:

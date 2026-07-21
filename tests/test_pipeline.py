@@ -51,6 +51,135 @@ def test_non_simulatable_is_successful_answer_only_without_generation(client, ba
     assert backend.generate_calls == 0
 
 
+def test_malformed_simulation_slice_preserves_a_safe_answer_without_generation():
+    from copy import deepcopy
+
+    from fastapi.testclient import TestClient
+
+    from server.app import create_app
+    from server.codex_backend import MockCodexBackend
+
+    class MalformedSimulationSliceBackend(MockCodexBackend):
+        async def understand(self, *args, **kwargs):
+            understanding = deepcopy(await super().understand(*args, **kwargs))
+            understanding["module_spec"] = {
+                "outputs": ["lit_fraction"],
+                "actor": "not-a-closed-actor",
+                "action": "orbits",
+            }
+            return understanding
+
+    backend = MalformedSimulationSliceBackend()
+    with TestClient(create_app(backend=backend, job_timeout_seconds=2)) as test_client:
+        job_id = ask(test_client, "success")
+        result = wait_for_terminal(test_client, job_id)
+        record = test_client.app.state.jobs.get(job_id)
+
+    assert result["status"] == "answer_only"
+    assert result["answer"]["tldr"]
+    assert result["simulation"] is None
+    assert result["fallback"]["reason_code"] == "generation_failed"
+    assert backend.generate_calls == 0
+    assert record.artifact is None
+    assert record.question is None
+
+
+def test_malformed_unsafe_slice_never_salvages_an_answer():
+    from copy import deepcopy
+
+    from fastapi.testclient import TestClient
+
+    from server.app import create_app
+    from server.codex_backend import MockCodexBackend
+
+    class MalformedUnsafeSliceBackend(MockCodexBackend):
+        async def understand(self, *args, **kwargs):
+            understanding = deepcopy(await super().understand(*args, **kwargs))
+            understanding["safe"] = False
+            understanding["module_spec"] = {
+                "outputs": ["lit_fraction"],
+                "actor": "not-a-closed-actor",
+                "action": "orbits",
+            }
+            return understanding
+
+    with TestClient(
+        create_app(backend=MalformedUnsafeSliceBackend(), job_timeout_seconds=2)
+    ) as test_client:
+        job_id = ask(test_client, "success")
+        result = wait_for_terminal(test_client, job_id)
+
+    assert result["status"] == "failed"
+    assert result["answer"] is None
+    assert result["simulation"] is None
+
+
+def test_partial_module_slice_falls_back_without_a_verified_label_or_cache_write():
+    from fastapi.testclient import TestClient
+
+    from server.app import create_app
+    from server.codex_backend import MockCodexBackend
+
+    class PartialModuleBackend(MockCodexBackend):
+        async def generate(self, *args, **kwargs):
+            self.generate_calls += 1
+            return {"module_js": "window.LayshSimulation = {};"}
+
+    backend = PartialModuleBackend()
+    with TestClient(create_app(backend=backend, job_timeout_seconds=2)) as test_client:
+        job_id = ask(test_client, "success")
+        result = wait_for_terminal(test_client, job_id)
+        record = test_client.app.state.jobs.get(job_id)
+
+    assert result["status"] == "answer_only"
+    assert result["answer"]["tldr"]
+    assert result["simulation"] is None
+    assert result["fallback"]["reason_code"] == "generation_failed"
+    assert backend.generate_calls == 1
+    assert record.artifact is None
+    assert test_client.app.state.jobs.artifacts == {}
+
+
+@pytest.mark.asyncio
+async def test_contradictory_simulation_contract_never_enters_verified_cache():
+    from copy import deepcopy
+
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend
+    from server.jobs import JobManager
+
+    class ContradictoryFixtureBackend(MockCodexBackend):
+        async def understand(self, *args, **kwargs):
+            understanding = deepcopy(await super().understand(*args, **kwargs))
+            understanding["checks"][0]["expected"] = 0.99
+            return understanding
+
+    class RejectingCache:
+        def lookup(self, **kwargs):
+            del kwargs
+            return None
+
+        def write_verified(self, **kwargs):
+            raise AssertionError("contradictory simulation must never be cached")
+
+    manager = JobManager(
+        ContradictoryFixtureBackend(),
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+        cache=RejectingCache(),
+    )
+    record = manager.start("success", "ar")
+    await record.task
+
+    assert record.status == "answer_only"
+    assert record.answer is not None and record.answer.tldr
+    assert record.simulation is None
+    assert record.artifact is None
+    assert record.fallback is not None
+    assert record.fallback.reason_code == "verification_exhausted"
+    assert manager.artifacts == {}
+
+
 def test_generate_failure_after_answer_preserves_the_safe_answer_as_answer_only():
     from fastapi.testclient import TestClient
 

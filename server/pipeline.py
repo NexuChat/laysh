@@ -4,11 +4,14 @@ import asyncio
 import hashlib
 from typing import Any, NoReturn
 
+from jsonschema import ValidationError
+
 from server.cache import VerificationReceipt
 from server.codex_backend import RuntimeContext
 from server.codex_runtime import CodexRuntimeError, StageExecution
 from server.schemas import (
     AnswerPayload,
+    ContractError,
     FallbackResult,
     RuntimeStageReceipt,
     SimulationMetadata,
@@ -43,6 +46,22 @@ def _gallery_suggestions(locale: str | None) -> list[str]:
     if locale == "en":
         return ["Why does the Moon change shape?", "Why do some objects float?"]
     return ["لماذا يتغير شكل القمر؟", "لماذا تطفو بعض الأجسام؟"]
+
+
+def _safe_answer_slice(document: Any) -> AnswerPayload | None:
+    """Keep only an independently safe answer when simulation fields are malformed."""
+
+    if not isinstance(document, dict) or document.get("safe") is not True:
+        return None
+    tldr = document.get("tldr")
+    if not isinstance(tldr, str) or not tldr.strip():
+        return None
+    key_formula = document.get("key_formula")
+    if not isinstance(key_formula, str):
+        key_formula = None
+    elif formula_presentation_report({"key_formula": key_formula})[0]:
+        key_formula = None
+    return AnswerPayload(tldr=tldr.strip(), key_formula=key_formula)
 
 
 def _reject(manager: Any, record: Any, reason_code: str, suggestions: list[str]) -> NoReturn:
@@ -192,16 +211,30 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         "صياغة جواب وعقد تعليمي",
         emit_event=False,
     )
-    understanding = validate_understanding(
-        await stage_result(
-            "understand",
-            manager.backend.understand(
-                question,
-                record.locale,
-                runtime_context=runtime_context,
-            ),
-        )
+    raw_understanding = await stage_result(
+        "understand",
+        manager.backend.understand(
+            question,
+            record.locale,
+            runtime_context=runtime_context,
+        ),
     )
+    try:
+        understanding = validate_understanding(raw_understanding)
+    except (ContractError, ValidationError):
+        answer = _safe_answer_slice(raw_understanding)
+        if answer is None:
+            raise
+        record.answer = answer
+        manager.transition(record, "answered", "الجواب جاهز", emit_event=False)
+        manager.emit(record, "answer", answer.model_dump(mode="json"))
+        _fallback(
+            manager,
+            record,
+            "generation_failed",
+            _gallery_suggestions(record.locale),
+        )
+        return
 
     if not understanding["safe"]:
         _reject(
