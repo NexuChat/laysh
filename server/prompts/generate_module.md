@@ -1,4 +1,4 @@
-Return closed-schema JSON only; use no tools. Assign JavaScript once to
+Return closed-schema JSON only; no tools. Assign JavaScript once to
 `window.LayshSimulation`; no Markdown, full HTML, CSS, or shell UI.
 
 Export exactly `version`, `init`, `setParameter`, `test`, `resize`, `destroy`.
@@ -13,15 +13,18 @@ Shared model:
   `state.<declared_output>`. All pivotal physics comes from it; easing is presentation-only.
 
 Shared geometry:
-- After every fit/clamp assign `canvas.__layshSceneGeometry = [{ schemaVersion: "1.0",
-  phase: "post_fit", ... }]` from current dimensions/state, with nonempty scientific circle/rect
-  objects and relations. Declare object `clippingPolicy` and relation `overlapPolicy`,
-  `contactPolicy`, `minimumClearance`. Only intended physics may use `scientific_occlusion`;
-  missing/unsupported evidence and undeclared overlap/contact/clipping fail closed.
+- After every fit/clamp copy this exact closed shape, replacing only identifiers and finite values:
+  `canvas.__layshSceneGeometry = [{ schemaVersion: "1.0", phase: "post_fit",
+  viewport: { width, height, safeInset: 0 }, state: { id: "frame", timeMs: 0 },
+  objects: [{ id: "actor", scientific: true,
+  geometry: { type: "circle", cx, cy, radius }, clippingPolicy: "forbid" }], relations: [] }]`.
+  `state` is never null; circle is the only geometry. Include every scientific body and each pair's
+  `overlapPolicy`, `contactPolicy`, `minimumClearance`. Use `scientific_occlusion` only for intended
+  physics; missing or unsupported evidence fails closed.
 
 Use canvas/context, Math, Number, arrays, plain objects only. No document, network, storage,
 navigation, dynamic code, workers, timers, sensors, audio, clipboard, console, URLs, or
-`requestAnimationFrame`. Source <=96 KiB in UTF-8 bytes. All supplied contracts are immutable.
+`requestAnimationFrame`. Source <=96 KiB in UTF-8 bytes.
 
 Visual contract:
 - Build layered scene depth with at least three visible depth layers: domain gradient and near/far bodies.
@@ -34,17 +37,15 @@ Visual contract:
   causal action carries the change, not only text, a marker, a frame counter, or decorative motion.
   Never move/resize the whole diagram to fake a scientific consequence.
 - Never draw changing numbers, percentages, or live readout values on the canvas. The trusted shell
-  owns the live numeric readout below the scene as readout chips. Stable conceptual labels are
-  allowed. If geometry is amplified, label its numeric factor (for example `x100`) on-canvas;
+  owns the live numeric readout below the scene as readout chips. Use stable conceptual labels.
+  If geometry is amplified, label its numeric factor (for example `x100`) on-canvas;
   never distort silently.
 - Use smooth fills or gradients for continuous bodies, never golf-ball dot patterns. Illuminated
   spheres need a curved terminator or equivalent physical mask, never a rectangular clip.
 - If schematic and observer views share a canvas, label `منظر علوي` / `كما يبدو من الأرض` or
   `Top view` / `View from Earth` by locale. Keep labels legible and inside canvas.
 
-Self-check ABI, fixtures, first draw, shared model, post-fit geometry, three visible depth layers,
-physical light, idle motion, same-value redraw, reactive feedback, stable conceptual labels,
-reduced motion, min/mid/max causality, actor visibility, curved terminator.
+Self-check ABI, fixtures, first draw, post-fit geometry, reduced motion, and min/mid/max causal actor.
 
 UNDERSTANDING_JSON:
 @@INPUT_JSON@@

@@ -1,0 +1,112 @@
+{
+  "schema_version": "1.0",
+  "fixture_id": "buoyancy_ar",
+  "attempt": 2,
+  "job_id": "job_007131c228b1b25e",
+  "status": "answer_only",
+  "total_elapsed_ms": 140196,
+  "live_call_count": 3,
+  "stages": [
+    {
+      "stage": "understand",
+      "model": "gpt-5.6-luna",
+      "elapsed_ms": 24775,
+      "thread_id_captured": true
+    },
+    {
+      "stage": "generate",
+      "model": "gpt-5.6-terra",
+      "elapsed_ms": 60070,
+      "thread_id_captured": true
+    },
+    {
+      "stage": "heal",
+      "model": "gpt-5.6-sol",
+      "elapsed_ms": 55213,
+      "thread_id_captured": true
+    }
+  ],
+  "heal_count": null,
+  "qa": null,
+  "artifact_sha256": null,
+  "browser_visual_evidence": null,
+  "visual_qa_evidence": null,
+  "automated_review": {
+    "passed": false,
+    "failure_codes": [
+      "pipeline_incomplete"
+    ],
+    "checks": {}
+  },
+  "diagnostics": [
+    {
+      "type": "verification_failure",
+      "attempt": 0,
+      "check_count": 25,
+      "failures": [
+        {
+          "gate": "runtime_init",
+          "code": "init_failed",
+          "expected": {
+            "accepts_trusted_options": [
+              "canvas",
+              "context",
+              "width",
+              "height",
+              "locale",
+              "reducedMotion",
+              "emitFrame"
+            ]
+          },
+          "actual": {
+            "error_type": "TypeError"
+          }
+        },
+        {
+          "gate": "runtime_init",
+          "code": "first_frame_missing",
+          "expected": {
+            "minimum_emit_frame_calls": 1
+          },
+          "actual": {
+            "emit_frame_calls": 0
+          }
+        },
+        {
+          "gate": "scene_geometry",
+          "code": "scene_samples_missing",
+          "expected": {
+            "samples": "nonempty_array"
+          },
+          "actual": {
+            "samples": []
+          },
+          "sample_index": 0,
+          "state": null
+        }
+      ]
+    },
+    {
+      "type": "verification_failure",
+      "attempt": 1,
+      "check_count": 25,
+      "failures": [
+        {
+          "gate": "scene_geometry",
+          "code": "scene_contract_invalid_state",
+          "expected": {
+            "fields": [
+              "id",
+              "timeMs"
+            ]
+          },
+          "actual": {
+            "state": null
+          },
+          "sample_index": 0,
+          "state": null
+        }
+      ]
+    }
+  ]
+}

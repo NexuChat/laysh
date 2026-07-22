@@ -774,3 +774,18 @@ landed. The official committed ledger therefore remains 22 of 30 passing; no
   final repository-wide offline proof recorded **571 passed, 1 skipped in
   367.50s**; Ruff remained clean. No live call on the new route had been made at
   this checkpoint.
+- The first live balanced-route trial used the owned `buoyancy_ar` fixture and
+  ended answer-only after **140.196s** and three calls: Luna-low understand
+  **24.775s**, Terra-medium generate **60.070s**, and one Sol-low heal
+  **55.213s**. The initial candidate failed runtime initialization and emitted
+  no scene samples; the repaired candidate initialized but emitted
+  `state: null`, so the closed geometry contract rejected it. No QA, Visual QA,
+  promotion, push, or deployment occurred. Evidence is retained at
+  `out/evidence/goldens/buoyancy-attempt-2.json`.
+- That repeated Moon's invalid scene-shape class and exposed a general prompt
+  defect: generation and heal showed an ellipsis, mentioned unsupported rects,
+  and omitted the required closed viewport/state/object/relation shape. Prompt
+  TDD recorded the focused failure, then required the complete exact circle
+  sample with non-null `{id,timeMs}` state in both stages. The affected prompt,
+  routing, snapshot, and verifier suite recorded **60 passed in 2.08s**; the
+  rendered generation prompt remains within its 4,800-character bound.

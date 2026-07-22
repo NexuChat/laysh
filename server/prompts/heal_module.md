@@ -11,12 +11,16 @@ For every shared-model repair, retain `/* LAYSH_SHARED_MODEL: modelState */`. In
 `test(inputs)`, bind `const state = modelState(...)`, then read `state.<declared_output>` when drawing
 and returning outputs; a bare call or duplicate formula does not repair the gate.
 
-Preserve or repair the shared post-fit scene evidence by assigning
-`canvas.__layshSceneGeometry = [{ schemaVersion: "1.0", phase: "post_fit", ... }]` after each fitted
-draw. Declare each
-scientific object's geometry/clipping policy and every pair's overlap/contact/clearance policy;
-`scientific_occlusion` is allowed only when the overlap is physically intentional. Recompute the
-reported geometry after every clamp or fit and resolve every `scene_geometry` failure exactly.
+Preserve or repair the shared post-fit scene evidence after every fitted draw with this exact closed
+shape, replacing only identifiers and finite values:
+`canvas.__layshSceneGeometry = [{ schemaVersion: "1.0", phase: "post_fit",
+viewport: { width, height, safeInset: 0 }, state: { id: "frame", timeMs: 0 },
+objects: [{ id: "actor", scientific: true,
+geometry: { type: "circle", cx, cy, radius }, clippingPolicy: "forbid" }], relations: [] }]`.
+`state` must never be null; circle is the only supported geometry. Add every scientific body and
+declare each pair's overlap/contact/clearance policy. `scientific_occlusion` is allowed only for
+physically intended overlap. Recompute after every clamp or fit and resolve every
+`scene_geometry` failure exactly.
 
 The v1.1 visual quality is part of the fixed contract and must survive every repair: preserve or add
 at least three scene-depth layers, physically consistent curved illumination and occlusion, a private

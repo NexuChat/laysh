@@ -144,4 +144,12 @@ def test_generation_and_heal_prompts_require_post_fit_scene_evidence():
         assert "canvas.__layshSceneGeometry = [{" in prompt
         assert 'schemaVersion: "1.0"' in prompt
         assert 'phase: "post_fit"' in prompt
+        assert 'viewport: { width, height, safeInset: 0 }' in prompt
+        assert 'state: { id: "frame", timeMs: 0 }' in prompt
+        assert 'objects: [{ id: "actor", scientific: true' in prompt
+        assert 'geometry: { type: "circle", cx, cy, radius }' in prompt
+        assert 'clippingPolicy: "forbid"' in prompt
+        assert "relations: []" in prompt
+        assert 'phase: "post_fit", ...' not in prompt
+        assert "circle/rect" not in prompt
         assert "scientific_occlusion" in prompt
