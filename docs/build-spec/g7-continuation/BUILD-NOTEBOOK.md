@@ -705,3 +705,32 @@ landed. The official committed ledger therefore remains 22 of 30 passing; no
   with an HTTP 200 response and added to the README and submission field sheet.
   This product-polish record does not change the separately documented
   ROUTE-02/RELEASE-01 acceptance ledger.
+
+### Post-Build-Week causal-quality and golden-review preparation
+
+- This work is isolated on `post-buildweek`; it does not alter the submitted
+  `main` branch, `v1.1` tag, or public deployment. No live model call was made
+  while building or testing these gates.
+- A test-first browser gate now requires the independently computed first model
+  outcome to match the trusted shell, a primary parameter probe to change both
+  the model and displayed outcome, and at least
+  `max(64, ceil(canvas_pixels * 0.001))` changed pixels. Negative fixtures prove
+  that an input-echoing readout and a one-pixel decorative reaction are rejected.
+- The module verifier rejects a primary input merely renamed as the first output
+  only when identifier tokens, units, and min/default/max values all establish
+  pass-through behavior; a legitimate semantically distinct `y = x` model stays
+  accepted. Prompt fixtures require derived outcomes, concept-relevant actor
+  motion, shell-owned readouts, and answer-only handling where the current ABI
+  cannot honestly expose the requested mechanism.
+- Golden regeneration is now bounded to two attempts and requires deterministic
+  verification, generic browser verification, three artifact-hash-bound visual
+  states, and structured semantic Visual QA before a candidate can reach manual
+  review or promotion. Stale browser or screenshot evidence fails closed.
+- Measured RED stages were **6 causal fixture failures**, followed by **6 browser
+  fixture failures**. Focused GREEN stages recorded **45**, **21**, **109**, and
+  **24** passing tests. The six existing pinned artifacts passed the strengthened
+  browser probe with changed-pixel counts from **3,506** to **35,716**.
+- Final pre-generation evidence: Ruff and all four JavaScript syntax checks were
+  clean; the repository-wide offline suite recorded **569 passed, 1 skipped in
+  367.91s**. The static asset and instant-gallery regression subset recorded
+  **8 passed in 7.43s** after refreshing the local frozen asset manifest.

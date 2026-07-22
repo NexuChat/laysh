@@ -342,6 +342,7 @@
         const badge = card.querySelector(".coming-badge, .instant-badge");
         if (!badge) continue;
         badge.className = "instant-badge";
+        badge.dataset.i18n = "gallery.instant";
         badge.textContent = t("gallery.instant");
         const launch = card.querySelector(".golden-launch");
         launch.disabled = false;

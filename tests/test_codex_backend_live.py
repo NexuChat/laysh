@@ -228,11 +228,24 @@ async def test_qa_input_is_slim_bounded_and_review_only():
     call = executor.calls[0]
     serialized = call["prompt"].split("QA_INPUT_JSON:\n", 1)[1].strip()
     payload = json.loads(serialized)
-    assert set(payload) == {"module_source", "module_spec", "fixtures", "gate_outcome"}
+    assert set(payload) == {
+        "module_source",
+        "module_spec",
+        "fixtures",
+        "gate_outcome",
+        "primary_parameter",
+        "key_formula",
+        "learning_objective",
+        "prediction",
+    }
     assert payload["module_source"] == VALID_MODULE_OUTPUT["module_js"]
     assert payload["module_spec"] == VALID_UNDERSTANDING["module_spec"]
     assert payload["fixtures"] == VALID_UNDERSTANDING["checks"]
     assert payload["gate_outcome"] == gate_outcome
+    assert payload["primary_parameter"] == VALID_UNDERSTANDING["primary_parameter"]
+    assert payload["key_formula"] == VALID_UNDERSTANDING["key_formula"]
+    assert payload["learning_objective"] == VALID_UNDERSTANDING["learning_objective"]
+    assert payload["prediction"] == VALID_UNDERSTANDING["prediction"]
     assert VALID_UNDERSTANDING["title"] not in call["prompt"]
     assert "full assembled HTML" not in call["prompt"]
     assert "immediate" in call["prompt"]
@@ -262,7 +275,7 @@ def test_generate_prompt_is_bounded_without_reducing_the_visual_contract():
         "physical light",
         "idle motion",
         "reactive feedback",
-        "readout chip",
+        "stable conceptual labels",
         "same-value redraw",
         "curved terminator",
     ):

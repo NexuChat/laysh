@@ -22,7 +22,7 @@ class BrowserVerificationResult:
     def passing(cls) -> BrowserVerificationResult:
         return cls(
             passed=True,
-            check_count=5,
+            check_count=9,
             failures=[],
             evidence={
                 "ready": True,
@@ -30,6 +30,11 @@ class BrowserVerificationResult:
                 "frameChanged": True,
                 "runtimeError": False,
                 "externalRequests": 0,
+                "initialOutcomeMatchesModel": True,
+                "modelOutcomeChanged": True,
+                "displayedOutcomeChanged": True,
+                "canvasPixels": 288_000,
+                "changedPixels": 2_400,
             },
         )
 
@@ -45,6 +50,13 @@ def _failure(code: str, expected: dict[str, Any], actual: dict[str, Any]) -> dic
 
 def _evaluate(evidence: dict[str, Any]) -> BrowserVerificationResult:
     failures = []
+    canvas_pixels = evidence.get("canvasPixels")
+    changed_pixels = evidence.get("changedPixels")
+    minimum_changed_pixels = (
+        max(64, (int(canvas_pixels) + 999) // 1000)
+        if isinstance(canvas_pixels, int) and canvas_pixels > 0
+        else 64
+    )
     checks = (
         (
             bool(evidence.get("ready")),
@@ -75,6 +87,47 @@ def _evaluate(evidence: dict[str, Any]) -> BrowserVerificationResult:
             "external_request_observed",
             {"external_requests": 0},
             {"external_requests": evidence.get("externalRequests")},
+        ),
+        (
+            evidence.get("initialOutcomeMatchesModel") is True,
+            "initial_outcome_mismatch",
+            {"displayed_outcome_matches_model": True},
+            {
+                "displayed_outcome_matches_model": evidence.get(
+                    "initialOutcomeMatchesModel"
+                ),
+                "initial_outcome": evidence.get("initialOutcome"),
+            },
+        ),
+        (
+            evidence.get("modelOutcomeChanged") is True,
+            "primary_outcome_unchanged",
+            {"model_outcome_changed": True},
+            {
+                "model_outcome_changed": evidence.get("modelOutcomeChanged"),
+                "initial_outcome": evidence.get("initialOutcome"),
+                "final_outcome": evidence.get("finalOutcome"),
+            },
+        ),
+        (
+            evidence.get("displayedOutcomeChanged") is True,
+            "displayed_outcome_unchanged",
+            {"displayed_outcome_changed": True},
+            {
+                "displayed_outcome_changed": evidence.get("displayedOutcomeChanged"),
+                "initial_parameter": evidence.get("initialParameterValue"),
+                "final_parameter": evidence.get("finalParameterValue"),
+            },
+        ),
+        (
+            isinstance(changed_pixels, int)
+            and changed_pixels >= minimum_changed_pixels,
+            "causal_visual_change_too_small",
+            {"minimum_changed_pixels": minimum_changed_pixels},
+            {
+                "changed_pixels": changed_pixels,
+                "canvas_pixels": canvas_pixels,
+            },
         ),
     )
     for passed, code, expected, actual in checks:

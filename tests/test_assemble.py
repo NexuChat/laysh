@@ -132,13 +132,31 @@ def test_portable_artifact_plays_from_file_without_network(tmp_path):
     )
     assert completed.returncode == 0, completed.stderr
     evidence = json.loads(completed.stdout)
-    assert evidence == {
-        "ready": True,
-        "controlChanged": True,
-        "frameChanged": True,
-        "runtimeError": False,
-        "externalRequests": 0,
+    assert set(evidence) == {
+        "ready",
+        "controlChanged",
+        "frameChanged",
+        "runtimeError",
+        "externalRequests",
+        "initialOutcomeMatchesModel",
+        "modelOutcomeChanged",
+        "displayedOutcomeChanged",
+        "initialParameterValue",
+        "finalParameterValue",
+        "initialOutcome",
+        "finalOutcome",
+        "canvasPixels",
+        "changedPixels",
     }
+    assert evidence["ready"] is True
+    assert evidence["controlChanged"] is True
+    assert evidence["frameChanged"] is True
+    assert evidence["runtimeError"] is False
+    assert evidence["externalRequests"] == 0
+    assert evidence["initialOutcomeMatchesModel"] is True
+    assert evidence["modelOutcomeChanged"] is True
+    assert evidence["displayedOutcomeChanged"] is True
+    assert evidence["changedPixels"] >= max(64, evidence["canvasPixels"] // 1000)
 
 
 @pytest.mark.browser

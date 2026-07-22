@@ -29,6 +29,10 @@ function safeValue(value) {
   return value;
 }
 
+function identifierTokens(value) {
+  return String(value).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+}
+
 function drawOperation() {
   drawOperations += 1;
 }
@@ -305,6 +309,58 @@ if (simulation) {
           },
         );
       }
+
+      const declaredDefaults = {};
+      for (const declaredParameter of [
+        understanding.primary_parameter,
+        understanding.secondary_parameter,
+      ]) {
+        if (declaredParameter) declaredDefaults[declaredParameter.id] = declaredParameter.default;
+      }
+      const sampleValues = [...new Set([
+        Number(parameter.min),
+        Number(parameter.default),
+        Number(parameter.max),
+      ])];
+      const identitySamples = [];
+      for (const parameterValue of sampleValues) {
+        sandbox.inputs = { ...declaredDefaults, [parameter.id]: parameterValue };
+        const result = new vm.Script("window.LayshSimulation.test(inputs)")
+          .runInContext(sandbox, { timeout: 250 });
+        identitySamples.push({ input: parameterValue, output: result?.[output] });
+      }
+      const primaryIdentity = identitySamples.length >= 2 && identitySamples.every((sample) => (
+        Number.isFinite(sample.output)
+        && Math.abs(sample.output - sample.input)
+          <= Math.max(1e-9, Math.abs(sample.input) * 1e-12)
+      ));
+      const primaryTokens = identifierTokens(parameter.id);
+      const outputTokens = new Set(identifierTokens(output));
+      const outputRenamesPrimary = primaryTokens.length > 0
+        && primaryTokens.every((token) => outputTokens.has(token));
+      const outputFixtureUnits = new Set(
+        understanding.checks
+          .filter((fixture) => fixture.kind === "numeric" && fixture.output === output)
+          .map((fixture) => fixture.unit),
+      );
+      const outputKeepsPrimaryUnit = outputFixtureUnits.size === 1
+        && outputFixtureUnits.has(parameter.unit);
+      if (primaryIdentity && outputRenamesPrimary && outputKeepsPrimaryUnit) {
+        addFailure(
+          "causal_observable",
+          "primary_input_identity",
+          {
+            first_output_is_derived: true,
+            primary_input_is_not_repeated: true,
+          },
+          { samples: identitySamples.map(({ input, output: observed }) => ({ input, output: observed })) },
+          {
+            parameter: parameter.id,
+            output,
+            message: `First output ${output} repeats primary parameter ${parameter.id}.`,
+          },
+        );
+      }
     } catch (error) {
       addFailure(
         "readout_visibility",
@@ -319,7 +375,7 @@ if (simulation) {
         { parameter: parameter.id, output },
       );
     }
-    checkCount += 1;
+    checkCount += 2;
   }
 }
 

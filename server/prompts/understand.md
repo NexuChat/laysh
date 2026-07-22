@@ -21,16 +21,26 @@ Rules:
   `Correction: [the correct mechanism], not [the false claim].` in English.
 - A simulatable result has one primary parameter, no more than one secondary parameter, and at least
   two independent numeric or relational fixtures.
+- The first output must be a derived scientific consequence of the primary control. Never merely
+  rename or repeat the primary control as an output. A unit conversion alone is not an explanatory
+  outcome unless the learner explicitly asks for it. Test the consequence at at least three
+  distinct primary values (normally minimum, midpoint, and maximum), holding any secondary control
+  at its default. A coincidental equality at one point is allowed; an identity mapping is not.
 - Every simulatable `module_spec` declares one visible primary `actor` and one
   concept-relevant `action`. Actors are exactly `moon`, `pendulum_bob`,
   `earth_landmark`, `wavefront`, `charge_carrier`, `floating_body`, or
   `visible_body`. Actions are exactly `rotates`, `oscillates`, `orbits`,
   `propagates`, `flows`, `floats_sinks`, or `phases`. Non-simulatable output
   sets both fields to `null`.
+- Do not invent a numeric slider for a categorical or material comparison. If no declared
+  actor/action can show the mechanism honestly, return non-simulatable with a useful answer and
+  safer refocused suggestions.
 - Write `key_formula` as short, student-facing display-grade math, never as source code. Use concise
   symbols such as `f`, `θ`, `T`, `L`, `I`, and `R`; use the Unicode minus sign `−`; and never emit
   snake_case, camelCase, implementation field names, or programming syntax. For example, emit
   `f = (1 − cos θ) / 2`, not `illuminated_fraction = (1 - cos(2π * lunar_day / 29.53)) / 2`.
+- `key_formula` must be an equation or proportional relation that names the derived observable. A
+  bare mapping such as `λ → color` is not a scientific model and must not be emitted.
 - Keep implementation identifiers in `module_spec` and fixture inputs only. Define any display symbol
   needed for comprehension in `tldr` using natural language.
 - When `builder_reference_contract` is present, it is a builder-reviewed curated constraint: preserve

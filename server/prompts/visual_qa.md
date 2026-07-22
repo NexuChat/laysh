@@ -9,6 +9,9 @@ facts that are not visible.
   hidden, clipped, or displaced outside the simulation.
 - `action_performed`: the three images visibly demonstrate the declared action;
   decorative backgrounds or unrelated particles do not count.
+- The prediction must be visibly testable across the three images through the
+  declared actor's causal action, not only text, a marker, a frame counter, or
+  decorative motion. A tiny unrelated change cannot establish causality.
 - `physically_consistent`: the visible sequence agrees with the supplied fixed
   model summary and passed gate names, without contradictory light, geometry,
   direction, or scale cues.

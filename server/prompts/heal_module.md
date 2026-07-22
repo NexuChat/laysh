@@ -16,8 +16,12 @@ reported geometry after every clamp or fit and resolve every `scene_geometry` fa
 The v1.1 visual quality is part of the fixed contract and must survive every repair: preserve or add
 at least three scene-depth layers, physically consistent curved illumination and occlusion, a private
 visual phase advanced by the trusted shell's same-value redraw when reduced motion is off, smooth
-parameter-linked reactive feedback, and rounded translucent readout chips. The module still owns no
-timers or animation APIs. Fixing a deterministic gate must never flatten or visually regress the scene.
+parameter-linked reactive feedback, and stable conceptual labels. The prediction must be visibly
+testable at minimum, midpoint, and maximum through the declared actor's causal action, not only text,
+a marker, a frame counter, or decorative motion. Never draw changing numbers, percentages, or live
+readout values on the canvas. The trusted shell owns the live numeric readout below the scene. The
+module still owns no timers or animation APIs. Fixing a deterministic gate must never flatten or
+visually regress the scene.
 
 HEAL_INPUT_JSON_WITH_EXACT_GATE_FAILURES:
 @@INPUT_JSON@@

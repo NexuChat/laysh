@@ -13,6 +13,11 @@ def test_browser_gate_returns_actionable_structured_failures(monkeypatch):
         "frameChanged": True,
         "runtimeError": False,
         "externalRequests": 0,
+        "initialOutcomeMatchesModel": True,
+        "modelOutcomeChanged": True,
+        "displayedOutcomeChanged": True,
+        "canvasPixels": 288_000,
+        "changedPixels": 2_400,
     }
     monkeypatch.setattr("server.browser_verify.shutil.which", lambda _: "/usr/bin/node")
     monkeypatch.setattr(
@@ -27,7 +32,7 @@ def test_browser_gate_returns_actionable_structured_failures(monkeypatch):
     result = verify_artifact_in_browser("<!doctype html><title>fixture</title>")
 
     assert result.passed is False
-    assert result.check_count == 5
+    assert result.check_count == 9
     assert result.evidence == observed
     assert result.failures == [
         {
@@ -63,6 +68,11 @@ async def test_browser_failure_enters_heal_with_exact_report_before_publish():
                 "frameChanged": True,
                 "runtimeError": False,
                 "externalRequests": 0,
+                "initialOutcomeMatchesModel": True,
+                "modelOutcomeChanged": True,
+                "displayedOutcomeChanged": True,
+                "canvasPixels": 288_000,
+                "changedPixels": 2_400,
             },
         ),
         BrowserVerificationResult.passing(),
@@ -93,3 +103,35 @@ async def test_browser_failure_enters_heal_with_exact_report_before_publish():
     assert record.simulation is not None
     assert record.simulation.heal_count == 1
     assert reports == []
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "code"),
+    [
+        ("initialOutcomeMatchesModel", False, "initial_outcome_mismatch"),
+        ("modelOutcomeChanged", False, "primary_outcome_unchanged"),
+        ("displayedOutcomeChanged", False, "displayed_outcome_unchanged"),
+        ("changedPixels", 20, "causal_visual_change_too_small"),
+    ],
+)
+def test_browser_gate_fails_closed_when_causal_evidence_is_missing(field, value, code):
+    from server.browser_verify import _evaluate
+
+    evidence = {
+        "ready": True,
+        "controlChanged": True,
+        "frameChanged": True,
+        "runtimeError": False,
+        "externalRequests": 0,
+        "initialOutcomeMatchesModel": True,
+        "modelOutcomeChanged": True,
+        "displayedOutcomeChanged": True,
+        "canvasPixels": 288_000,
+        "changedPixels": 2_400,
+        field: value,
+    }
+
+    result = _evaluate(evidence)
+
+    assert result.passed is False
+    assert code in {failure["code"] for failure in result.failures}

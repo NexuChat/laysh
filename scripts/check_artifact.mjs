@@ -113,17 +113,70 @@ try {
       const choice = document.querySelector('#prediction-choices button');
       choice.click();
       const control = document.querySelector('#primary-control');
+      const canvas = document.querySelector('#simulation');
+      const context = canvas.getContext('2d', { willReadFrequently: true });
+      const description = document.querySelector('#state-description');
+      const lesson = window.__LAYSH_LESSON__;
+      const simulation = window.LayshSimulation;
+      const readout = window.LayshReadout.forLesson(lesson);
+      const outputName = lesson.module_spec.outputs[0];
       const beforeControlValue = Number(control.value);
-      const target = Math.abs(beforeControlValue - Number(control.min))
-        <= Math.abs(beforeControlValue - Number(control.max))
-        ? control.max
-        : control.min;
-      control.value = target;
+      const outputAt = (value) => Number(simulation.test({
+        [lesson.primary_parameter.id]: Number(value),
+      })?.[outputName]);
+      const initialOutcome = outputAt(beforeControlValue);
+      const initialDescription = description.textContent;
+      const initialOutcomeMatchesModel = initialDescription.includes(readout.format(initialOutcome));
+      const beforePixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      const rawCandidates = [
+        Number(control.min),
+        (Number(control.min) + Number(control.max)) / 2,
+        Number(control.max),
+      ];
+      const candidates = [];
+      for (const candidate of rawCandidates) {
+        control.value = String(candidate);
+        const sanitized = Number(control.value);
+        if (!candidates.includes(sanitized)) candidates.push(sanitized);
+      }
+      control.value = String(beforeControlValue);
+      const target = candidates
+        .map((value) => ({ value, outcome: outputAt(value) }))
+        .sort((left, right) => (
+          Math.abs(right.outcome - initialOutcome) - Math.abs(left.outcome - initialOutcome)
+        ))[0];
+      control.value = String(target.value);
       control.dispatchEvent(new Event('input', { bubbles: true }));
+      const afterControlValue = Number(control.value);
+      const finalOutcome = outputAt(afterControlValue);
+      const finalDescription = description.textContent;
+      const afterPixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+      let changedPixels = 0;
+      for (let index = 0; index < beforePixels.length; index += 4) {
+        const changed = Math.max(
+          Math.abs(beforePixels[index] - afterPixels[index]),
+          Math.abs(beforePixels[index + 1] - afterPixels[index + 1]),
+          Math.abs(beforePixels[index + 2] - afterPixels[index + 2]),
+          Math.abs(beforePixels[index + 3] - afterPixels[index + 3]),
+        ) > 8;
+        if (changed) changedPixels += 1;
+      }
       return {
         controlChanged: !control.disabled && Number(control.value) !== beforeControlValue,
         frameChanged: Number(root.dataset.frameCount || 0) > before,
         runtimeError: Boolean(root.dataset.runtimeError),
+        initialOutcomeMatchesModel,
+        modelOutcomeChanged: Number.isFinite(initialOutcome) && Number.isFinite(finalOutcome)
+          && Math.abs(finalOutcome - initialOutcome)
+            > Math.max(1e-12, Math.abs(initialOutcome) * 1e-12),
+        displayedOutcomeChanged: finalDescription !== initialDescription
+          && finalDescription.includes(readout.format(finalOutcome)),
+        initialParameterValue: beforeControlValue,
+        finalParameterValue: afterControlValue,
+        initialOutcome,
+        finalOutcome,
+        canvasPixels: canvas.width * canvas.height,
+        changedPixels,
       };
     })()`,
     returnByValue: true,
@@ -135,6 +188,15 @@ try {
     frameChanged: interaction.result.value.frameChanged,
     runtimeError: interaction.result.value.runtimeError,
     externalRequests,
+    initialOutcomeMatchesModel: interaction.result.value.initialOutcomeMatchesModel,
+    modelOutcomeChanged: interaction.result.value.modelOutcomeChanged,
+    displayedOutcomeChanged: interaction.result.value.displayedOutcomeChanged,
+    initialParameterValue: interaction.result.value.initialParameterValue,
+    finalParameterValue: interaction.result.value.finalParameterValue,
+    initialOutcome: interaction.result.value.initialOutcome,
+    finalOutcome: interaction.result.value.finalOutcome,
+    canvasPixels: interaction.result.value.canvasPixels,
+    changedPixels: interaction.result.value.changedPixels,
   }));
 } catch (error) {
   process.stderr.write(`${error.message}\n`);

@@ -118,6 +118,8 @@ async def test_curated_visual_qa_routes_three_bounded_images_to_terra(tmp_path):
     assert call["public"] is False
     assert call["evidence_fixture_id"] == "moon_phases_ar"
     assert "moon" in call["prompt"] and "orbits" in call["prompt"]
+    assert VALID_UNDERSTANDING["learning_objective"] in call["prompt"]
+    assert VALID_UNDERSTANDING["prediction"]["prompt"] in call["prompt"]
     assert "module_js" not in call["prompt"]
 
 

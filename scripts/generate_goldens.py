@@ -4,6 +4,8 @@ import argparse
 import asyncio
 import hashlib
 import json
+import shutil
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -11,7 +13,7 @@ from typing import Any
 
 from server.browser_verify import verify_artifact_in_browser
 from server.cache import VerificationReceipt, VerifiedCache
-from server.codex_backend import CodexBackend
+from server.codex_backend import CodexBackend, RuntimeContext
 from server.codex_runtime import CodexExecutor
 from server.goldens import (
     GOLDEN_FIXTURE_IDS,
@@ -27,6 +29,8 @@ from server.verify import verify_candidate
 ROOT = Path(__file__).parents[1]
 EVIDENCE_ROOT = ROOT / "out" / "evidence" / "goldens"
 CANDIDATE_ROOT = ROOT / "out" / "tmp" / "goldens"
+VISUAL_QA_ROOT = EVIDENCE_ROOT / "visual-qa"
+MAX_GOLDEN_ATTEMPTS = 2
 
 
 def atomic_write(path: Path, content: str) -> None:
@@ -48,6 +52,157 @@ def _safe_stage_report(record: Any) -> list[dict[str, Any]]:
     ]
 
 
+def _visual_qa_screenshot_names(golden_id: str) -> list[str]:
+    return [
+        f"{golden_id}-visual-qa-initial.png",
+        f"{golden_id}-visual-qa-mid-action.png",
+        f"{golden_id}-visual-qa-parameter-changed.png",
+    ]
+
+
+def _verified_visual_qa_paths(
+    *,
+    artifact: str,
+    golden_id: str,
+    screenshot_root: Path,
+    browser_report: dict[str, Any],
+) -> tuple[Path, Path, Path]:
+    artifact_sha256 = hashlib.sha256(artifact.encode("utf-8")).hexdigest()
+    if browser_report.get("artifactSha256") != artifact_sha256:
+        raise ValueError("stale browser evidence does not match candidate artifact")
+    expected_names = _visual_qa_screenshot_names(golden_id)
+    if browser_report.get("visualQaScreenshots") != expected_names:
+        raise ValueError("browser evidence does not contain the ordered visual QA states")
+    paths = tuple(screenshot_root / name for name in expected_names)
+    if any(not path.is_file() or path.stat().st_size < 1_000 for path in paths):
+        raise ValueError("three bounded visual QA screenshots are required")
+    return paths  # type: ignore[return-value]
+
+
+def _verify_bound_visual_evidence(
+    *,
+    artifact: str,
+    golden_id: str,
+    screenshot_root: Path,
+    browser_report: dict[str, Any],
+    visual_qa_evidence: dict[str, Any],
+) -> tuple[Path, Path, Path]:
+    paths = _verified_visual_qa_paths(
+        artifact=artifact,
+        golden_id=golden_id,
+        screenshot_root=screenshot_root,
+        browser_report=browser_report,
+    )
+    artifact_sha256 = hashlib.sha256(artifact.encode("utf-8")).hexdigest()
+    if visual_qa_evidence.get("artifact_sha256") != artifact_sha256:
+        raise ValueError("stale visual QA evidence does not match candidate artifact")
+    if visual_qa_evidence.get("screenshots") != [path.name for path in paths]:
+        raise ValueError("stale visual QA evidence has a different screenshot sequence")
+    return paths
+
+
+def _run_golden_browser_harness(
+    *,
+    artifact_path: Path,
+    screenshot_root: Path,
+    golden_id: str,
+    report_path: Path,
+) -> dict[str, Any]:
+    node = shutil.which("node")
+    if node is None:
+        raise ValueError("golden visual browser capture requires Node.js")
+    completed = subprocess.run(  # noqa: S603 - fixed local harness and candidate
+        [
+            node,
+            str(ROOT / "scripts" / "check_golden.mjs"),
+            str(artifact_path),
+            str(screenshot_root),
+            golden_id,
+            str(report_path),
+        ],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    if completed.returncode != 0:
+        raise ValueError("golden visual browser capture failed")
+    try:
+        evidence = json.loads(completed.stdout)
+    except json.JSONDecodeError as error:
+        raise ValueError("golden visual browser capture returned malformed JSON") from error
+    atomic_write(report_path, json.dumps(evidence, ensure_ascii=False, indent=2) + "\n")
+    return evidence
+
+
+async def _attach_visual_qa(
+    *,
+    backend: CodexBackend,
+    fixture_id: str,
+    golden_id: str,
+    artifact: str,
+    screenshot_root: Path,
+    browser_evidence: dict[str, Any],
+    builder_outputs: dict[str, Any],
+    stage_executions: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    verification = builder_outputs.get("verification")
+    pipeline_browser = builder_outputs.get("browser")
+    if not (
+        isinstance(verification, dict)
+        and verification.get("passed") is True
+        and isinstance(pipeline_browser, dict)
+        and bool(pipeline_browser)
+    ):
+        raise ValueError("visual QA requires passing deterministic and browser gates")
+    if not (
+        browser_evidence.get("ready") is True
+        and browser_evidence.get("runtimeError") is False
+        and browser_evidence.get("externalRequests") == 0
+        and browser_evidence.get("consoleErrors") == []
+        and browser_evidence.get("visualQaMidActionChanged") is True
+        and browser_evidence.get("visualQaParameterChanged") is True
+        and len(browser_evidence.get("cases", [])) == 3
+        and all(case.get("frameChanged") is True for case in browser_evidence["cases"])
+    ):
+        raise ValueError("visual QA browser evidence did not pass")
+    screenshots = _verified_visual_qa_paths(
+        artifact=artifact,
+        golden_id=golden_id,
+        screenshot_root=screenshot_root,
+        browser_report=browser_evidence,
+    )
+    gate_outcome = {
+        "passed": True,
+        "check_count": verification["check_count"],
+        "gate_names": ["deterministic", "browser"],
+    }
+    execution = await backend.visual_qa(
+        builder_outputs["understanding"],
+        screenshots,
+        gate_outcome,
+        runtime_context=RuntimeContext(public=False, evidence_fixture_id=fixture_id),
+    )
+    builder_outputs["visual_qa"] = execution.data
+    if stage_executions is not None:
+        stage_executions.append(
+            {
+                "stage": "visual_qa",
+                "attempt": 1,
+                "model": execution.model,
+                "outcome": "completed",
+                "elapsed_ms": execution.elapsed_ms,
+                "failure_code": None,
+                "thread_id": execution.thread_id,
+            }
+        )
+    return {
+        "artifact_sha256": hashlib.sha256(artifact.encode("utf-8")).hexdigest(),
+        "screenshots": [path.name for path in screenshots],
+    }
+
+
 async def generate_candidate(fixture_id: str, attempt: int) -> int:
     settings = Settings.from_env()
     if not settings.record_runtime:
@@ -59,6 +214,7 @@ async def generate_candidate(fixture_id: str, attempt: int) -> int:
         evidence_stage_timeout_seconds=settings.evidence_stage_timeout_seconds,
         record_runtime=True,
         evidence_allowlist=frozenset(GOLDEN_FIXTURE_IDS),
+        evidence_image_roots=(VISUAL_QA_ROOT,),
     )
     backend = CodexBackend(executor=executor, settings=settings)
     manager = JobManager(
@@ -83,12 +239,47 @@ async def generate_candidate(fixture_id: str, attempt: int) -> int:
         "checks": {},
     }
     artifact_sha256 = None
+    browser_visual_evidence: dict[str, Any] | None = None
+    visual_qa_evidence: dict[str, Any] | None = None
     if record.artifact and record.builder_outputs:
+        golden_id = golden_id_for_fixture(fixture_id)
+        artifact_path = CANDIDATE_ROOT / f"{golden_id}.html"
+        atomic_write(artifact_path, record.artifact)
+        screenshot_root = VISUAL_QA_ROOT / golden_id / f"attempt-{attempt}"
+        browser_report_path = (
+            EVIDENCE_ROOT / f"{golden_id}-attempt-{attempt}-browser.json"
+        )
+        browser_visual_evidence = await asyncio.to_thread(
+            _run_golden_browser_harness,
+            artifact_path=artifact_path,
+            screenshot_root=screenshot_root,
+            golden_id=golden_id,
+            report_path=browser_report_path,
+        )
+        visual_qa_evidence = await _attach_visual_qa(
+            backend=backend,
+            fixture_id=fixture_id,
+            golden_id=golden_id,
+            artifact=record.artifact,
+            screenshot_root=screenshot_root,
+            browser_evidence=browser_visual_evidence,
+            builder_outputs=record.builder_outputs,
+            stage_executions=record.stage_executions,
+        )
         review = review_golden_candidate(
             fixture=fixture,
             understanding=record.builder_outputs["understanding"],
             module_output=record.builder_outputs["module_output"],
         )
+        visual_qa_passed = _semantic_visual_qa_passed(
+            record.builder_outputs["visual_qa"],
+            deterministic_passed=True,
+            browser_passed=True,
+        )
+        review.setdefault("checks", {})["semantic_visual_qa"] = visual_qa_passed
+        if not visual_qa_passed:
+            review["passed"] = False
+            review.setdefault("failure_codes", []).append("semantic_visual_qa_failed")
         artifact_sha256 = hashlib.sha256(record.artifact.encode()).hexdigest()
         candidate = {
             "schema_version": "1.0",
@@ -100,6 +291,8 @@ async def generate_candidate(fixture_id: str, attempt: int) -> int:
             "artifact_sha256": artifact_sha256,
             "artifact": record.artifact,
             "builder_outputs": record.builder_outputs,
+            "browser_visual_evidence": browser_visual_evidence,
+            "visual_qa_evidence": visual_qa_evidence,
             "automated_review": review,
         }
         atomic_write(
@@ -126,6 +319,8 @@ async def generate_candidate(fixture_id: str, attempt: int) -> int:
         ),
         "qa": record.builder_outputs.get("qa") if record.builder_outputs else None,
         "artifact_sha256": artifact_sha256,
+        "browser_visual_evidence": browser_visual_evidence,
+        "visual_qa_evidence": visual_qa_evidence,
         "automated_review": review,
         "diagnostics": record.builder_diagnostics,
     }
@@ -232,6 +427,9 @@ def refresh_candidate_shell(fixture_id: str) -> int:
     candidate["artifact"] = verification.artifact
     candidate["artifact_sha256"] = hashlib.sha256(verification.artifact.encode()).hexdigest()
     candidate["shell_refreshed_offline"] = True
+    candidate.pop("browser_visual_evidence", None)
+    candidate.pop("visual_qa_evidence", None)
+    outputs.pop("visual_qa", None)
     outputs["verification"] = {
         **outputs["verification"],
         "passed": True,
@@ -284,6 +482,15 @@ def promote_candidate(fixture_id: str, revision: str | None = None) -> int:
     )
     if not authoritative_verification.passed or authoritative_verification.artifact is None:
         raise ValueError("candidate failed authoritative deterministic promotion gates")
+    authoritative_sha256 = hashlib.sha256(
+        authoritative_verification.artifact.encode("utf-8")
+    ).hexdigest()
+    if not (
+        candidate.get("artifact_sha256") == authoritative_sha256
+        and hashlib.sha256(candidate["artifact"].encode("utf-8")).hexdigest()
+        == authoritative_sha256
+    ):
+        raise ValueError("candidate artifact is stale relative to authoritative assembly")
     screenshot_root = (
         ROOT / "out" / "evidence" / "screens" / "v1.1"
         if revision == "v1.1"
@@ -298,6 +505,8 @@ def promote_candidate(fixture_id: str, revision: str | None = None) -> int:
     if any(not path.exists() or path.stat().st_size < 10_000 for path in screenshots):
         raise ValueError("accepted mobile and desktop screenshots are required")
     browser_report = json.loads(browser_report_path.read_text(encoding="utf-8"))
+    if browser_report.get("artifactSha256") != authoritative_sha256:
+        raise ValueError("stale browser evidence does not match candidate artifact")
     if not (
         browser_report.get("ready") is True
         and browser_report.get("runtimeError") is False
@@ -309,6 +518,16 @@ def promote_candidate(fixture_id: str, revision: str | None = None) -> int:
         and browser_report.get("reactiveFrameVariants", 0) >= 2
     ):
         raise ValueError("golden browser evidence did not pass")
+    visual_screenshot_root = (
+        VISUAL_QA_ROOT / golden_id / f"attempt-{candidate['attempt']}"
+    )
+    visual_qa_screenshots = _verify_bound_visual_evidence(
+        artifact=authoritative_verification.artifact,
+        golden_id=golden_id,
+        screenshot_root=visual_screenshot_root,
+        browser_report=candidate.get("browser_visual_evidence", {}),
+        visual_qa_evidence=candidate.get("visual_qa_evidence", {}),
+    )
     if not _semantic_visual_qa_passed(
         outputs.get("visual_qa"),
         deterministic_passed=authoritative_verification.passed,
@@ -360,6 +579,9 @@ def promote_candidate(fixture_id: str, revision: str | None = None) -> int:
             "heal_count": verification["heal_count"],
             "browser": browser_report,
             "screenshots": [str(path.relative_to(ROOT)) for path in screenshots],
+            "visual_qa_screenshots": [
+                str(path.relative_to(ROOT)) for path in visual_qa_screenshots
+            ],
         },
         release_revision=revision,
         expected_previous_sha256=previous_sha256,
@@ -378,7 +600,9 @@ def parse_args() -> argparse.Namespace:
     subparsers = parser.add_subparsers(dest="command", required=True)
     generate = subparsers.add_parser("generate")
     generate.add_argument("--fixture", required=True, choices=GOLDEN_FIXTURE_IDS)
-    generate.add_argument("--attempt", type=int, choices=(1, 2, 3), required=True)
+    generate.add_argument(
+        "--attempt", type=int, choices=tuple(range(1, MAX_GOLDEN_ATTEMPTS + 1)), required=True
+    )
     promote = subparsers.add_parser("promote")
     promote.add_argument("--fixture", required=True, choices=GOLDEN_FIXTURE_IDS)
     promote.add_argument("--revision", choices=("v1.1",))

@@ -339,7 +339,11 @@ try {
       });
     })()`);
     async function tabTo(selectors, sessionId) {
-      await evaluate(`document.querySelector(${JSON.stringify(selectors[0])}).focus()`, sessionId);
+      await evaluate(`(() => {
+        const start = document.querySelector(${JSON.stringify(selectors[0])});
+        start.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
+        start.focus();
+      })()`, sessionId);
       const results = [];
       for (const selector of selectors.slice(1)) {
         const dispatchedAt = Date.now();
@@ -357,7 +361,9 @@ try {
           windowsVirtualKeyCode: 9,
           nativeVirtualKeyCode: 9,
         }, sessionId);
-        await delay(25);
+        // Chrome reports the new active element before its keyboard-driven scroll settles.
+        // Measure visible focus after that scroll, not at the transient pre-scroll position.
+        await delay(100);
         const observedAt = Date.now();
         results.push(await evaluate(`(() => {
           const element = document.querySelector(${JSON.stringify(selector)});
