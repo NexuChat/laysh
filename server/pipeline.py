@@ -462,7 +462,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 )
                 return
             continue
-        if heal_count >= 2:
+        if heal_count >= (2 if record.public else 1):
             _fallback(
                 manager,
                 record,

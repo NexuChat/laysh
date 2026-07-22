@@ -742,6 +742,27 @@ def test_exhausted_heal_preserves_answer_and_never_exposes_artifact(client, back
     assert backend.qa_calls == 0
 
 
+@pytest.mark.asyncio
+async def test_curated_evidence_stops_after_one_failed_heal(backend):
+    from server.browser_verify import BrowserVerificationResult
+    from server.jobs import JobManager
+
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        evidence_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+    )
+    record = manager.start_evidence("exhausted heal", "ar", "moon_phases_ar")
+    await record.task
+
+    assert record.status == "answer_only"
+    assert record.fallback is not None
+    assert record.fallback.reason_code == "verification_exhausted"
+    assert backend.heal_calls == 1
+    assert backend.qa_calls == 0
+
+
 def test_timeout_reaches_truthful_terminal_state_and_discards_question(backend):
     from fastapi.testclient import TestClient
 

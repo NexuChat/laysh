@@ -2,83 +2,53 @@
   "schema_version": "1.0",
   "fixture_id": "moon_phases_ar",
   "attempt": 2,
-  "job_id": "job_976b91d5598b5c4e",
+  "job_id": "job_59af944dc9270ce4",
   "status": "answer_only",
-  "total_elapsed_ms": 200021,
+  "total_elapsed_ms": 552434,
   "live_call_count": 4,
   "stages": [
     {
       "stage": "understand",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 29853,
+      "elapsed_ms": 34536,
       "thread_id_captured": true
     },
     {
       "stage": "generate",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 109700,
+      "elapsed_ms": 208045,
       "thread_id_captured": true
     },
     {
-      "stage": "heal_1",
+      "stage": "heal",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 44994,
+      "elapsed_ms": 153157,
       "thread_id_captured": true
     },
     {
-      "stage": "qa",
+      "stage": "heal",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 12970,
+      "elapsed_ms": 156413,
       "thread_id_captured": true
     }
   ],
-  "heal_count": 1,
-  "qa": {
-    "approved": false,
-    "issues": [
-      "Scene remains flat: solid panels and discs provide no convincing layered spatial depth.",
-      "Moon lighting uses a rectangular clip with a straight terminator, so phase illumination is not physically consistent.",
-      "No reduced-motion-aware idle loop or same-value redraw motion exists; labels are plain text without readable overlay chips."
-    ],
-    "replacement_module_js": null,
-    "visual_richness": {
-      "scene_depth": false,
-      "physical_light": false,
-      "idle_motion": false,
-      "reactive_feedback": true,
-      "readable_overlays": false
-    }
-  },
-  "artifact_sha256": "dab7818c4b60ab140b944907a994efdf6c08785bb4f3f70b1ce717cc2f9b43d6",
+  "heal_count": null,
+  "qa": null,
+  "artifact_sha256": null,
+  "browser_visual_evidence": null,
+  "visual_qa_evidence": null,
   "automated_review": {
-    "passed": true,
-    "checks": {
-      "formula_matches_reference": true,
-      "learner_copy_has_no_hash_placeholders": true,
-      "learner_copy_localized": true,
-      "primary_parameter_matches_reference": true,
-      "model_fixtures_match_reference": true,
-      "bilingual_metadata": true,
-      "reference_fixture_count": 3,
-      "reference_fixtures_passed": true,
-      "misconception_present": true,
-      "teaching_flow_complete": true,
-      "assumptions_present": true,
-      "units_present": true
-    },
-    "failure_codes": [],
-    "reference_report": {
-      "passed": true,
-      "check_count": 8,
-      "fixture_count": 3,
-      "failures": []
-    }
+    "passed": false,
+    "failure_codes": [
+      "pipeline_incomplete"
+    ],
+    "checks": {}
   },
   "diagnostics": [
     {
       "type": "verification_failure",
       "attempt": 0,
-      "check_count": 12,
+      "check_count": 23,
       "failures": [
         {
           "gate": "runtime_init",
@@ -107,23 +77,83 @@
           "actual": {
             "emit_frame_calls": 0
           }
+        },
+        {
+          "gate": "scene_geometry",
+          "code": "scene_samples_missing",
+          "expected": {
+            "samples": "nonempty_array"
+          },
+          "actual": {
+            "samples": []
+          },
+          "sample_index": 0,
+          "state": null
         }
       ]
     },
     {
-      "type": "qa_rejected",
-      "issues": [
-        "Scene remains flat: solid panels and discs provide no convincing layered spatial depth.",
-        "Moon lighting uses a rectangular clip with a straight terminator, so phase illumination is not physically consistent.",
-        "No reduced-motion-aware idle loop or same-value redraw motion exists; labels are plain text without readable overlay chips."
-      ],
-      "visual_richness": {
-        "scene_depth": false,
-        "physical_light": false,
-        "idle_motion": false,
-        "reactive_feedback": true,
-        "readable_overlays": false
-      }
+      "type": "verification_failure",
+      "attempt": 1,
+      "check_count": 23,
+      "failures": [
+        {
+          "gate": "scene_geometry",
+          "code": "scene_contract_unknown_field",
+          "expected": {
+            "allowed_fields": [
+              "objects",
+              "phase",
+              "relations",
+              "schemaVersion",
+              "state",
+              "viewport"
+            ]
+          },
+          "actual": {
+            "fields": [
+              "circles",
+              "clippingPolicy",
+              "dimensions",
+              "guides",
+              "rects"
+            ]
+          },
+          "sample_index": 0,
+          "state": {
+            "angle_deg": 90,
+            "lit_fraction": 0.49999999999999994
+          }
+        }
+      ]
+    },
+    {
+      "type": "verification_failure",
+      "attempt": 2,
+      "check_count": 23,
+      "failures": [
+        {
+          "gate": "scene_geometry",
+          "code": "scene_contract_invalid_state",
+          "expected": {
+            "fields": [
+              "id",
+              "timeMs"
+            ]
+          },
+          "actual": {
+            "state": {
+              "angle_deg": 90,
+              "lit_fraction": 0.49999999999999994
+            }
+          },
+          "sample_index": 0,
+          "state": {
+            "angle_deg": 90,
+            "lit_fraction": 0.49999999999999994
+          }
+        }
+      ]
     }
   ]
 }

@@ -752,3 +752,25 @@ landed. The official committed ledger therefore remains 22 of 30 passing; no
   passed, with high-current speed **0.000192–0.000247** versus low-current speed
   **0.000021–0.000023**. The final repository-wide rerun recorded **570 passed,
   1 skipped in 367.16s** with Ruff clean.
+
+### Post-Build-Week bounded curated routing trial
+
+- The second bounded Moon attempt still used the prior all-Sol evidence route
+  and ended answer-only after **552.434s** and four calls: understand
+  **34.536s**, generate **208.045s**, heal 1 **153.157s**, and heal 2
+  **156.413s**. The candidate first failed runtime initialization and empty
+  scene samples; its repairs then emitted unknown scene-contract fields and an
+  invalid state shape. It was not promoted. The retained sanitized record is
+  `out/evidence/goldens/moon_phases-attempt-2.json`.
+- To measure a lower-latency curated path without weakening public behavior,
+  the evidence/golden profile now uses GPT-5.6 Luna low for understanding,
+  Terra medium for generation, one bounded Sol low heal, Sol medium QA, and Sol
+  low Visual QA. Public jobs retain their existing two-heal policy. Focused TDD
+  recorded **5 expected failures**, then the affected routing/pipeline suite
+  recorded **96 passed in 11.99s** with Ruff clean.
+- The first repository-wide rerun exposed one stale RELEASE-01 node ID after
+  the routing test was renamed: **1 failed, 570 passed, 1 skipped in 367.87s**.
+  Updating that executable mapping made the focused release-map test pass. The
+  final repository-wide offline proof recorded **571 passed, 1 skipped in
+  367.50s**; Ruff remained clean. No live call on the new route had been made at
+  this checkpoint.

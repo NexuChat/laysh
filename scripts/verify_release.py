@@ -192,7 +192,7 @@ ACCEPTANCE_ROW_TEST_NODEIDS: dict[str, tuple[str, ...]] = {
         "tests/test_model_routing.py::test_terra_generation_failure_never_starts_a_fresh_sol_generation",
         "tests/test_model_routing.py::test_heal_uses_generation_model_then_allows_one_final_sol_attempt",
         "tests/test_settings.py::test_runtime_defaults_are_gpt_5_6_family_only",
-        "tests/test_codex_backend_live.py::test_curated_generate_heal_and_ordinary_qa_stay_sol",
+        "tests/test_codex_backend_live.py::test_curated_generation_is_terra_then_sol_repairs_stay_low_cost",
     ),
     "ROUTE-02": (
         "tests/test_routing_evaluation.py::test_bounded_route_report_adopts_terra_only_from_complete_observed_evidence",

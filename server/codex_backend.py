@@ -225,7 +225,11 @@ class CodexBackend:
             ),
             schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["heal"],
             model=model,
-            effort="high" if attempt == 2 else "medium",
+            effort=(
+                "low"
+                if not selected_context.public
+                else ("high" if attempt == 2 else "medium")
+            ),
             **self._execution_policy(selected_context),
         )
 

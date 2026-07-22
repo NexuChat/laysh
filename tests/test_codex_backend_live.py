@@ -111,7 +111,7 @@ async def test_public_understand_retries_terra_only_after_luna_schema_failure(ca
 
 
 @pytest.mark.asyncio
-async def test_curated_understand_routes_to_sol_for_build_time_fixture_quality():
+async def test_curated_understand_routes_to_luna_with_builder_reference_contract():
     from server.codex_backend import CodexBackend, RuntimeContext
     from server.settings import Settings
 
@@ -124,7 +124,7 @@ async def test_curated_understand_routes_to_sol_for_build_time_fixture_quality()
         runtime_context=RuntimeContext(public=False, evidence_fixture_id="moon_phases_ar"),
     )
 
-    assert executor.calls[0]["model"] == "gpt-5.6-sol"
+    assert executor.calls[0]["model"] == "gpt-5.6-luna"
     assert executor.calls[0]["effort"] == "low"
     assert executor.calls[0]["public"] is False
     payload = json.loads(executor.calls[0]["prompt"].split("INPUT_JSON:\n", 1)[1])
@@ -150,7 +150,7 @@ async def test_public_understand_never_receives_builder_fixture_contract():
 
 
 @pytest.mark.asyncio
-async def test_curated_generate_heal_and_ordinary_qa_stay_sol(monkeypatch):
+async def test_curated_generation_is_terra_then_sol_repairs_stay_low_cost(monkeypatch):
     from server.codex_backend import CodexBackend, RuntimeContext
     from server.settings import Settings
 
@@ -186,12 +186,12 @@ async def test_curated_generate_heal_and_ordinary_qa_stay_sol(monkeypatch):
     )
 
     assert [call["model"] for call in executor.calls] == [
-        "gpt-5.6-sol",
+        "gpt-5.6-terra",
         "gpt-5.6-sol",
         "gpt-5.6-sol",
         "gpt-5.6-sol",
     ]
-    assert [call["effort"] for call in executor.calls] == ["medium", "medium", "high", "medium"]
+    assert [call["effort"] for call in executor.calls] == ["medium", "low", "low", "medium"]
     assert [call["schema_path"].name for call in executor.calls] == [
         "module.schema.json",
         "module.schema.json",

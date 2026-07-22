@@ -16,11 +16,11 @@ def _default_terra_generation_tiers() -> tuple[str, ...]:
 class Settings:
     understand_model: str = "gpt-5.6-luna"
     understand_fallback_model: str = "gpt-5.6-terra"
-    evidence_understand_model: str = "gpt-5.6-sol"
-    generate_model: str = "gpt-5.6-sol"
+    evidence_understand_model: str = "gpt-5.6-luna"
+    generate_model: str = "gpt-5.6-terra"
     heal_model: str = "gpt-5.6-sol"
     qa_model: str = "gpt-5.6-sol"
-    visual_qa_model: str = "gpt-5.6-terra"
+    visual_qa_model: str = "gpt-5.6-sol"
     terra_generation_tiers: tuple[str, ...] = field(
         default_factory=_default_terra_generation_tiers
     )
