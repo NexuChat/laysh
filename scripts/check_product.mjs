@@ -175,6 +175,8 @@ try {
 
   await setViewport(390, 844, true);
   await navigate();
+  await evaluate("document.querySelector('#locale-control').click()");
+  await waitFor("document.documentElement.lang === 'ar'");
   await capture(`${evidencePrefix}-landing-mobile-390x844.png`);
   await waitFor("!document.querySelector('[data-golden-id=\"moon_phases\"] .golden-launch').disabled", 5000);
   await evaluate("document.querySelector('[data-golden-id=\"moon_phases\"] .golden-launch').click()");

@@ -22,12 +22,12 @@ def _contrast(foreground: str, background: str) -> float:
 def test_night_observatory_text_pairs_meet_wcag_aa():
     css = (ROOT / "web" / "app.css").read_text(encoding="utf-8")
     pairs = {
-        "cream_on_space": ("#eef4f8", "#05080b"),
-        "cream_on_glass": ("#eef4f8", "#0e1c2b"),
-        "slate_on_space": ("#7e93a6", "#05080b"),
-        "slate_on_glass": ("#7e93a6", "#0e1c2b"),
-        "amber_on_space": ("#f6a94a", "#05080b"),
-        "moon_on_space": ("#58b7ff", "#05080b"),
+        "cream_on_space": ("#f1ecdf", "#0d0f12"),
+        "cream_on_glass": ("#f1ecdf", "#171b21"),
+        "slate_on_space": ("#98a1ad", "#0d0f12"),
+        "slate_on_glass": ("#98a1ad", "#171b21"),
+        "amber_on_space": ("#ffc247", "#0d0f12"),
+        "moon_on_space": ("#76d6c8", "#0d0f12"),
     }
     for name, (foreground, background) in pairs.items():
         assert foreground in css and background in css

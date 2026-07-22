@@ -101,7 +101,8 @@ def update_preflight(
         "+00:00", "Z"
     )
     report.setdefault("release_confirmations", {})["asset_licenses"] = (
-        "MIT application code; GNU FreeFont under GPLv3+ with Font Exception"
+        "MIT application code; GNU FreeFont under GPLv3+ with Font Exception; "
+        "Noto Kufi Arabic under SIL OFL 1.1"
     )
     report["release_confirmations"]["repository_visibility_for_judging"] = (
         "owner will create and push the public repository after G6"

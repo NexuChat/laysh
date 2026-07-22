@@ -153,7 +153,7 @@ ACCEPTANCE_ROW_TEST_NODEIDS: dict[str, tuple[str, ...]] = {
     ),
     "ASSET-01": (
         "tests/test_static_asset_versioning.py::test_frozen_asset_manifest_matches_runtime_assets_and_gallery_contract",
-        "tests/test_static_asset_versioning.py::test_document_uses_one_version_for_every_runtime_asset",
+        "tests/test_static_asset_versioning.py::test_document_versions_entrypoints_and_preloaded_fonts_without_duplicate_fetches",
         "tests/test_static_asset_versioning.py::test_production_application_routes_static_assets_through_version_gate",
         "tests/test_static_asset_versioning.py::test_manifest_fails_closed_when_a_versioned_asset_changes",
         "tests/test_static_asset_browser.py::test_versioned_assets_load_immutably_in_a_fresh_browser_profile",

@@ -1,18 +1,20 @@
 # Laysh submission kit
 
-This directory is an owner-ready handoff. The build session did not create a
-remote repository, push code, upload media, open an authenticated Devpost form,
-or submit the project.
+This directory records the final submission handoff. The owner authorized the
+public repository and deployment, supplied the public video, and reported that
+the Devpost entry was submitted during the officially extended submission
+window. The authenticated Devpost confirmation remains owner-held evidence.
 
 - [`description.md`](description.md) — final paste-ready text derived from the README.
-- [`fields.md`](fields.md) — filled field sheet and clearly marked URL placeholders.
-- [`video-outline.md`](video-outline.md) — 2:55 English-narrated demo plan.
-- [`owner-checklist.md`](owner-checklist.md) — the remaining owner-only actions.
+- [`fields.md`](fields.md) — filled field sheet with the published URLs.
+- [`video-outline.md`](video-outline.md) — English-narrated demo plan.
+- [`owner-checklist.md`](owner-checklist.md) — publication status and remaining
+  owner verification.
 
 Official release choice: **Education**.  
 Primary `/feedback` Session ID: `019f7998-9378-72b2-b590-ee10e632ce81`.
 
-Owner-only finish line: **Create the public GitHub repository** and push;
-**Upload the final video** as a public YouTube video; replace every URL
-placeholder; complete the Devpost form; select Education; **Submit**; and reopen
-the saved submission before the deadline.
+Published materials: <https://github.com/NexuChat/laysh>,
+<https://laysh.mlki.app>, and <https://youtu.be/KRztDZH5BEQ>. The remaining
+owner-only action is to retain the authenticated Devpost confirmation and keep
+the demo available throughout judging.

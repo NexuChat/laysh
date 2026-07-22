@@ -138,9 +138,13 @@ try {
     everyResponseImmutable: responses.every(
       (response) => response.cacheControl === "public, max-age=31536000, immutable",
     ),
-    oneHtmlBundleVersion: [...dom.scripts, ...dom.styles].every(
-      (url) => new URL(url).searchParams.get("v") === manifest.bundle_version,
-    ),
+    htmlAssetVersionsMatchManifest: [...dom.scripts, ...dom.styles].every((url) => {
+      const parsed = new URL(url);
+      const asset = parsed.pathname.replace("/static/", "");
+      const metadata = manifest.assets[asset];
+      const expected = asset.startsWith("fonts/") ? metadata?.sha256 : manifest.bundle_version;
+      return Boolean(metadata) && parsed.searchParams.get("v") === expected;
+    }),
     noConsoleErrors: consoleErrors.length === 0,
   };
   socket.close();

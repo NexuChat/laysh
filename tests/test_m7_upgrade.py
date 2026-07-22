@@ -8,20 +8,33 @@ import pytest
 ROOT = Path(__file__).parents[1]
 
 
-def test_web_shell_carries_the_night_observatory_identity(client):
+def test_web_shell_carries_the_bold_editorial_observatory_identity(client):
     html = client.get("/").text
     css = client.get("/static/app.css").text
 
-    for color in ("#05080b", "#0e1c2b", "#f6a94a", "#58b7ff", "#eef4f8", "#7e93a6"):
+    for color in (
+        "#0d0f12",
+        "#171b21",
+        "#ffc247",
+        "#ff6b2c",
+        "#76d6c8",
+        "#f1ecdf",
+        "#98a1ad",
+    ):
         assert color in css
     assert 'class="brand-dot"' in html
-    assert "اسأل ليش، والعب الجواب." in html
+    assert "Ask why, then play the answer." in html
     assert 'class="star-field"' in html
     assert "orbit-scene" in html
     assert "color-scheme: dark" in css
+    assert "54px 54px" in css
+    assert ".star-field { display: none; }" in css
+    assert "gap: clamp(0.85rem, 1.8vw, 1.35rem)" in css
+    assert "border-radius: 1.15rem" in css
     assert "letter-spacing: -" not in css
     assert "prefers-reduced-motion: reduce" in css
-    assert 'href="/static/fonts/free-serif-arabic-display.woff2?v=' in html
+    assert 'href="/static/fonts/noto-kufi-ar.woff2?v=' in html
+    assert 'href="/static/fonts/noto-kufi-latin.woff2?v=' in html
 
 
 def test_build_view_has_truthful_agent_theatre_hooks(client):

@@ -5,6 +5,7 @@
     ar: {
       "document.title": "ليش — اسأل، افهم، وجرّب",
       "nav.skip": "انتقل إلى المحتوى",
+      "nav.brand": "ليش",
       "nav.brandLabel": "ليش، الصفحة الرئيسية",
       "nav.lab": "مرصد العلوم التفاعلي",
       "locale.control": "E",
@@ -163,6 +164,7 @@
     en: {
       "document.title": "Laysh — ask, understand, and experiment",
       "nav.skip": "Skip to content",
+      "nav.brand": "Laysh",
       "nav.brandLabel": "Laysh, home page",
       "nav.lab": "Interactive science observatory",
       "locale.control": "العربية",

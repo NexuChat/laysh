@@ -339,7 +339,8 @@
         if (!card || !lesson.instant) continue;
         card.querySelector("h3").textContent = lesson.title;
         card.querySelector(".card-domain").textContent = lesson.domain;
-        const badge = card.querySelector(".coming-badge");
+        const badge = card.querySelector(".coming-badge, .instant-badge");
+        if (!badge) continue;
         badge.className = "instant-badge";
         badge.textContent = t("gallery.instant");
         const launch = card.querySelector(".golden-launch");

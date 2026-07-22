@@ -147,14 +147,16 @@ try {
     screenHeight: 900,
   });
   await navigate();
+  await evaluate(`localStorage.setItem("laysh-locale", "ar")`);
+  await navigate();
   await waitFor("!document.querySelector('[data-golden-id=\"moon_phases\"] .golden-launch').disabled", 5000);
 
-  const arabic = await evaluate(`({
+  const defaultEnglish = await evaluate(`({
     lang: document.documentElement.lang,
     dir: document.documentElement.dir,
-    landing: document.querySelector('#hero-title').textContent.includes('سؤال فضولي'),
+    landing: document.querySelector('#hero-title').textContent.includes('curious question'),
   })`);
-  await capture("i18n-ar-landing.png");
+  await capture("i18n-en-landing.png");
 
   await evaluate(`(() => {
     window.__localeWrites = [];
@@ -167,15 +169,28 @@ try {
       document.querySelector(selector).click();
     }
   })()`);
-  const beforeControl = arabic.lang;
+  const beforeControl = defaultEnglish.lang;
   const afterOutsideClicks = await evaluate("document.documentElement.lang");
   const outsideWrites = await evaluate("window.__localeWrites");
 
   await evaluate("document.querySelector('#locale-control').click()");
+  await waitFor("document.documentElement.lang === 'ar'");
+  await waitFor(
+    "document.querySelector('[data-golden-id=\"moon_phases\"] .instant-badge').textContent === 'فوري'",
+    5000,
+  );
+  const arabic = await evaluate(`({
+    lang: document.documentElement.lang,
+    dir: document.documentElement.dir,
+    landing: document.querySelector('#hero-title').textContent.includes('سؤال فضولي'),
+    instant: Array.from(document.querySelectorAll('.instant-badge')).every((badge) => badge.textContent === 'فوري'),
+  })`);
+  await capture("i18n-ar-landing.png");
+  const controlWritesAfterArabic = await evaluate("window.__localeWrites");
+  await evaluate("document.querySelector('#locale-control').click()");
   await waitFor("document.documentElement.lang === 'en'");
   await waitFor("document.querySelector('[data-golden-id=\"moon_phases\"] h3').textContent === 'Moon phases'", 5000);
   const controlWrites = await evaluate("window.__localeWrites");
-  await capture("i18n-en-landing.png");
 
   await evaluate("document.querySelector('[data-golden-id=\"moon_phases\"] .golden-launch').click()");
   await waitFor("!document.querySelector('#result-view').hidden", 5000);
@@ -256,6 +271,7 @@ try {
   const persistedAfterReload = await evaluate("document.documentElement.lang");
 
   process.stdout.write(JSON.stringify({
+    defaultEnglish,
     arabic,
     english,
     requestLocales,
@@ -263,7 +279,8 @@ try {
       beforeControl,
       afterOutsideClicks,
       outsideWrites,
-      afterControl: controlWrites.at(-1)?.[1],
+      afterControl: controlWritesAfterArabic.at(-1)?.[1],
+      controlWritesAfterArabic,
       controlWrites,
       persistedAfterReload,
     },

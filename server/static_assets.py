@@ -20,9 +20,8 @@ RUNTIME_ASSETS = (
     "app.js",
     "locale.js",
     "translations.js",
-    "fonts/free-sans-arabic-latin.woff2",
-    "fonts/free-sans-arabic-latin-bold.woff2",
-    "fonts/free-serif-arabic-display.woff2",
+    "fonts/noto-kufi-ar.woff2",
+    "fonts/noto-kufi-latin.woff2",
 )
 _SHA256 = re.compile(r"[0-9a-f]{64}")
 

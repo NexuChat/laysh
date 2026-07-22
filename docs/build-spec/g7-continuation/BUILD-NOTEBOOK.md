@@ -666,3 +666,42 @@ landed. The official committed ledger therefore remains 22 of 30 passing; no
   clean, and the provenance gate retained one root, zero merges, and zero
   unlinked commits. This records documentation correctness only; it does not
   change the blocked ROUTE-02 or unstarted RELEASE-01 statuses above.
+
+### English-default editorial refresh — measured public close-out
+
+- The public shell now uses self-hosted Noto Kufi Arabic subsets under SIL OFL
+  1.1 and the measured bold-editorial observatory palette. Six gallery lessons
+  are independent bordered cards rather than one visually fused panel. No
+  negative Arabic letter spacing was introduced; reduced-motion and visible
+  focus contracts remain in the stylesheet.
+- Test-first identity and locale checks recorded the intended red state as
+  **4 failed**, then **20 passed** after the initial shell implementation. A
+  real Chrome locale journey recorded **1 passed in 31.37s**. A legacy
+  `laysh-locale=ar` preference is deliberately ignored by the versioned v2
+  preference key so this release opens English/LTR; a new explicit Arabic or
+  English choice persists normally.
+- A second browser regression proved that rehydrating an already-ready gallery
+  on locale change incorrectly displayed the pending label. The retained fix
+  accepts both pre- and post-hydration badge states; the browser proof now
+  requires all six Arabic badges to read `فوري`.
+- The taller separated mobile gallery exposed an offscreen iframe race:
+  `requestAnimationFrame` could defer the embed bridge's first height report.
+  The bridge now schedules deterministic layout measurement as a microtask,
+  retains its ResizeObserver loop guard, and still reports the measured lesson
+  height rather than a fixed fallback. The full 24-journey viewport/DPR/zoom,
+  clipping, keyboard, live-resize, and motion-clock browser proof recorded
+  **1 passed in 38.94s**.
+- The final affected static, browser, accessibility, sharing, release-map, and
+  embedded-simulation sweep recorded **115 passed in 222.42s**. Ruff,
+  `git diff --check`, and the frozen static-asset check were clean before this
+  sweep. The repository-wide rerun remains pending and is not claimed here.
+- Public verification against `https://laysh.mlki.app` returned 200 for the
+  root, health endpoint, CSS, JavaScript, and both Kufi font subsets. A clean
+  browser measured English/LTR, `"Laysh Kufi"`, a 21.6px gallery gap, 18.4px
+  card radius, six Arabic `فوري` badges after switching locale, and zero console
+  errors or warnings. Accepted evidence is under
+  `out/evidence/screens/bold-refresh/`.
+- The owner-provided public video `https://youtu.be/KRztDZH5BEQ` was verified
+  with an HTTP 200 response and added to the README and submission field sheet.
+  This product-polish record does not change the separately documented
+  ROUTE-02/RELEASE-01 acceptance ledger.

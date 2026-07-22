@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  let frameId = 0;
+  let reportQueued = false;
   let lastHeight = 0;
   const lesson = document.getElementById("lesson");
   document.documentElement.style.minWidth = "0";
@@ -15,7 +15,7 @@
   }
 
   function reportHeight() {
-    frameId = 0;
+    reportQueued = false;
     const height = contentHeight();
     if (height <= 0 || height === lastHeight || window.parent === window) return;
     lastHeight = height;
@@ -26,8 +26,9 @@
   }
 
   function scheduleHeightReport() {
-    if (frameId) cancelAnimationFrame(frameId);
-    frameId = requestAnimationFrame(reportHeight);
+    if (reportQueued) return;
+    reportQueued = true;
+    queueMicrotask(reportHeight);
   }
 
   const observer = new ResizeObserver(scheduleHeightReport);
@@ -48,7 +49,6 @@
   });
   document.fonts?.ready.then(scheduleHeightReport);
   window.addEventListener("pagehide", () => {
-    cancelAnimationFrame(frameId);
     observer.disconnect();
   }, { once: true });
   scheduleHeightReport();

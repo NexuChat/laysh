@@ -9,8 +9,10 @@ change, observe, and explain.
 
 ## What it does
 
-Laysh is an Arabic-first learning experience for secondary-school learners aged
-13+ and teachers. It answers a safe question first, then builds a focused
+Laysh is an Arabic-centered bilingual learning experience for secondary-school
+learners aged 13+ and teachers. The public interface opens in English and its
+explicit language control switches the complete journey to persistent RTL
+Arabic. It answers a safe question first, then builds a focused
 interactive simulation when the concept is meaningfully simulatable. Six
 builder-reviewed lessons—Moon phases, buoyancy, pendulum period, a simple
 circuit, sound pitch, and day/night—play instantly. Every lesson includes a
@@ -63,4 +65,3 @@ domain adapters, and teacher-facing tools.
 
 Primary Codex `/feedback` Session ID:
 `019f7998-9378-72b2-b590-ee10e632ce81`
-

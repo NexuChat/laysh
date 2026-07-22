@@ -81,7 +81,17 @@ def test_ar_en_snapshots_direction_and_locale_control_event_scope(tmp_path):
         except subprocess.TimeoutExpired:
             server.kill()
 
-    assert evidence["arabic"] == {"lang": "ar", "dir": "rtl", "landing": True}
+    assert evidence["defaultEnglish"] == {
+        "lang": "en",
+        "dir": "ltr",
+        "landing": True,
+    }
+    assert evidence["arabic"] == {
+        "lang": "ar",
+        "dir": "rtl",
+        "landing": True,
+        "instant": True,
+    }
     assert evidence["english"]["lang"] == "en"
     assert evidence["english"]["dir"] == "ltr"
     assert evidence["english"]["landing"] is True
@@ -98,11 +108,12 @@ def test_ar_en_snapshots_direction_and_locale_control_event_scope(tmp_path):
     assert evidence["english"]["artifactDirection"] is True
     assert evidence["requestLocales"] == ["en", "en"]
     assert evidence["eventScope"] == {
-        "beforeControl": "ar",
-        "afterOutsideClicks": "ar",
+        "beforeControl": "en",
+        "afterOutsideClicks": "en",
         "outsideWrites": [],
-        "afterControl": "en",
-        "controlWrites": [["laysh-locale", "en"]],
+        "afterControl": "ar",
+        "controlWritesAfterArabic": [["laysh-locale-v2", "ar"]],
+        "controlWrites": [["laysh-locale-v2", "ar"], ["laysh-locale-v2", "en"]],
         "persistedAfterReload": "en",
     }
     assert evidence["consoleErrors"] == []

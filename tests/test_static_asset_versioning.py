@@ -22,7 +22,7 @@ def test_frozen_asset_manifest_matches_runtime_assets_and_gallery_contract():
     assert re.fullmatch(r"[0-9a-f]{64}", frozen["bundle_version"])
 
 
-def test_document_uses_one_version_for_every_runtime_asset():
+def test_document_versions_entrypoints_and_preloaded_fonts_without_duplicate_fetches():
     from server.static_assets import load_asset_manifest
 
     manifest = load_asset_manifest()
@@ -36,7 +36,12 @@ def test_document_uses_one_version_for_every_runtime_asset():
         url.removeprefix("/static/") for url, _ in [*references, *css_references]
     }
     assert referenced_paths == set(manifest["assets"])
-    assert {seen_version for _, seen_version in references} == {version}
+    assert {
+        (url.removeprefix("/static/"), seen_version) for url, seen_version in references
+    } == {
+        (relative, metadata["sha256"] if relative.startswith("fonts/") else version)
+        for relative, metadata in manifest["assets"].items()
+    }
     assert {
         (url.removeprefix("/static/"), seen_version) for url, seen_version in css_references
     } == {

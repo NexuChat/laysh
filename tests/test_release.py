@@ -62,6 +62,7 @@ def test_release_documents_cover_judge_and_owner_handoff_requirements():
         assert required in readme
     assert "MIT License" in license_text
     assert "GNU FreeFont" in notices and "Font Exception" in notices
+    assert "Noto Kufi Arabic" in notices and "SIL Open Font License" in notices
     assert "Education" in submission
     assert "019f7998-9378-72b2-b590-ee10e632ce81" in submission
     assert "Create the public GitHub repository" in submission

@@ -93,6 +93,9 @@ def test_application_loads_locale_assets_and_exposes_an_explicit_locale_control(
     assert 'byId("locale-control").addEventListener("click"' in locale_source
     assert 'source !== "locale-control"' in locale_source
     assert 'localStorage.setItem(STORAGE_KEY, locale)' in locale_source
+    assert 'const STORAGE_KEY = "laysh-locale-v2";' in locale_source
+    assert 'const DEFAULT_LOCALE = "en";' in locale_source
+    assert 'return supported.has(saved) ? saved : DEFAULT_LOCALE;' in locale_source
 
 
 def test_gallery_results_are_localized_before_they_are_served(client):
@@ -125,7 +128,7 @@ def test_direction_contract_covers_application_and_existing_portable_shell():
     from server.assemble import assemble_artifact
 
     html = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
-    assert '<html lang="ar" dir="rtl">' in html
+    assert '<html lang="en" dir="ltr">' in html
     assert 'id="answer-formula" dir="ltr"' in html
     assert 'id="effective-model" dir="ltr"' in html
 

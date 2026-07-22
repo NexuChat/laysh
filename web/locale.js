@@ -1,7 +1,8 @@
 (() => {
   "use strict";
 
-  const STORAGE_KEY = "laysh-locale";
+  const STORAGE_KEY = "laysh-locale-v2";
+  const DEFAULT_LOCALE = "en";
   const catalogs = window.LayshTranslations;
   const supported = new Set(["ar", "en"]);
   const byId = (id) => document.getElementById(id);
@@ -9,9 +10,9 @@
   function storedLocale() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      return supported.has(saved) ? saved : "ar";
+      return supported.has(saved) ? saved : DEFAULT_LOCALE;
     } catch {
-      return "ar";
+      return DEFAULT_LOCALE;
     }
   }
 

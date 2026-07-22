@@ -167,5 +167,7 @@ def test_every_gallery_simulation_is_visible_and_unclipped_at_supported_sizes():
         assert clock["afterParameter"]["clock"]["executed"] == 0
         assert clock["afterParameter"]["value"] != clock["before"]["value"]
         assert clock["afterClock"]["clock"]["now"] == 96
-        assert clock["afterClock"]["clock"]["executed"] > 0
+        assert clock["afterClock"]["resumed"]["queued"] > 0
+        assert clock["afterClock"]["playbackState"] == "running"
+        assert clock["afterClock"]["clock"]["executed"] > 0, clock
         assert clock["afterClock"]["value"] == clock["afterParameter"]["value"]

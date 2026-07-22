@@ -12,7 +12,7 @@ labels.
 | Project | **Laysh (ليش)** |
 | Chosen category | **Education** |
 | Text description | Paste `description.md` |
-| Public YouTube demonstration video | `https://<FINAL-YOUTUBE-URL>` |
+| Public YouTube demonstration video | `https://youtu.be/KRztDZH5BEQ` |
 | Code repository URL | `https://github.com/NexuChat/laysh` |
 | Primary `/feedback` Codex Session ID | `019f7998-9378-72b2-b590-ee10e632ce81` |
 
@@ -33,7 +33,7 @@ competition-required:
 | Try-it/demo URL | `https://laysh.mlki.app` |
 | Built with | Codex, GPT-5.6 Luna, GPT-5.6 Sol, Python 3.12, FastAPI, JavaScript, JSON Schema, Chrome, systemd, cloudflared |
 | Project image | `out/evidence/screens/goldens/moon_phases-desktop-1440x900.png` |
-| Source license | MIT; GNU FreeFont separately under GPLv3+ with Font Exception |
+| Source license | MIT; GNU FreeFont under GPLv3+ with Font Exception; Noto Kufi Arabic under SIL OFL 1.1 |
 | Team/profile | Owner completes in Devpost |
 
 Authoritative owner checks:

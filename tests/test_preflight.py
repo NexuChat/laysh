@@ -50,7 +50,8 @@ def test_preflight_recheck_preserves_model_smokes_and_records_primary_session(tm
     )
     assert updated["model_smokes"] == [{"model": "gpt-5.6-luna", "available": True}]
     assert updated["release_confirmations"]["asset_licenses"] == (
-        "MIT application code; GNU FreeFont under GPLv3+ with Font Exception"
+        "MIT application code; GNU FreeFont under GPLv3+ with Font Exception; "
+        "Noto Kufi Arabic under SIL OFL 1.1"
     )
 
 

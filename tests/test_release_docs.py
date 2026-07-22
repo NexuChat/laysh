@@ -38,14 +38,24 @@ def test_clean_checkout_does_not_install_empty_javascript_dependencies() -> None
     assert "zero JavaScript dependencies" in document
 
 
-def test_release_actions_remain_explicitly_owner_only_and_unchecked() -> None:
+def test_release_docs_record_published_assets_without_claiming_owner_devpost_evidence() -> None:
     document = _read(OWNER_CHECKLIST)
     assert "owner-only" in document.casefold()
     assert "explicit owner approval" in document.casefold()
-    assert re.search(r"^- \[ \].*\btag\b", document, re.IGNORECASE | re.MULTILINE)
-    assert re.search(r"^- \[ \].*\bpush\b", document, re.IGNORECASE | re.MULTILINE)
-    assert re.search(r"^- \[ \].*\bsubmit\b", document, re.IGNORECASE | re.MULTILINE)
-    assert re.search(r"^- \[[xX]\]", document, re.MULTILINE) is None
+    assert re.search(r"^- \[[xX]\].*\btag\b", document, re.IGNORECASE | re.MULTILINE)
+    assert re.search(r"^- \[[xX]\].*\bpush\b", document, re.IGNORECASE | re.MULTILINE)
+    assert "https://github.com/NexuChat/laysh" in document
+    assert "https://youtu.be/KRztDZH5BEQ" in document
+    assert re.search(
+        r"^- \[ \].*authenticated evidence",
+        document,
+        re.IGNORECASE | re.MULTILINE,
+    )
+    assert re.search(
+        r"^- \[ \].*reopen the saved submission",
+        document,
+        re.IGNORECASE | re.MULTILINE,
+    )
 
 
 def test_release_docs_disclose_share_retention_and_expiry() -> None:

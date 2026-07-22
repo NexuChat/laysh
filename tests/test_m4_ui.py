@@ -4,36 +4,41 @@ from pathlib import Path
 ROOT = Path(__file__).parents[1]
 
 
-def test_arabic_ask_view_has_truthful_gallery_and_thumb_reachable_action(client):
+def test_default_ask_view_has_truthful_gallery_and_thumb_reachable_action(client):
     response = client.get("/")
     assert response.status_code == 200
     html = response.text
 
-    assert '<html lang="ar" dir="rtl">' in html
+    assert '<html lang="en" dir="ltr">' in html
     assert 'id="question"' in html and 'dir="auto"' in html
     assert 'id="safe-example"' in html
     assert 'id="ask-submit"' in html
     assert 'class="gallery-card"' in html
     assert len(re.findall(r'class="gallery-card"', html)) == 6
-    assert html.count("قريبًا بعد المراجعة") == 6
-    assert "فوري" not in html
+    assert html.count("Coming after review") == 6
+    assert "Instant" not in html
     assert "data-pinned=\"true\"" not in html
 
 
-def test_local_font_is_preloaded_served_and_license_checked(client):
+def test_kufi_font_is_preloaded_served_and_license_checked(client):
     html = client.get("/").text
     css = client.get("/static/app.css")
-    font = client.get("/static/fonts/free-sans-arabic-latin.woff2")
-    license_response = client.get("/static/fonts/FREEFONT-LICENSE.txt")
+    arabic_font = client.get("/static/fonts/noto-kufi-ar.woff2")
+    latin_font = client.get("/static/fonts/noto-kufi-latin.woff2")
+    license_response = client.get("/static/fonts/OFL-1.1.txt")
 
     assert 'rel="preload"' in html
-    assert '/static/fonts/free-sans-arabic-latin.woff2' in html
+    assert '/static/fonts/noto-kufi-ar.woff2' in html
+    assert '/static/fonts/noto-kufi-latin.woff2' in html
     assert css.status_code == 200
-    assert font.status_code == 200
-    assert font.headers["content-type"] == "font/woff2"
-    assert len(font.content) < 160_000
+    for font in (arabic_font, latin_font):
+        assert font.status_code == 200
+        assert font.headers["content-type"] == "font/woff2"
+        assert len(font.content) < 160_000
     assert license_response.status_code == 200
-    assert "Special Font Exception" in license_response.text
+    assert "SIL OPEN FONT LICENSE Version 1.1" in license_response.text
+    assert 'font-family: "Laysh Kufi"' in css.text
+    assert "font-weight: 100 900" in css.text
     assert "font-display: swap" in css.text
     assert "letter-spacing: -" not in css.text
     assert "position: sticky" in css.text

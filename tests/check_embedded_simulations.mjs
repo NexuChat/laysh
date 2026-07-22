@@ -170,15 +170,39 @@ try {
   async function measureLoaded(cardId, viewport) {
     const expectedUrl = await evaluate("document.querySelector('#simulation-frame').src");
     const expectedTitle = await evaluate("document.querySelector('#result-title').textContent");
-    const { sessionId } = await currentFrameSession(expectedUrl, expectedTitle);
-    await waitFor("document.documentElement.dataset.layshReady === 'true'", 10000, sessionId);
     try {
       await waitFor("document.querySelector('#simulation-frame').getBoundingClientRect().height > 150");
     } catch (error) {
-      throw new Error(`${cardId} at ${viewport.label}: ${error.message}`);
+      const parentState = await evaluate(`(() => {
+        const frame = document.querySelector('#simulation-frame');
+        return {
+          inlineHeight: frame.style.height,
+          contentHeight: frame.dataset.contentHeight || null,
+          writes: window.__layshFrameHeightWrites,
+          messages: window.__layshMessages,
+          resultHidden: document.querySelector('#result-view').hidden,
+        };
+      })()`);
+      const { sessionId: diagnosticSessionId } = await currentFrameSession(expectedUrl, expectedTitle);
+      const childState = await evaluate(`({
+        bridgePresent: Boolean(document.querySelector('[data-laysh-embed-bridge]')),
+        ready: document.documentElement.dataset.layshReady || null,
+        origin: location.origin,
+        viewportHeight: innerHeight,
+        lessonBottom: Math.ceil(document.querySelector('#lesson').getBoundingClientRect().bottom),
+      })`, diagnosticSessionId);
+      throw new Error(`${cardId} at ${viewport.label}: ${error.message}; ${JSON.stringify({
+        parentState,
+        childState,
+      })}`);
     }
+    await evaluate("document.querySelector('#simulation-frame').scrollIntoView({ block: 'start' })");
+    const { sessionId } = await currentFrameSession(expectedUrl, expectedTitle);
+    await waitFor("document.documentElement.dataset.layshReady === 'true'", 10000, sessionId);
     const convergenceDeadline = Date.now() + 5000;
     let converged = false;
+    let lastFrameBounds = null;
+    let lastChildLayout = null;
     while (Date.now() < convergenceDeadline) {
       const frameBounds = await evaluate(`(() => {
         const rect = document.querySelector('#simulation-frame').getBoundingClientRect();
@@ -189,6 +213,8 @@ try {
         viewportHeight: innerHeight,
         lessonBottom: Math.ceil(document.querySelector('#lesson').getBoundingClientRect().bottom),
       }))()`, sessionId);
+      lastFrameBounds = frameBounds;
+      lastChildLayout = childLayout;
       if (
         Math.abs(frameBounds.width - childLayout.viewportWidth) <= 2
         && frameBounds.height + 2 >= childLayout.lessonBottom
@@ -200,7 +226,26 @@ try {
       await delay(100);
     }
     if (!converged) {
-      throw new Error(`${cardId} at ${viewport.label}: embedded viewport did not converge`);
+      const parentState = await evaluate(`(() => {
+        const frame = document.querySelector('#simulation-frame');
+        return {
+          inlineHeight: frame.style.height,
+          contentHeight: frame.dataset.contentHeight || null,
+          writes: window.__layshFrameHeightWrites,
+          resultHidden: document.querySelector('#result-view').hidden,
+        };
+      })()`);
+      const childState = await evaluate(`({
+        bridgePresent: Boolean(document.querySelector('[data-laysh-embed-bridge]')),
+        ready: document.documentElement.dataset.layshReady || null,
+        origin: location.origin,
+      })`, sessionId);
+      throw new Error(`${cardId} at ${viewport.label}: embedded viewport did not converge; ${JSON.stringify({
+        frameBounds: lastFrameBounds,
+        childLayout: lastChildLayout,
+        parentState,
+        childState,
+      })}`);
     }
 
     const parent = await evaluate(`(() => {
@@ -312,6 +357,7 @@ try {
           windowsVirtualKeyCode: 9,
           nativeVirtualKeyCode: 9,
         }, sessionId);
+        await delay(25);
         const observedAt = Date.now();
         results.push(await evaluate(`(() => {
           const element = document.querySelector(${JSON.stringify(selector)});
@@ -384,6 +430,12 @@ try {
     await evaluate(`(() => {
       const frame = document.querySelector('#simulation-frame');
       window.__layshFrameHeightWrites = [];
+      window.__layshMessages = [];
+      window.addEventListener('message', (event) => {
+        if (event.data?.source === 'laysh-artifact') {
+          window.__layshMessages.push({ origin: event.origin, data: event.data });
+        }
+      });
       new MutationObserver(() => {
         window.__layshFrameHeightWrites.push(frame.style.height);
       }).observe(frame, { attributes: true, attributeFilter: ['style'] });
@@ -448,8 +500,15 @@ try {
       })()`);
       const afterClock = await evaluate(`(() => {
         const control = document.querySelector('#primary-control');
+        document.querySelector('#play-pause').click();
+        const resumed = window.__layshTestClock.snapshot();
         window.__layshTestClock.advance(96);
-        return { clock: window.__layshTestClock.snapshot(), value: control.value };
+        return {
+          clock: window.__layshTestClock.snapshot(),
+          resumed,
+          playbackState: document.documentElement.dataset.playbackState,
+          value: control.value,
+        };
       })()`);
       return { slug, before, afterParameter, afterClock };
     } finally {

@@ -4,13 +4,16 @@
 
 ### اسأل ليش، والعب الجواب · Ask why. Play the answer.
 
-An Arabic-first learning experience that answers a learner's question, then builds a
-small verified simulation for prediction, observation, and explanation.
+An Arabic-centered bilingual learning experience that answers a learner's question,
+then builds a small verified simulation for prediction, observation, and explanation.
+The public interface opens in English by default; **العربية** switches the complete
+journey to persistent RTL Arabic.
 
 **Live demo:** [`laysh.mlki.app`](https://laysh.mlki.app)
 **Public repository:** [`github.com/NexuChat/laysh`](https://github.com/NexuChat/laysh)
+**Demo video:** [`youtu.be/KRztDZH5BEQ`](https://youtu.be/KRztDZH5BEQ)
 
-<img src="out/evidence/screens/goldens/moon_phases-desktop-1440x900.png" alt="Laysh showing the Arabic Moon phases interactive lesson and its verification receipt" width="920">
+<img src="out/evidence/screens/bold-refresh/desktop-1440x900.png" alt="Laysh English-default night-observatory landing page with six separated instant experiment cards" width="920">
 
 </div>
 
@@ -26,10 +29,16 @@ The six builder-reviewed lessons—Moon phases, buoyancy, pendulum period, a sim
 circuit, sound pitch, and day/night—open instantly. A new question uses Codex to create
 only the phenomenon-specific module; Laysh supplies the trusted, accessible lesson shell.
 
+The interface uses a self-hosted Noto Kufi Arabic variable font and a restrained
+night-observatory editorial system: high-contrast cream type, warm amber actions, cyan
+evidence states, and individually separated lesson cards. Motion remains optional under
+the learner's reduced-motion preference.
+
 ## Try it
 
-The hosted demo will require no Laysh account or payment. Until the owner inserts the
-final URL, the complete local judging path is:
+The [hosted demo](https://laysh.mlki.app) requires no Laysh account or payment and opens
+in English by default. Use **العربية** in the header for the complete RTL journey. The
+quota-free local judging path is:
 
 ```bash
 git clone https://github.com/NexuChat/laysh.git
@@ -39,11 +48,12 @@ npm install
 LAYSH_CODEX_BACKEND=mock .venv/bin/uvicorn server.app:create_app --factory --port 8765
 ```
 
-Open <http://127.0.0.1:8765>, choose **أطوار القمر** for a quota-free instant path, move
-the main control, inspect the causal text alternative and verification receipt, then use
-the download action to open the network-dead HTML outside the hosting origin. The mock
-backend exercises the full product without an OpenAI login or model spend. The owner-run
-hosted service uses Codex for new questions.
+Open <http://127.0.0.1:8765>, choose **Moon phases** (or switch to Arabic and choose
+**أطوار القمر**) for a quota-free instant path, move the main control, inspect the causal
+text alternative and verification receipt, then use the download action to open the
+network-dead HTML outside the hosting origin. The mock backend exercises the full product
+without an OpenAI login or model spend. The owner-run hosted service uses Codex for new
+questions.
 
 ## How it works
 
@@ -246,8 +256,9 @@ broad curriculum coverage.
 
 ## License and provenance
 
-Laysh application code is MIT licensed; see [`LICENSE`](LICENSE). The bundled subset of
-GNU FreeFont is **not** relicensed under MIT. It is distributed under GPLv3 or later with
-the GNU Font Exception; see [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) and the
-license files beside the WOFF2 assets. The UI and simulation artwork are code-drawn; no
-remote image, icon, analytics, or ad asset is bundled.
+Laysh application code is MIT licensed; see [`LICENSE`](LICENSE). The bundled GNU FreeFont
+subsets used by portable simulations remain under GPLv3 or later with the Font Exception;
+the Noto Kufi Arabic interface subsets remain under SIL OFL 1.1. See
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) and the license files beside the WOFF2
+assets. The UI and simulation artwork are code-drawn; no remote image, icon, analytics,
+or ad asset is bundled.

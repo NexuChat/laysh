@@ -6,11 +6,11 @@ from tests.test_pipeline import ask
 ROOT = Path(__file__).parents[1]
 
 
-def test_root_is_arabic_first_ask_build_result_application(client):
+def test_root_is_english_default_ask_build_result_application(client):
     response = client.get("/")
     assert response.status_code == 200
-    assert '<html lang="ar" dir="rtl">' in response.text
-    assert "اسأل ليش، والعب الجواب" in response.text
+    assert '<html lang="en" dir="ltr">' in response.text
+    assert "Ask why, then play the answer" in response.text
     assert 'id="ask-form"' in response.text
     controller = client.get("/static/app.js").text
     assert 'headers["Last-Event-ID"]' in controller

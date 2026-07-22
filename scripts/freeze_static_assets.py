@@ -27,10 +27,16 @@ def render_stylesheet(stylesheet: str, manifest: dict[str, object]) -> str:
 
 
 def render_index(index: str, manifest: dict[str, object]) -> str:
-    version = str(manifest["bundle_version"])
+    bundle_version = str(manifest["bundle_version"])
     assets = manifest["assets"]
     assert isinstance(assets, dict)
-    for relative in assets:
+    for relative, metadata in assets.items():
+        assert isinstance(metadata, dict)
+        version = (
+            str(metadata["sha256"])
+            if relative.startswith("fonts/")
+            else bundle_version
+        )
         index = re.sub(
             rf'(/static/{re.escape(relative)})(?:\?v=[0-9a-f]{{64}})?(?=["\)])',
             rf"\1?v={version}",

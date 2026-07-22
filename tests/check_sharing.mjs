@@ -152,6 +152,8 @@ try {
       permissions: ["clipboardReadWrite", "clipboardSanitizedWrite"],
     });
     await navigate(`${baseUrl}/`);
+    await evaluate("document.querySelector('#locale-control').click()");
+    await waitFor("document.documentElement.lang === 'ar'");
     await evaluate(`(() => {
       const field = document.querySelector('#question');
       field.value = 'success private-browser-question-7391';

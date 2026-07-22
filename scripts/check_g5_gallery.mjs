@@ -102,6 +102,11 @@ try {
     if (await evaluate("document.readyState === 'complete'")) break;
     await delay(50);
   }
+  await evaluate("document.querySelector('#locale-control').click()");
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    if (await evaluate("document.documentElement.lang === 'ar'")) break;
+    await delay(50);
+  }
   let cards = [];
   for (let attempt = 0; attempt < 100; attempt += 1) {
     cards = await evaluate(`Array.from(document.querySelectorAll('[data-golden-id]')).map(card => ({

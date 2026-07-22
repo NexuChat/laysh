@@ -1093,6 +1093,8 @@ def test_evaluation_provenance_covers_transitive_verifier_and_assembly_inputs():
         "sim_shell/shell.js",
         "web/fonts/free-sans-arabic-latin.woff2",
         "web/fonts/free-serif-arabic-display.woff2",
+        "web/fonts/noto-kufi-ar.woff2",
+        "web/fonts/noto-kufi-latin.woff2",
     } <= set(SOURCE_SNAPSHOT_PATHS)
 
 
