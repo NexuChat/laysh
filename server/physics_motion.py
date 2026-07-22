@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Mapping, Sequence
+from statistics import median
 from typing import Any
 
 
@@ -401,6 +402,33 @@ def _sound_pitch(
     return failures, len(control_samples) * 2 + 1
 
 
+def _matched_feature_distance(
+    earlier: Sequence[tuple[float, float]],
+    later: Sequence[tuple[float, float]],
+) -> float | None:
+    """Return one-to-one feature travel while ignoring births and dropouts."""
+
+    candidates = sorted(
+        (math.dist(left, right), left_index, right_index)
+        for left_index, left in enumerate(earlier)
+        for right_index, right in enumerate(later)
+        if math.dist(left, right) <= 0.2
+    )
+    matched_left: set[int] = set()
+    matched_right: set[int] = set()
+    distances: list[float] = []
+    for distance, left_index, right_index in candidates:
+        if left_index in matched_left or right_index in matched_right:
+            continue
+        matched_left.add(left_index)
+        matched_right.add(right_index)
+        distances.append(distance)
+    if not distances:
+        return None
+    moving_distances = [distance for distance in distances if distance > 1e-9]
+    return float(median(moving_distances)) if moving_distances else 0.0
+
+
 def _trace_speed(samples: Sequence[Mapping[str, object]]) -> float | None:
     if len(samples) < 2:
         return None
@@ -437,14 +465,10 @@ def _trace_speed(samples: Sequence[Mapping[str, object]]) -> float | None:
     if len(feature_frames) == len(samples):
         travelled = 0.0
         for earlier, later in zip(feature_frames, feature_frames[1:], strict=False):
-            distances: list[float] = []
-            for point in earlier:
-                distance = min(math.dist(point, candidate) for candidate in later)
-                if distance <= 0.2:
-                    distances.append(distance)
-            if not distances:
+            distance = _matched_feature_distance(earlier, later)
+            if distance is None:
                 return None
-            travelled += max(distances)
+            travelled += distance
         return travelled / duration
 
     points = [_centroid(sample) for sample in samples]

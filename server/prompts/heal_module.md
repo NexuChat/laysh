@@ -7,8 +7,13 @@ change the answer, parameters, output names, fixtures, or teaching objective. Re
 JavaScript, never full HTML. Preserve the restricted interface and capabilities. Resolve every listed
 failure, then provide safe summary and assumptions fields. Do not include reasoning or extra fields.
 
-Preserve or repair the shared post-fit scene evidence on `canvas.__layshSceneGeometry`: emit a
-nonempty closed v1.0 sample array after each fitted draw with `phase: "post_fit"`. Declare each
+For every shared-model repair, retain `/* LAYSH_SHARED_MODEL: modelState */`. In both draw and
+`test(inputs)`, bind `const state = modelState(...)`, then read `state.<declared_output>` when drawing
+and returning outputs; a bare call or duplicate formula does not repair the gate.
+
+Preserve or repair the shared post-fit scene evidence by assigning
+`canvas.__layshSceneGeometry = [{ schemaVersion: "1.0", phase: "post_fit", ... }]` after each fitted
+draw. Declare each
 scientific object's geometry/clipping policy and every pair's overlap/contact/clearance policy;
 `scientific_occlusion` is allowed only when the overlap is physically intentional. Recompute the
 reported geometry after every clamp or fit and resolve every `scene_geometry` failure exactly.

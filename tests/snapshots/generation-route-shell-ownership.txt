@@ -4,5 +4,5 @@
   "schema": "module.schema.json",
   "ownership_clause": "Return closed-schema JSON only; use no tools. Assign JavaScript once to `window.LayshSimulation`; no Markdown, full HTML, CSS, or shell UI.",
   "trusted_shell_source": "sim_shell/shell.html",
-  "rendered_prompt_sha256": "f7e46b777927cf00caae7a29322595c412e4d0418eb195aded09f5e778f7aebe"
+  "rendered_prompt_sha256": "36e65793530ce4b639357595fded00f907c3173f89ec0ded2b5618186ee5ceaa"
 }

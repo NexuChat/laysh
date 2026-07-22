@@ -9,15 +9,15 @@ Export exactly `version`, `init`, `setParameter`, `test`, `resize`, `destroy`.
 
 Shared model:
 - Put `/* LAYSH_SHARED_MODEL: modelState */` before one pure named state-object function.
-- Render and `test(inputs)` consume the same model function. Pivotal angle, phase, fraction, flow,
-  brightness, wavelength, and force come from it; easing changes presentation only.
+- In both draw and `test(inputs)`, bind `const state = modelState(...)` and read
+  `state.<declared_output>`. All pivotal physics comes from it; easing is presentation-only.
 
 Shared geometry:
-- After every fit/clamp, replace `canvas.__layshSceneGeometry` with nonempty closed v1.0 samples:
-  `phase: "post_fit"`, viewport, state, scientific circle/rect objects, and relations.
-- Objects declare `clippingPolicy`; relations declare `overlapPolicy`, `contactPolicy`,
-  `minimumClearance`. Use `scientific_occlusion` only for intended physics. Missing/unsupported
-  evidence and undeclared overlap, contact, or clipping fail closed.
+- After every fit/clamp assign `canvas.__layshSceneGeometry = [{ schemaVersion: "1.0",
+  phase: "post_fit", ... }]` from current dimensions/state, with nonempty scientific circle/rect
+  objects and relations. Declare object `clippingPolicy` and relation `overlapPolicy`,
+  `contactPolicy`, `minimumClearance`. Only intended physics may use `scientific_occlusion`;
+  missing/unsupported evidence and undeclared overlap/contact/clipping fail closed.
 
 Use canvas/context, Math, Number, arrays, plain objects only. No document, network, storage,
 navigation, dynamic code, workers, timers, sensors, audio, clipboard, console, URLs, or

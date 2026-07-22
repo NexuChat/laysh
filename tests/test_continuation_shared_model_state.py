@@ -223,12 +223,14 @@ def test_legacy_shared_model_refresh_fails_closed_without_scene_evidence(
     assert {path.name: path.read_bytes() for path in golden_root.glob("*.json")} == before
 
 
-def test_generation_prompt_requires_the_shared_model_state_contract():
+def test_generation_and_heal_prompts_show_consumed_shared_state_repairs():
     from pathlib import Path
 
-    prompt = (Path(__file__).parents[1] / "server/prompts/generate_module.md").read_text(
-        encoding="utf-8"
-    )
+    prompt_root = Path(__file__).parents[1] / "server" / "prompts"
 
-    assert "LAYSH_SHARED_MODEL" in prompt
-    assert "same model function" in prompt
+    for name in ("generate_module.md", "heal_module.md"):
+        prompt = (prompt_root / name).read_text(encoding="utf-8")
+
+        assert "LAYSH_SHARED_MODEL" in prompt
+        assert "const state = modelState(" in prompt
+        assert "state.<declared_output>" in prompt

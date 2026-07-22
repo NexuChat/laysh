@@ -734,3 +734,21 @@ landed. The official committed ledger therefore remains 22 of 30 passing; no
   clean; the repository-wide offline suite recorded **569 passed, 1 skipped in
   367.91s**. The static asset and instant-gallery regression subset recorded
   **8 passed in 7.43s** after refreshing the local frozen asset manifest.
+- The first post-buildweek Moon candidate made four GPT-5.6 Sol calls and ended
+  answer-only after **416.642s**: understand **28.205s**, generate **152.089s**,
+  heal 1 **109.674s**, and heal 2 **126.408s**. Exact retained failures showed
+  the generated repairs still omitted consumed shared state and nonempty
+  post-fit scene samples. This was treated as a general prompt-contract defect,
+  not accepted or promoted as a golden.
+- Prompt TDD added executable repair shapes for binding and consuming
+  `modelState` and assigning closed post-fit geometry. The focused RED was
+  **2 failed**; the affected prompt/contract suite then recorded **29 passed**.
+- A full-suite browser failure exposed nondeterministic carrier-speed evidence:
+  color-mask features could disappear and reappear, and the prior nearest-point
+  calculation matched multiple earlier components to one later component. A
+  one-to-one assignment plus the median displacement of matched moving features
+  now excludes births/dropouts without lowering the declared circuit tolerance.
+  Its focused regression was RED then GREEN; five independent browser runs all
+  passed, with high-current speed **0.000192–0.000247** versus low-current speed
+  **0.000021–0.000023**. The final repository-wide rerun recorded **570 passed,
+  1 skipped in 367.16s** with Ruff clean.

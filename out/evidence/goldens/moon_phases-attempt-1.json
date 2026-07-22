@@ -2,39 +2,41 @@
   "schema_version": "1.0",
   "fixture_id": "moon_phases_ar",
   "attempt": 1,
-  "job_id": "job_9817171ede81610e",
+  "job_id": "job_33bf6b69ea7155e4",
   "status": "answer_only",
-  "total_elapsed_ms": 218485,
+  "total_elapsed_ms": 416642,
   "live_call_count": 4,
   "stages": [
     {
       "stage": "understand",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 27767,
+      "elapsed_ms": 28205,
       "thread_id_captured": true
     },
     {
       "stage": "generate",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 117437,
+      "elapsed_ms": 152089,
       "thread_id_captured": true
     },
     {
-      "stage": "heal_1",
+      "stage": "heal",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 56363,
+      "elapsed_ms": 109674,
       "thread_id_captured": true
     },
     {
-      "stage": "qa",
+      "stage": "heal",
       "model": "gpt-5.6-sol",
-      "elapsed_ms": 14328,
+      "elapsed_ms": 126408,
       "thread_id_captured": true
     }
   ],
   "heal_count": null,
   "qa": null,
   "artifact_sha256": null,
+  "browser_visual_evidence": null,
+  "visual_qa_evidence": null,
   "automated_review": {
     "passed": false,
     "failure_codes": [
@@ -46,7 +48,7 @@
     {
       "type": "verification_failure",
       "attempt": 0,
-      "check_count": 12,
+      "check_count": 22,
       "failures": [
         {
           "gate": "runtime_init",
@@ -75,6 +77,76 @@
           "actual": {
             "emit_frame_calls": 0
           }
+        },
+        {
+          "gate": "scene_geometry",
+          "code": "scene_samples_missing",
+          "expected": {
+            "samples": "nonempty_array"
+          },
+          "actual": {
+            "samples": []
+          },
+          "sample_index": 0,
+          "state": null
+        }
+      ]
+    },
+    {
+      "type": "verification_failure",
+      "attempt": 1,
+      "check_count": 22,
+      "failures": [
+        {
+          "gate": "shared_model_state",
+          "code": "shared_model_state_not_consumed_by_test",
+          "expected": {
+            "test_consumes_state_from": "modelState"
+          },
+          "actual": {
+            "test_consumes_shared_model_state": false
+          }
+        },
+        {
+          "gate": "scene_geometry",
+          "code": "scene_samples_missing",
+          "expected": {
+            "samples": "nonempty_array"
+          },
+          "actual": {
+            "samples": []
+          },
+          "sample_index": 0,
+          "state": null
+        }
+      ]
+    },
+    {
+      "type": "verification_failure",
+      "attempt": 2,
+      "check_count": 22,
+      "failures": [
+        {
+          "gate": "shared_model_state",
+          "code": "shared_model_state_not_consumed_by_test",
+          "expected": {
+            "test_consumes_state_from": "modelState"
+          },
+          "actual": {
+            "test_consumes_shared_model_state": false
+          }
+        },
+        {
+          "gate": "scene_geometry",
+          "code": "scene_samples_missing",
+          "expected": {
+            "samples": "nonempty_array"
+          },
+          "actual": {
+            "samples": []
+          },
+          "sample_index": 0,
+          "state": null
         }
       ]
     }

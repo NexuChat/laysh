@@ -141,5 +141,7 @@ def test_generation_and_heal_prompts_require_post_fit_scene_evidence():
 
     for prompt in (generate, heal):
         assert "canvas.__layshSceneGeometry" in prompt
+        assert "canvas.__layshSceneGeometry = [{" in prompt
+        assert 'schemaVersion: "1.0"' in prompt
         assert 'phase: "post_fit"' in prompt
         assert "scientific_occlusion" in prompt

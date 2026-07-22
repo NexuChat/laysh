@@ -2,8 +2,8 @@
   "algorithm": "sha256",
   "contract_version": "1.0",
   "files": {
-    "server/prompts/generate_module.md": "9a361d4eed88ac12f5b90e96508b2b5fdc98e9870425549c0ff3914db655145a",
-    "server/prompts/heal_module.md": "aebd20bbce0f3b9cb309f3fee7c4126c5546d825de936399fc2f6e1913ced252",
+    "server/prompts/generate_module.md": "792f3c4cf0b8df24f4b80fa7b53facce2320a487b0db18938f64592bf1b0f4b2",
+    "server/prompts/heal_module.md": "5f62c4d5c0d119528a33944c1ed707d882ccd9eff5d954a0eaab4e9709ce8e35",
     "server/prompts/qa.md": "c9a1bdf4236f30adeade44c54b374da0684a46ad0b5567bd0338e60e75ecfab0",
     "server/prompts/understand.md": "b9b298f2934dd75470948bf83316f67e78c3d2f8be2cf1d55b220f5999378402",
     "server/prompts/visual_qa.md": "83c5d09cadad29bbc47323760c316c3307105fcd3fce291a0f2d05ad97e4f465",
