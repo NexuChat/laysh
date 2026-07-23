@@ -686,22 +686,53 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             "scene_geometry": "visual",
             "causal_response": "visual",
         }
+        browser_readiness_retry_role_by_code = {
+            "canvas_pixels_unchanged": "visual",
+            "visible_frame_unchanged": "visual",
+        }
 
-        def fragment_retry_request(
+        def fragment_repair_plan(
             failures: list[dict[str, Any]],
-        ) -> tuple[str, str] | None:
-            roles = {
-                retry_role_by_gate.get(failure.get("gate"))
-                for failure in failures
-            }
-            if not roles or None in roles or len(roles) != 1:
+        ) -> list[tuple[str, str]] | None:
+            roles: set[str] = set()
+            browser_readiness_codes: set[str] = set()
+            has_causal_response_failure = False
+            for failure in failures:
+                gate = failure.get("gate")
+                if not isinstance(gate, str):
+                    return None
+                if gate == "browser_readiness":
+                    code = failure.get("code")
+                    if not isinstance(code, str):
+                        return None
+                    role = browser_readiness_retry_role_by_code.get(code)
+                    if role is not None:
+                        browser_readiness_codes.add(code)
+                else:
+                    role = retry_role_by_gate.get(gate)
+                if role is None:
+                    return None
+                roles.add(role)
+                has_causal_response_failure |= gate == "causal_response"
+            if not roles:
                 return None
-            role = roles.pop()
-            if role == "physics":
-                return role, "physics_fixture_mismatch"
-            if any(failure.get("gate") == "causal_response" for failure in failures):
-                return role, "visual_causality_mismatch"
-            return role, "visual_geometry_mismatch"
+
+            plan: list[tuple[str, str]] = []
+            if "physics" in roles:
+                plan.append(("physics", "physics_fixture_mismatch"))
+            if "visual" in roles:
+                if has_causal_response_failure:
+                    visual_failure_code = "visual_causality_mismatch"
+                elif browser_readiness_codes:
+                    visual_failure_code = next(
+                        code
+                        for code in browser_readiness_retry_role_by_code
+                        if code in browser_readiness_codes
+                    )
+                else:
+                    visual_failure_code = "visual_geometry_mismatch"
+                plan.append(("visual", visual_failure_code))
+            return plan
 
         async def regenerate_trusted_fragment_candidate(
             role: str,
@@ -870,68 +901,24 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             module_output,
             understanding,
         )
-        preflight_roles = {
-            retry_role_by_gate.get(failure.get("gate"))
-            for failure in fragment_preflight.failures
-        }
-        retryable_preflight = (
-            not fragment_preflight.passed
-            and None not in preflight_roles
-            and bool(preflight_roles)
-            and callable(fragment_regenerator)
+        preflight_repair_plan = (
+            fragment_repair_plan(fragment_preflight.failures)
+            if not fragment_preflight.passed and callable(fragment_regenerator)
+            else None
         )
-        if retryable_preflight:
-            for role in sorted(preflight_roles):
-                if role == "physics":
-                    failure_code = "physics_fixture_mismatch"
-                elif any(
-                    failure.get("gate") == "causal_response"
-                    for failure in fragment_preflight.failures
-                ):
-                    failure_code = "visual_causality_mismatch"
-                else:
-                    failure_code = "visual_geometry_mismatch"
+        if preflight_repair_plan is not None:
+            for role, failure_code in preflight_repair_plan:
                 logger.warning(
                     "fragment preflight rejected job=%s role=%s code=%s",
                     record.job_id,
                     role,
                     failure_code,
                 )
-                repair_attempt = claim_fragment_repair_attempt(role)
-                if repair_attempt is None:
-                    _fallback(
-                        manager,
-                        record,
-                        "generation_failed",
-                        _gallery_suggestions(record.locale),
-                    )
-                    return
-                manager.emit(
-                    record,
-                    "stage",
-                    {
-                        "stage": "generate",
-                        "detail": "إعادة بناء الجزء الذي لم يجتز الفحص الحتمي",
-                        "elapsed_ms": manager.elapsed_ms(record),
-                    },
+                repaired = await regenerate_trusted_fragment_candidate(
+                    role,
+                    failure_code,
                 )
-                try:
-                    regenerated_stage = await fragment_regenerator(
-                        role,
-                        understanding,
-                        failure_code,
-                        repair_attempt=repair_attempt,
-                        runtime_context=runtime_context,
-                    )
-                    regenerated_document = stage_data(
-                        regenerated_stage,
-                        f"generate_{role}",
-                        fragment_role=role,
-                    )
-                    fragment_validators[role](regenerated_document, understanding)
-                except (CodexRuntimeError, ContractError, ValidationError, ValueError) as error:
-                    if isinstance(error, CodexRuntimeError):
-                        record_stage_failure(f"generate_{role}", error)
+                if not repaired:
                     _fallback(
                         manager,
                         record,
@@ -939,8 +926,6 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                         _gallery_suggestions(record.locale),
                     )
                     return
-                fragment_documents[role] = regenerated_document
-                fragment_stages[role] = regenerated_stage
             physics_fragment = fragment_documents["physics"]
             visual_fragment = fragment_documents["visual"]
             physics_stage = fragment_stages["physics"]
@@ -1177,8 +1162,8 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                     )
                     return
                 if use_fragment_route:
-                    retry_request = fragment_retry_request(verification.failures)
-                    if retry_request is None:
+                    repair_plan = fragment_repair_plan(verification.failures)
+                    if repair_plan is None:
                         _fallback(
                             manager,
                             record,
@@ -1188,17 +1173,19 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                         return
                     heal_count += 1
                     manager.transition(record, "healing", "إصلاح فشل تحقق محدد")
-                    repaired = await regenerate_trusted_fragment_candidate(
-                        *retry_request,
-                    )
-                    if not repaired:
-                        _fallback(
-                            manager,
-                            record,
-                            "generation_failed",
-                            _gallery_suggestions(record.locale),
+                    for role, failure_code in repair_plan:
+                        repaired = await regenerate_trusted_fragment_candidate(
+                            role,
+                            failure_code,
                         )
-                        return
+                        if not repaired:
+                            _fallback(
+                                manager,
+                                record,
+                                "generation_failed",
+                                _gallery_suggestions(record.locale),
+                            )
+                            return
                     verification = None
                     continue
                 heal_count += 1

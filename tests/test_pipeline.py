@@ -976,3 +976,274 @@ async def test_pipeline_cancellation_propagates():
     task.cancel()
     with pytest.raises(PipelineCancelled):
         await task
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("failures", "expected_regeneration_calls", "expected_status"),
+    [
+        pytest.param(
+            [
+                {
+                    "gate": "fixture_integrity",
+                    "code": "numeric_fixture_mismatch",
+                    "expected": {"fixture_match": True},
+                    "actual": {"fixture_match": False},
+                },
+                {
+                    "gate": "scene_geometry",
+                    "code": "scientific_actor_clipped",
+                    "expected": {"within_viewport": True},
+                    "actual": {"within_viewport": False},
+                },
+            ],
+            [
+                ("physics", "physics_fixture_mismatch", 1),
+                ("visual", "visual_geometry_mismatch", 1),
+            ],
+            "complete",
+            id="physics_and_visual",
+        ),
+        pytest.param(
+            [
+                {
+                    "gate": "unknown_gate",
+                    "code": "unknown_failure",
+                    "expected": {"known": True},
+                    "actual": {"known": False},
+                }
+            ],
+            [],
+            "answer_only",
+            id="unknown",
+        ),
+        pytest.param(
+            [
+                {
+                    "gate": "invariant",
+                    "code": "numeric_fixture_mismatch",
+                    "expected": {"fixture_match": True},
+                    "actual": {"fixture_match": False},
+                },
+                {
+                    "gate": "unknown_gate",
+                    "code": "unknown_failure",
+                    "expected": {"known": True},
+                    "actual": {"known": False},
+                },
+            ],
+            [],
+            "answer_only",
+            id="mapped_and_unknown",
+        ),
+    ],
+)
+async def test_fragment_preflight_repairs_all_mapped_roles_or_falls_back_for_unknown(
+    monkeypatch: pytest.MonkeyPatch,
+    failures: list[dict[str, object]],
+    expected_regeneration_calls: list[tuple[str, str, int]],
+    expected_status: str,
+) -> None:
+    """Known preflight failures repair every role; unknowns remain terminal."""
+
+    from copy import deepcopy
+
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend, RuntimeContext
+    from server.codex_runtime import StageExecution
+    from server.jobs import JobManager
+    from server.verify import VerificationResult
+    from tests.golden_cases import VALID_UNDERSTANDING
+    from tests.test_parallel_fragment_generation import PHYSICS_FRAGMENT, VISUAL_FRAGMENT
+
+    class FragmentBackend(MockCodexBackend):
+        def __init__(self) -> None:
+            super().__init__()
+            self.regeneration_calls: list[tuple[str, str, int]] = []
+
+        async def understand(self, _question, _locale, *, runtime_context=None):
+            assert runtime_context == RuntimeContext(public=True)
+            self.understand_calls += 1
+            return deepcopy(VALID_UNDERSTANDING)
+
+        async def generate_fragments(self, _understanding, *, runtime_context=None):
+            assert runtime_context == RuntimeContext(public=True)
+            return (
+                StageExecution(
+                    data=deepcopy(PHYSICS_FRAGMENT),
+                    thread_id="private-physics",
+                    model="gpt-5.6-sol",
+                    elapsed_ms=1,
+                ),
+                StageExecution(
+                    data=deepcopy(VISUAL_FRAGMENT),
+                    thread_id="private-visual",
+                    model="gpt-5.6-terra",
+                    elapsed_ms=1,
+                ),
+            )
+
+        async def regenerate_fragment(
+            self,
+            role,
+            _understanding,
+            failure_code,
+            *,
+            repair_attempt=1,
+            runtime_context=None,
+        ):
+            assert runtime_context == RuntimeContext(public=True)
+            self.regeneration_calls.append((role, failure_code, repair_attempt))
+            fragment = PHYSICS_FRAGMENT if role == "physics" else VISUAL_FRAGMENT
+            return StageExecution(
+                data=deepcopy(fragment),
+                thread_id="private-repair",
+                model="gpt-5.6-sol" if role == "physics" else "gpt-5.6-terra",
+                elapsed_ms=1,
+            )
+
+    verification_calls = 0
+
+    def deterministic_verifier(_module_output, _understanding):
+        nonlocal verification_calls
+        verification_calls += 1
+        if expected_status == "complete" and verification_calls > 1:
+            return VerificationResult(
+                passed=True,
+                check_count=1,
+                failures=[],
+                artifact="<!doctype html><title>verified</title>",
+                node_report={"passed": True},
+            )
+        return VerificationResult(
+            passed=False,
+            check_count=1,
+            failures=deepcopy(failures),
+            artifact=None,
+            node_report={"passed": False},
+        )
+
+    monkeypatch.setattr("server.pipeline.verify_candidate", deterministic_verifier)
+    backend = FragmentBackend()
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _artifact: BrowserVerificationResult.passing(),
+    )
+    record = manager.start("success", "ar")
+    assert record.task is not None
+    await record.task
+
+    assert record.status == expected_status
+    if expected_status == "answer_only":
+        assert record.fallback is not None
+        assert record.fallback.reason_code == "verification_exhausted"
+    assert backend.regeneration_calls == expected_regeneration_calls
+    assert backend.heal_calls == 0
+
+
+@pytest.mark.asyncio
+async def test_fragment_post_verification_repairs_mixed_roles_then_reverifies(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from copy import deepcopy
+
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend, RuntimeContext
+    from server.codex_runtime import StageExecution
+    from server.jobs import JobManager
+    from server.verify import VerificationResult
+    from tests.golden_cases import VALID_UNDERSTANDING
+    from tests.test_parallel_fragment_generation import PHYSICS_FRAGMENT, VISUAL_FRAGMENT
+
+    class FragmentBackend(MockCodexBackend):
+        def __init__(self) -> None:
+            super().__init__()
+            self.regeneration_calls: list[tuple[str, str, int]] = []
+
+        async def understand(self, _question, _locale, *, runtime_context=None):
+            assert runtime_context == RuntimeContext(public=True)
+            return deepcopy(VALID_UNDERSTANDING)
+
+        async def generate_fragments(self, _understanding, *, runtime_context=None):
+            assert runtime_context == RuntimeContext(public=True)
+            return (
+                StageExecution(
+                    deepcopy(PHYSICS_FRAGMENT), "private-physics", "gpt-5.6-sol", 1
+                ),
+                StageExecution(
+                    deepcopy(VISUAL_FRAGMENT), "private-visual", "gpt-5.6-terra", 1
+                ),
+            )
+
+        async def regenerate_fragment(
+            self,
+            role,
+            _understanding,
+            failure_code,
+            *,
+            repair_attempt=1,
+            runtime_context=None,
+        ):
+            assert runtime_context == RuntimeContext(public=True)
+            self.regeneration_calls.append((role, failure_code, repair_attempt))
+            fragment = PHYSICS_FRAGMENT if role == "physics" else VISUAL_FRAGMENT
+            return StageExecution(
+                deepcopy(fragment),
+                "private-repair",
+                "gpt-5.6-sol" if role == "physics" else "gpt-5.6-terra",
+                1,
+            )
+
+    verification_calls = 0
+
+    def deterministic_verifier(_module_output, _understanding):
+        nonlocal verification_calls
+        verification_calls += 1
+        if verification_calls == 2:
+            return VerificationResult(
+                passed=False,
+                check_count=1,
+                failures=[
+                    {
+                        "gate": "fixture_integrity",
+                        "code": "numeric_fixture_mismatch",
+                        "expected": {"fixture_match": True},
+                        "actual": {"fixture_match": False},
+                    },
+                    {
+                        "gate": "causal_response",
+                        "code": "causal_relation_mismatch",
+                        "expected": {"response": True},
+                        "actual": {"response": False},
+                    },
+                ],
+                artifact=None,
+                node_report={"passed": False},
+            )
+        return VerificationResult(
+            passed=True,
+            check_count=1,
+            failures=[],
+            artifact="<!doctype html><title>verified</title>",
+            node_report={"passed": True},
+        )
+
+    monkeypatch.setattr("server.pipeline.verify_candidate", deterministic_verifier)
+    backend = FragmentBackend()
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _artifact: BrowserVerificationResult.passing(),
+    )
+    record = manager.start("success", "ar")
+    assert record.task is not None
+    await record.task
+
+    assert record.status == "complete"
+    assert backend.regeneration_calls == [
+        ("physics", "physics_fixture_mismatch", 1),
+        ("visual", "visual_causality_mismatch", 1),
+    ]
+    assert backend.heal_calls == 0
+    assert verification_calls == 3
