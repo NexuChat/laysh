@@ -394,24 +394,68 @@ class CodexBackend:
             if selected_context.public
             else self.settings.evidence_stage_timeout_seconds
         )
-        physics_task = asyncio.create_task(
-            self._execute_stage(
-                prompt=self._render_prompt("generate_physics.md", understanding),
-                schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["generate_physics"],
-                model=self.settings.physics_model,
-                effort="medium",
-                timeout_seconds=timeout_seconds,
+
+        async def execute_fragment_role(
+            *,
+            role: Literal["physics", "visual"],
+            prompt_name: str,
+            schema_name: Literal["generate_physics", "generate_visual"],
+            model: str,
+        ) -> StageExecution:
+            started = time.monotonic()
+            arguments = {
+                "prompt": self._render_prompt(prompt_name, understanding),
+                "schema_path": CODEX_OUTPUT_SCHEMA_BY_STAGE[schema_name],
+                "model": model,
+                "effort": "medium",
+                "timeout_seconds": timeout_seconds,
                 **policy,
+            }
+            try:
+                return await self._execute_stage(**arguments)
+            except CodexPolicyError:
+                raise
+            except CodexRuntimeError as error:
+                if not selected_context.public or error.code != "nonzero_exit":
+                    raise
+                LOGGER.warning(
+                    "public fragment runtime retry: role=%s model=%s failure=%s "
+                    "upstream_kind=%s",
+                    role,
+                    model,
+                    error.code,
+                    error.safe_detail.get("kind"),
+                )
+                retry = await self._execute_stage(**arguments)
+                return StageExecution(
+                    data=retry.data,
+                    thread_id=retry.thread_id,
+                    model=retry.model,
+                    elapsed_ms=max(
+                        retry.elapsed_ms,
+                        int((time.monotonic() - started) * 1000),
+                    ),
+                    attempted_models=(model, retry.model),
+                    prior_failure_codes=(error.code,),
+                    input_tokens=retry.input_tokens,
+                    cached_input_tokens=retry.cached_input_tokens,
+                    output_tokens=retry.output_tokens,
+                )
+
+        physics_task = asyncio.create_task(
+            execute_fragment_role(
+                role="physics",
+                prompt_name="generate_physics.md",
+                schema_name="generate_physics",
+                model=self.settings.physics_model,
             )
         )
         visual_task = asyncio.create_task(
-            self._execute_stage(
-                prompt=self._render_prompt("generate_visual.md", understanding),
-                schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["generate_visual"],
+            execute_fragment_role(
+                role="visual",
+                prompt_name="generate_visual.md",
+                schema_name="generate_visual",
                 model=self.settings.visual_model,
-                effort="medium",
-                timeout_seconds=timeout_seconds,
-                **policy,
             )
         )
         tasks = (physics_task, visual_task)
