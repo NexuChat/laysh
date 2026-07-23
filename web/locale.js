@@ -29,7 +29,7 @@
   function apply() {
     document.documentElement.lang = locale;
     document.documentElement.dir = locale === "ar" ? "rtl" : "ltr";
-    document.title = translate("document.title");
+    document.title = translate(document.body?.dataset.documentTitle || "document.title");
     for (const element of document.querySelectorAll("[data-i18n]")) {
       element.textContent = translate(element.dataset.i18n);
     }

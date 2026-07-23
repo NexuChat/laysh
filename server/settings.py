@@ -48,6 +48,10 @@ class Settings:
     global_generations_per_day: int = 60
     max_concurrent_jobs: int = 2
     max_queued_jobs: int = 10
+    model_lab_enabled: bool = False
+    model_lab_ip_comparisons_per_hour: int = 2
+    model_lab_global_comparisons_per_day: int = 10
+    model_lab_max_concurrent_runs: int = 1
 
     def __post_init__(self) -> None:
         configured = {
@@ -98,6 +102,12 @@ class Settings:
             raise ValueError("generation quota values must be positive")
         if self.max_concurrent_jobs <= 0 or self.max_queued_jobs < 0:
             raise ValueError("capacity values must allow at least one running job")
+        if (
+            self.model_lab_ip_comparisons_per_hour <= 0
+            or self.model_lab_global_comparisons_per_day <= 0
+            or self.model_lab_max_concurrent_runs <= 0
+        ):
+            raise ValueError("model-lab capacity values must be positive")
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -225,5 +235,24 @@ class Settings:
             ),
             max_queued_jobs=int(
                 os.getenv("LAYSH_MAX_QUEUED_JOBS", str(defaults.max_queued_jobs))
+            ),
+            model_lab_enabled=os.getenv("LAYSH_MODEL_LAB_ENABLED", "0") == "1",
+            model_lab_ip_comparisons_per_hour=int(
+                os.getenv(
+                    "LAYSH_MODEL_LAB_IP_COMPARISONS_PER_HOUR",
+                    str(defaults.model_lab_ip_comparisons_per_hour),
+                )
+            ),
+            model_lab_global_comparisons_per_day=int(
+                os.getenv(
+                    "LAYSH_MODEL_LAB_GLOBAL_COMPARISONS_PER_DAY",
+                    str(defaults.model_lab_global_comparisons_per_day),
+                )
+            ),
+            model_lab_max_concurrent_runs=int(
+                os.getenv(
+                    "LAYSH_MODEL_LAB_MAX_CONCURRENT_RUNS",
+                    str(defaults.model_lab_max_concurrent_runs),
+                )
             ),
         )

@@ -25,6 +25,12 @@ from server.goldens import (
     localized_pinned_golden,
 )
 from server.jobs import TERMINAL_STATES, JobManager
+from server.model_lab import (
+    ModelLabAccepted,
+    ModelLabCompareRequest,
+    ModelLabManager,
+    ModelLabRunResult,
+)
 from server.ratelimit import GenerationLimiter
 from server.schemas import AskAccepted, AskRequest, PublicResult
 from server.settings import Settings
@@ -56,6 +62,7 @@ def _artifact_for_embed(artifact: str) -> str:
 
 def create_app(
     backend: MockCodexBackend | CodexBackend | None = None,
+    model_lab_backend: MockCodexBackend | CodexBackend | None = None,
     job_timeout_seconds: float | None = None,
     browser_verifier: Callable[[str], BrowserVerificationResult] = verify_artifact_in_browser,
     share_root: Path | None = None,
@@ -63,10 +70,9 @@ def create_app(
     share_clock: Callable[[], float] | None = None,
 ) -> FastAPI:
     settings = Settings.from_env()
-    if backend is not None:
-        selected_backend = backend
-    elif settings.backend == "codex":
-        selected_backend = CodexBackend(
+
+    def configured_codex_backend() -> CodexBackend:
+        return CodexBackend(
             executor=CodexExecutor(
                 stage_timeout_seconds=settings.public_stage_timeout_seconds,
                 evidence_stage_timeout_seconds=settings.evidence_stage_timeout_seconds,
@@ -75,8 +81,20 @@ def create_app(
             ),
             settings=settings,
         )
+
+    if backend is not None:
+        selected_backend = backend
+    elif settings.backend == "codex":
+        selected_backend = configured_codex_backend()
     else:
         selected_backend = MockCodexBackend()
+    selected_model_lab_backend = model_lab_backend
+    if selected_model_lab_backend is None:
+        selected_model_lab_backend = (
+            configured_codex_backend()
+            if settings.model_lab_enabled and settings.backend == "codex"
+            else selected_backend
+        )
     public_timeout = (
         settings.public_job_timeout_seconds if job_timeout_seconds is None else job_timeout_seconds
     )
@@ -130,6 +148,17 @@ def create_app(
         per_ip_per_hour=settings.ip_generations_per_hour,
         global_per_day=settings.global_generations_per_day,
     )
+    app.state.model_lab = ModelLabManager(
+        backend=selected_model_lab_backend,
+        browser_verifier=browser_verifier,
+        max_concurrent_runs=settings.model_lab_max_concurrent_runs,
+    )
+    app.state.model_lab_limiter = GenerationLimiter(
+        secret=hashlib.sha256(limiter_secret + b":model-lab").digest(),
+        per_ip_per_hour=settings.model_lab_ip_comparisons_per_hour,
+        global_per_day=settings.model_lab_global_comparisons_per_day,
+    )
+    app.add_event_handler("shutdown", app.state.model_lab.cancel_all)
 
     @app.get("/", response_class=HTMLResponse)
     async def index() -> HTMLResponse:
@@ -166,6 +195,71 @@ def create_app(
             job_id=record.job_id,
             stream_url=f"/api/jobs/{record.job_id}/events",
             result_url=f"/api/jobs/{record.job_id}",
+        )
+
+    def require_model_lab() -> None:
+        if not settings.model_lab_enabled:
+            raise HTTPException(status_code=404, detail="not found")
+
+    @app.get("/model-lab", response_class=HTMLResponse)
+    async def model_lab_page() -> HTMLResponse:
+        require_model_lab()
+        content = (ROOT / "web" / "model-lab.html").read_text(encoding="utf-8")
+        return HTMLResponse(
+            content,
+            headers={
+                "X-Content-Type-Options": "nosniff",
+                "Referrer-Policy": "no-referrer",
+                "Cache-Control": "no-store",
+                "X-Robots-Tag": "noindex, nofollow",
+            },
+        )
+
+    @app.post(
+        "/api/model-lab/compare",
+        response_model=ModelLabAccepted,
+        status_code=status.HTTP_202_ACCEPTED,
+    )
+    async def compare_models(
+        payload: ModelLabCompareRequest,
+        request: Request,
+    ) -> ModelLabAccepted:
+        require_model_lab()
+        question = unicodedata.normalize("NFKC", payload.question).strip()
+        if not question:
+            raise HTTPException(status_code=422, detail="question must not be blank")
+        client_ip = request.client.host if request.client else "unknown"
+        if app.state.model_lab_limiter.acquire(client_ip):
+            raise HTTPException(status_code=429, detail="model lab comparison limit reached")
+        return app.state.model_lab.start(payload.model_copy(update={"question": question}))
+
+    @app.get(
+        "/api/model-lab/runs/{run_id}",
+        response_model=ModelLabRunResult,
+    )
+    async def get_model_lab_run(run_id: str, response: Response) -> ModelLabRunResult:
+        require_model_lab()
+        response.headers["Cache-Control"] = "no-store"
+        run = app.state.model_lab.get(run_id)
+        if run is None:
+            raise HTTPException(status_code=404, detail="model lab run not found")
+        return run
+
+    @app.get("/api/model-lab/artifacts/{artifact_id}")
+    async def get_model_lab_artifact(artifact_id: str) -> Response:
+        require_model_lab()
+        artifact = app.state.model_lab.artifacts.get(artifact_id)
+        if artifact is None:
+            raise HTTPException(status_code=404, detail="model lab artifact not found")
+        return HTMLResponse(
+            _artifact_for_embed(artifact),
+            headers={
+                "Content-Disposition": f'inline; filename="laysh-{artifact_id}.html"',
+                "Content-Security-Policy": PORTABLE_CSP,
+                "X-Content-Type-Options": "nosniff",
+                "Referrer-Policy": "no-referrer",
+                "Cache-Control": "no-store",
+            },
         )
 
     @app.get("/api/jobs/{job_id}", response_model=PublicResult)

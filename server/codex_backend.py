@@ -200,6 +200,20 @@ class GenerationCandidateSpec:
             raise ValueError("generation candidate effort is not allowed")
 
 
+@dataclass(frozen=True, slots=True)
+class StageModelSpec:
+    """Explicit model and effort for one isolated runtime role."""
+
+    model: Literal["gpt-5.6-luna", "gpt-5.6-terra", "gpt-5.6-sol"]
+    effort: Literal["low", "medium", "high"]
+
+    def __post_init__(self) -> None:
+        if self.model not in ALLOWED_RUNTIME_MODELS:
+            raise ValueError("stage model must be GPT-5.6")
+        if self.effort not in {"low", "medium", "high"}:
+            raise ValueError("stage effort is not allowed")
+
+
 class CodexBackend:
     """Structured GPT-5.6-only stage backend."""
 
@@ -349,6 +363,33 @@ class CodexBackend:
             output_tokens=result.output_tokens,
         )
 
+    async def understand_for_lab(
+        self,
+        question: str,
+        locale: str | None,
+        *,
+        model: str,
+        effort: str,
+        runtime_context: RuntimeContext | None = None,
+    ) -> StageExecution:
+        """Run one explicit, ephemeral understanding call for the isolated lab."""
+
+        selected_context = runtime_context or RuntimeContext()
+        if not selected_context.public:
+            raise CodexPolicyError("model_lab_public_only")
+        stage_spec = StageModelSpec(model=model, effort=effort)
+        return await self._execute_stage(
+            prompt=self._render_prompt(
+                "understand.md",
+                {"question": question, "locale": locale},
+            ),
+            schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["understand"],
+            model=stage_spec.model,
+            effort=stage_spec.effort,
+            timeout_seconds=self.settings.public_stage_timeout_seconds,
+            **self._execution_policy(selected_context),
+        )
+
     async def generate(
         self,
         understanding: dict[str, Any],
@@ -382,6 +423,41 @@ class CodexBackend:
         *,
         runtime_context: RuntimeContext | None = None,
     ) -> tuple[StageExecution, StageExecution]:
+        return await self._generate_fragments_with_specs(
+            understanding,
+            physics_spec=StageModelSpec(self.settings.physics_model, "medium"),
+            visual_spec=StageModelSpec(self.settings.visual_model, "medium"),
+            runtime_context=runtime_context,
+        )
+
+    async def generate_fragments_for_lab(
+        self,
+        understanding: dict[str, Any],
+        *,
+        physics_spec: StageModelSpec,
+        visual_spec: StageModelSpec,
+        runtime_context: RuntimeContext | None = None,
+    ) -> tuple[StageExecution, StageExecution]:
+        """Generate explicit physics and visual roles for the isolated model lab."""
+
+        selected_context = runtime_context or RuntimeContext()
+        if not selected_context.public:
+            raise CodexPolicyError("model_lab_public_only")
+        return await self._generate_fragments_with_specs(
+            understanding,
+            physics_spec=physics_spec,
+            visual_spec=visual_spec,
+            runtime_context=selected_context,
+        )
+
+    async def _generate_fragments_with_specs(
+        self,
+        understanding: dict[str, Any],
+        *,
+        physics_spec: StageModelSpec,
+        visual_spec: StageModelSpec,
+        runtime_context: RuntimeContext | None,
+    ) -> tuple[StageExecution, StageExecution]:
         """Generate the scientific model and visual plan concurrently.
 
         Both calls are required.  If either fails or the learner cancels, the
@@ -402,14 +478,14 @@ class CodexBackend:
             role: Literal["physics", "visual"],
             prompt_name: str,
             schema_name: Literal["generate_physics", "generate_visual"],
-            model: str,
+            stage_spec: StageModelSpec,
         ) -> StageExecution:
             started = time.monotonic()
             arguments = {
                 "prompt": self._render_prompt(prompt_name, understanding),
                 "schema_path": CODEX_OUTPUT_SCHEMA_BY_STAGE[schema_name],
-                "model": model,
-                "effort": "medium",
+                "model": stage_spec.model,
+                "effort": stage_spec.effort,
                 "timeout_seconds": timeout_seconds,
                 **policy,
             }
@@ -424,7 +500,7 @@ class CodexBackend:
                     "public fragment runtime retry: role=%s model=%s failure=%s "
                     "upstream_kind=%s",
                     role,
-                    model,
+                    stage_spec.model,
                     error.code,
                     error.safe_detail.get("kind"),
                 )
@@ -437,7 +513,7 @@ class CodexBackend:
                         retry.elapsed_ms,
                         int((time.monotonic() - started) * 1000),
                     ),
-                    attempted_models=(model, retry.model),
+                    attempted_models=(stage_spec.model, retry.model),
                     prior_failure_codes=(error.code,),
                     input_tokens=retry.input_tokens,
                     cached_input_tokens=retry.cached_input_tokens,
@@ -449,7 +525,7 @@ class CodexBackend:
                 role="physics",
                 prompt_name="generate_physics.md",
                 schema_name="generate_physics",
-                model=self.settings.physics_model,
+                stage_spec=physics_spec,
             )
         )
         visual_task = asyncio.create_task(
@@ -457,7 +533,7 @@ class CodexBackend:
                 role="visual",
                 prompt_name="generate_visual.md",
                 schema_name="generate_visual",
-                model=self.settings.visual_model,
+                stage_spec=visual_spec,
             )
         )
         tasks = (physics_task, visual_task)
@@ -938,14 +1014,31 @@ class MockCodexBackend:
             return _non_simulatable(locale or "ar")
         return deepcopy(_success_understanding(locale or "ar"))
 
+    async def understand_for_lab(
+        self,
+        question: str,
+        locale: str | None,
+        *,
+        model: str,
+        effort: str,
+        runtime_context: RuntimeContext | None = None,
+    ) -> dict[str, Any]:
+        StageModelSpec(model=model, effort=effort)
+        return await self.understand(
+            question,
+            locale,
+            runtime_context=runtime_context,
+        )
+
     async def generate(
         self,
         understanding: dict[str, Any],
         scenario: str = "success",
         *,
         runtime_context: RuntimeContext | None = None,
+        candidate_spec: GenerationCandidateSpec | None = None,
     ) -> dict[str, Any]:
-        del runtime_context
+        del runtime_context, candidate_spec
         self.generate_calls += 1
         source = self._good_source
         if scenario in {"broken_first_draft", "exhausted_heal"}:
@@ -958,6 +1051,74 @@ class MockCodexBackend:
                 "assumptions": ["مدار دائري مبسط", "لا تمثل المسافات بمقياس حقيقي"],
             }
         )
+
+    async def generate_fragments_for_lab(
+        self,
+        understanding: dict[str, Any],
+        *,
+        physics_spec: StageModelSpec,
+        visual_spec: StageModelSpec,
+        runtime_context: RuntimeContext | None = None,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        del runtime_context
+        StageModelSpec(physics_spec.model, physics_spec.effort)
+        StageModelSpec(visual_spec.model, visual_spec.effort)
+        output_name = understanding["module_spec"]["outputs"][0]
+        parameter_id = understanding["primary_parameter"]["id"]
+        physics = {
+            "physics_expressions": [
+                {
+                    "name": output_name,
+                    "expression": f"(1 - cos({parameter_id} * pi / 180)) / 2",
+                }
+            ],
+            "output_names": [output_name],
+            "brief_summary": "Deterministic offline model-lab fragment.",
+            "assumptions": ["Offline mock fixture"],
+        }
+        visual = {
+            "representation": {
+                "scene_pattern": "world_only",
+                "actor_archetype": "body",
+                "proof_channels": [
+                    {
+                        "output_name": output_name,
+                        "carrier": "actor",
+                        "channel": "opacity",
+                    }
+                ],
+                "motion_model": "parameter_driven",
+            },
+            "background": {
+                "top_color": "#07111F",
+                "bottom_color": "#10243A",
+            },
+            "commands": [
+                {
+                    "kind": "circle",
+                    "id": "actor",
+                    "scientific": True,
+                    "clipping_policy": "forbid",
+                    "cx": "width / 2",
+                    "cy": "height / 2",
+                    "radius": "min(30, min_dim * 0.12)",
+                    "fill_color": "#F7E7A9",
+                    "fill_alt_color": "#D08A32",
+                    "stroke_color": "#FFFFFF",
+                    "line_width": "2",
+                    "opacity": f"0.55 + output_{output_name} * 0.45",
+                }
+            ],
+            "relations": [],
+            "causal_response": {
+                "actor_id": "actor",
+                "output_name": output_name,
+                "channel": "opacity",
+                "relation": "direct",
+                "temporal_mode": "parameter_driven",
+            },
+        }
+        return physics, visual
 
     async def heal(
         self,

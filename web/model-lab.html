@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#07090c">
+  <title>Laysh model lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2307090c'/%3E%3Ccircle cx='23' cy='32' r='10' fill='none' stroke='%23ffc247' stroke-width='3'/%3E%3Ccircle cx='41' cy='32' r='10' fill='none' stroke='%2376d6c8' stroke-width='3'/%3E%3C/svg%3E">
+  <link rel="preload" href="/static/fonts/noto-kufi-ar.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/static/fonts/noto-kufi-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/static/model-lab.css">
+  <script src="/static/translations.js" defer></script>
+  <script src="/static/locale.js" defer></script>
+  <script src="/static/model-lab.js" defer></script>
+</head>
+<body data-document-title="modelLab.documentTitle">
+  <a class="skip-link" href="#comparison" data-i18n="modelLab.skip">Skip to the comparison</a>
+  <div class="lab-sky" aria-hidden="true">
+    <span class="star-cluster cluster-a"></span>
+    <span class="star-cluster cluster-b"></span>
+    <span class="meridian"></span>
+  </div>
+
+  <div class="lab-shell">
+    <header class="lab-header">
+      <a class="back-link" href="/">
+        <span aria-hidden="true">←</span>
+        <span data-i18n="modelLab.back">Back to Laysh</span>
+      </a>
+      <a class="lab-brand" href="/">
+        <span data-i18n="nav.brand">Laysh</span><b>.</b>
+      </a>
+      <button class="locale-control" id="locale-control" type="button" data-i18n="locale.control" data-i18n-aria-label="locale.controlLabel">العربية</button>
+    </header>
+
+    <main id="comparison">
+      <section class="lab-hero" aria-labelledby="lab-title">
+        <div class="hero-copy">
+          <p class="lab-badge"><span aria-hidden="true">◉</span> <span data-i18n="modelLab.badge">Private lab · never added to the library</span></p>
+          <p class="eyebrow" data-i18n="modelLab.eyebrow">Model comparison observatory</p>
+          <h1 id="lab-title" data-i18n="modelLab.title">One question. Two different eyes.</h1>
+          <p class="lede" data-i18n="modelLab.lede">Hold the question constant, then compare how each model draws the scientific idea at the reasoning effort you choose.</p>
+        </div>
+        <div class="dual-lens" aria-hidden="true">
+          <span class="lens lens-a"><i></i></span>
+          <span class="lens lens-b"><i></i></span>
+          <span class="lens-axis"></span>
+        </div>
+      </section>
+
+      <aside class="lab-notice">
+        <span class="notice-mark" aria-hidden="true">i</span>
+        <div>
+          <strong data-i18n="modelLab.noticeTitle">An honest, isolated comparison</strong>
+          <p data-i18n="modelLab.notice">We understand the question once, then generate two candidates concurrently. No heal, model QA, or library write; only artifacts that pass deterministic and browser gates are shown.</p>
+        </div>
+      </aside>
+
+      <form class="lab-console" id="model-lab-form" novalidate>
+        <div class="question-field">
+          <label for="lab-question" data-i18n="modelLab.questionLabel">Science question</label>
+          <textarea id="lab-question" name="question" maxlength="600" rows="3" dir="auto" required aria-describedby="lab-question-help lab-error" data-i18n-placeholder="modelLab.questionPlaceholder"></textarea>
+          <p id="lab-question-help" class="field-help" data-i18n="modelLab.questionHelp">Both candidates receive the same fixed understanding. Do not enter personal or sensitive data.</p>
+          <p id="lab-error" class="field-error" role="alert" hidden></p>
+        </div>
+
+        <fieldset class="understand-config" data-role="understand">
+          <legend data-i18n="modelLab.understandStage">Shared understanding</legend>
+          <label>
+            <span data-i18n="modelLab.model">Model</span>
+            <select name="model">
+              <option value="gpt-5.6-luna" selected>GPT-5.6 Luna</option>
+              <option value="gpt-5.6-terra">GPT-5.6 Terra</option>
+              <option value="gpt-5.6-sol">GPT-5.6 Sol</option>
+            </select>
+          </label>
+          <label>
+            <span data-i18n="modelLab.effort">Reasoning effort</span>
+            <select name="effort">
+              <option value="low" selected data-i18n="modelLab.effort.low">Low</option>
+              <option value="medium" data-i18n="modelLab.effort.medium">Medium</option>
+              <option value="high" data-i18n="modelLab.effort.high">High</option>
+            </select>
+          </label>
+        </fieldset>
+
+        <div class="candidate-controls">
+          <fieldset class="candidate-config" data-slot="A">
+            <legend data-i18n="modelLab.candidate" data-i18n-slot="A">Candidate A</legend>
+            <div class="role-config" data-role="physics">
+              <strong data-i18n="modelLab.physicsStage">Physics model</strong>
+              <label><span data-i18n="modelLab.model">Model</span><select name="model"><option value="gpt-5.6-luna">GPT-5.6 Luna</option><option value="gpt-5.6-terra">GPT-5.6 Terra</option><option value="gpt-5.6-sol" selected>GPT-5.6 Sol</option></select></label>
+              <label><span data-i18n="modelLab.effort">Reasoning effort</span><select name="effort"><option value="low" data-i18n="modelLab.effort.low">Low</option><option value="medium" selected data-i18n="modelLab.effort.medium">Medium</option><option value="high" data-i18n="modelLab.effort.high">High</option></select></label>
+            </div>
+            <div class="role-config" data-role="visual">
+              <strong data-i18n="modelLab.visualStage">Drawing and representation</strong>
+              <label><span data-i18n="modelLab.model">Model</span><select name="model"><option value="gpt-5.6-luna">GPT-5.6 Luna</option><option value="gpt-5.6-terra" selected>GPT-5.6 Terra</option><option value="gpt-5.6-sol">GPT-5.6 Sol</option></select></label>
+              <label><span data-i18n="modelLab.effort">Reasoning effort</span><select name="effort"><option value="low" data-i18n="modelLab.effort.low">Low</option><option value="medium" selected data-i18n="modelLab.effort.medium">Medium</option><option value="high" data-i18n="modelLab.effort.high">High</option></select></label>
+            </div>
+          </fieldset>
+
+          <div class="versus" aria-hidden="true"><span>vs</span></div>
+
+          <fieldset class="candidate-config" data-slot="B">
+            <legend data-i18n="modelLab.candidate" data-i18n-slot="B">Candidate B</legend>
+            <div class="role-config" data-role="physics">
+              <strong data-i18n="modelLab.physicsStage">Physics model</strong>
+              <label><span data-i18n="modelLab.model">Model</span><select name="model"><option value="gpt-5.6-luna">GPT-5.6 Luna</option><option value="gpt-5.6-terra">GPT-5.6 Terra</option><option value="gpt-5.6-sol" selected>GPT-5.6 Sol</option></select></label>
+              <label><span data-i18n="modelLab.effort">Reasoning effort</span><select name="effort"><option value="low" data-i18n="modelLab.effort.low">Low</option><option value="medium" selected data-i18n="modelLab.effort.medium">Medium</option><option value="high" data-i18n="modelLab.effort.high">High</option></select></label>
+            </div>
+            <div class="role-config" data-role="visual">
+              <strong data-i18n="modelLab.visualStage">Drawing and representation</strong>
+              <label><span data-i18n="modelLab.model">Model</span><select name="model"><option value="gpt-5.6-luna">GPT-5.6 Luna</option><option value="gpt-5.6-terra">GPT-5.6 Terra</option><option value="gpt-5.6-sol" selected>GPT-5.6 Sol</option></select></label>
+              <label><span data-i18n="modelLab.effort">Reasoning effort</span><select name="effort"><option value="low" data-i18n="modelLab.effort.low">Low</option><option value="medium" data-i18n="modelLab.effort.medium">Medium</option><option value="high" selected data-i18n="modelLab.effort.high">High</option></select></label>
+            </div>
+          </fieldset>
+        </div>
+
+        <button class="compare-button" id="compare-button" type="submit">
+          <span class="button-orbit" aria-hidden="true"></span>
+          <span data-i18n="modelLab.submit">Start comparison</span>
+        </button>
+      </form>
+
+      <section class="shared-answer" id="shared-answer" aria-labelledby="shared-answer-title" hidden>
+        <div class="shared-answer-heading">
+          <p class="eyebrow" data-i18n="modelLab.sharedAnswer">Shared understanding</p>
+          <bdi id="understand-route" dir="ltr"></bdi>
+        </div>
+        <h2 id="shared-answer-title" dir="auto"></h2>
+        <p id="shared-formula" class="formula" dir="ltr" hidden></p>
+      </section>
+
+      <p class="run-status" id="run-status" role="status" aria-live="polite" data-state="idle">
+        <span aria-hidden="true"></span>
+        <strong data-i18n="modelLab.idle">Waiting for a question</strong>
+      </p>
+
+      <section class="comparison-grid" aria-label="Model comparison results">
+        <article class="observation-bay bay-a" data-candidate="A">
+          <header>
+            <div>
+              <p class="bay-index">A / 01</p>
+              <h2 data-i18n="modelLab.candidate" data-i18n-slot="A">Candidate A</h2>
+            </div>
+            <span class="candidate-status" data-status="queued" data-i18n="modelLab.idle">Waiting for a question</span>
+          </header>
+          <div class="candidate-routes">
+            <p><span data-i18n="modelLab.physicsStage">Physics model</span><bdi class="physics-model" dir="ltr">GPT-5.6 Sol</bdi><span class="physics-effort" data-i18n="modelLab.effort.medium">Medium</span></p>
+            <p><span data-i18n="modelLab.visualStage">Drawing and representation</span><bdi class="visual-model" dir="ltr">GPT-5.6 Terra</bdi><span class="visual-effort" data-i18n="modelLab.effort.medium">Medium</span></p>
+          </div>
+          <dl class="metrics">
+            <div><dt data-i18n="modelLab.physicsTime">Physics</dt><dd data-metric="physics">—</dd></div>
+            <div><dt data-i18n="modelLab.visualTime">Drawing</dt><dd data-metric="visual">—</dd></div>
+            <div><dt data-i18n="modelLab.verificationTime">Verification</dt><dd data-metric="verification">—</dd></div>
+            <div><dt data-i18n="modelLab.checks">Checks</dt><dd data-metric="checks">—</dd></div>
+          </dl>
+          <div class="bay-stage">
+            <div class="stage-placeholder" aria-hidden="true"><span></span><i></i></div>
+            <iframe title="Candidate A simulation" sandbox="allow-scripts" scrolling="auto" data-i18n-title="modelLab.frameTitle" data-i18n-slot="A" hidden></iframe>
+            <div class="withheld" hidden>
+              <span aria-hidden="true">×</span>
+              <p data-i18n="modelLab.noArtifact">This artifact was withheld because it did not pass the gates. Raw model output is never displayed.</p>
+              <p><strong data-i18n="modelLab.gates">Gates not passed</strong>: <bdi class="failed-gates" dir="ltr"></bdi></p>
+            </div>
+          </div>
+        </article>
+
+        <article class="observation-bay bay-b" data-candidate="B">
+          <header>
+            <div>
+              <p class="bay-index">B / 02</p>
+              <h2 data-i18n="modelLab.candidate" data-i18n-slot="B">Candidate B</h2>
+            </div>
+            <span class="candidate-status" data-status="queued" data-i18n="modelLab.idle">Waiting for a question</span>
+          </header>
+          <div class="candidate-routes">
+            <p><span data-i18n="modelLab.physicsStage">Physics model</span><bdi class="physics-model" dir="ltr">GPT-5.6 Sol</bdi><span class="physics-effort" data-i18n="modelLab.effort.medium">Medium</span></p>
+            <p><span data-i18n="modelLab.visualStage">Drawing and representation</span><bdi class="visual-model" dir="ltr">GPT-5.6 Sol</bdi><span class="visual-effort" data-i18n="modelLab.effort.high">High</span></p>
+          </div>
+          <dl class="metrics">
+            <div><dt data-i18n="modelLab.physicsTime">Physics</dt><dd data-metric="physics">—</dd></div>
+            <div><dt data-i18n="modelLab.visualTime">Drawing</dt><dd data-metric="visual">—</dd></div>
+            <div><dt data-i18n="modelLab.verificationTime">Verification</dt><dd data-metric="verification">—</dd></div>
+            <div><dt data-i18n="modelLab.checks">Checks</dt><dd data-metric="checks">—</dd></div>
+          </dl>
+          <div class="bay-stage">
+            <div class="stage-placeholder" aria-hidden="true"><span></span><i></i></div>
+            <iframe title="Candidate B simulation" sandbox="allow-scripts" scrolling="auto" data-i18n-title="modelLab.frameTitle" data-i18n-slot="B" hidden></iframe>
+            <div class="withheld" hidden>
+              <span aria-hidden="true">×</span>
+              <p data-i18n="modelLab.noArtifact">This artifact was withheld because it did not pass the gates. Raw model output is never displayed.</p>
+              <p><strong data-i18n="modelLab.gates">Gates not passed</strong>: <bdi class="failed-gates" dir="ltr"></bdi></p>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <footer class="lab-footer" data-i18n="modelLab.footer">This is a private measurement lab, not the learner path or Laysh library.</footer>
+  </div>
+</body>
+</html>

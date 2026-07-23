@@ -13,13 +13,13 @@
       "sha256": "61b046636e1d155cb7b48d924fad2299e0099efaca67a50b4d3cc3b7a07e9b86"
     },
     "locale.js": {
-      "sha256": "fdd64b204c65c91573024713ebf464f70cc22009e76c897f5c03825c3841f31a"
+      "sha256": "be133a4f35a759038fbf2bfef053bfb3fda248992e9345204a9e3d8b01df75ef"
     },
     "translations.js": {
-      "sha256": "cbd44a77c6c103564850435f83fde2a84be4adaed4e039abd96233671a33f16a"
+      "sha256": "b386e0d5d7e8a70fc1756b70d52e8d74f60ec64b4647d079de1140ea711a2737"
     }
   },
-  "bundle_version": "dd04997cd3ac7e8f96acf4af4418b2d4e215bb79ee30e76e59a0f5007d68009b",
+  "bundle_version": "acea850244aae429813000a6d34f686099a54724c34974109c8bc6a6a31786c4",
   "gallery_contract_version": "1.0",
   "schema_version": "1.0"
 }
