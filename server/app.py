@@ -151,7 +151,11 @@ def create_app(
             record = (
                 app.state.jobs.start_capacity_fallback(payload.locale, limit_reason)
                 if limit_reason
-                else app.state.jobs.start(question, payload.locale)
+                else app.state.jobs.start(
+                    question,
+                    payload.locale,
+                    fresh_generation=payload.generation_mode == "fresh",
+                )
             )
         return AskAccepted(
             job_id=record.job_id,

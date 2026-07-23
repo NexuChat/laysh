@@ -7,7 +7,7 @@
     "server/prompts/qa.md": "c9a1bdf4236f30adeade44c54b374da0684a46ad0b5567bd0338e60e75ecfab0",
     "server/prompts/understand.md": "b9b298f2934dd75470948bf83316f67e78c3d2f8be2cf1d55b220f5999378402",
     "server/prompts/visual_qa.md": "83c5d09cadad29bbc47323760c316c3307105fcd3fce291a0f2d05ad97e4f465",
-    "server/schemas.py": "11ce30ab5d634ffe7c27ca53c16b5dfd3fe61756c266b390f779de65094eac2d",
+    "server/schemas.py": "d091d2610522d9666da19e4d90677f814dcedd3d7ab555c4550151a77506978b",
     "server/schemas/module.schema.json": "d3b68cc0a4f0ac656f963c95d5fb3726200520156cd873ca199023fe2668b739",
     "server/schemas/module_fixture.schema.json": "1191f30e60aee78ae02f92440421a3175c63af080ce9d14d3453a8f3f27d447e",
     "server/schemas/qa.schema.json": "36754ea08cad302d908f29cba270df9e2f807581a16ddf3b9b246c1042109511",

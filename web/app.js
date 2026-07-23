@@ -432,7 +432,7 @@
     }, 5000);
   }
 
-  async function submitQuestion(question) {
+  async function submitQuestion(question, { fresh = false } = {}) {
     state.terminal = false;
     state.jobId = null;
     state.lastEventId = 0;
@@ -456,7 +456,11 @@
       const response = await fetch("/api/ask", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ question, locale: currentLocale }),
+        body: JSON.stringify({
+          question,
+          locale: currentLocale,
+          generation_mode: fresh ? "fresh" : "standard",
+        }),
       });
       if (!response.ok) throw new Error("ask_unavailable");
       const accepted = await response.json();
@@ -515,9 +519,12 @@
     byId(id).addEventListener("click", () => setView("ask", { push: true }));
   }
   byId("replay-result").addEventListener("click", () => {
-    const frame = byId("simulation-frame");
-    frame.src = frame.src;
-    frame.focus();
+    const rebuildQuestion = state.lastQuestion || state.result?.simulation?.title || "";
+    if (rebuildQuestion) submitQuestion(rebuildQuestion, { fresh: true });
+    else {
+      setView("ask", { push: true });
+      byId("question").focus();
+    }
   });
   byId("share-result").addEventListener("click", shareResult);
   byId("projector-result").addEventListener("click", async () => {

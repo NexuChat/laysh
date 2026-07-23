@@ -80,6 +80,7 @@ class JobRecord:
     builder_outputs: dict[str, Any] = field(default_factory=dict)
     promote_golden: bool = False
     share_eligible: bool = False
+    fresh_generation: bool = False
 
     def public_result(self) -> PublicResult:
         return PublicResult(
@@ -163,6 +164,7 @@ class JobManager:
         public: bool = True,
         evidence_fixture_id: str | None = None,
         promote_golden: bool = False,
+        fresh_generation: bool = False,
     ) -> JobRecord:
         job_id = f"job_{secrets.token_hex(8)}"
         record = JobRecord(
@@ -172,6 +174,7 @@ class JobManager:
             public=public,
             evidence_fixture_id=evidence_fixture_id,
             promote_golden=promote_golden,
+            fresh_generation=fresh_generation,
         )
         self.records[job_id] = record
         record.task = asyncio.create_task(self._run(record))

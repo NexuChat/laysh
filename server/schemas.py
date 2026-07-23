@@ -182,6 +182,7 @@ class PublicResult(ClosedModel):
 class AskRequest(ClosedModel):
     question: str = Field(min_length=1, max_length=600)
     locale: Literal["ar", "en"] | None = None
+    generation_mode: Literal["standard", "fresh"] = "standard"
 
 
 class AskAccepted(ClosedModel):

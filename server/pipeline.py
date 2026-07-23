@@ -311,7 +311,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
 
     manager.transition(record, "cache_lookup", "فحص النتائج الموثقة")
     cache = manager.cache
-    if cache is not None:
+    if cache is not None and not record.fresh_generation:
         cached = cache.lookup(
             question=question,
             locale=understanding["lang"],
