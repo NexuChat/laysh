@@ -49,7 +49,12 @@ Channel is `x|y|rotation|size|opacity`, and its actor field directly uses
 `output_<output_name>` (trajectory `y` derives the named output by construction).
 Relation is `direct|inverse`; temporal mode is `parameter_driven|cyclic`. Angles and
 rotations are radians within −2π…2π. Preserve negative, zero, and positive states for
-signed crossing fixtures.
+signed crossing fixtures. Before returning, evaluate every causal and actor proof
+channel at fixture-covered low, middle, and high output states. It must produce at
+least three distinct post-clamp values, meet the channel's visible range, and follow
+the declared direct or inverse order. Merely mentioning the output is insufficient:
+never multiply it by zero, clamp every state to one value, cancel it algebraically,
+or let viewport fitting flatten all three states.
 
 Closed command branches:
 - `circle`: `cx,cy,radius,fill_color,fill_alt_color,stroke_color,line_width,opacity`.

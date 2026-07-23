@@ -55,6 +55,10 @@ _SEMANTIC_FAILURE_CODES = (
     ("causal response output requires an understanding fixture", "causal_fixture_required"),
     ("causal channel field must directly consume", "causal_channel_output_required"),
     (
+        "causal channel must vary across fixture-covered output states",
+        "causal_channel_fixture_response_required",
+    ),
+    (
         "signed causal output requires negative, zero, and positive fixtures",
         "signed_causal_fixture_coverage_required",
     ),
@@ -73,6 +77,10 @@ _SEMANTIC_FAILURE_CODES = (
     (
         "representation actor proof is not backed",
         "representation_actor_proof_unbacked",
+    ),
+    (
+        "representation actor proof channel must vary",
+        "representation_actor_fixture_response_required",
     ),
     (
         "representation graph proof requires world_plus_graph",
@@ -107,6 +115,19 @@ _SEMANTIC_FAILURE_CODES = (
     ("physics expression names must be unique", "duplicate_physics_output"),
     ("assembled source exceeds 40KiB", "assembled_source_too_large"),
 )
+
+
+class _ChannelResponseError(ContractError):
+    def __init__(
+        self,
+        message: str,
+        *,
+        expected: dict[str, Any],
+        actual: dict[str, Any],
+    ) -> None:
+        super().__init__(message)
+        self.expected = expected
+        self.actual = actual
 
 
 def fragment_failure_code(error: Exception) -> str:
@@ -176,6 +197,9 @@ def fragment_failure_diagnostic(
             str(item) if isinstance(item, str) else int(item)
             for item in error.absolute_path
         ]
+    elif isinstance(error, _ChannelResponseError):
+        expected.update(error.expected)
+        actual.update(error.actual)
     return {
         "gate": "fragment_contract",
         "code": code,
@@ -262,6 +286,99 @@ def _compile_expression(expression: object, names: dict[str, str]) -> str:
         raise ValueError("unsupported_expression_syntax")
 
     return visit(parsed.body)
+
+
+def _evaluate_expression(expression: object, names: dict[str, float]) -> float:
+    """Evaluate the same closed numeric DSL used by the trusted assembler."""
+
+    parsed = _parse_expression(expression)
+
+    def finite(value: float) -> float:
+        return value if math.isfinite(value) else 0.0
+
+    def visit(node: ast.AST) -> float:
+        if isinstance(node, ast.Constant):
+            if isinstance(node.value, bool) or not isinstance(node.value, (int, float)):
+                raise ValueError("expression_literal_must_be_finite_number")
+            return finite(float(node.value))
+        if isinstance(node, ast.Name):
+            if node.id == "pi":
+                return math.pi
+            try:
+                return finite(float(names[node.id]))
+            except KeyError as error:
+                raise ValueError(f"undeclared_expression_name:{node.id}") from error
+        if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.UAdd, ast.USub)):
+            value = visit(node.operand)
+            return value if isinstance(node.op, ast.UAdd) else -value
+        if isinstance(node, ast.BinOp):
+            left = visit(node.left)
+            right = visit(node.right)
+            try:
+                if isinstance(node.op, ast.Add):
+                    return finite(left + right)
+                if isinstance(node.op, ast.Sub):
+                    return finite(left - right)
+                if isinstance(node.op, ast.Mult):
+                    return finite(left * right)
+                if isinstance(node.op, ast.Div):
+                    return finite(left / right)
+                if isinstance(node.op, ast.Mod):
+                    return finite(left % right)
+                if isinstance(node.op, ast.Pow):
+                    return finite(math.pow(left, right))
+            except (OverflowError, ValueError, ZeroDivisionError):
+                return 0.0
+            raise ValueError("unsupported_expression_operator")
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and not node.keywords:
+            arguments = [visit(argument) for argument in node.args]
+            try:
+                if node.func.id == "abs":
+                    value = abs(arguments[0])
+                elif node.func.id == "acos":
+                    value = math.acos(arguments[0])
+                elif node.func.id == "asin":
+                    value = math.asin(arguments[0])
+                elif node.func.id == "atan":
+                    value = math.atan(arguments[0])
+                elif node.func.id == "atan2":
+                    value = math.atan2(arguments[0], arguments[1])
+                elif node.func.id == "ceil":
+                    value = math.ceil(arguments[0])
+                elif node.func.id == "clamp":
+                    value = max(arguments[1], min(arguments[2], arguments[0]))
+                elif node.func.id == "cos":
+                    value = math.cos(arguments[0])
+                elif node.func.id == "exp":
+                    value = math.exp(arguments[0])
+                elif node.func.id == "floor":
+                    value = math.floor(arguments[0])
+                elif node.func.id == "log":
+                    value = math.log(arguments[0])
+                elif node.func.id == "log10":
+                    value = math.log10(arguments[0])
+                elif node.func.id == "max":
+                    value = max(arguments)
+                elif node.func.id == "min":
+                    value = min(arguments)
+                elif node.func.id == "pow":
+                    value = math.pow(arguments[0], arguments[1])
+                elif node.func.id == "round":
+                    value = math.floor(arguments[0] + 0.5)
+                elif node.func.id == "sin":
+                    value = math.sin(arguments[0])
+                elif node.func.id == "sqrt":
+                    value = math.sqrt(arguments[0])
+                elif node.func.id == "tan":
+                    value = math.tan(arguments[0])
+                else:
+                    raise ValueError(f"unsupported_expression_call:{node.func.id}")
+            except (IndexError, OverflowError, ValueError, ZeroDivisionError):
+                return 0.0
+            return finite(float(value))
+        raise ValueError("unsupported_expression_syntax")
+
+    return finite(visit(parsed.body))
 
 
 def _expression_is_zero(expression: object) -> bool:
@@ -541,6 +658,316 @@ def _command_has_time_output_motion(command: dict[str, Any]) -> bool:
     )
 
 
+_RESPONSE_VIEWPORT = {"width": 720.0, "height": 400.0, "min_dim": 400.0}
+_CHANNEL_MINIMUM_RANGE = {
+    "x": 32.0,
+    "y": 32.0,
+    "rotation": 0.15,
+    "opacity": 0.2,
+    "size": 0.15,
+}
+
+
+def _output_probe_states(
+    understanding: dict[str, Any],
+    output_name: str,
+) -> list[dict[str, float]]:
+    """Build deterministic visual states from numeric fixtures, with safe probes."""
+
+    primary = understanding["primary_parameter"]
+    primary_id = primary["id"]
+    rows: list[tuple[float, float]] = []
+    for check in understanding["checks"]:
+        if check["kind"] != "numeric" or check["output"] != output_name:
+            continue
+        parameter_value = next(
+            (
+                float(item["value"])
+                for item in check["inputs"]
+                if item["name"] == primary_id
+            ),
+            float(primary["default"]),
+        )
+        rows.append((float(check["expected"]), parameter_value))
+
+    unique_rows: dict[float, float] = {}
+    for output_value, parameter_value in rows:
+        unique_rows.setdefault(output_value, parameter_value)
+    ordered = sorted(unique_rows.items())
+    fixture_backed = len(ordered) >= 3
+    if len(ordered) >= 3:
+        probes = ordered
+    elif len(ordered) == 2:
+        low, high = ordered
+        probes = [
+            low,
+            ((low[0] + high[0]) / 2, (low[1] + high[1]) / 2),
+            high,
+        ]
+    elif len(ordered) == 1:
+        value, parameter_value = ordered[0]
+        delta = max(1.0, abs(value) * 0.5)
+        probes = [
+            (value - delta, float(primary["min"])),
+            (value, parameter_value),
+            (value + delta, float(primary["max"])),
+        ]
+    else:
+        probes = [
+            (-1.0, float(primary["min"])),
+            (0.0, float(primary["default"])),
+            (1.0, float(primary["max"])),
+        ]
+
+    defaults: dict[str, float] = {}
+    for declared_output in understanding["module_spec"]["outputs"]:
+        expected = [
+            float(check["expected"])
+            for check in understanding["checks"]
+            if check["kind"] == "numeric" and check["output"] == declared_output
+        ]
+        defaults[f"output_{declared_output}"] = (
+            sorted(expected)[len(expected) // 2] if expected else 0.0
+        )
+
+    span = float(primary["max"]) - float(primary["min"])
+    states: list[dict[str, float]] = []
+    for output_value, parameter_value in probes:
+        normalized = (
+            (parameter_value - float(primary["min"])) / span if span > 0 else 0.0
+        )
+        states.append(
+            {
+                **_RESPONSE_VIEWPORT,
+                **defaults,
+                "normalized": min(1.0, max(0.0, normalized)),
+                "phase": 0.0,
+                "time": 0.0,
+                f"output_{output_name}": output_value,
+                "__output_value": output_value,
+                "__fixture_backed": 1.0 if fixture_backed else 0.0,
+            }
+        )
+    return states
+
+
+def _clamp(value: float, lower: float, upper: float) -> float:
+    return max(lower, min(upper, value))
+
+
+def _body_group_envelope(command: dict[str, Any], state: dict[str, float]) -> float:
+    envelope = 1.0
+    for part in command["parts"]:
+        if part["kind"] == "circle":
+            extent = max(0.0, _evaluate_expression(part["radius"], state))
+            offset = math.hypot(
+                _evaluate_expression(part["dx"], state),
+                _evaluate_expression(part["dy"], state),
+            )
+        elif part["kind"] == "ellipse":
+            extent = max(
+                0.0,
+                _evaluate_expression(part["radius_x"], state),
+                _evaluate_expression(part["radius_y"], state),
+            )
+            offset = math.hypot(
+                _evaluate_expression(part["dx"], state),
+                _evaluate_expression(part["dy"], state),
+            )
+        elif part["kind"] == "rect":
+            extent = math.hypot(
+                max(0.0, _evaluate_expression(part["width"], state)),
+                max(0.0, _evaluate_expression(part["height"], state)),
+            ) / 2
+            offset = math.hypot(
+                _evaluate_expression(part["dx"], state),
+                _evaluate_expression(part["dy"], state),
+            )
+        else:
+            extent = 0.0
+            offset = max(
+                math.hypot(
+                    _evaluate_expression(part["dx1"], state),
+                    _evaluate_expression(part["dy1"], state),
+                ),
+                math.hypot(
+                    _evaluate_expression(part["dx2"], state),
+                    _evaluate_expression(part["dy2"], state),
+                ),
+            )
+        envelope = max(envelope, offset + extent)
+    return envelope
+
+
+def _command_channel_value(
+    command: dict[str, Any],
+    channel: str,
+    state: dict[str, float],
+) -> float:
+    kind = command["kind"]
+    if kind == "trajectory":
+        if channel == "y":
+            return state[f'output_{command["output_name"]}']
+        return _clamp(_evaluate_expression(command["opacity"], state), 0.0, 1.0)
+
+    if kind == "circle":
+        field = {"x": "cx", "y": "cy", "size": "radius", "opacity": "opacity"}[
+            channel
+        ]
+        value = _evaluate_expression(command[field], state)
+        if channel == "size":
+            return max(0.0, value)
+        if channel == "opacity":
+            return _clamp(value, 0.0, 1.0)
+        return value
+
+    if kind == "ellipse":
+        radius_x = max(0.0, _evaluate_expression(command["radius_x"], state))
+        radius_y = max(0.0, _evaluate_expression(command["radius_y"], state))
+        envelope = max(radius_x, radius_y)
+        fit_limit = max(1.0, state["min_dim"] / 2 - 8)
+        fit_scale = min(1.0, fit_limit / envelope) if envelope > 0 else 1.0
+        fitted_envelope = envelope * fit_scale
+        if channel in {"x", "y"}:
+            field = "cx" if channel == "x" else "cy"
+            limit = state["width"] if channel == "x" else state["height"]
+            return _clamp(
+                _evaluate_expression(command[field], state),
+                fitted_envelope + 4,
+                limit - fitted_envelope - 4,
+            )
+        if channel == "rotation":
+            return _clamp(
+                _evaluate_expression(command["rotation"], state),
+                -2 * math.pi,
+                2 * math.pi,
+            )
+        if channel == "size":
+            return fitted_envelope
+        return _clamp(_evaluate_expression(command["opacity"], state), 0.0, 1.0)
+
+    if kind == "body_group":
+        envelope = _body_group_envelope(command, state)
+        fit_limit = max(1.0, state["min_dim"] / 2 - 8)
+        fitted_envelope = envelope * min(1.0, fit_limit / envelope)
+        if channel in {"x", "y"}:
+            field = "cx" if channel == "x" else "cy"
+            limit = state["width"] if channel == "x" else state["height"]
+            return _clamp(
+                _evaluate_expression(command[field], state),
+                fitted_envelope + 4,
+                limit - fitted_envelope - 4,
+            )
+        if channel == "rotation":
+            return _clamp(
+                _evaluate_expression(command["rotation"], state),
+                -2 * math.pi,
+                2 * math.pi,
+            )
+        if channel == "size":
+            return fitted_envelope
+        return _clamp(_evaluate_expression(command["opacity"], state), 0.0, 1.0)
+
+    if kind == "vector_arrow":
+        field = {
+            "x": "x1",
+            "y": "y1",
+            "rotation": "angle",
+            "size": "length",
+            "opacity": "opacity",
+        }[channel]
+        value = _evaluate_expression(command[field], state)
+        if channel == "rotation":
+            return _clamp(value, -2 * math.pi, 2 * math.pi)
+        if channel == "size":
+            return max(0.0, value)
+        if channel == "opacity":
+            return _clamp(value, 0.0, 1.0)
+        return value
+
+    if kind == "ray":
+        if channel in {"x", "y", "opacity"}:
+            field = {"x": "x1", "y": "y1", "opacity": "opacity"}[channel]
+            value = _evaluate_expression(command[field], state)
+            return _clamp(value, 0.0, 1.0) if channel == "opacity" else value
+        if channel == "rotation":
+            return _clamp(
+                _evaluate_expression(command["segments"][0]["angle"], state),
+                -2 * math.pi,
+                2 * math.pi,
+            )
+        return sum(
+            max(0.0, _evaluate_expression(segment["length"], state))
+            for segment in command["segments"]
+        )
+
+    raise ContractError("unsupported scientific channel response")
+
+
+def _channel_response_measurement(
+    command: dict[str, Any],
+    *,
+    channel: str,
+    output_name: str,
+    understanding: dict[str, Any],
+    relation: str | None,
+) -> dict[str, Any]:
+    states = _output_probe_states(understanding, output_name)
+    samples = sorted(
+        (
+            (
+                state["__output_value"],
+                _command_channel_value(command, channel, state),
+            )
+            for state in states
+        ),
+        key=lambda item: item[0],
+    )
+    values = [value for _, value in samples]
+    distinct_states = len({f"{value:.6f}" for value in values})
+    raw_range = max(values) - min(values)
+    if channel == "size":
+        positive = [value for value in values if value > 1e-9]
+        baseline = min(positive) if positive else 0.0
+        observed_range = raw_range / baseline if baseline > 0 else 0.0
+    else:
+        observed_range = raw_range
+
+    monotonic = True
+    compared = 0
+    if relation is not None:
+        expected_sign = 1 if relation == "direct" else -1
+        for (left_output, left_visual), (right_output, right_visual) in zip(
+            samples,
+            samples[1:],
+            strict=False,
+        ):
+            if abs(right_output - left_output) <= 1e-9:
+                continue
+            visual_delta = right_visual - left_visual
+            if expected_sign * visual_delta < -1e-6:
+                monotonic = False
+                break
+            if abs(visual_delta) > 1e-6:
+                compared += 1
+        monotonic = monotonic and compared >= 2
+
+    return {
+        "channel": channel,
+        "output_name": output_name,
+        "distinct_states": distinct_states,
+        "observed_range": round(observed_range, 6),
+        "minimum_range": _CHANNEL_MINIMUM_RANGE[channel],
+        "monotonic_relation": monotonic,
+        "fixture_backed": bool(states[0]["__fixture_backed"]),
+        "passed": (
+            distinct_states >= 3
+            and observed_range > 1e-6
+            and monotonic
+        ),
+    }
+
+
 _CAUSAL_CHANNEL_FIELDS: dict[str, dict[str, tuple[str, ...]]] = {
     "circle": {
         "x": ("cx",),
@@ -602,6 +1029,31 @@ def _validate_causal_response(
 
     if understanding is None:
         return
+
+    measurement = _channel_response_measurement(
+        actor,
+        channel=response["channel"],
+        output_name=output_name,
+        understanding=understanding,
+        relation=response["relation"],
+    )
+    if not measurement["passed"]:
+        raise _ChannelResponseError(
+            "causal channel must vary across fixture-covered output states",
+            expected={
+                "channel": response["channel"],
+                "minimum_distinct_states": 3,
+                "minimum_range": measurement["minimum_range"],
+                "monotonic_relation": response["relation"],
+            },
+            actual={
+                "channel": response["channel"],
+                "distinct_states": measurement["distinct_states"],
+                "observed_range": measurement["observed_range"],
+                "monotonic_relation": measurement["monotonic_relation"],
+                "output_name": output_name,
+            },
+        )
 
     primary = understanding["primary_parameter"]
     if primary["min"] < 0 < primary["max"]:
@@ -689,16 +1141,52 @@ def _validate_representation(
             )
         if proof["carrier"] != "actor":
             continue
-        if not any(
-            _command_channel_consumes_output(
+        backing_commands = [
+            command
+            for command in scientific_commands
+            if _command_channel_consumes_output(
                 command,
                 proof["channel"],
                 output_name,
             )
-            for command in scientific_commands
-        ):
+        ]
+        if not backing_commands:
             raise ContractError(
                 "representation actor proof is not backed by a scientific command"
+            )
+        if understanding is None:
+            continue
+        measurements = [
+            _channel_response_measurement(
+                command,
+                channel=proof["channel"],
+                output_name=output_name,
+                understanding=understanding,
+                relation=None,
+            )
+            for command in backing_commands
+        ]
+        if not any(measurement["passed"] for measurement in measurements):
+            best = max(
+                measurements,
+                key=lambda item: (
+                    item["distinct_states"],
+                    item["observed_range"],
+                ),
+            )
+            raise _ChannelResponseError(
+                "representation actor proof channel must vary across fixture-covered output states",
+                expected={
+                    "channel": proof["channel"],
+                    "minimum_distinct_states": 3,
+                    "minimum_range": best["minimum_range"],
+                },
+                actual={
+                    "channel": proof["channel"],
+                    "distinct_states": best["distinct_states"],
+                    "observed_range": best["observed_range"],
+                    "output_name": output_name,
+                },
             )
 
 

@@ -193,6 +193,82 @@ def test_causal_channel_field_must_directly_consume_the_declared_output():
         validate_visual_fragment(output_only_in_another_field, deepcopy(VALID_UNDERSTANDING))
 
 
+@pytest.mark.parametrize(
+    "flat_expression",
+    [
+        pytest.param(
+            "width / 2 + output_lit_fraction * 0",
+            id="cancelled-output",
+        ),
+        pytest.param(
+            "clamp(output_lit_fraction, 0, 0)",
+            id="flat-clamp",
+        ),
+    ],
+)
+def test_causal_channel_must_vary_across_fixture_covered_output_states(
+    flat_expression: str,
+):
+    from server.fragment_generation import (
+        fragment_failure_diagnostic,
+        validate_visual_fragment,
+    )
+    from server.schemas import ContractError
+
+    document = _visual_fragment()
+    document["commands"][0]["cx"] = flat_expression
+
+    with pytest.raises(ContractError) as captured:
+        validate_visual_fragment(document, deepcopy(VALID_UNDERSTANDING))
+
+    diagnostic = fragment_failure_diagnostic(
+        captured.value,
+        role="visual",
+        understanding=deepcopy(VALID_UNDERSTANDING),
+    )
+    assert diagnostic == {
+        "gate": "fragment_contract",
+        "code": "causal_channel_fixture_response_required",
+        "expected": {
+            "fragment_contract_valid": True,
+            "channel": "x",
+            "minimum_distinct_states": 3,
+            "minimum_range": 32.0,
+            "monotonic_relation": "direct",
+        },
+        "actual": {
+            "fragment_contract_valid": False,
+            "failure_code": "causal_channel_fixture_response_required",
+            "channel": "x",
+            "distinct_states": 1,
+            "observed_range": 0.0,
+            "monotonic_relation": False,
+            "output_name": "lit_fraction",
+        },
+    }
+
+
+def test_actor_proof_channel_must_vary_across_fixture_covered_output_states():
+    from server.fragment_generation import validate_visual_fragment
+    from server.schemas import ContractError
+
+    document = _visual_fragment()
+    document["representation"]["proof_channels"].append(
+        {
+            "output_name": "lit_fraction",
+            "carrier": "actor",
+            "channel": "opacity",
+        }
+    )
+    document["commands"][0]["opacity"] = "0.65 + output_lit_fraction * 0"
+
+    with pytest.raises(
+        ContractError,
+        match="representation actor proof channel must vary",
+    ):
+        validate_visual_fragment(document, deepcopy(VALID_UNDERSTANDING))
+
+
 def test_signed_output_crossing_zero_requires_negative_zero_positive_fixtures():
     from server.fragment_generation import validate_visual_fragment
     from server.schemas import ContractError
@@ -275,26 +351,28 @@ def test_ellipse_rotation_is_compiled_as_safely_bounded_radians():
     assert "-Math.PI * 2,Math.PI * 2" in source
 
 
-def test_fragment_preflight_rejects_a_causal_relation_lie_before_browser_or_heal():
-    from server.fragment_generation import assemble_fragments
-    from server.verify import verify_candidate
+def test_fragment_contract_rejects_a_causal_relation_lie_before_assembly():
+    from server.fragment_generation import (
+        fragment_failure_diagnostic,
+        validate_visual_fragment,
+    )
+    from server.schemas import ContractError
 
     document = _visual_fragment()
     document["commands"][0]["cx"] = (
         "width / 2 - output_lit_fraction * min_dim * 0.25"
     )
-    module_output = assemble_fragments(
-        deepcopy(PHYSICS_FRAGMENT),
-        document,
-        deepcopy(VALID_UNDERSTANDING),
+    with pytest.raises(ContractError) as captured:
+        validate_visual_fragment(document, deepcopy(VALID_UNDERSTANDING))
+
+    diagnostic = fragment_failure_diagnostic(
+        captured.value,
+        role="visual",
+        understanding=deepcopy(VALID_UNDERSTANDING),
     )
-
-    report = verify_candidate(module_output, deepcopy(VALID_UNDERSTANDING))
-
-    assert report.passed is False
-    assert "causal_relation_mismatch" in {
-        failure["code"] for failure in report.failures
-    }
+    assert diagnostic["code"] == "causal_channel_fixture_response_required"
+    assert diagnostic["expected"]["monotonic_relation"] == "direct"
+    assert diagnostic["actual"]["monotonic_relation"] is False
 
 
 def test_fragment_preflight_samples_the_fixture_defined_zero_crossing():

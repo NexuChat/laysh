@@ -5,7 +5,7 @@
   "files": {
     "server/prompts/generate_module.md": "66ca95ae728c871687d8a3895514bc615d6ad7bb59e949529ac0722f4d8815df",
     "server/prompts/generate_physics.md": "9cd0f90577d418916f09863b53f03f3d79a0ed40b1390fa0c20971ab7088d79f",
-    "server/prompts/generate_visual.md": "055341b95cd1a71ab6af0bb85aaa9417ad691a2ca6eca9fa5121df64d9e31a83",
+    "server/prompts/generate_visual.md": "e82573bff53b1d7ddaea94e008f414680d4a57eb748b19a499598ee1eb1bde71",
     "server/prompts/heal_module.md": "9de7b16b681fa53dd4004547af201460c2e0d172fef7444b3e26376f5b4a757d",
     "server/prompts/qa.md": "57a3184de8c11900b2a9d8d7d5cef38ce0e5e0a80ce4c1963e159ccfe7f80eb0",
     "server/prompts/understand.md": "589e40d030c114a4d17a0a6f2b7ffa82b7eae08c0cbf0d77a5902d7652314fb7",

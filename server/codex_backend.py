@@ -48,6 +48,12 @@ FRAGMENT_RETRY_HINTS: dict[str, str] = {
         "Make the causal actor field for the selected channel directly use "
         "output_<output_name>; normalized alone is not causal evidence."
     ),
+    "causal_channel_fixture_response_required": (
+        "Replace the causal channel expression so fixture-covered low, middle, and "
+        "high output states yield three distinct salient values in the declared "
+        "direct or inverse order. Remove zero multipliers, flat clamps, and "
+        "post-fit saturation; do not merely preserve the old expression."
+    ),
     "signed_causal_fixture_coverage_required": (
         "Preserve distinct negative, zero, and positive actor behavior from the fixed "
         "signed output fixtures."
@@ -79,6 +85,11 @@ FRAGMENT_RETRY_HINTS: dict[str, str] = {
     "representation_actor_proof_unbacked": (
         "For every actor proof channel, make a scientific circle or ellipse field for "
         "that channel directly use output_<output_name>."
+    ),
+    "representation_actor_fixture_response_required": (
+        "Replace the actor proof expression so fixture-covered low, middle, and high "
+        "output states yield three visibly distinct values after runtime clamps. "
+        "Remove zero multipliers, flat clamps, and aliases that cancel the output."
     ),
     "representation_graph_scene_required": (
         "Set representation.scene_pattern to world_plus_graph whenever graph is the "
