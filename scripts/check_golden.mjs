@@ -336,9 +336,16 @@ try {
         await setControlValue(run.control_value);
         await delay(settleMilliseconds);
         const samples = [];
+        // Repeated carriers can advance by almost exactly one carrier spacing at
+        // the authored interval, making faster flow alias as slower flow. Sample
+        // the continuous carrier trace above its Nyquist rate without changing
+        // the artifact, expected speed ratio, or any production behavior.
+        const temporalSampleInterval = physics.kind === 'simple_circuit'
+          ? Math.min(Number(run.sample_interval_ms), 60)
+          : Number(run.sample_interval_ms);
         for (let index = 0; index < run.sample_count; index += 1) {
           samples.push(await captureMotionSample());
-          if (index + 1 < run.sample_count) await delay(run.sample_interval_ms);
+          if (index + 1 < run.sample_count) await delay(temporalSampleInterval);
         }
         temporalRuns.push({ control_value: Number(run.control_value), samples });
       }
