@@ -358,6 +358,50 @@ async def test_cache_write_failure_keeps_a_verified_playable_result_after_answer
     assert record.simulation.sim_id in manager.artifacts
 
 
+@pytest.mark.asyncio
+async def test_fresh_pipeline_without_an_incumbent_serves_and_caches_its_candidate(tmp_path):
+    from server.browser_verify import BrowserVerificationResult
+    from server.cache import VERIFIED_CACHE_CONTRACT_VERSION, VerifiedCache
+    from server.codex_backend import MockCodexBackend
+    from server.jobs import JobManager
+
+    cache = VerifiedCache(
+        root=tmp_path / "live",
+        golden_root=tmp_path / "golden",
+        secret=b"fresh-without-incumbent-secret",
+        contract_version=VERIFIED_CACHE_CONTRACT_VERSION,
+    )
+    manager = JobManager(
+        MockCodexBackend(),
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+        cache=cache,
+    )
+
+    record = manager.start("success", "ar", fresh_generation=True)
+    await record.task
+    cached = cache.lookup(
+        question="success",
+        locale="ar",
+        domain="astronomy",
+        canonical_intent="moon_phase_lit_fraction",
+    )
+
+    assert record.status == "complete"
+    assert record.fresh_outcome is None
+    assert record.artifact is not None
+    assert cached is not None and cached.artifact == record.artifact
+    assert set(cached.receipt.passed_gates) == {
+        "closed_schema",
+        "fixtures",
+        "node_runtime",
+        "restricted_source",
+    }
+    assert "success" not in (tmp_path / "live" / f"{cached.cache_id}.json").read_text(
+        encoding="utf-8"
+    )
+
+
 def test_unsafe_fixture_is_zero_echo_and_spends_no_generation(client, backend):
     canary = "unsafe PRIVATE-CANARY-9182"
     job_id = ask(client, canary)

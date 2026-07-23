@@ -4,7 +4,7 @@
       "sha256": "f2ee2cf9076a7598c89c8cefe8a3f870302be630774c5ee17457938dc9e1f79f"
     },
     "app.js": {
-      "sha256": "ad2d8c8ad5ff52f58f34a705301ad2eb961d02e9d9dc9117cb3e46829efddab3"
+      "sha256": "5f040a77526669279c633aff417b27fbc64396c49554b383752535d580f78b10"
     },
     "fonts/noto-kufi-ar.woff2": {
       "sha256": "01290c72f7179c551d8eef0b5e190615b082a5876e3abacca88e341e0e1fafe9"
@@ -16,10 +16,10 @@
       "sha256": "fdd64b204c65c91573024713ebf464f70cc22009e76c897f5c03825c3841f31a"
     },
     "translations.js": {
-      "sha256": "8be6c87f75d1ae8e4d3bc618c2fb87046a6c36f5ba46d7b3715fae360c8ac597"
+      "sha256": "cbd44a77c6c103564850435f83fde2a84be4adaed4e039abd96233671a33f16a"
     }
   },
-  "bundle_version": "44577c2cf1b1865b01db38ca8d0611766b33cabd592c3e8e726d6ac10660ff6e",
+  "bundle_version": "dd04997cd3ac7e8f96acf4af4418b2d4e215bb79ee30e76e59a0f5007d68009b",
   "gallery_contract_version": "1.0",
   "schema_version": "1.0"
 }

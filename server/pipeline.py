@@ -33,6 +33,69 @@ from server.verify import VerificationResult, formula_presentation_report, verif
 logger = logging.getLogger(__name__)
 
 
+LIVE_DETERMINISTIC_PASSED_GATES = frozenset(
+    {
+        "closed_schema",
+        "restricted_source",
+        "node_runtime",
+        "fixtures",
+    }
+)
+
+
+@dataclass(frozen=True, slots=True)
+class _FreshComparisonDecision:
+    approved: bool
+    reason_code: str
+
+
+def _live_browser_checks_pass(evidence: dict[str, Any] | None) -> bool:
+    """Check only the browser evidence available to live fresh rebuilds."""
+
+    if not isinstance(evidence, dict):
+        return False
+    return (
+        evidence.get("ready") is True
+        and evidence.get("controlChanged") is True
+        and evidence.get("frameChanged") is True
+        and isinstance(evidence.get("canvasHashBefore"), int)
+        and isinstance(evidence.get("canvasHashAfter"), int)
+        and evidence["canvasHashBefore"] != evidence["canvasHashAfter"]
+        and evidence.get("runtimeError") is False
+        and evidence.get("externalRequests") == 0
+    )
+
+
+def _compare_fresh_candidate(
+    incumbent: Any,
+    candidate_receipt: VerificationReceipt,
+    browser_evidence: dict[str, Any] | None,
+) -> _FreshComparisonDecision:
+    """Fail closed for fresh jobs without importing the offline promotion gate."""
+
+    incumbent_receipt = getattr(incumbent, "receipt", None)
+    incumbent_tier = getattr(incumbent, "tier", None)
+    if incumbent_receipt is None or not incumbent_receipt.verified:
+        return _FreshComparisonDecision(False, "missing_incumbent_evidence")
+    if {"A": 2, "B": 1}.get("B", 0) < {"A": 2, "B": 1}.get(incumbent_tier, 0):
+        return _FreshComparisonDecision(False, "candidate_tier_regression")
+    if not (
+        candidate_receipt.deterministic_passed
+        and candidate_receipt.failed_gate_count == 0
+        and LIVE_DETERMINISTIC_PASSED_GATES.issuperset(
+            incumbent_receipt.passed_gates
+        )
+    ):
+        return _FreshComparisonDecision(False, "deterministic_regression")
+    if not candidate_receipt.browser_passed or not _live_browser_checks_pass(
+        browser_evidence
+    ):
+        return _FreshComparisonDecision(False, "browser_regression")
+    if candidate_receipt.check_count < incumbent_receipt.check_count:
+        return _FreshComparisonDecision(False, "check_count_regression")
+    return _FreshComparisonDecision(True, "approved")
+
+
 class PipelineCancelled(Exception):
     pass
 
@@ -553,14 +616,17 @@ async def run_pipeline(manager: Any, record: Any) -> None:
 
     manager.transition(record, "cache_lookup", "فحص النتائج الموثقة")
     cache = manager.cache
-    if cache is not None and not record.fresh_generation:
+    incumbent = None
+    if cache is not None:
         cached = cache.lookup(
             question=question,
             locale=understanding["lang"],
             domain=understanding["domain"],
             canonical_intent=understanding["canonical_intent"],
         )
-        if cached is not None:
+        if record.fresh_generation:
+            incumbent = cached
+        elif cached is not None:
             manager.transition(record, "browser_check", "استخدام إيصال تحقق مخزّن")
             manager.emit(
                 record,
@@ -1292,8 +1358,53 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             ],
         },
     )
-    privacy_safe = not contains_learner_question_echo(artifact, question)
-    if cache is not None and privacy_safe:
+    candidate_receipt = VerificationReceipt(
+        deterministic_passed=True,
+        browser_passed=bool(browser_evidence),
+        failed_gate_count=0,
+        check_count=check_count,
+        passed_gates=tuple(sorted(LIVE_DETERMINISTIC_PASSED_GATES)),
+    )
+    candidate_privacy_safe = not contains_learner_question_echo(artifact, question)
+    served_artifact = artifact
+    served_title = understanding["title"]
+    served_locale = understanding["lang"]
+    served_direction = "rtl" if understanding["lang"] == "ar" else "ltr"
+    served_tier = "B"
+    served_check_count = check_count
+    served_heal_count = heal_count
+    served_effective_model: str | None = None
+    served_share_eligible = candidate_privacy_safe
+    keep_incumbent = False
+    if record.fresh_generation and incumbent is not None:
+        fresh_decision = _compare_fresh_candidate(
+            incumbent,
+            candidate_receipt,
+            browser_evidence,
+        )
+        if not fresh_decision.approved:
+            keep_incumbent = True
+            record.fresh_outcome = "kept_incumbent"
+            record.fresh_outcome_reason_code = fresh_decision.reason_code
+            record.builder_diagnostics.append(
+                {
+                    "type": "fresh_candidate_kept_incumbent",
+                    "reason_code": fresh_decision.reason_code,
+                }
+            )
+            served_artifact = incumbent.artifact
+            served_title = incumbent.title
+            served_locale = incumbent.locale
+            served_direction = incumbent.direction
+            served_tier = incumbent.tier
+            served_check_count = incumbent.receipt.check_count
+            served_heal_count = 0
+            served_effective_model = "verified/cache"
+            served_share_eligible = (
+                incumbent.exact_key == cache.exact_key(question, understanding["lang"])
+                and not contains_learner_question_echo(incumbent.artifact, question)
+            )
+    if cache is not None and candidate_privacy_safe and not keep_incumbent:
         try:
             cache.write_verified(
                 question=question,
@@ -1304,12 +1415,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 title=understanding["title"],
                 direction="rtl" if understanding["lang"] == "ar" else "ltr",
                 tier="B",
-                receipt=VerificationReceipt(
-                    deterministic_passed=True,
-                    browser_passed=bool(browser_evidence),
-                    failed_gate_count=0,
-                    check_count=check_count,
-                ),
+                receipt=candidate_receipt,
                 route_label=STABLE_ROUTE,
             )
         except (OSError, ValueError) as error:
@@ -1317,10 +1423,10 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 record.builder_diagnostics.append(
                     {"type": "cache_write_failed", "error_type": type(error).__name__}
                 )
-    sim_id = "sim_" + hashlib.sha256(artifact.encode("utf-8")).hexdigest()[:16]
-    manager.artifacts[sim_id] = artifact
-    record.share_eligible = privacy_safe
-    record.artifact = artifact
+    sim_id = "sim_" + hashlib.sha256(served_artifact.encode("utf-8")).hexdigest()[:16]
+    manager.artifacts[sim_id] = served_artifact
+    record.share_eligible = served_share_eligible
+    record.artifact = served_artifact
     if not record.public:
         record.builder_outputs = {
             "understanding": understanding,
@@ -1343,20 +1449,20 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         ),
         None,
     )
-    effective_model = effective_generation_model or (
+    effective_model = served_effective_model or effective_generation_model or (
         generated_execution["model"] if generated_execution else "mock/offline"
     )
     record.simulation = SimulationMetadata(
         sim_id=sim_id,
-        title=understanding["title"],
-        lang=understanding["lang"],
-        direction="rtl" if understanding["lang"] == "ar" else "ltr",
+        title=served_title,
+        lang=served_locale,
+        direction=served_direction,
         artifact_url=f"/api/sims/{sim_id}/download",
-        tier="B",
+        tier=served_tier,
         effective_model=effective_model,
         elapsed_ms=manager.elapsed_ms(record),
-        check_count=check_count,
-        heal_count=heal_count,
+        check_count=served_check_count,
+        heal_count=served_heal_count,
     )
     manager.emit(
         record,
@@ -1364,8 +1470,8 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         {
             "result_url": f"/api/jobs/{record.job_id}",
             "sim_id": sim_id,
-            "title": understanding["title"],
-            "tier": "B",
+            "title": served_title,
+            "tier": served_tier,
         },
     )
     manager.transition(record, "complete", "verified_mock_result")

@@ -81,6 +81,8 @@ class JobRecord:
     promote_golden: bool = False
     share_eligible: bool = False
     fresh_generation: bool = False
+    fresh_outcome: str | None = None
+    fresh_outcome_reason_code: str | None = None
 
     def public_result(self) -> PublicResult:
         return PublicResult(
@@ -89,6 +91,8 @@ class JobRecord:
             answer=self.answer,
             simulation=self.simulation,
             fallback=self.fallback,
+            fresh_outcome=self.fresh_outcome,
+            fresh_outcome_reason_code=self.fresh_outcome_reason_code,
             runtime_receipts=self.runtime_receipts,
         )
 

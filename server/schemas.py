@@ -185,6 +185,14 @@ class PublicResult(ClosedModel):
     answer: AnswerPayload | None
     simulation: SimulationMetadata | None
     fallback: FallbackResult | None
+    fresh_outcome: Literal["kept_incumbent"] | None = None
+    fresh_outcome_reason_code: Literal[
+        "candidate_tier_regression",
+        "deterministic_regression",
+        "browser_regression",
+        "check_count_regression",
+        "missing_incumbent_evidence",
+    ] | None = None
     runtime_receipts: list[RuntimeStageReceipt] = Field(default_factory=list)
 
 

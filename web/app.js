@@ -31,6 +31,7 @@
     connectionKey: null,
     failure: null,
     shareFeedbackKey: null,
+    freshOutcomeKey: null,
   };
 
   const byId = (id) => document.getElementById(id);
@@ -256,7 +257,7 @@
     const shareButton = byId("share-result");
     shareButton.disabled = false;
     delete shareButton.dataset.shareUrl;
-    setShareFeedback(null);
+    setFreshOutcomeNotice(result);
     byId("receipt-tier").textContent = t(simulation.tier === "A" ? "result.tierA" : "result.tierB");
     byId("tier-badge").textContent = t(
       simulation.tier === "A" ? "result.humanBadge" : "result.autoBadge",
@@ -273,10 +274,18 @@
   function setShareFeedback(key) {
     state.shareFeedbackKey = key;
     const status = byId("share-status");
-    status.textContent = key ? t(key) : "";
+    const displayedKey = key || state.freshOutcomeKey;
+    status.textContent = displayedKey ? t(displayedKey) : "";
     if (key === "result.shareFailure") status.dataset.state = "failed";
-    else if (key) status.dataset.state = "complete";
+    else if (displayedKey) status.dataset.state = "complete";
     else delete status.dataset.state;
+  }
+
+  function setFreshOutcomeNotice(result) {
+    state.freshOutcomeKey = result.fresh_outcome === "kept_incumbent"
+      ? "result.keptBetterVersion"
+      : null;
+    setShareFeedback(null);
   }
 
   async function shareResult() {
