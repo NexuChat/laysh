@@ -21,6 +21,7 @@ from server.goldens import (
     review_golden_candidate,
 )
 from server.jobs import JobManager
+from server.promotion import compare_promotion_candidate
 from server.settings import Settings
 from server.verify import verify_candidate
 
@@ -34,6 +35,21 @@ def atomic_write(path: Path, content: str) -> None:
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(content, encoding="utf-8")
     temporary.replace(path)
+
+
+def _promotion_screenshot_evidence(paths: list[Path]) -> list[dict[str, Any]]:
+    evidence: list[dict[str, Any]] = []
+    for path in paths:
+        viewport = "mobile" if "mobile" in path.name else "desktop"
+        content = path.read_bytes()
+        evidence.append(
+            {
+                "viewport": viewport,
+                "sha256": hashlib.sha256(content).hexdigest(),
+                "bytes": len(content),
+            }
+        )
+    return evidence
 
 
 def _safe_stage_report(record: Any) -> list[dict[str, Any]]:
@@ -324,11 +340,48 @@ def promote_candidate(fixture_id: str, revision: str | None = None) -> int:
         contract_version="1.0",
     )
     existing_path = GOLDEN_ROOT / f"{golden_id}.json"
+    incumbent = None
     previous_sha256 = None
+    if existing_path.exists():
+        incumbent = json.loads(existing_path.read_text(encoding="utf-8"))
     if revision:
-        previous_sha256 = json.loads(existing_path.read_text(encoding="utf-8"))[
-            "artifact_sha256"
-        ]
+        if incumbent is None:
+            raise ValueError("a release revision requires an incumbent golden")
+        previous_sha256 = incumbent["artifact_sha256"]
+    promotion_evidence = {
+        "deterministic": {
+            "passed": authoritative_verification.passed,
+            "report": authoritative_verification.node_report,
+        },
+        "contract": {"passed": current_review["passed"], "review": current_review},
+        "qa": {
+            "passed": True,
+            "builder": outputs["qa"],
+            "semantic": outputs["visual_qa"],
+        },
+        "browser": browser_report,
+        "screenshots": _promotion_screenshot_evidence(screenshots),
+    }
+    promotion_decision = None
+    if incumbent is not None:
+        promotion_decision = compare_promotion_candidate(
+            {
+                "tier": incumbent["tier"],
+                "artifact_sha256": incumbent["artifact_sha256"],
+                "evidence": incumbent.get("evidence", {}).get("promotion"),
+            },
+            {
+                "tier": "A",
+                "artifact_sha256": candidate["artifact_sha256"],
+                "incumbent_artifact_sha256": incumbent["artifact_sha256"],
+                "evidence": promotion_evidence,
+            },
+        )
+        if not promotion_decision.approved:
+            raise ValueError(
+                "candidate is worse than the incumbent: "
+                + promotion_decision.reason_code.value
+            )
     entry = cache.pin_golden(
         golden_id=golden_id,
         question=fixture["question"],
@@ -360,9 +413,11 @@ def promote_candidate(fixture_id: str, revision: str | None = None) -> int:
             "heal_count": verification["heal_count"],
             "browser": browser_report,
             "screenshots": [str(path.relative_to(ROOT)) for path in screenshots],
+            "promotion": promotion_evidence,
         },
         release_revision=revision,
         expected_previous_sha256=previous_sha256,
+        promotion_decision=promotion_decision,
     )
     manifest = build_manifest()
     atomic_write(

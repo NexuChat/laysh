@@ -43,8 +43,11 @@ async def test_fresh_rebuild_bypasses_a_verified_cache_hit_without_retaining_que
     assert rebuilt.simulation is not None
     assert cached.simulation.effective_model == "verified/cache"
     assert rebuilt.simulation.effective_model != "verified/cache"
+    assert rebuilt.simulation.tier == "B"
     assert backend.generate_calls == 2
     assert rebuilt.question is None
+    assert list((tmp_path / "golden").glob("*.json")) == []
+    assert all(entry.tier == "B" for entry in cache.list_entries())
 
 
 def test_api_accepts_only_the_closed_fresh_generation_mode(client):

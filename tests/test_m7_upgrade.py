@@ -200,13 +200,57 @@ def test_explicit_release_revision_can_replace_a_pin_but_live_writes_remain_bloc
         "answer": {"tldr": "جواب", "key_formula": "f = (1 − cos θ) / 2"},
         "metadata": {"ar": {"title": "أطوار القمر"}},
         "review": {"verdict": "pass"},
-        "evidence": {"gate": "G7"},
+        "evidence": {
+            "deterministic": {"passed": True},
+            "contract": {"passed": True},
+            "qa": {"passed": True},
+            "browser": {
+                "ready": True,
+                "runtimeError": False,
+                "externalRequests": 0,
+                "cases": [
+                    {"frameChanged": True, "visualSignature": 1},
+                    {"frameChanged": True, "visualSignature": 2},
+                    {"frameChanged": True, "visualSignature": 3},
+                ],
+                "idleFrameChanged": True,
+                "reactiveFrameVariants": 3,
+            },
+            "screenshots": [
+                {"viewport": "mobile", "sha256": "b" * 64, "bytes": 20_000},
+                {"viewport": "desktop", "sha256": "c" * 64, "bytes": 30_000},
+            ],
+        },
     }
     original = cache.pin_golden(artifact="<!doctype html><p>v1</p>", **common)
+    with pytest.raises(ValueError, match="approved promotion decision"):
+        cache.pin_golden(
+            artifact="<!doctype html><p>v1.1</p>",
+            release_revision="v1.1",
+            expected_previous_sha256=original.artifact_sha256,
+            **common,
+        )
+
+    from server.promotion import compare_promotion_candidate
+
+    decision = compare_promotion_candidate(
+        {
+            "tier": "A",
+            "artifact_sha256": original.artifact_sha256,
+            "evidence": common["evidence"],
+        },
+        {
+            "tier": "A",
+            "artifact_sha256": "d" * 64,
+            "incumbent_artifact_sha256": original.artifact_sha256,
+            "evidence": common["evidence"],
+        },
+    )
     replacement = cache.pin_golden(
         artifact="<!doctype html><p>v1.1</p>",
         release_revision="v1.1",
         expected_previous_sha256=original.artifact_sha256,
+        promotion_decision=decision,
         **common,
     )
 
