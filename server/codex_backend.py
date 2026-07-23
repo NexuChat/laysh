@@ -52,6 +52,30 @@ FRAGMENT_RETRY_HINTS: dict[str, str] = {
         "Preserve distinct negative, zero, and positive actor behavior from the fixed "
         "signed output fixtures."
     ),
+    "representation_time_driven_deferred": (
+        "Use parameter_driven or cyclic for representation.motion_model; time_driven "
+        "requires phase A2 primitives and is not available yet."
+    ),
+    "representation_archetype_not_emittable": (
+        "Choose body, elongated_body, orbital_pair, linked_bodies, or "
+        "surface_and_body until the phase A2 command primitives are available."
+    ),
+    "representation_archetype_command_mismatch": (
+        "Match actor_archetype to the emitted scientific circle and ellipse "
+        "composition, including enough scientific actors for paired archetypes."
+    ),
+    "representation_actor_proof_unbacked": (
+        "For every actor proof channel, make a scientific circle or ellipse field for "
+        "that channel directly use output_<output_name>."
+    ),
+    "representation_graph_scene_required": (
+        "Set representation.scene_pattern to world_plus_graph whenever graph is the "
+        "selected proof medium."
+    ),
+    "representation_output_undeclared": (
+        "Use an exact output declared by the fixed module spec for every "
+        "representation proof channel; do not invent aliases."
+    ),
     "scientific_output_reference_required": (
         "Every scientific circle or ellipse must visibly use output_<declared_name> "
         "in at least one geometry or opacity field. Fixed contextual shapes must set "

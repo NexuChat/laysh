@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from copy import deepcopy
 
 import pytest
@@ -28,6 +29,18 @@ def _scientific_actor(*, opacity: str = "0.5 + output_lit_fraction * 0.5") -> di
 
 def _visual_fragment() -> dict:
     return {
+        "representation": {
+            "scene_pattern": "world_only",
+            "actor_archetype": "body",
+            "proof_channels": [
+                {
+                    "output_name": "lit_fraction",
+                    "carrier": "actor",
+                    "channel": "x",
+                }
+            ],
+            "motion_model": "parameter_driven",
+        },
         "background": {
             "top_color": "#07111F",
             "bottom_color": "#10243A",
@@ -93,6 +106,7 @@ def _signed_visual_fragment() -> dict:
     document["commands"][0]["cx"] = "width / 2 + output_signed_response * 20"
     document["commands"][0]["opacity"] = "1"
     document["causal_response"]["output_name"] = "signed_response"
+    document["representation"]["proof_channels"][0]["output_name"] = "signed_response"
     return document
 
 
@@ -249,6 +263,7 @@ def test_ellipse_rotation_is_compiled_as_safely_bounded_radians():
         }
     ]
     document["causal_response"]["channel"] = "rotation"
+    document["representation"]["proof_channels"][0]["channel"] = "rotation"
 
     source = assemble_fragments(
         deepcopy(PHYSICS_FRAGMENT),
@@ -394,5 +409,4 @@ async def test_causal_fragment_retry_codes_receive_topic_agnostic_guidance(
 
     retry_guidance = executor.prompt.split("DETERMINISTIC_RETRY:", 1)[1]
     assert actionable_phrase in retry_guidance
-    assert "car" not in executor.prompt.casefold()
-    assert "plane" not in executor.prompt.casefold()
+    assert re.search(r"\b(?:car|plane)\b", executor.prompt.casefold()) is None
