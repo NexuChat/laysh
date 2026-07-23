@@ -16,10 +16,10 @@
       "sha256": "be133a4f35a759038fbf2bfef053bfb3fda248992e9345204a9e3d8b01df75ef"
     },
     "translations.js": {
-      "sha256": "b386e0d5d7e8a70fc1756b70d52e8d74f60ec64b4647d079de1140ea711a2737"
+      "sha256": "4376d472169fa8e2e2308d66321f94c030d882581bd78ef8d33e5c85baed9af7"
     }
   },
-  "bundle_version": "acea850244aae429813000a6d34f686099a54724c34974109c8bc6a6a31786c4",
+  "bundle_version": "cde91406e5a81dc6171abd65eca3d346782722d9a7d3e242203ac09581bd1ef6",
   "gallery_contract_version": "1.0",
   "schema_version": "1.0"
 }

@@ -37,7 +37,7 @@
     <main id="comparison">
       <section class="lab-hero" aria-labelledby="lab-title">
         <div class="hero-copy">
-          <p class="lab-badge"><span aria-hidden="true">◉</span> <span data-i18n="modelLab.badge">Private lab · never added to the library</span></p>
+          <p class="lab-badge"><span aria-hidden="true">◉</span> <span data-i18n="modelLab.badge">Isolated lab · never added to the library</span></p>
           <p class="eyebrow" data-i18n="modelLab.eyebrow">Model comparison observatory</p>
           <h1 id="lab-title" data-i18n="modelLab.title">One question. Two different eyes.</h1>
           <p class="lede" data-i18n="modelLab.lede">Hold the question constant, then compare how each model draws the scientific idea at the reasoning effort you choose.</p>
@@ -53,7 +53,7 @@
         <span class="notice-mark" aria-hidden="true">i</span>
         <div>
           <strong data-i18n="modelLab.noticeTitle">An honest, isolated comparison</strong>
-          <p data-i18n="modelLab.notice">We understand the question once, then generate two candidates concurrently. No heal, model QA, or library write; only artifacts that pass deterministic and browser gates are shown.</p>
+          <p data-i18n="modelLab.notice">We understand the question once, then generate two candidates concurrently. Verified results are labeled as such; safe but rejected candidates may appear only as unverified previews. Nothing is written to the library.</p>
         </div>
       </aside>
 
@@ -158,6 +158,11 @@
           </dl>
           <div class="bay-stage">
             <div class="stage-placeholder" aria-hidden="true"><span></span><i></i></div>
+            <div class="preview-warning" role="note" hidden>
+              <strong data-i18n="modelLab.previewTitle">Unverified preview</strong>
+              <p data-i18n="modelLab.previewCopy">This candidate missed scientific or quality checks. It is shown only for comparison and is not verified, cached, shared, or added to the library.</p>
+              <p><strong data-i18n="modelLab.gates">Gates not passed</strong>: <bdi class="preview-failures" dir="ltr"></bdi></p>
+            </div>
             <iframe title="Candidate A simulation" sandbox="allow-scripts" scrolling="auto" data-i18n-title="modelLab.frameTitle" data-i18n-slot="A" hidden></iframe>
             <div class="withheld" hidden>
               <span aria-hidden="true">×</span>
@@ -187,6 +192,11 @@
           </dl>
           <div class="bay-stage">
             <div class="stage-placeholder" aria-hidden="true"><span></span><i></i></div>
+            <div class="preview-warning" role="note" hidden>
+              <strong data-i18n="modelLab.previewTitle">Unverified preview</strong>
+              <p data-i18n="modelLab.previewCopy">This candidate missed scientific or quality checks. It is shown only for comparison and is not verified, cached, shared, or added to the library.</p>
+              <p><strong data-i18n="modelLab.gates">Gates not passed</strong>: <bdi class="preview-failures" dir="ltr"></bdi></p>
+            </div>
             <iframe title="Candidate B simulation" sandbox="allow-scripts" scrolling="auto" data-i18n-title="modelLab.frameTitle" data-i18n-slot="B" hidden></iframe>
             <div class="withheld" hidden>
               <span aria-hidden="true">×</span>
@@ -198,7 +208,7 @@
       </section>
     </main>
 
-    <footer class="lab-footer" data-i18n="modelLab.footer">This is a private measurement lab, not the learner path or Laysh library.</footer>
+    <footer class="lab-footer" data-i18n="modelLab.footer">This is an isolated measurement lab, not the learner path or Laysh library.</footer>
   </div>
 </body>
 </html>

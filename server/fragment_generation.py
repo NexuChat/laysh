@@ -1421,6 +1421,48 @@ def validate_visual_fragment(
     return document
 
 
+def validate_visual_fragment_for_preview(
+    document: dict[str, Any],
+    understanding: dict[str, Any],
+) -> dict[str, Any]:
+    """Validate only the closed, compilable visual DSL needed for a safe lab preview.
+
+    Scientific semantics deliberately remain the responsibility of
+    ``validate_visual_fragment``. This narrower boundary exists only so the isolated
+    model lab can render a clearly labeled rejected candidate without accepting it as
+    verified or exposing model-authored code.
+    """
+
+    understanding = validate_understanding(understanding)
+    validate_document(document, load_schema("visual_fragment.schema.json"))
+    _reject_untrusted_markers(document)
+    commands = document["commands"]
+    ids = [command["id"] for command in commands]
+    if len(set(ids)) != len(ids):
+        raise ContractError("visual command ids must be unique")
+    declared_output_names = {
+        f"output_{name}" for name in understanding["module_spec"]["outputs"]
+    }
+    declared_outputs = set(understanding["module_spec"]["outputs"])
+    for command in commands:
+        for _, expression, _ in _command_numeric_expressions(command):
+            if not _visual_output_names(expression) <= declared_output_names:
+                raise ContractError("visual expression references an undeclared output")
+            _compile_visual_expression(expression, understanding)
+        if (
+            command["kind"] == "trajectory"
+            and command["output_name"] not in declared_outputs
+        ):
+            raise ContractError("trajectory output must reference a declared output")
+    for relation in document["relations"]:
+        if not _visual_output_names(
+            relation["minimum_clearance"]
+        ) <= declared_output_names:
+            raise ContractError("relation references an undeclared output")
+        _compile_visual_expression(relation["minimum_clearance"], understanding)
+    return document
+
+
 def _visual_expression(expression: object, understanding: dict[str, Any]) -> str:
     return f"finiteNumber({_compile_visual_expression(expression, understanding)})"
 
@@ -1785,6 +1827,38 @@ def assemble_fragments(
     understanding = validate_understanding(understanding)
     physics_fragment = validate_physics_fragment(physics_fragment, understanding)
     visual_fragment = validate_visual_fragment(visual_fragment, understanding)
+    return _assemble_validated_fragments(
+        physics_fragment,
+        visual_fragment,
+        understanding,
+    )
+
+
+def assemble_fragments_for_preview(
+    physics_fragment: dict[str, Any],
+    visual_fragment: dict[str, Any],
+    understanding: dict[str, Any],
+) -> dict[str, Any]:
+    """Assemble a safe but explicitly unverified lab-only preview."""
+
+    understanding = validate_understanding(understanding)
+    physics_fragment = validate_physics_fragment(physics_fragment, understanding)
+    visual_fragment = validate_visual_fragment_for_preview(
+        visual_fragment,
+        understanding,
+    )
+    return _assemble_validated_fragments(
+        physics_fragment,
+        visual_fragment,
+        understanding,
+    )
+
+
+def _assemble_validated_fragments(
+    physics_fragment: dict[str, Any],
+    visual_fragment: dict[str, Any],
+    understanding: dict[str, Any],
+) -> dict[str, Any]:
     primary = understanding["primary_parameter"]
     secondary = understanding.get("secondary_parameter")
     parameters = [primary, *([] if secondary is None else [secondary])]

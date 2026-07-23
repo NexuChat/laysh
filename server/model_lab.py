@@ -15,6 +15,7 @@ from server.codex_backend import RuntimeContext, StageModelSpec
 from server.codex_runtime import CodexRuntimeError, StageExecution
 from server.fragment_generation import (
     assemble_fragments,
+    assemble_fragments_for_preview,
     fragment_failure_diagnostic,
     validate_physics_fragment,
     validate_visual_fragment,
@@ -26,12 +27,25 @@ from server.schemas import (
     validate_module_output,
     validate_understanding,
 )
-from server.verify import VerificationResult, verify_candidate
+from server.verify import (
+    VerificationResult,
+    verify_artifact_contract,
+    verify_candidate,
+)
 
 LabModel = Literal["gpt-5.6-luna", "gpt-5.6-terra", "gpt-5.6-sol"]
 LabEffort = Literal["low", "medium", "high"]
-LabCandidateStatus = Literal["queued", "generating", "verifying", "verified", "rejected", "failed"]
+LabCandidateStatus = Literal[
+    "queued",
+    "generating",
+    "verifying",
+    "verified",
+    "unverified",
+    "rejected",
+    "failed",
+]
 LabRunStatus = Literal["queued", "understanding", "generating", "complete", "rejected", "failed"]
+LabArtifactTier = Literal["verified", "unverified_preview"]
 
 
 class ModelLabStageConfig(ClosedModel):
@@ -70,6 +84,7 @@ class ModelLabCandidateResult(ClosedModel):
     check_count: int = Field(default=0, ge=0)
     failed_gates: list[str] = Field(default_factory=list, max_length=20)
     failure_codes: list[str] = Field(default_factory=list, max_length=20)
+    artifact_tier: LabArtifactTier | None = None
     artifact_url: str | None = None
 
 
@@ -100,6 +115,7 @@ class _Candidate:
     check_count: int = 0
     failed_gates: list[str] = field(default_factory=list)
     failure_codes: list[str] = field(default_factory=list)
+    artifact_tier: LabArtifactTier | None = None
     artifact_url: str | None = None
 
     def public_result(self) -> ModelLabCandidateResult:
@@ -116,6 +132,7 @@ class _Candidate:
             check_count=self.check_count,
             failed_gates=self.failed_gates,
             failure_codes=self.failure_codes,
+            artifact_tier=self.artifact_tier,
             artifact_url=self.artifact_url,
         )
 
@@ -164,6 +181,58 @@ def _gate_names(failures: list[dict[str, Any]]) -> list[str]:
             and isinstance((gate := failure.get("gate")), str)
         }
     )[:20]
+
+
+def _failure_codes(failures: list[dict[str, Any]]) -> list[str]:
+    return sorted(
+        {
+            f"{gate}:{code}"
+            for failure in failures
+            if isinstance(failure, dict)
+            and isinstance((gate := failure.get("gate")), str)
+            and isinstance((code := failure.get("code")), str)
+            and gate.replace("_", "").isalnum()
+            and code.replace("_", "").isalnum()
+        }
+    )[:20]
+
+
+_PREVIEW_BLOCKING_GATES = frozenset(
+    {
+        "source_size",
+        "interface",
+        "security",
+        "syntax_runtime",
+        "assembly",
+    }
+)
+_PREVIEW_BLOCKING_BROWSER_CODES = frozenset(
+    {
+        "browser_probe_unavailable",
+        "browser_probe_timeout",
+        "browser_probe_failed",
+        "browser_probe_malformed",
+        "first_frame_missing",
+        "runtime_error_beacon",
+        "external_request_observed",
+    }
+)
+
+
+def _preview_blocked_by(failures: list[dict[str, Any]]) -> bool:
+    return any(
+        isinstance(failure, dict)
+        and failure.get("gate") in _PREVIEW_BLOCKING_GATES
+        for failure in failures
+    )
+
+
+def _preview_blocked_by_browser(failures: list[dict[str, Any]]) -> bool:
+    return any(
+        isinstance(failure, dict)
+        and failure.get("code") in _PREVIEW_BLOCKING_BROWSER_CODES
+        for failure in failures
+    )
 
 
 class ModelLabManager:
@@ -320,55 +389,82 @@ class ModelLabManager:
         elapsed = int((time.monotonic() - generation_started) * 1000)
         candidate.physics_elapsed_ms = _stage_elapsed(physics_result, elapsed)
         candidate.visual_elapsed_ms = _stage_elapsed(visual_result, elapsed)
-        validated_fragments: dict[str, dict[str, Any]] = {}
-        for role, result, validator in (
-            ("physics", physics_result, validate_physics_fragment),
-            ("visual", visual_result, validate_visual_fragment),
-        ):
-            try:
-                validated_fragments[role] = validator(
-                    _stage_data(result),
-                    understanding,
-                )
-            except (ContractError, ValidationError, ValueError) as error:
-                diagnostic = fragment_failure_diagnostic(
-                    error,
-                    role=role,
-                    understanding=understanding,
-                )
-                candidate.failed_gates.append(diagnostic["gate"])
-                candidate.failure_codes.append(f"{role}:{diagnostic['code']}")
-            except OSError:
-                candidate.status = "failed"
-                return
-        if candidate.failure_codes:
-            candidate.failed_gates = sorted(set(candidate.failed_gates))
-            candidate.check_count = len(candidate.failure_codes)
-            candidate.status = "rejected"
-            return
-
+        physics_document = _stage_data(physics_result)
+        visual_document = _stage_data(visual_result)
         try:
-            module_output = validate_module_output(
-                assemble_fragments(
-                    validated_fragments["physics"],
-                    validated_fragments["visual"],
-                    understanding,
-                )
+            physics_fragment = validate_physics_fragment(
+                physics_document,
+                understanding,
             )
         except (ContractError, ValidationError, ValueError) as error:
             diagnostic = fragment_failure_diagnostic(
                 error,
-                role="assembly",
+                role="physics",
                 understanding=understanding,
             )
             candidate.failed_gates = [diagnostic["gate"]]
-            candidate.failure_codes = [f"assembly:{diagnostic['code']}"]
+            candidate.failure_codes = [f"physics:{diagnostic['code']}"]
             candidate.check_count = 1
             candidate.status = "rejected"
             return
         except OSError:
             candidate.status = "failed"
             return
+
+        visual_semantic_failure: dict[str, Any] | None = None
+        try:
+            visual_fragment = validate_visual_fragment(
+                visual_document,
+                understanding,
+            )
+        except (ContractError, ValidationError, ValueError) as error:
+            visual_semantic_failure = fragment_failure_diagnostic(
+                error,
+                role="visual",
+                understanding=understanding,
+            )
+            candidate.failed_gates = [visual_semantic_failure["gate"]]
+            candidate.failure_codes = [
+                f"visual:{visual_semantic_failure['code']}"
+            ]
+            candidate.check_count = 1
+            try:
+                module_output = validate_module_output(
+                    assemble_fragments_for_preview(
+                        physics_fragment,
+                        visual_document,
+                        understanding,
+                    )
+                )
+            except (ContractError, ValidationError, OSError, ValueError):
+                candidate.status = "rejected"
+                return
+        except OSError:
+            candidate.status = "failed"
+            return
+        else:
+            try:
+                module_output = validate_module_output(
+                    assemble_fragments(
+                        physics_fragment,
+                        visual_fragment,
+                        understanding,
+                    )
+                )
+            except (ContractError, ValidationError, ValueError) as error:
+                diagnostic = fragment_failure_diagnostic(
+                    error,
+                    role="assembly",
+                    understanding=understanding,
+                )
+                candidate.failed_gates = [diagnostic["gate"]]
+                candidate.failure_codes = [f"assembly:{diagnostic['code']}"]
+                candidate.check_count = 1
+                candidate.status = "rejected"
+                return
+            except OSError:
+                candidate.status = "failed"
+                return
 
         candidate.status = "verifying"
         verification_started = time.monotonic()
@@ -377,9 +473,48 @@ class ModelLabManager:
             module_output,
             understanding,
         )
-        candidate.check_count = deterministic.check_count
-        if not deterministic.passed or deterministic.artifact is None:
-            candidate.failed_gates = _gate_names(deterministic.failures)
+        candidate.check_count += deterministic.check_count
+        combined_failures = list(deterministic.failures)
+        if visual_semantic_failure is not None:
+            combined_failures.insert(0, visual_semantic_failure)
+        candidate.failed_gates = _gate_names(combined_failures)
+        candidate.failure_codes = sorted(
+            set([*candidate.failure_codes, *_failure_codes(deterministic.failures)])
+        )[:20]
+
+        artifact = deterministic.artifact
+        if artifact is None and not _preview_blocked_by(deterministic.failures):
+            try:
+                from server.assemble import assemble_artifact
+
+                artifact = assemble_artifact(understanding, module_output)
+                artifact_failures, artifact_checks = verify_artifact_contract(
+                    artifact,
+                    understanding,
+                    module_output["module_js"],
+                )
+                candidate.check_count += artifact_checks
+                if artifact_failures:
+                    artifact = None
+                    candidate.failed_gates = sorted(
+                        set(
+                            [
+                                *candidate.failed_gates,
+                                *_gate_names(artifact_failures),
+                            ]
+                        )
+                    )[:20]
+                    candidate.failure_codes = sorted(
+                        set(
+                            [
+                                *candidate.failure_codes,
+                                *_failure_codes(artifact_failures),
+                            ]
+                        )
+                    )[:20]
+            except (OSError, ValueError):
+                artifact = None
+        if artifact is None:
             candidate.verification_elapsed_ms = int(
                 (time.monotonic() - verification_started) * 1000
             )
@@ -390,7 +525,7 @@ class ModelLabManager:
             async with self._browser_slots:
                 browser: BrowserVerificationResult = await asyncio.to_thread(
                     self.browser_verifier,
-                    deterministic.artifact,
+                    artifact,
                 )
         except (OSError, RuntimeError, ValueError):
             candidate.verification_elapsed_ms = int(
@@ -399,8 +534,14 @@ class ModelLabManager:
             candidate.status = "failed"
             return
         candidate.check_count += browser.check_count
-        if not browser.passed:
-            candidate.failed_gates = _gate_names(browser.failures)
+        if browser.failures:
+            candidate.failed_gates = sorted(
+                set([*candidate.failed_gates, *_gate_names(browser.failures)])
+            )[:20]
+            candidate.failure_codes = sorted(
+                set([*candidate.failure_codes, *_failure_codes(browser.failures)])
+            )[:20]
+        if _preview_blocked_by_browser(browser.failures):
             candidate.verification_elapsed_ms = int(
                 (time.monotonic() - verification_started) * 1000
             )
@@ -408,9 +549,18 @@ class ModelLabManager:
             return
 
         artifact_id = f"{run.run_id}_{candidate.slot.lower()}"
-        self.artifacts[artifact_id] = deterministic.artifact
+        self.artifacts[artifact_id] = artifact
         candidate.artifact_url = f"/api/model-lab/artifacts/{artifact_id}"
         candidate.verification_elapsed_ms = int(
             (time.monotonic() - verification_started) * 1000
         )
-        candidate.status = "verified"
+        if (
+            visual_semantic_failure is None
+            and deterministic.passed
+            and browser.passed
+        ):
+            candidate.status = "verified"
+            candidate.artifact_tier = "verified"
+        else:
+            candidate.status = "unverified"
+            candidate.artifact_tier = "unverified_preview"

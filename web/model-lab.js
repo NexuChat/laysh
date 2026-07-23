@@ -45,6 +45,7 @@
     generating: "modelLab.generating",
     verifying: "modelLab.verifying",
     verified: "modelLab.verified",
+    unverified: "modelLab.unverified",
     rejected: "modelLab.rejected",
     failed: "modelLab.failed",
   };
@@ -110,6 +111,9 @@
     frame.removeAttribute("src");
     frame.style.removeProperty("height");
     bay.querySelector(".withheld").hidden = true;
+    const previewWarning = bay.querySelector(".preview-warning");
+    previewWarning.hidden = true;
+    previewWarning.querySelector(".preview-failures").textContent = "";
   }
 
   function resetComparison(configs) {
@@ -160,8 +164,20 @@
 
     const frame = bay.querySelector("iframe");
     const withheld = bay.querySelector(".withheld");
-    if (candidate.status === "verified" && candidate.artifact_url) {
+    const previewWarning = bay.querySelector(".preview-warning");
+    const safeFailures = [...new Set([
+      ...(candidate.failed_gates || []),
+      ...(candidate.failure_codes || []),
+    ])];
+    if (
+      ["verified", "unverified"].includes(candidate.status)
+      && candidate.artifact_url
+    ) {
       withheld.hidden = true;
+      previewWarning.hidden = candidate.status !== "unverified";
+      previewWarning.querySelector(".preview-failures").textContent = safeFailures.length
+        ? safeFailures.join(", ")
+        : "—";
       frame.hidden = false;
       if (frame.getAttribute("src") !== candidate.artifact_url) {
         frame.src = candidate.artifact_url;
@@ -169,11 +185,9 @@
       return;
     }
     frame.hidden = true;
+    previewWarning.hidden = true;
     if (candidate.status === "rejected" || candidate.status === "failed") {
       withheld.hidden = false;
-      const safeFailures = candidate.failure_codes?.length
-        ? candidate.failure_codes
-        : candidate.failed_gates;
       bay.querySelector(".failed-gates").textContent = safeFailures.length
         ? safeFailures.join(", ")
         : "—";

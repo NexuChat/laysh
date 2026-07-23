@@ -5,6 +5,7 @@ import time
 from copy import deepcopy
 from typing import Any
 
+import pytest
 from fastapi.testclient import TestClient
 
 from tests.conftest import wait_for_terminal
@@ -87,17 +88,20 @@ class _ComparingBackend:
             self.active_generations -= 1
 
 
-def _enabled_client(monkeypatch, backend: Any):
+def _enabled_client(monkeypatch, backend: Any, *, browser_verifier=None):
     from server.app import create_app
     from server.browser_verify import BrowserVerificationResult
     from server.codex_backend import MockCodexBackend
 
     monkeypatch.setenv("LAYSH_MODEL_LAB_ENABLED", "1")
+    if browser_verifier is None:
+        def browser_verifier(_):
+            return BrowserVerificationResult.passing()
     return TestClient(
         create_app(
             backend=MockCodexBackend(),
             model_lab_backend=backend,
-            browser_verifier=lambda _: BrowserVerificationResult.passing(),
+            browser_verifier=browser_verifier,
         )
     )
 
@@ -137,6 +141,7 @@ def test_model_lab_page_is_separate_and_has_closed_comparison_controls(monkeypat
     assert 'data-role="understand"' in response.text
     assert response.text.count('data-role="physics"') == 2
     assert response.text.count('data-role="visual"') == 2
+    assert response.text.count('class="preview-warning"') == 2
     assert "/api/model-lab/compare" not in response.text
     assert 'href="/"' in response.text
 
@@ -243,7 +248,7 @@ def test_enabled_codex_lab_owns_a_distinct_backend_executor_and_semaphore(monkey
     assert lab_backend._model_slots is not learner_backend._model_slots
 
 
-def test_model_lab_withholds_rejected_candidate_and_exposes_only_safe_gate_names(
+def test_model_lab_shows_a_labeled_unverified_preview_for_quality_gate_failures(
     monkeypatch,
 ):
     backend = _ComparingBackend(reject_luna=True)
@@ -251,17 +256,139 @@ def test_model_lab_withholds_rejected_candidate_and_exposes_only_safe_gate_names
         accepted = client.post("/api/model-lab/compare", json=_comparison_payload())
         run = _wait_for_lab_run(client, accepted.json()["status_url"])
 
+        preview, verified = run["candidates"]
+        assert preview["status"] == "unverified"
+        assert preview["artifact_tier"] == "unverified_preview"
+        assert preview["artifact_url"]
+        assert "fragment_contract" in preview["failed_gates"]
+        assert (
+            "visual:causal_scientific_actor_required"
+            in preview["failure_codes"]
+        )
+        assert client.get(preview["artifact_url"]).status_code == 200
+        assert "failures" not in preview
+        assert "raw_fragment" not in preview
+        assert verified["status"] == "verified"
+        assert verified["artifact_tier"] == "verified"
+        assert verified["artifact_url"]
+
+
+class _UncompilablePreviewBackend(_ComparingBackend):
+    async def generate_fragments_for_lab(self, *args, **kwargs):
+        physics, visual = await super().generate_fragments_for_lab(*args, **kwargs)
+        physics_spec = kwargs["physics_spec"]
+        if physics_spec.model == "gpt-5.6-luna":
+            visual["commands"][0]["opacity"] = "fetch(1)"
+        return physics, visual
+
+
+def test_model_lab_still_withholds_uncompilable_or_unsafe_preview_fragments(
+    monkeypatch,
+):
+    with _enabled_client(monkeypatch, _UncompilablePreviewBackend()) as client:
+        accepted = client.post("/api/model-lab/compare", json=_comparison_payload())
+        run = _wait_for_lab_run(client, accepted.json()["status_url"])
+
         rejected, verified = run["candidates"]
         assert rejected["status"] == "rejected"
+        assert rejected["artifact_tier"] is None
         assert rejected["artifact_url"] is None
-        assert rejected["failed_gates"] == ["fragment_contract"]
         assert rejected["failure_codes"] == [
-            "visual:causal_scientific_actor_required"
+            "visual:unsupported_expression_call"
         ]
-        assert "failures" not in rejected
-        assert "raw_fragment" not in rejected
         assert verified["status"] == "verified"
-        assert verified["artifact_url"]
+
+
+def test_preview_assembler_relaxes_semantics_without_relaxing_safe_compilation():
+    from server.fragment_generation import (
+        assemble_fragments,
+        assemble_fragments_for_preview,
+    )
+    from server.schemas import ContractError
+
+    semantic_failure = deepcopy(VISUAL_FRAGMENT)
+    semantic_failure["causal_response"]["actor_id"] = "missing"
+
+    with pytest.raises(ContractError):
+        assemble_fragments(
+            deepcopy(PHYSICS_FRAGMENT),
+            semantic_failure,
+            deepcopy(VALID_UNDERSTANDING),
+        )
+    preview = assemble_fragments_for_preview(
+        deepcopy(PHYSICS_FRAGMENT),
+        semantic_failure,
+        deepcopy(VALID_UNDERSTANDING),
+    )
+    assert preview["module_js"]
+
+    uncompilable = deepcopy(semantic_failure)
+    uncompilable["commands"][0]["opacity"] = "fetch(1)"
+    with pytest.raises(ValueError, match="unsupported_expression_call"):
+        assemble_fragments_for_preview(
+            deepcopy(PHYSICS_FRAGMENT),
+            uncompilable,
+            deepcopy(VALID_UNDERSTANDING),
+        )
+
+
+def test_model_lab_previews_browser_quality_failures_but_withholds_runtime_failures(
+    monkeypatch,
+):
+    from server.browser_verify import BrowserVerificationResult
+
+    quality_failure = {
+        "gate": "causal_response",
+        "code": "causal_evidence_invalid",
+        "expected": {"response": True},
+        "actual": {"response": False},
+    }
+    with _enabled_client(
+        monkeypatch,
+        _ComparingBackend(),
+        browser_verifier=lambda _: BrowserVerificationResult(
+            False,
+            1,
+            [quality_failure],
+            {},
+        ),
+    ) as client:
+        accepted = client.post("/api/model-lab/compare", json=_comparison_payload())
+        quality_run = _wait_for_lab_run(client, accepted.json()["status_url"])
+
+    assert {
+        (candidate["status"], candidate["artifact_tier"])
+        for candidate in quality_run["candidates"]
+    } == {("unverified", "unverified_preview")}
+    assert all(candidate["artifact_url"] for candidate in quality_run["candidates"])
+
+    runtime_failure = {
+        "gate": "browser_readiness",
+        "code": "runtime_error_beacon",
+        "expected": {"runtime_error": False},
+        "actual": {"runtime_error": True},
+    }
+    with _enabled_client(
+        monkeypatch,
+        _ComparingBackend(),
+        browser_verifier=lambda _: BrowserVerificationResult(
+            False,
+            1,
+            [runtime_failure],
+            {},
+        ),
+    ) as client:
+        accepted = client.post("/api/model-lab/compare", json=_comparison_payload())
+        runtime_run = _wait_for_lab_run(client, accepted.json()["status_url"])
+
+    assert {candidate["status"] for candidate in runtime_run["candidates"]} == {
+        "rejected"
+    }
+    assert all(
+        candidate["artifact_url"] is None
+        and candidate["artifact_tier"] is None
+        for candidate in runtime_run["candidates"]
+    )
 
 
 def test_model_lab_contract_rejects_unknown_models_efforts_and_extra_fields(monkeypatch):
