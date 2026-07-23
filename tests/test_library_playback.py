@@ -25,7 +25,8 @@ def test_trusted_shell_keeps_causal_feedback_live_and_replays_with_one_bounded_s
     assert 'syncPlaybackUi("user-control")' in source
     assert "function cancelReplaySweep()" in source
     assert "function startReplaySweep()" in source
-    assert "requestAnimationFrame(stepReplaySweep)" in source
+    assert "animationClock.requestReplay(stepReplaySweep)" in source
+    assert "requestAnimationFrame(" in source
     assert "replayFrameId" in source
     assert 'resetSimulation()' in source
     assert 'cancelAnimationFrame(idleFrameId)' in source

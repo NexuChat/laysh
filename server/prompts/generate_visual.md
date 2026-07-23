@@ -29,8 +29,12 @@ Fixed contextual shapes must set `scientific: false`; every command marked
 geometry or opacity. A trajectory is always scientific and derives its declared
 output from compiled physics. Prefer one `body_group` for a cohesive multi-part
 scientific actor; its parts use relative offsets and transform together around the
-group center. Canvas y increases downward. Supporting pieces outside a body group
-remain non-scientific.
+group center, forming a recognizable silhouette instead of a stack of generic
+circles. Outside a body group, keep an actor's pieces cohesive by deriving them
+from the same center, output, and phase expressions. When an ellipse is the
+primary actor, normally use one scientific ellipse and mark its supporting
+silhouette pieces `scientific: false`. Canvas y increases downward. Supporting
+pieces outside a body group remain non-scientific.
 Changes to the parameter named by `primary_parameter.id` must visibly alter at least
 one salient non-text scene property through a fixture-covered declared output. Use
 `normalized` only for layout. Use `phase` in at least one visible numeric field for

@@ -42,6 +42,17 @@ def test_six_pinned_lesson_modules_self_play_and_yield_to_controls(tmp_path):
         PHYSICS_FRAGMENT,
         {
             **VISUAL_FRAGMENT,
+            "representation": {
+                **VISUAL_FRAGMENT["representation"],
+                "actor_archetype": "elongated_body",
+                "proof_channels": [
+                    {
+                        "output_name": "lit_fraction",
+                        "carrier": "actor",
+                        "channel": "size",
+                    }
+                ],
+            },
             "commands": [SCIENTIFIC_ELLIPSE],
             "causal_response": {
                 **VISUAL_FRAGMENT["causal_response"],

@@ -26,6 +26,18 @@ SECONDARY_DRIVEN_PHYSICS = {
 
 
 VISIBLE_READOUT = {
+    "representation": {
+        "scene_pattern": "world_only",
+        "actor_archetype": "body",
+        "proof_channels": [
+            {
+                "output_name": "readout",
+                "carrier": "actor",
+                "channel": "opacity",
+            }
+        ],
+        "motion_model": "parameter_driven",
+    },
     "background": {
         "top_color": "#07111F",
         "bottom_color": "#10243A",
