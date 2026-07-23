@@ -254,8 +254,12 @@ def test_model_lab_withholds_rejected_candidate_and_exposes_only_safe_gate_names
         rejected, verified = run["candidates"]
         assert rejected["status"] == "rejected"
         assert rejected["artifact_url"] is None
-        assert "generation_contract" in rejected["failed_gates"]
+        assert rejected["failed_gates"] == ["fragment_contract"]
+        assert rejected["failure_codes"] == [
+            "visual:causal_scientific_actor_required"
+        ]
         assert "failures" not in rejected
+        assert "raw_fragment" not in rejected
         assert verified["status"] == "verified"
         assert verified["artifact_url"]
 

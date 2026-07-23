@@ -15,6 +15,7 @@ from server.codex_backend import RuntimeContext, StageModelSpec
 from server.codex_runtime import CodexRuntimeError, StageExecution
 from server.fragment_generation import (
     assemble_fragments,
+    fragment_failure_diagnostic,
     validate_physics_fragment,
     validate_visual_fragment,
 )
@@ -68,6 +69,7 @@ class ModelLabCandidateResult(ClosedModel):
     verification_elapsed_ms: int | None = Field(default=None, ge=0)
     check_count: int = Field(default=0, ge=0)
     failed_gates: list[str] = Field(default_factory=list, max_length=20)
+    failure_codes: list[str] = Field(default_factory=list, max_length=20)
     artifact_url: str | None = None
 
 
@@ -97,6 +99,7 @@ class _Candidate:
     verification_elapsed_ms: int | None = None
     check_count: int = 0
     failed_gates: list[str] = field(default_factory=list)
+    failure_codes: list[str] = field(default_factory=list)
     artifact_url: str | None = None
 
     def public_result(self) -> ModelLabCandidateResult:
@@ -112,6 +115,7 @@ class _Candidate:
             verification_elapsed_ms=self.verification_elapsed_ms,
             check_count=self.check_count,
             failed_gates=self.failed_gates,
+            failure_codes=self.failure_codes,
             artifact_url=self.artifact_url,
         )
 
@@ -316,26 +320,54 @@ class ModelLabManager:
         elapsed = int((time.monotonic() - generation_started) * 1000)
         candidate.physics_elapsed_ms = _stage_elapsed(physics_result, elapsed)
         candidate.visual_elapsed_ms = _stage_elapsed(visual_result, elapsed)
+        validated_fragments: dict[str, dict[str, Any]] = {}
+        for role, result, validator in (
+            ("physics", physics_result, validate_physics_fragment),
+            ("visual", visual_result, validate_visual_fragment),
+        ):
+            try:
+                validated_fragments[role] = validator(
+                    _stage_data(result),
+                    understanding,
+                )
+            except (ContractError, ValidationError, ValueError) as error:
+                diagnostic = fragment_failure_diagnostic(
+                    error,
+                    role=role,
+                    understanding=understanding,
+                )
+                candidate.failed_gates.append(diagnostic["gate"])
+                candidate.failure_codes.append(f"{role}:{diagnostic['code']}")
+            except OSError:
+                candidate.status = "failed"
+                return
+        if candidate.failure_codes:
+            candidate.failed_gates = sorted(set(candidate.failed_gates))
+            candidate.check_count = len(candidate.failure_codes)
+            candidate.status = "rejected"
+            return
+
         try:
-            physics_fragment = validate_physics_fragment(
-                _stage_data(physics_result),
-                understanding,
-            )
-            visual_fragment = validate_visual_fragment(
-                _stage_data(visual_result),
-                understanding,
-            )
             module_output = validate_module_output(
                 assemble_fragments(
-                    physics_fragment,
-                    visual_fragment,
+                    validated_fragments["physics"],
+                    validated_fragments["visual"],
                     understanding,
                 )
             )
-        except (ContractError, ValidationError, OSError, ValueError):
-            candidate.failed_gates = ["generation_contract"]
+        except (ContractError, ValidationError, ValueError) as error:
+            diagnostic = fragment_failure_diagnostic(
+                error,
+                role="assembly",
+                understanding=understanding,
+            )
+            candidate.failed_gates = [diagnostic["gate"]]
+            candidate.failure_codes = [f"assembly:{diagnostic['code']}"]
             candidate.check_count = 1
             candidate.status = "rejected"
+            return
+        except OSError:
+            candidate.status = "failed"
             return
 
         candidate.status = "verifying"

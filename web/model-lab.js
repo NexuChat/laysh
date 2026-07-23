@@ -171,8 +171,11 @@
     frame.hidden = true;
     if (candidate.status === "rejected" || candidate.status === "failed") {
       withheld.hidden = false;
-      bay.querySelector(".failed-gates").textContent = candidate.failed_gates.length
-        ? candidate.failed_gates.join(", ")
+      const safeFailures = candidate.failure_codes?.length
+        ? candidate.failure_codes
+        : candidate.failed_gates;
+      bay.querySelector(".failed-gates").textContent = safeFailures.length
+        ? safeFailures.join(", ")
         : "—";
     } else {
       withheld.hidden = true;
