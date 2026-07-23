@@ -169,7 +169,7 @@ async def test_public_generate_receives_long_stage_budget_inside_hard_job_cap():
 
 
 @pytest.mark.asyncio
-async def test_public_generate_canary_override_uses_luna_high_without_changing_heal():
+async def test_public_generate_override_keeps_one_sol_low_heal():
     from server.codex_backend import CodexBackend, RuntimeContext
     from server.settings import Settings
 
@@ -192,9 +192,9 @@ async def test_public_generate_canary_override_uses_luna_high_without_changing_h
 
     assert [call["model"] for call in executor.calls] == [
         "gpt-5.6-luna",
-        "gpt-5.6-terra",
+        "gpt-5.6-sol",
     ]
-    assert [call["effort"] for call in executor.calls] == ["high", "medium"]
+    assert [call["effort"] for call in executor.calls] == ["high", "low"]
 
 
 @pytest.mark.asyncio

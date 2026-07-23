@@ -246,7 +246,7 @@ async def test_terra_generation_failure_never_starts_a_fresh_sol_generation():
 
 
 @pytest.mark.asyncio
-async def test_heal_uses_generation_model_then_allows_one_final_sol_attempt():
+async def test_public_heal_uses_one_sol_low_attempt_and_rejects_a_second():
     from server.codex_backend import CodexBackend, RuntimeContext
     from server.settings import Settings
 
@@ -266,13 +266,14 @@ async def test_heal_uses_generation_model_then_allows_one_final_sol_attempt():
         1,
         runtime_context=context,
     )
-    await backend.heal(
-        VALID_MODULE_OUTPUT,
-        VALID_UNDERSTANDING,
-        [{"gate": "invariant", "code": "fixture_mismatch"}],
-        2,
-        runtime_context=context,
-    )
+    with pytest.raises(ValueError, match="exceeds configured limit"):
+        await backend.heal(
+            VALID_MODULE_OUTPUT,
+            VALID_UNDERSTANDING,
+            [{"gate": "invariant", "code": "fixture_mismatch"}],
+            2,
+            runtime_context=context,
+        )
     await backend.qa(
         VALID_MODULE_OUTPUT,
         VALID_UNDERSTANDING,
@@ -282,13 +283,11 @@ async def test_heal_uses_generation_model_then_allows_one_final_sol_attempt():
 
     assert [call["model"] for call in executor.calls] == [
         "gpt-5.6-terra",
-        "gpt-5.6-terra",
         "gpt-5.6-sol",
         "gpt-5.6-sol",
     ]
     assert [call["effort"] for call in executor.calls] == [
         "medium",
-        "medium",
-        "high",
+        "low",
         "medium",
     ]

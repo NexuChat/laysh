@@ -938,6 +938,30 @@ def test_exhausted_heal_preserves_answer_and_never_exposes_artifact(client, back
     assert backend.qa_calls == 0
 
 
+@pytest.mark.asyncio
+async def test_public_backend_can_bound_verification_to_one_heal_attempt():
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend
+    from server.jobs import JobManager
+
+    class OneHealBackend(MockCodexBackend):
+        public_heal_attempt_limit = 1
+
+    backend = OneHealBackend()
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+    )
+    record = manager.start("exhausted heal", "ar")
+    await record.task
+
+    assert record.status == "answer_only"
+    assert record.fallback is not None
+    assert record.fallback.reason_code == "verification_exhausted"
+    assert backend.heal_calls == 1
+
+
 def test_timeout_reaches_truthful_terminal_state_and_discards_question(backend):
     from fastapi.testclient import TestClient
 

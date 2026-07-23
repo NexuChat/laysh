@@ -21,6 +21,8 @@ class Settings:
     physics_model: str = "gpt-5.6-sol"
     visual_model: str = "gpt-5.6-terra"
     heal_model: str = "gpt-5.6-sol"
+    public_heal_effort: str = "low"
+    public_heal_attempt_limit: int = 1
     qa_model: str = "gpt-5.6-sol"
     visual_qa_model: str = "gpt-5.6-terra"
     public_generate_model_override: str | None = None
@@ -65,6 +67,10 @@ class Settings:
             raise ValueError("every Laysh runtime stage must use an approved GPT-5.6 model")
         if self.public_generate_effort not in {"low", "medium", "high"}:
             raise ValueError("public generate effort must be low, medium, or high")
+        if self.public_heal_effort not in {"low", "medium", "high"}:
+            raise ValueError("public heal effort must be low, medium, or high")
+        if self.public_heal_attempt_limit not in {1, 2}:
+            raise ValueError("public heal attempt limit must be one or two")
         if self.public_generation_strategy not in {"module", "fragments"}:
             raise ValueError("public generation strategy must be module or fragments")
         if self.public_candidate_count not in {1, 2}:
@@ -109,6 +115,16 @@ class Settings:
             physics_model=os.getenv("LAYSH_PHYSICS_MODEL", defaults.physics_model),
             visual_model=os.getenv("LAYSH_VISUAL_MODEL", defaults.visual_model),
             heal_model=os.getenv("LAYSH_HEAL_MODEL", defaults.heal_model),
+            public_heal_effort=os.getenv(
+                "LAYSH_PUBLIC_HEAL_EFFORT",
+                defaults.public_heal_effort,
+            ).strip(),
+            public_heal_attempt_limit=int(
+                os.getenv(
+                    "LAYSH_PUBLIC_HEAL_ATTEMPT_LIMIT",
+                    str(defaults.public_heal_attempt_limit),
+                )
+            ),
             qa_model=os.getenv("LAYSH_QA_MODEL", defaults.qa_model),
             visual_qa_model=os.getenv(
                 "LAYSH_VISUAL_QA_MODEL", defaults.visual_qa_model

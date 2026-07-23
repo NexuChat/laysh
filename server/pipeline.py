@@ -694,6 +694,13 @@ async def run_pipeline(manager: Any, record: Any) -> None:
     qa_verified_candidate: _QaVerifiedCandidate | None = None
     effective_generation_model: str | None = None
     trusted_fragment_candidate = False
+    heal_attempt_limit = (
+        getattr(manager.backend, "public_heal_attempt_limit", 2)
+        if record.public
+        else 2
+    )
+    if heal_attempt_limit not in {1, 2}:
+        raise RuntimeError("invalid heal attempt limit")
 
     candidate_spec_factory = getattr(
         manager.backend,
@@ -1359,7 +1366,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                         )
                         return
                     continue
-                if heal_count >= 2:
+                if heal_count >= heal_attempt_limit:
                     if record.public and qa_verified_candidate is not None:
                         module_output = qa_verified_candidate.module_output
                         verification = qa_verified_candidate.verification
@@ -1423,7 +1430,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         if (heal_count or record.promote_golden) and qa_outcome is None:
             if verification is None:
                 raise RuntimeError("QA requires a verified candidate")
-            qa_can_reheal = record.public and heal_count < 2
+            qa_can_reheal = record.public and heal_count < heal_attempt_limit
             qa_status, qa_result = await review_candidate(
                 module_output,
                 verification,

@@ -218,6 +218,7 @@ class CodexBackend:
             terra_eligible_tiers=frozenset(settings.terra_generation_tiers)
         )
         self.public_generation_strategy = settings.public_generation_strategy
+        self.public_heal_attempt_limit = settings.public_heal_attempt_limit
         self._model_slots = asyncio.Semaphore(settings.max_parallel_model_calls)
 
     async def _execute_stage(self, **kwargs: Any) -> StageExecution:
@@ -622,11 +623,14 @@ class CodexBackend:
         runtime_context: RuntimeContext | None = None,
     ) -> StageExecution:
         selected_context = runtime_context or RuntimeContext()
-        model = (
-            self.routing_policy.heal_model(understanding, attempt)
-            if selected_context.public
-            else self.settings.heal_model
-        )
+        if selected_context.public:
+            if attempt > self.settings.public_heal_attempt_limit:
+                raise ValueError("public heal attempt exceeds configured limit")
+            model = self.settings.heal_model
+            effort = self.settings.public_heal_effort
+        else:
+            model = self.settings.heal_model
+            effort = "high" if attempt == 2 else "medium"
         return await self._execute_stage(
             prompt=self._render_prompt(
                 "heal_module.md",
@@ -639,7 +643,7 @@ class CodexBackend:
             ),
             schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["heal"],
             model=model,
-            effort="high" if attempt == 2 else "medium",
+            effort=effort,
             **self._execution_policy(selected_context),
         )
 

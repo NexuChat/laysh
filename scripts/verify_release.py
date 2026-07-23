@@ -190,7 +190,7 @@ ACCEPTANCE_ROW_TEST_NODEIDS: dict[str, tuple[str, ...]] = {
         "tests/test_model_routing.py::test_committed_route_uses_terra_only_for_bounded_generation_canary",
         "tests/test_model_routing.py::test_public_luna_classification_failure_retries_once_on_terra",
         "tests/test_model_routing.py::test_terra_generation_failure_never_starts_a_fresh_sol_generation",
-        "tests/test_model_routing.py::test_heal_uses_generation_model_then_allows_one_final_sol_attempt",
+        "tests/test_model_routing.py::test_public_heal_uses_one_sol_low_attempt_and_rejects_a_second",
         "tests/test_settings.py::test_runtime_defaults_are_gpt_5_6_family_only",
         "tests/test_codex_backend_live.py::test_curated_generate_heal_and_ordinary_qa_stay_sol",
     ),
