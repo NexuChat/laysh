@@ -29,8 +29,12 @@ from server.model_lab import (
     ModelLabAccepted,
     ModelLabCompareRequest,
     ModelLabManager,
+    ModelLabPipelineRequest,
+    ModelLabPipelineRerunRequest,
+    ModelLabPipelineRunResult,
     ModelLabRunResult,
 )
+from server.model_lab_discovery import WikimediaEvidenceProvider
 from server.ratelimit import GenerationLimiter
 from server.schemas import AskAccepted, AskRequest, PublicResult
 from server.settings import Settings
@@ -63,6 +67,7 @@ def _artifact_for_embed(artifact: str) -> str:
 def create_app(
     backend: MockCodexBackend | CodexBackend | None = None,
     model_lab_backend: MockCodexBackend | CodexBackend | None = None,
+    model_lab_evidence_provider: object | None = None,
     job_timeout_seconds: float | None = None,
     browser_verifier: Callable[[str], BrowserVerificationResult] = verify_artifact_in_browser,
     share_root: Path | None = None,
@@ -151,6 +156,9 @@ def create_app(
     app.state.model_lab = ModelLabManager(
         backend=selected_model_lab_backend,
         browser_verifier=browser_verifier,
+        evidence_provider=(
+            model_lab_evidence_provider or WikimediaEvidenceProvider()
+        ),
         max_concurrent_runs=settings.model_lab_max_concurrent_runs,
     )
     app.state.model_lab_limiter = GenerationLimiter(
@@ -214,6 +222,64 @@ def create_app(
                 "X-Robots-Tag": "noindex, nofollow",
             },
         )
+
+    @app.post(
+        "/api/model-lab/pipeline",
+        response_model=ModelLabAccepted,
+        status_code=status.HTTP_202_ACCEPTED,
+    )
+    async def start_model_lab_pipeline(
+        payload: ModelLabPipelineRequest,
+        request: Request,
+    ) -> ModelLabAccepted:
+        require_model_lab()
+        question = unicodedata.normalize("NFKC", payload.question).strip()
+        if not question:
+            raise HTTPException(status_code=422, detail="question must not be blank")
+        client_ip = request.client.host if request.client else "unknown"
+        if app.state.model_lab_limiter.acquire(client_ip):
+            raise HTTPException(status_code=429, detail="model lab pipeline limit reached")
+        return app.state.model_lab.start_pipeline(
+            payload.model_copy(update={"question": question})
+        )
+
+    @app.get(
+        "/api/model-lab/pipeline/{run_id}",
+        response_model=ModelLabPipelineRunResult,
+    )
+    async def get_model_lab_pipeline(
+        run_id: str,
+        response: Response,
+    ) -> ModelLabPipelineRunResult:
+        require_model_lab()
+        response.headers["Cache-Control"] = "no-store"
+        run = app.state.model_lab.get_pipeline(run_id)
+        if run is None:
+            raise HTTPException(status_code=404, detail="model lab pipeline not found")
+        return run
+
+    @app.post(
+        "/api/model-lab/pipeline/{run_id}/rerun",
+        response_model=ModelLabAccepted,
+        status_code=status.HTTP_202_ACCEPTED,
+    )
+    async def rerun_model_lab_pipeline(
+        run_id: str,
+        payload: ModelLabPipelineRerunRequest,
+    ) -> ModelLabAccepted:
+        require_model_lab()
+        try:
+            return app.state.model_lab.rerun_pipeline(run_id, payload)
+        except KeyError as error:
+            raise HTTPException(
+                status_code=404,
+                detail="model lab pipeline not found",
+            ) from error
+        except RuntimeError as error:
+            raise HTTPException(
+                status_code=409,
+                detail="model lab pipeline is already running",
+            ) from error
 
     @app.post(
         "/api/model-lab/compare",

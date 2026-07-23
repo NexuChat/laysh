@@ -15,7 +15,7 @@ from typing import Any
 from jsonschema import ValidationError
 
 from server.schemas import validate_document
-from server.settings import ALLOWED_RUNTIME_MODELS
+from server.settings import ALLOWED_RUNTIME_MODELS, LAB_REASONING_EFFORTS_BY_MODEL
 
 ProcessFactory = Callable[..., Awaitable[asyncio.subprocess.Process]]
 ALLOWED_EFFORTS = frozenset({"low", "medium", "high"})
@@ -174,10 +174,13 @@ class CodexExecutor:
         effort: str,
         public: bool,
         evidence_fixture_id: str | None,
+        model_lab: bool,
     ) -> None:
         if model not in ALLOWED_RUNTIME_MODELS:
             raise CodexPolicyError("model_not_approved_gpt_5_6")
-        if effort not in ALLOWED_EFFORTS:
+        if model_lab and effort not in LAB_REASONING_EFFORTS_BY_MODEL[model]:
+            raise CodexPolicyError("effort_not_supported_by_model")
+        if not model_lab and effort not in ALLOWED_EFFORTS:
             raise CodexPolicyError("effort_not_allowed")
         if public:
             return
@@ -332,6 +335,8 @@ class CodexExecutor:
         evidence_fixture_id: str | None = None,
         timeout_seconds: float | None = None,
         image_paths: tuple[Path, ...] = (),
+        model_lab: bool = False,
+        fast: bool | None = None,
     ) -> StageExecution:
         try:
             output_schema = json.loads(schema_path.read_text(encoding="utf-8"))
@@ -350,6 +355,7 @@ class CodexExecutor:
             effort=effort,
             public=public,
             evidence_fixture_id=evidence_fixture_id,
+            model_lab=model_lab,
         )
         validated_images = self._validated_image_paths(image_paths, public=public)
         started = time.monotonic()
@@ -365,8 +371,6 @@ class CodexExecutor:
                 model,
                 "-c",
                 f'model_reasoning_effort="{effort}"',
-                "-c",
-                'service_tier="fast"',
                 "--sandbox",
                 "read-only",
                 "--skip-git-repo-check",
@@ -375,6 +379,10 @@ class CodexExecutor:
                 "--cd",
                 runtime_directory,
             ]
+            if fast is not False:
+                args.extend(["-c", 'service_tier="fast"'])
+            if fast is True:
+                args.extend(["--enable", "fast_mode"])
             if validated_images:
                 args.extend(["--image", *(str(path) for path in validated_images)])
             if public:

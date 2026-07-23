@@ -2,22 +2,20 @@
 <html lang="en" dir="ltr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
-  <meta name="robots" content="noindex,nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#07090c">
-  <title>Laysh model lab</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2307090c'/%3E%3Ccircle cx='23' cy='32' r='10' fill='none' stroke='%23ffc247' stroke-width='3'/%3E%3Ccircle cx='41' cy='32' r='10' fill='none' stroke='%2376d6c8' stroke-width='3'/%3E%3C/svg%3E">
+  <title data-i18n="modelLab.documentTitle">Laysh pipeline workbench</title>
   <link rel="preload" href="/static/fonts/noto-kufi-ar.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="/static/fonts/noto-kufi-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/static/model-lab.css">
   <script src="/static/translations.js" defer></script>
   <script src="/static/locale.js" defer></script>
   <script src="/static/model-lab.js" defer></script>
 </head>
 <body data-document-title="modelLab.documentTitle">
-  <a class="skip-link" href="#comparison" data-i18n="modelLab.skip">Skip to the comparison</a>
+  <a class="skip-link" href="#pipeline-studio" data-i18n="modelLab.skip">Skip to the pipeline</a>
   <div class="lab-sky" aria-hidden="true">
-    <span class="star-cluster cluster-a"></span>
+    <span class="star-cluster"></span>
     <span class="star-cluster cluster-b"></span>
     <span class="meridian"></span>
   </div>
@@ -28,188 +26,211 @@
         <span aria-hidden="true">←</span>
         <span data-i18n="modelLab.back">Back to Laysh</span>
       </a>
-      <a class="lab-brand" href="/">
-        <span data-i18n="nav.brand">Laysh</span><b>.</b>
-      </a>
-      <button class="locale-control" id="locale-control" type="button" data-i18n="locale.control" data-i18n-aria-label="locale.controlLabel">العربية</button>
+      <a class="lab-brand" href="/" aria-label="Laysh">Laysh<b>.</b></a>
+      <button class="locale-control" id="locale-control" type="button" data-locale-switch aria-label="العربية">العربية</button>
     </header>
 
-    <main id="comparison">
+    <main id="pipeline-studio">
       <section class="lab-hero" aria-labelledby="lab-title">
         <div class="hero-copy">
-          <p class="lab-badge"><span aria-hidden="true">◉</span> <span data-i18n="modelLab.badge">Isolated lab · never added to the library</span></p>
-          <p class="studio-mode" data-i18n="modelLab.mode">Direct Canvas Studio</p>
-          <p class="eyebrow" data-i18n="modelLab.eyebrow">Model comparison observatory</p>
-          <h1 id="lab-title" data-i18n="modelLab.title">One question. Two different eyes.</h1>
-          <p class="lede" data-i18n="modelLab.lede">A physics model builds the scientific plan, then your selected drawing model authors a complete Canvas scene without the main product's declarative drawing limits.</p>
+          <p class="lab-badge"><span aria-hidden="true">◌</span><span data-i18n="modelLab.badge">Isolated lab · never added to the library</span></p>
+          <p class="studio-mode" data-i18n="modelLab.mode">Pipeline Workbench</p>
+          <p class="eyebrow" data-i18n="modelLab.eyebrow">Every real stage, under your control</p>
+          <h1 id="lab-title" data-i18n="modelLab.title">Change one stage. Watch every consequence.</h1>
+          <p class="lede" data-i18n="modelLab.lede">Choose a GPT-5.6 model, reasoning effort, and real Fast tier for every model stage. Re-running a stage automatically rebuilds every dependent stage after it.</p>
         </div>
-        <div class="dual-lens" aria-hidden="true">
-          <span class="lens lens-a"><i></i></span>
-          <span class="lens lens-b"><i></i></span>
-          <span class="lens-axis"></span>
+        <div class="pipeline-orbit" aria-hidden="true">
+          <span>01</span><span>02</span><span>03</span><span>04</span><span>05</span><span>06</span>
+          <i></i>
         </div>
       </section>
 
-      <aside class="lab-notice">
+      <aside class="lab-notice" aria-labelledby="lab-notice-title">
         <span class="notice-mark" aria-hidden="true">i</span>
         <div>
-          <strong data-i18n="modelLab.noticeTitle">An honest, isolated comparison</strong>
-          <p data-i18n="modelLab.notice">Each candidate runs physics first and then a direct Canvas author. Hard safety and runtime failures are withheld; scientific and visual checks are advisory and remain visible beside the preview. Nothing reaches the learner pipeline or library.</p>
+          <h2 id="lab-notice-title" data-i18n="modelLab.noticeTitle">A real, isolated pipeline</h2>
+          <p data-i18n="modelLab.notice">Model controls apply only to this lab. Deterministic and browser gates remain model-free and visible. We show safe structured outputs and the rendered simulation, never hidden reasoning or raw executable model output.</p>
         </div>
       </aside>
 
-      <form class="lab-console" id="model-lab-form" novalidate>
-        <div class="question-field">
-          <label for="lab-question" data-i18n="modelLab.questionLabel">Science question</label>
-          <textarea id="lab-question" name="question" maxlength="600" rows="3" dir="auto" required aria-describedby="lab-question-help lab-error" data-i18n-placeholder="modelLab.questionPlaceholder"></textarea>
-          <p id="lab-question-help" class="field-help" data-i18n="modelLab.questionHelp">Both candidates receive the same fixed understanding. Do not enter personal or sensitive data.</p>
-          <p id="lab-error" class="field-error" role="alert" hidden></p>
+      <form class="pipeline-console" id="model-lab-form" novalidate>
+        <section class="question-panel" aria-labelledby="question-panel-title">
+          <div>
+            <p class="section-index">00 / INPUT</p>
+            <h2 id="question-panel-title" data-i18n="modelLab.questionLabel">Science question</h2>
+          </div>
+          <label class="question-field">
+            <span class="sr-only" data-i18n="modelLab.questionLabel">Science question</span>
+            <textarea id="lab-question" name="question" rows="3" maxlength="600" required aria-describedby="question-help lab-error" data-i18n-placeholder="modelLab.questionPlaceholder" placeholder="Example: Why does water pressure increase as we dive deeper?"></textarea>
+            <small id="question-help" data-i18n="modelLab.questionHelp">Do not enter personal or sensitive data.</small>
+            <span class="field-error" id="lab-error" role="alert" hidden></span>
+          </label>
+          <div class="pipeline-modes" aria-label="Experiment modes" data-i18n-aria-label="modelLab.modes">
+            <label>
+              <span data-i18n="modelLab.sourceMode">Reference grounding</span>
+              <select id="source-mode" name="source_mode">
+                <option value="off" selected data-i18n="modelLab.sourceMode.off">Off · no external request</option>
+                <option value="public_references" data-i18n="modelLab.sourceMode.public">Wikipedia + Wikidata</option>
+              </select>
+              <small data-i18n="modelLab.sourceDisclosure">The isolated run uses English canonical evidence plus local terminology when available; only Wikimedia receives the question.</small>
+            </label>
+            <label>
+              <span data-i18n="modelLab.visualMode">Visual construction</span>
+              <select id="visual-mode" name="visual_mode">
+                <option value="trusted_scene_plan" selected data-i18n="modelLab.visualMode.plan">Trusted scene plan</option>
+                <option value="direct_canvas" data-i18n="modelLab.visualMode.direct">Direct Canvas module</option>
+              </select>
+              <small data-i18n="modelLab.visualModeHelp">Compare a compact trusted renderer with unrestricted visual authorship.</small>
+            </label>
+          </div>
+        </section>
+
+        <div class="pipeline-heading">
+          <div>
+            <p class="section-index">01—11 / PIPELINE</p>
+            <h2 data-i18n="modelLab.pipelineTitle">Configure every stage</h2>
+          </div>
+          <p data-i18n="modelLab.pipelineHelp">A stage rerun uses the latest result before it, then automatically rebuilds all downstream dependencies.</p>
         </div>
 
-        <fieldset class="understand-config" data-role="understand">
-          <legend data-i18n="modelLab.understandStage">Shared understanding</legend>
-          <label>
-            <span data-i18n="modelLab.model">Model</span>
-            <select name="model">
-              <option value="gpt-5.6-luna" selected>GPT-5.6 Luna</option>
-              <option value="gpt-5.6-terra">GPT-5.6 Terra</option>
-              <option value="gpt-5.6-sol">GPT-5.6 Sol</option>
-            </select>
-          </label>
-          <label>
-            <span data-i18n="modelLab.effort">Reasoning effort</span>
-            <select name="effort">
-              <option value="low" selected data-i18n="modelLab.effort.low">Low</option>
-              <option value="medium" data-i18n="modelLab.effort.medium">Medium</option>
-              <option value="high" data-i18n="modelLab.effort.high">High</option>
-            </select>
-          </label>
-        </fieldset>
+        <section class="pipeline-grid" aria-label="Pipeline stages" data-i18n-aria-label="modelLab.pipelineTitle">
+          <article class="pipeline-stage deterministic-stage" data-stage="evidence">
+            <header><span>01</span><div><h3 data-i18n="modelLab.stage.evidence">Reference evidence</h3><p data-i18n="modelLab.stage.evidenceHelp">Optional English canonical evidence plus local terminology from Wikipedia and Wikidata.</p></div></header>
+            <p class="no-model-chip" data-i18n="modelLab.sourceTool">Bounded source lookup · no model call</p>
+            <div class="stage-actions"><span class="stage-status" data-state="idle" data-i18n="modelLab.idle">Not run</span><button type="button" data-action="rerun" disabled data-i18n="modelLab.rerun">Rerun from here</button></div>
+            <div class="stage-output" hidden></div>
+          </article>
 
-        <div class="candidate-controls">
-          <fieldset class="candidate-config" data-slot="A">
-            <legend data-i18n="modelLab.candidate" data-i18n-slot="A">Candidate A</legend>
-            <div class="role-config" data-role="physics">
-              <strong data-i18n="modelLab.physicsStage">Physics model</strong>
+          <article class="pipeline-stage model-stage" data-stage="understand">
+            <header><span>02</span><div><h3 data-i18n="modelLab.stage.understand">Understand</h3><p data-i18n="modelLab.stage.understandHelp">Answer, lesson contract, parameters, and fixtures.</p></div></header>
+            <div class="stage-controls">
+              <label><span data-i18n="modelLab.model">Model</span><select name="model"><option value="gpt-5.6-luna">GPT-5.6 Luna</option><option value="gpt-5.6-terra">GPT-5.6 Terra</option><option value="gpt-5.6-sol">GPT-5.6 Sol</option></select></label>
+              <label><span data-i18n="modelLab.effort">Reasoning effort</span><select name="effort"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="xhigh">Extra high</option><option value="max">Max</option><option value="ultra">Ultra</option></select></label>
+              <label class="fast-toggle"><input type="checkbox" name="fast" checked><span><b data-i18n="modelLab.fast">Fast 1.5×</b><small data-i18n="modelLab.fastCost">Higher usage</small></span></label>
+            </div>
+            <div class="stage-actions"><span class="stage-status" data-state="idle" data-i18n="modelLab.idle">Not run</span><button type="button" data-action="rerun" disabled data-i18n="modelLab.rerun">Rerun from here</button></div>
+            <div class="stage-output" hidden></div>
+          </article>
+
+          <article class="pipeline-stage model-stage" data-stage="physics">
+            <header><span>03</span><div><h3 data-i18n="modelLab.stage.physics">Scientific model</h3><p data-i18n="modelLab.stage.physicsHelp">Equations, outputs, assumptions, and causal plan.</p></div></header>
+            <div class="stage-controls">
               <label><span data-i18n="modelLab.model">Model</span><select name="model"><option value="gpt-5.6-luna">GPT-5.6 Luna</option><option value="gpt-5.6-terra" selected>GPT-5.6 Terra</option><option value="gpt-5.6-sol">GPT-5.6 Sol</option></select></label>
-              <label><span data-i18n="modelLab.effort">Reasoning effort</span><select name="effort"><option value="low" data-i18n="modelLab.effort.low">Low</option><option value="medium" selected data-i18n="modelLab.effort.medium">Medium</option><option value="high" data-i18n="modelLab.effort.high">High</option></select></label>
+              <label><span data-i18n="modelLab.effort">Reasoning effort</span><select name="effort"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="xhigh">Extra high</option><option value="max">Max</option><option value="ultra">Ultra</option></select></label>
+              <label class="fast-toggle"><input type="checkbox" name="fast" checked><span><b data-i18n="modelLab.fast">Fast 1.5×</b><small data-i18n="modelLab.fastCost">Higher usage</small></span></label>
             </div>
-            <div class="role-config" data-role="visual">
-              <strong data-i18n="modelLab.visualStage">Direct Canvas author</strong>
+            <div class="stage-actions"><span class="stage-status" data-state="idle" data-i18n="modelLab.idle">Not run</span><button type="button" data-action="rerun" disabled data-i18n="modelLab.rerun">Rerun from here</button></div>
+            <div class="stage-output" hidden></div>
+          </article>
+
+          <article class="pipeline-stage deterministic-stage" data-stage="plan">
+            <header><span>04</span><div><h3 data-i18n="modelLab.stage.plan">Discovery and scene plan</h3><p data-i18n="modelLab.stage.planHelp">Prediction, observation, explanation, transfer, and the scientific representation family.</p></div></header>
+            <p class="no-model-chip" data-i18n="modelLab.noModel">Local checks · no model call</p>
+            <div class="stage-actions"><span class="stage-status" data-state="idle" data-i18n="modelLab.idle">Not run</span><button type="button" data-action="rerun" disabled data-i18n="modelLab.rerun">Rerun from here</button></div>
+            <div class="stage-output" hidden></div>
+          </article>
+
+          <article class="pipeline-stage model-stage stage-visual" data-stage="visual">
+            <header><span>05</span><div><h3 data-i18n="modelLab.stage.visual">Canvas generation</h3><p data-i18n="modelLab.stage.visualHelp">Complete scientific scene, interaction, and motion.</p></div></header>
+            <div class="stage-controls">
               <label><span data-i18n="modelLab.model">Model</span><select name="model"><option value="gpt-5.6-luna">GPT-5.6 Luna</option><option value="gpt-5.6-terra" selected>GPT-5.6 Terra</option><option value="gpt-5.6-sol">GPT-5.6 Sol</option></select></label>
-              <label><span data-i18n="modelLab.effort">Reasoning effort</span><select name="effort"><option value="low" data-i18n="modelLab.effort.low">Low</option><option value="medium" selected data-i18n="modelLab.effort.medium">Medium</option><option value="high" data-i18n="modelLab.effort.high">High</option></select></label>
+              <label><span data-i18n="modelLab.effort">Reasoning effort</span><select name="effort"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="xhigh">Extra high</option><option value="max">Max</option><option value="ultra">Ultra</option></select></label>
+              <label class="fast-toggle"><input type="checkbox" name="fast" checked><span><b data-i18n="modelLab.fast">Fast 1.5×</b><small data-i18n="modelLab.fastCost">Higher usage</small></span></label>
             </div>
-          </fieldset>
+            <div class="stage-actions"><span class="stage-status" data-state="idle" data-i18n="modelLab.idle">Not run</span><button type="button" data-action="rerun" disabled data-i18n="modelLab.rerun">Rerun from here</button></div>
+            <div class="stage-output" hidden></div>
+          </article>
 
-          <div class="versus" aria-hidden="true"><span>vs</span></div>
+          <article class="pipeline-stage deterministic-stage" data-stage="verify">
+            <header><span>06</span><div><h3 data-i18n="modelLab.stage.verify">Deterministic verification</h3><p data-i18n="modelLab.stage.verifyHelp">Contracts, security, physics, fixtures, geometry, and runtime.</p></div></header>
+            <p class="no-model-chip" data-i18n="modelLab.noModel">Local checks · no model call</p>
+            <div class="stage-actions"><span class="stage-status" data-state="idle" data-i18n="modelLab.idle">Not run</span><button type="button" data-action="rerun" disabled data-i18n="modelLab.rerun">Rerun from here</button></div>
+            <div class="stage-output" hidden></div>
+          </article>
 
-          <fieldset class="candidate-config" data-slot="B">
-            <legend data-i18n="modelLab.candidate" data-i18n-slot="B">Candidate B</legend>
-            <div class="role-config" data-role="physics">
-              <strong data-i18n="modelLab.physicsStage">Physics model</strong>
+          <article class="pipeline-stage deterministic-stage" data-stage="browser">
+            <header><span>07</span><div><h3 data-i18n="modelLab.stage.browser">Browser verification</h3><p data-i18n="modelLab.stage.browserHelp">Real render, interaction, runtime beacon, and visual response.</p></div></header>
+            <p class="no-model-chip" data-i18n="modelLab.noModel">Local checks · no model call</p>
+            <div class="stage-actions"><span class="stage-status" data-state="idle" data-i18n="modelLab.idle">Not run</span><button type="button" data-action="rerun" disabled data-i18n="modelLab.rerun">Rerun from here</button></div>
+            <div class="stage-output" hidden></div>
+          </article>
+
+          <article class="pipeline-stage model-stage" data-stage="repair_1">
+            <header><span>08</span><div><h3 data-i18n="modelLab.stage.repair1">Bounded repair 1</h3><p data-i18n="modelLab.stage.repairHelp">Receives the exact gate failures and current module.</p></div></header>
+            <div class="stage-controls">
               <label><span data-i18n="modelLab.model">Model</span><select name="model"><option value="gpt-5.6-luna">GPT-5.6 Luna</option><option value="gpt-5.6-terra">GPT-5.6 Terra</option><option value="gpt-5.6-sol" selected>GPT-5.6 Sol</option></select></label>
-              <label><span data-i18n="modelLab.effort">Reasoning effort</span><select name="effort"><option value="low" data-i18n="modelLab.effort.low">Low</option><option value="medium" selected data-i18n="modelLab.effort.medium">Medium</option><option value="high" data-i18n="modelLab.effort.high">High</option></select></label>
+              <label><span data-i18n="modelLab.effort">Reasoning effort</span><select name="effort"><option value="low" selected>Low</option><option value="medium">Medium</option><option value="high">High</option><option value="xhigh">Extra high</option><option value="max">Max</option><option value="ultra">Ultra</option></select></label>
+              <label class="fast-toggle"><input type="checkbox" name="fast" checked><span><b data-i18n="modelLab.fast">Fast 1.5×</b><small data-i18n="modelLab.fastCost">Higher usage</small></span></label>
             </div>
-            <div class="role-config" data-role="visual">
-              <strong data-i18n="modelLab.visualStage">Direct Canvas author</strong>
+            <div class="stage-actions"><span class="stage-status" data-state="idle" data-i18n="modelLab.idle">Not run</span><button type="button" data-action="rerun" disabled data-i18n="modelLab.rerun">Rerun from here</button></div>
+            <div class="stage-output" hidden></div>
+          </article>
+
+          <article class="pipeline-stage model-stage" data-stage="repair_2">
+            <header><span>09</span><div><h3 data-i18n="modelLab.stage.repair2">Bounded repair 2</h3><p data-i18n="modelLab.stage.repairHelp">Receives the exact gate failures and current module.</p></div></header>
+            <div class="stage-controls">
               <label><span data-i18n="modelLab.model">Model</span><select name="model"><option value="gpt-5.6-luna">GPT-5.6 Luna</option><option value="gpt-5.6-terra">GPT-5.6 Terra</option><option value="gpt-5.6-sol" selected>GPT-5.6 Sol</option></select></label>
-              <label><span data-i18n="modelLab.effort">Reasoning effort</span><select name="effort"><option value="low" data-i18n="modelLab.effort.low">Low</option><option value="medium" selected data-i18n="modelLab.effort.medium">Medium</option><option value="high" data-i18n="modelLab.effort.high">High</option></select></label>
+              <label><span data-i18n="modelLab.effort">Reasoning effort</span><select name="effort"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="xhigh">Extra high</option><option value="max">Max</option><option value="ultra">Ultra</option></select></label>
+              <label class="fast-toggle"><input type="checkbox" name="fast" checked><span><b data-i18n="modelLab.fast">Fast 1.5×</b><small data-i18n="modelLab.fastCost">Higher usage</small></span></label>
             </div>
-          </fieldset>
+            <div class="stage-actions"><span class="stage-status" data-state="idle" data-i18n="modelLab.idle">Not run</span><button type="button" data-action="rerun" disabled data-i18n="modelLab.rerun">Rerun from here</button></div>
+            <div class="stage-output" hidden></div>
+          </article>
+
+          <article class="pipeline-stage model-stage" data-stage="qa">
+            <header><span>10</span><div><h3 data-i18n="modelLab.stage.qa">QA review</h3><p data-i18n="modelLab.stage.qaHelp">Terse review of science, teaching flow, and visual richness.</p></div></header>
+            <div class="stage-controls">
+              <label><span data-i18n="modelLab.model">Model</span><select name="model"><option value="gpt-5.6-luna">GPT-5.6 Luna</option><option value="gpt-5.6-terra">GPT-5.6 Terra</option><option value="gpt-5.6-sol" selected>GPT-5.6 Sol</option></select></label>
+              <label><span data-i18n="modelLab.effort">Reasoning effort</span><select name="effort"><option value="low" selected>Low</option><option value="medium">Medium</option><option value="high">High</option><option value="xhigh">Extra high</option><option value="max">Max</option><option value="ultra">Ultra</option></select></label>
+              <label class="fast-toggle"><input type="checkbox" name="fast" checked><span><b data-i18n="modelLab.fast">Fast 1.5×</b><small data-i18n="modelLab.fastCost">Higher usage</small></span></label>
+            </div>
+            <div class="stage-actions"><span class="stage-status" data-state="idle" data-i18n="modelLab.idle">Not run</span><button type="button" data-action="rerun" disabled data-i18n="modelLab.rerun">Rerun from here</button></div>
+            <div class="stage-output" hidden></div>
+          </article>
+
+          <article class="pipeline-stage deterministic-stage" data-stage="finalize">
+            <header><span>11</span><div><h3 data-i18n="modelLab.stage.finalize">Assemble and display</h3><p data-i18n="modelLab.stage.finalizeHelp">Build the isolated artifact and label its real trust tier.</p></div></header>
+            <p class="no-model-chip" data-i18n="modelLab.noModel">Local checks · no model call</p>
+            <div class="stage-actions"><span class="stage-status" data-state="idle" data-i18n="modelLab.idle">Not run</span><button type="button" data-action="rerun" disabled data-i18n="modelLab.rerun">Rerun from here</button></div>
+            <div class="stage-output" hidden></div>
+          </article>
+        </section>
+
+        <div class="run-bar">
+          <div class="run-status" id="run-status" data-state="idle" role="status" aria-live="polite">
+            <span aria-hidden="true"></span>
+            <div><small data-i18n="modelLab.runStatus">Pipeline status</small><strong data-i18n="modelLab.idle">Not run</strong></div>
+          </div>
+          <button class="run-button" id="run-pipeline-button" type="submit"><span data-i18n="modelLab.submit">Run full pipeline</span><b aria-hidden="true">→</b></button>
         </div>
-
-        <button class="compare-button" id="compare-button" type="submit">
-          <span class="button-orbit" aria-hidden="true"></span>
-          <span data-i18n="modelLab.submit">Start comparison</span>
-        </button>
       </form>
 
-      <section class="shared-answer" id="shared-answer" aria-labelledby="shared-answer-title" hidden>
-        <div class="shared-answer-heading">
-          <p class="eyebrow" data-i18n="modelLab.sharedAnswer">Shared understanding</p>
-          <bdi id="understand-route" dir="ltr"></bdi>
-        </div>
-        <h2 id="shared-answer-title" dir="auto"></h2>
-        <p id="shared-formula" class="formula" dir="ltr" hidden></p>
-      </section>
+      <section class="pipeline-results" id="pipeline-results" hidden aria-labelledby="results-title">
+        <header class="results-header">
+          <div><p class="section-index">OUTPUT / TRACE</p><h2 id="results-title" data-i18n="modelLab.resultsTitle">Stage results</h2></div>
+          <p data-i18n="modelLab.resultsHelp">Structured final outputs are shown; private reasoning and raw executable source remain hidden.</p>
+        </header>
 
-      <p class="run-status" id="run-status" role="status" aria-live="polite" data-state="idle">
-        <span aria-hidden="true"></span>
-        <strong data-i18n="modelLab.idle">Waiting for a question</strong>
-      </p>
-
-      <section class="comparison-grid" aria-label="Model comparison results">
-        <article class="observation-bay bay-a" data-candidate="A">
-          <header>
-            <div>
-              <p class="bay-index">A / 01</p>
-              <h2 data-i18n="modelLab.candidate" data-i18n-slot="A">Candidate A</h2>
-            </div>
-            <span class="candidate-status" data-status="queued" data-i18n="modelLab.idle">Waiting for a question</span>
-          </header>
-          <div class="candidate-routes">
-            <p><span data-i18n="modelLab.physicsStage">Physics model</span><bdi class="physics-model" dir="ltr">GPT-5.6 Terra</bdi><span class="physics-effort" data-i18n="modelLab.effort.medium">Medium</span></p>
-            <p><span data-i18n="modelLab.visualStage">Direct Canvas author</span><bdi class="visual-model" dir="ltr">GPT-5.6 Terra</bdi><span class="visual-effort" data-i18n="modelLab.effort.medium">Medium</span></p>
-          </div>
-          <dl class="metrics">
-            <div><dt data-i18n="modelLab.physicsTime">Physics</dt><dd data-metric="physics">—</dd></div>
-            <div><dt data-i18n="modelLab.visualTime">Drawing</dt><dd data-metric="visual">—</dd></div>
-            <div><dt data-i18n="modelLab.verificationTime">Verification</dt><dd data-metric="verification">—</dd></div>
-            <div><dt data-i18n="modelLab.checks">Checks</dt><dd data-metric="checks">—</dd></div>
-          </dl>
-          <div class="bay-stage">
-            <div class="stage-placeholder" aria-hidden="true"><span></span><i></i></div>
-            <div class="preview-warning" role="note" hidden>
-              <strong data-i18n="modelLab.previewTitle">Unverified preview</strong>
-              <p data-i18n="modelLab.previewCopy">This candidate missed scientific or quality checks. It is shown only for comparison and is not verified, cached, shared, or added to the library.</p>
-              <p><strong data-i18n="modelLab.gates">Gates not passed</strong>: <bdi class="preview-failures" dir="ltr"></bdi></p>
-            </div>
-            <iframe title="Candidate A simulation" sandbox="allow-scripts" scrolling="auto" data-i18n-title="modelLab.frameTitle" data-i18n-slot="A" hidden></iframe>
-            <div class="withheld" hidden>
-              <span aria-hidden="true">×</span>
-              <p data-i18n="modelLab.noArtifact">This artifact was withheld because it did not pass the gates. Raw model output is never displayed.</p>
-              <p><strong data-i18n="modelLab.gates">Gates not passed</strong>: <bdi class="failed-gates" dir="ltr"></bdi></p>
-            </div>
-          </div>
+        <article class="shared-answer" id="shared-answer" hidden>
+          <p data-i18n="modelLab.sharedAnswer">Answer from understanding</p>
+          <strong id="shared-answer-title"></strong>
+          <code id="shared-formula" dir="auto" hidden></code>
         </article>
 
-        <article class="observation-bay bay-b" data-candidate="B">
-          <header>
-            <div>
-              <p class="bay-index">B / 02</p>
-              <h2 data-i18n="modelLab.candidate" data-i18n-slot="B">Candidate B</h2>
-            </div>
-            <span class="candidate-status" data-status="queued" data-i18n="modelLab.idle">Waiting for a question</span>
-          </header>
-          <div class="candidate-routes">
-            <p><span data-i18n="modelLab.physicsStage">Physics model</span><bdi class="physics-model" dir="ltr">GPT-5.6 Sol</bdi><span class="physics-effort" data-i18n="modelLab.effort.medium">Medium</span></p>
-            <p><span data-i18n="modelLab.visualStage">Direct Canvas author</span><bdi class="visual-model" dir="ltr">GPT-5.6 Sol</bdi><span class="visual-effort" data-i18n="modelLab.effort.medium">Medium</span></p>
-          </div>
-          <dl class="metrics">
-            <div><dt data-i18n="modelLab.physicsTime">Physics</dt><dd data-metric="physics">—</dd></div>
-            <div><dt data-i18n="modelLab.visualTime">Drawing</dt><dd data-metric="visual">—</dd></div>
-            <div><dt data-i18n="modelLab.verificationTime">Verification</dt><dd data-metric="verification">—</dd></div>
-            <div><dt data-i18n="modelLab.checks">Checks</dt><dd data-metric="checks">—</dd></div>
-          </dl>
-          <div class="bay-stage">
-            <div class="stage-placeholder" aria-hidden="true"><span></span><i></i></div>
-            <div class="preview-warning" role="note" hidden>
-              <strong data-i18n="modelLab.previewTitle">Unverified preview</strong>
-              <p data-i18n="modelLab.previewCopy">This candidate missed scientific or quality checks. It is shown only for comparison and is not verified, cached, shared, or added to the library.</p>
-              <p><strong data-i18n="modelLab.gates">Gates not passed</strong>: <bdi class="preview-failures" dir="ltr"></bdi></p>
-            </div>
-            <iframe title="Candidate B simulation" sandbox="allow-scripts" scrolling="auto" data-i18n-title="modelLab.frameTitle" data-i18n-slot="B" hidden></iframe>
-            <div class="withheld" hidden>
-              <span aria-hidden="true">×</span>
-              <p data-i18n="modelLab.noArtifact">This artifact was withheld because it did not pass the gates. Raw model output is never displayed.</p>
-              <p><strong data-i18n="modelLab.gates">Gates not passed</strong>: <bdi class="failed-gates" dir="ltr"></bdi></p>
-            </div>
-          </div>
+        <article class="artifact-panel" id="pipeline-preview" hidden>
+          <header><div><p class="section-index">VISUAL OUTPUT</p><h2 data-i18n="modelLab.previewResult">Rendered simulation</h2></div><span class="artifact-tier"></span></header>
+          <div class="preview-warning" role="note" hidden><strong data-i18n="modelLab.previewTitle">Unverified preview</strong><p data-i18n="modelLab.previewCopy">This preview remains isolated and is not added to the learner library.</p></div>
+          <iframe title="Pipeline simulation output" data-i18n-title="modelLab.pipelineFrameTitle" sandbox="allow-scripts" scrolling="auto"></iframe>
+        </article>
+
+        <article class="trace-panel">
+          <header><h2 data-i18n="modelLab.traceTitle">Execution trace</h2><span id="revision-label"></span></header>
+          <ol id="pipeline-trace"></ol>
         </article>
       </section>
     </main>
 
-    <footer class="lab-footer" data-i18n="modelLab.footer">This is an isolated measurement lab, not the learner path or Laysh library.</footer>
+    <footer class="lab-footer" data-i18n="modelLab.footer">This isolated workbench never changes the learner pipeline, cache, or library.</footer>
   </div>
 </body>
 </html>

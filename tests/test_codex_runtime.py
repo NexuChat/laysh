@@ -308,6 +308,96 @@ async def test_public_stage_uses_stdin_argument_array_isolated_cwd_and_ephemeral
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("model", "effort"),
+    [
+        ("gpt-5.6-luna", "max"),
+        ("gpt-5.6-terra", "ultra"),
+        ("gpt-5.6-sol", "ultra"),
+    ],
+)
+async def test_model_lab_stage_accepts_catalog_efforts_and_can_enable_fast(
+    model,
+    effort,
+):
+    process = FakeProcess(success_jsonl(VALID_MODULE_OUTPUT))
+    captured = {}
+    executor = executor_with_process(process, captured)
+
+    await executor.execute_stage(
+        prompt="isolated model lab",
+        schema_path=Path("server/schemas/module.schema.json").resolve(),
+        model=model,
+        effort=effort,
+        public=True,
+        model_lab=True,
+        fast=True,
+    )
+
+    args = captured["args"]
+    assert f'model_reasoning_effort="{effort}"' in args
+    assert ("--enable", "fast_mode") == args[
+        args.index("--enable") : args.index("--enable") + 2
+    ]
+    assert 'service_tier="fast"' in args
+
+
+@pytest.mark.asyncio
+async def test_model_lab_stage_can_disable_fast_without_changing_runtime_defaults():
+    process = FakeProcess(success_jsonl(VALID_MODULE_OUTPUT))
+    captured = {}
+    executor = executor_with_process(process, captured)
+
+    await executor.execute_stage(
+        prompt="isolated model lab",
+        schema_path=Path("server/schemas/module.schema.json").resolve(),
+        model="gpt-5.6-terra",
+        effort="xhigh",
+        public=True,
+        model_lab=True,
+        fast=False,
+    )
+
+    args = captured["args"]
+    assert "--enable" not in args
+    assert 'service_tier="fast"' not in args
+
+    with pytest.raises(Exception, match="effort_not_allowed"):
+        await executor.execute_stage(
+            prompt="learner runtime",
+            schema_path=Path("server/schemas/module.schema.json").resolve(),
+            model="gpt-5.6-terra",
+            effort="xhigh",
+            public=True,
+        )
+
+
+@pytest.mark.asyncio
+async def test_model_lab_rejects_ultra_for_luna_before_spawning():
+    spawned = False
+
+    async def factory(*_args, **_kwargs):
+        nonlocal spawned
+        spawned = True
+        return FakeProcess()
+
+    from server.codex_runtime import CodexExecutor, CodexPolicyError
+
+    executor = CodexExecutor(process_factory=factory)
+    with pytest.raises(CodexPolicyError, match="effort_not_supported_by_model"):
+        await executor.execute_stage(
+            prompt="must not run",
+            schema_path=Path("server/schemas/module.schema.json").resolve(),
+            model="gpt-5.6-luna",
+            effort="ultra",
+            public=True,
+            model_lab=True,
+            fast=True,
+        )
+    assert spawned is False
+
+
+@pytest.mark.asyncio
 async def test_evidence_mode_is_disabled_by_default():
     from server.codex_runtime import CodexPolicyError
 

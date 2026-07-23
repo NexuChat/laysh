@@ -4,20 +4,55 @@
   const form = document.getElementById("model-lab-form");
   const question = document.getElementById("lab-question");
   const error = document.getElementById("lab-error");
-  const submit = document.getElementById("compare-button");
+  const submit = document.getElementById("run-pipeline-button");
   const runStatus = document.getElementById("run-status");
+  const results = document.getElementById("pipeline-results");
   const sharedAnswer = document.getElementById("shared-answer");
   const answerCopy = document.getElementById("shared-answer-title");
   const formula = document.getElementById("shared-formula");
-  const understandRoute = document.getElementById("understand-route");
-  const bays = new Map(
-    [...document.querySelectorAll("[data-candidate]")].map((bay) => [
-      bay.dataset.candidate,
-      bay,
+  const artifactPanel = document.getElementById("pipeline-preview");
+  const artifactFrame = artifactPanel.querySelector("iframe");
+  const artifactTier = artifactPanel.querySelector(".artifact-tier");
+  const previewWarning = artifactPanel.querySelector(".preview-warning");
+  const trace = document.getElementById("pipeline-trace");
+  const revisionLabel = document.getElementById("revision-label");
+  const localeControl = document.getElementById("locale-control");
+  const sourceMode = document.getElementById("source-mode");
+  const visualMode = document.getElementById("visual-mode");
+  const cards = new Map(
+    [...document.querySelectorAll("[data-stage]")].map((card) => [
+      card.dataset.stage,
+      card,
     ]),
   );
-  let activeRun = null;
-  let lastResult = null;
+  const modelStages = new Set([
+    "understand",
+    "physics",
+    "visual",
+    "repair_1",
+    "repair_2",
+    "qa",
+  ]);
+  const supportedEfforts = {
+    "gpt-5.6-luna": new Set(["low", "medium", "high", "xhigh", "max"]),
+    "gpt-5.6-terra": new Set(["low", "medium", "high", "xhigh", "max", "ultra"]),
+    "gpt-5.6-sol": new Set(["low", "medium", "high", "xhigh", "max", "ultra"]),
+  };
+  const stageOrder = [
+    "evidence",
+    "understand",
+    "physics",
+    "plan",
+    "visual",
+    "verify",
+    "browser",
+    "repair_1",
+    "repair_2",
+    "qa",
+    "finalize",
+  ];
+  let activeStatusUrl = null;
+  let currentRun = null;
   let pollTimer = 0;
 
   const locale = () => window.LayshLocale.current();
@@ -35,188 +70,76 @@
       }),
     });
   };
-  const displayModel = (model) => model.replace("gpt-5.6-", "GPT-5.6 ").replace(
-    /\b(luna|terra|sol)\b/,
-    (name) => name[0].toUpperCase() + name.slice(1),
-  );
+  const displayModel = (model) => model
+    .replace("gpt-5.6-", "GPT-5.6 ")
+    .replace(/\b(luna|terra|sol)\b/, (name) => (
+      name[0].toUpperCase() + name.slice(1)
+    ));
 
-  const candidateStatusKey = {
-    queued: "modelLab.queued",
-    generating: "modelLab.generating",
-    verifying: "modelLab.verifying",
-    verified: "modelLab.verified",
-    unverified: "modelLab.unverified",
-    rejected: "modelLab.rejected",
-    failed: "modelLab.failed",
-  };
-  const runStatusKey = {
-    idle: "modelLab.idle",
-    queued: "modelLab.queued",
-    understanding: "modelLab.understanding",
-    generating: "modelLab.generating",
-    complete: "modelLab.complete",
-    rejected: "modelLab.rejected",
-    failed: "modelLab.failed",
-  };
-
-  function translateSlots() {
-    for (const element of document.querySelectorAll("[data-i18n-slot]")) {
-      if (element.dataset.i18n) {
-        element.textContent = t(element.dataset.i18n, {
-          slot: element.dataset.i18nSlot,
-        });
-      }
-      if (element.dataset.i18nTitle) {
-        element.title = t(element.dataset.i18nTitle, {
-          slot: element.dataset.i18nSlot,
-        });
-      }
-    }
-  }
-
-  function selectedStage(container) {
+  function stageConfig(stage) {
+    const card = cards.get(stage);
     return {
-      model: container.querySelector('[name="model"]').value,
-      effort: container.querySelector('[name="effort"]').value,
+      model: card.querySelector('[name="model"]').value,
+      effort: card.querySelector('[name="effort"]').value,
+      fast: card.querySelector('[name="fast"]').checked,
     };
   }
 
-  function selectedUnderstanding() {
-    return selectedStage(document.querySelector('[data-role="understand"]'));
-  }
-
-  function selectedCandidates() {
-    return [...document.querySelectorAll(".candidate-config")].map((fieldset) => ({
-      physics: selectedStage(fieldset.querySelector('[data-role="physics"]')),
-      visual: selectedStage(fieldset.querySelector('[data-role="visual"]')),
-    }));
-  }
-
-  function resetBay(bay, config) {
-    bay.dataset.state = "queued";
-    const status = bay.querySelector(".candidate-status");
-    status.dataset.status = "queued";
-    status.textContent = t("modelLab.idle");
-    bay.querySelector(".physics-model").textContent = displayModel(config.physics.model);
-    bay.querySelector(".physics-effort").textContent = t(
-      `modelLab.effort.${config.physics.effort}`,
-    );
-    bay.querySelector(".visual-model").textContent = displayModel(config.visual.model);
-    bay.querySelector(".visual-effort").textContent = t(
-      `modelLab.effort.${config.visual.effort}`,
-    );
-    for (const metric of bay.querySelectorAll("[data-metric]")) metric.textContent = "—";
-    const frame = bay.querySelector("iframe");
-    frame.hidden = true;
-    frame.removeAttribute("src");
-    frame.style.removeProperty("height");
-    bay.querySelector(".withheld").hidden = true;
-    const previewWarning = bay.querySelector(".preview-warning");
-    previewWarning.hidden = true;
-    previewWarning.querySelector(".preview-failures").textContent = "";
-  }
-
-  function resetComparison(configs) {
-    lastResult = null;
-    sharedAnswer.hidden = true;
-    answerCopy.textContent = "";
-    formula.hidden = true;
-    formula.textContent = "";
-    [...bays.values()].forEach((bay, index) => resetBay(bay, configs[index]));
-  }
-
-  function renderRunStatus(status) {
-    runStatus.dataset.state = status;
-    runStatus.querySelector("strong").textContent = t(
-      runStatusKey[status] || "modelLab.failed",
+  function pipelineConfig() {
+    return Object.fromEntries(
+      [...modelStages].map((stage) => [stage, stageConfig(stage)]),
     );
   }
 
-  function renderCandidate(candidate) {
-    const bay = bays.get(candidate.slot);
-    if (!bay) return;
-    bay.dataset.state = candidate.status;
-    bay.querySelector(".physics-model").textContent = displayModel(
-      candidate.physics_model,
-    );
-    bay.querySelector(".physics-effort").textContent = t(
-      `modelLab.effort.${candidate.physics_effort}`,
-    );
-    bay.querySelector(".visual-model").textContent = displayModel(candidate.visual_model);
-    bay.querySelector(".visual-effort").textContent = t(
-      `modelLab.effort.${candidate.visual_effort}`,
-    );
-    const status = bay.querySelector(".candidate-status");
-    status.dataset.status = candidate.status;
-    status.textContent = t(candidateStatusKey[candidate.status] || "modelLab.failed");
-    bay.querySelector('[data-metric="physics"]').textContent = formatDuration(
-      candidate.physics_elapsed_ms,
-    );
-    bay.querySelector('[data-metric="visual"]').textContent = formatDuration(
-      candidate.visual_elapsed_ms,
-    );
-    bay.querySelector('[data-metric="verification"]').textContent = formatDuration(
-      candidate.verification_elapsed_ms,
-    );
-    bay.querySelector('[data-metric="checks"]').textContent = candidate.check_count
-      ? formatNumber(candidate.check_count)
-      : "—";
+  function syncEfforts(card) {
+    const model = card.querySelector('[name="model"]').value;
+    const effort = card.querySelector('[name="effort"]');
+    const allowed = supportedEfforts[model];
+    for (const option of effort.options) {
+      option.disabled = !allowed.has(option.value);
+    }
+    if (!allowed.has(effort.value)) effort.value = "max";
+    const note = card.querySelector(".effort-note");
+    if (note) {
+      note.textContent = model === "gpt-5.6-luna"
+        ? t("modelLab.lunaLimit")
+        : "";
+      note.hidden = model !== "gpt-5.6-luna";
+    }
+  }
 
-    const frame = bay.querySelector("iframe");
-    const withheld = bay.querySelector(".withheld");
-    const previewWarning = bay.querySelector(".preview-warning");
-    const safeFailures = [...new Set([
-      ...(candidate.failed_gates || []),
-      ...(candidate.failure_codes || []),
-    ])];
-    if (
-      ["verified", "unverified"].includes(candidate.status)
-      && candidate.artifact_url
-    ) {
-      withheld.hidden = true;
-      previewWarning.hidden = candidate.status !== "unverified";
-      previewWarning.querySelector(".preview-failures").textContent = safeFailures.length
-        ? safeFailures.join(", ")
-        : "—";
-      frame.hidden = false;
-      if (frame.getAttribute("src") !== candidate.artifact_url) {
-        frame.src = candidate.artifact_url;
+  function syncAllEfforts() {
+    for (const stage of modelStages) syncEfforts(cards.get(stage));
+  }
+
+  function updateEffortLabels() {
+    for (const card of document.querySelectorAll(".model-stage")) {
+      for (const option of card.querySelector('[name="effort"]').options) {
+        option.textContent = t(`modelLab.effort.${option.value}`);
       }
-      return;
-    }
-    frame.hidden = true;
-    previewWarning.hidden = true;
-    if (candidate.status === "rejected" || candidate.status === "failed") {
-      withheld.hidden = false;
-      bay.querySelector(".failed-gates").textContent = safeFailures.length
-        ? safeFailures.join(", ")
-        : "—";
-    } else {
-      withheld.hidden = true;
     }
   }
 
-  function renderResult(result) {
-    lastResult = result;
-    renderRunStatus(result.status);
-    if (result.answer?.tldr) {
-      sharedAnswer.hidden = false;
-      answerCopy.textContent = result.answer.tldr;
-      formula.textContent = result.answer.key_formula || "";
-      formula.hidden = !result.answer.key_formula;
-    }
-    understandRoute.textContent = `${displayModel(result.understand_model)} · ${t(
-      `modelLab.effort.${result.understand_effort}`,
-    )} · ${formatDuration(result.understand_elapsed_ms)}`;
-    result.candidates.forEach(renderCandidate);
+  function updateLocaleControl() {
+    const isArabic = locale() === "ar";
+    localeControl.textContent = isArabic ? "EN" : "العربية";
+    localeControl.setAttribute(
+      "aria-label",
+      isArabic ? "Switch to English" : "التبديل إلى العربية",
+    );
   }
 
   function setBusy(busy) {
     submit.disabled = busy;
-    submit.querySelector("[data-i18n]").textContent = t(
+    submit.querySelector("span").textContent = t(
       busy ? "modelLab.submitBusy" : "modelLab.submit",
     );
-    for (const control of form.querySelectorAll("textarea, select")) control.disabled = busy;
+    for (const control of form.querySelectorAll("textarea, select, input")) {
+      control.disabled = busy;
+    }
+    for (const button of form.querySelectorAll('[data-action="rerun"]')) {
+      button.disabled = busy || !currentRun;
+    }
   }
 
   function showError(key) {
@@ -231,8 +154,290 @@
     question.removeAttribute("aria-invalid");
   }
 
-  async function poll(statusUrl) {
-    if (activeRun !== statusUrl) return;
+  function renderRunStatus(status, activeStage = null) {
+    const statusKey = {
+      queued: "modelLab.queued",
+      running: "modelLab.running",
+      complete: "modelLab.complete",
+      rejected: "modelLab.rejected",
+      failed: "modelLab.failed",
+    }[status] || "modelLab.idle";
+    runStatus.dataset.state = status;
+    runStatus.querySelector("strong").textContent = activeStage
+      ? t("modelLab.runningStage", {
+        stage: t(`modelLab.stage.${activeStage.replace("_1", "1").replace("_2", "2")}`),
+      })
+      : t(statusKey);
+  }
+
+  function appendText(container, className, text) {
+    if (!text) return;
+    const element = document.createElement("p");
+    element.className = className;
+    element.textContent = text;
+    container.append(element);
+  }
+
+  function appendList(container, titleKey, values, className = "") {
+    if (!Array.isArray(values) || values.length === 0) return;
+    const group = document.createElement("div");
+    group.className = `output-group ${className}`.trim();
+    const title = document.createElement("strong");
+    title.textContent = t(titleKey);
+    const list = document.createElement("ul");
+    for (const value of values) {
+      const item = document.createElement("li");
+      item.textContent = value;
+      list.append(item);
+    }
+    group.append(title, list);
+    container.append(group);
+  }
+
+  function appendSources(container, sources) {
+    if (!Array.isArray(sources) || sources.length === 0) return;
+    const group = document.createElement("div");
+    group.className = "output-group source-output";
+    const title = document.createElement("strong");
+    title.textContent = t("modelLab.output.sources");
+    const list = document.createElement("ul");
+    for (const source of sources) {
+      const item = document.createElement("li");
+      const link = document.createElement("a");
+      link.href = source.url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = source.title;
+      const metadata = document.createElement("small");
+      metadata.textContent = `${source.provider} · ${source.license}`;
+      item.append(link, metadata);
+      list.append(item);
+    }
+    group.append(title, list);
+    container.append(group);
+  }
+
+  function appendDiscovery(container, discovery) {
+    if (!discovery?.learning_cycle || !discovery?.representation) return;
+    const group = document.createElement("div");
+    group.className = "discovery-output";
+    const family = document.createElement("p");
+    family.className = "representation-family";
+    family.textContent = t("modelLab.output.representation", {
+      value: discovery.representation.family.replaceAll("_", " "),
+    });
+    const cycle = document.createElement("ol");
+    for (const [name, copy] of Object.entries(discovery.learning_cycle)) {
+      const item = document.createElement("li");
+      const label = document.createElement("strong");
+      label.textContent = t(`modelLab.discovery.${name}`);
+      const text = document.createElement("span");
+      text.textContent = copy;
+      item.append(label, text);
+      cycle.append(item);
+    }
+    group.append(family, cycle);
+    if (Array.isArray(discovery.related_references)
+      && discovery.related_references.length > 0) {
+      const references = document.createElement("div");
+      references.className = "output-group source-output related-reference-output";
+      const heading = document.createElement("strong");
+      heading.textContent = t("modelLab.output.relatedReferences");
+      const list = document.createElement("ul");
+      for (const reference of discovery.related_references) {
+        const item = document.createElement("li");
+        const link = document.createElement("a");
+        link.href = reference.url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = reference.title;
+        const metadata = document.createElement("small");
+        metadata.textContent = [
+          reference.provider,
+          reference.language,
+          reference.license_note,
+        ].filter(Boolean).join(" · ");
+        item.append(link, metadata);
+        list.append(item);
+      }
+      references.append(heading, list);
+      group.append(references);
+    }
+    container.append(group);
+  }
+
+  function renderStageOutput(card, event, result) {
+    const output = card.querySelector(".stage-output");
+    output.replaceChildren();
+    if (!event) {
+      output.hidden = true;
+      return;
+    }
+    const stageOutput = event.output || {};
+    appendText(output, "output-summary", stageOutput.summary);
+    if (stageOutput.formula) {
+      const code = document.createElement("code");
+      code.dir = "auto";
+      code.textContent = stageOutput.formula;
+      output.append(code);
+    }
+    appendList(output, "modelLab.output.details", stageOutput.details);
+    appendList(
+      output,
+      "modelLab.output.expressions",
+      stageOutput.expressions,
+      "expressions",
+    );
+    appendList(output, "modelLab.output.assumptions", stageOutput.assumptions);
+    appendList(output, "modelLab.output.outputs", stageOutput.output_names, "outputs");
+    appendList(output, "modelLab.output.issues", stageOutput.issues, "issues");
+    appendSources(output, stageOutput.sources);
+    appendDiscovery(output, stageOutput.discovery);
+    appendList(output, "modelLab.gates", [
+      ...(stageOutput.failed_gates || []),
+      ...(stageOutput.failure_codes || []),
+    ], "failures");
+    if (stageOutput.visual_richness) {
+      const quality = document.createElement("div");
+      quality.className = "quality-grid";
+      for (const [name, passed] of Object.entries(stageOutput.visual_richness)) {
+        const chip = document.createElement("span");
+        chip.dataset.passed = String(passed);
+        chip.textContent = `${passed ? "✓" : "×"} ${t(`modelLab.quality.${name}`)}`;
+        quality.append(chip);
+      }
+      output.append(quality);
+    }
+    if (Number.isFinite(stageOutput.check_count) && stageOutput.check_count > 0) {
+      appendText(
+        output,
+        "output-checks",
+        t("modelLab.checkCount", { value: formatNumber(stageOutput.check_count) }),
+      );
+    }
+    if (
+      result.artifact_url
+      && ["visual", "repair_1", "repair_2", "finalize"].includes(event.stage)
+    ) {
+      const link = document.createElement("a");
+      link.className = "visual-output-link";
+      link.href = "#pipeline-preview";
+      link.textContent = t("modelLab.openVisual");
+      output.append(link);
+    }
+    output.hidden = output.childElementCount === 0;
+  }
+
+  function latestEvents(result) {
+    const latest = new Map();
+    for (const event of result.timeline) {
+      if (event.revision === result.revision) latest.set(event.stage, event);
+    }
+    return latest;
+  }
+
+  function renderCards(result) {
+    const events = latestEvents(result);
+    for (const stage of stageOrder) {
+      const card = cards.get(stage);
+      const event = events.get(stage);
+      const status = card.querySelector(".stage-status");
+      if (!event) {
+        const isActive = result.active_stage === stage;
+        status.dataset.state = isActive ? "running" : "idle";
+        status.textContent = isActive
+          ? t("modelLab.event.running")
+          : t("modelLab.notRunThisRevision");
+        renderStageOutput(card, null, result);
+        continue;
+      }
+      status.dataset.state = event.status;
+      status.textContent = `${t(`modelLab.event.${event.status}`)} · ${formatDuration(event.elapsed_ms)}`;
+      renderStageOutput(card, event, result);
+    }
+  }
+
+  function renderTrace(result) {
+    trace.replaceChildren();
+    revisionLabel.textContent = t("modelLab.revision", {
+      value: formatNumber(result.revision),
+    });
+    for (const event of result.timeline) {
+      const item = document.createElement("li");
+      item.dataset.status = event.status;
+      item.dataset.revision = String(event.revision);
+      const marker = document.createElement("span");
+      marker.className = "trace-marker";
+      marker.textContent = String(event.sequence).padStart(2, "0");
+      const copy = document.createElement("div");
+      const heading = document.createElement("strong");
+      heading.textContent = t(
+        `modelLab.stage.${event.stage.replace("_1", "1").replace("_2", "2")}`,
+      );
+      const metadata = document.createElement("p");
+      const route = event.model
+        ? `${displayModel(event.model)} · ${t(`modelLab.effort.${event.effort}`)} · ${
+          event.fast ? t("modelLab.fast") : t("modelLab.standard")
+        }`
+        : t("modelLab.noModel");
+      metadata.textContent = `${t(`modelLab.event.${event.status}`)} · ${
+        formatDuration(event.elapsed_ms)
+      } · ${route}`;
+      copy.append(heading, metadata);
+      if (event.output?.summary) {
+        const summary = document.createElement("p");
+        summary.className = "trace-summary";
+        summary.textContent = event.output.summary;
+        copy.append(summary);
+      }
+      const revision = document.createElement("small");
+      revision.textContent = `R${event.revision}`;
+      item.append(marker, copy, revision);
+      trace.append(item);
+    }
+  }
+
+  function renderArtifact(result) {
+    if (!result.artifact_url) {
+      artifactPanel.hidden = true;
+      delete artifactPanel.dataset.ready;
+      artifactFrame.removeAttribute("src");
+      return;
+    }
+    artifactPanel.hidden = false;
+    artifactTier.dataset.tier = result.artifact_tier;
+    artifactTier.textContent = t(
+      result.artifact_tier === "verified"
+        ? "modelLab.verified"
+        : "modelLab.unverified",
+    );
+    previewWarning.hidden = result.artifact_tier !== "unverified_preview";
+    if (artifactFrame.getAttribute("src") !== result.artifact_url) {
+      artifactPanel.dataset.ready = "false";
+      artifactFrame.style.removeProperty("height");
+      artifactFrame.src = result.artifact_url;
+    }
+  }
+
+  function renderResult(result) {
+    currentRun = result;
+    results.hidden = result.timeline.length === 0;
+    renderRunStatus(result.status, result.active_stage);
+    if (result.answer?.tldr) {
+      sharedAnswer.hidden = false;
+      answerCopy.textContent = result.answer.tldr;
+      formula.textContent = result.answer.key_formula || "";
+      formula.hidden = !result.answer.key_formula;
+    } else {
+      sharedAnswer.hidden = true;
+    }
+    renderCards(result);
+    renderTrace(result);
+    renderArtifact(result);
+  }
+
+  async function poll(statusUrl, minimumRevision) {
+    if (activeStatusUrl !== statusUrl) return;
     try {
       const response = await fetch(statusUrl, {
         headers: { accept: "application/json" },
@@ -241,72 +446,127 @@
       if (!response.ok) throw new Error("status_unavailable");
       const result = await response.json();
       renderResult(result);
-      if (["complete", "rejected", "failed"].includes(result.status)) {
-        activeRun = null;
+      if (
+        result.revision >= minimumRevision
+        && ["complete", "rejected", "failed"].includes(result.status)
+      ) {
+        activeStatusUrl = null;
         setBusy(false);
         return;
       }
-      pollTimer = window.setTimeout(() => poll(statusUrl), 800);
+      pollTimer = window.setTimeout(
+        () => poll(statusUrl, minimumRevision),
+        650,
+      );
     } catch {
-      activeRun = null;
+      activeStatusUrl = null;
       setBusy(false);
       renderRunStatus("failed");
       showError("modelLab.error.generic");
     }
   }
 
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    clearError();
+  async function startPipeline() {
     const normalizedQuestion = question.value.normalize("NFKC").trim();
     if (!normalizedQuestion) {
       showError("modelLab.error.required");
       question.focus();
       return;
     }
-
-    window.clearTimeout(pollTimer);
-    activeRun = null;
-    const candidates = selectedCandidates();
-    resetComparison(candidates);
+    clearError();
     setBusy(true);
     renderRunStatus("queued");
-    try {
-      const response = await fetch("/api/model-lab/compare", {
-        method: "POST",
-        headers: { "content-type": "application/json", accept: "application/json" },
-        body: JSON.stringify({
-          question: normalizedQuestion,
-          locale: locale(),
-          understand: selectedUnderstanding(),
-          candidates,
-        }),
-      });
-      if (!response.ok) {
-        showError(
-          response.status === 429 ? "modelLab.error.rate" : "modelLab.error.generic",
-        );
-        renderRunStatus("failed");
-        setBusy(false);
-        return;
-      }
-      const accepted = await response.json();
-      activeRun = accepted.status_url;
-      await poll(activeRun);
-    } catch {
-      showError("modelLab.error.generic");
+    const response = await fetch("/api/model-lab/pipeline", {
+      method: "POST",
+      headers: { "content-type": "application/json", accept: "application/json" },
+      body: JSON.stringify({
+        question: normalizedQuestion,
+        locale: locale(),
+        source_mode: sourceMode.value,
+        visual_mode: visualMode.value,
+        stages: pipelineConfig(),
+      }),
+    });
+    if (!response.ok) {
+      showError(
+        response.status === 429 ? "modelLab.error.rate" : "modelLab.error.generic",
+      );
       renderRunStatus("failed");
       setBusy(false);
+      return;
+    }
+    const accepted = await response.json();
+    activeStatusUrl = accepted.status_url;
+    await poll(activeStatusUrl, 1);
+  }
+
+  async function rerunFrom(stage) {
+    if (!currentRun || activeStatusUrl) return;
+    clearError();
+    setBusy(true);
+    const nextRevision = currentRun.revision + 1;
+    const payload = {
+      stage,
+      config: modelStages.has(stage) ? stageConfig(stage) : null,
+      source_mode: stage === "evidence" ? sourceMode.value : null,
+      visual_mode: ["evidence", "understand", "physics", "plan", "visual"].includes(stage)
+        ? visualMode.value
+        : null,
+    };
+    const response = await fetch(
+      `/api/model-lab/pipeline/${encodeURIComponent(currentRun.run_id)}/rerun`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json", accept: "application/json" },
+        body: JSON.stringify(payload),
+      },
+    );
+    if (!response.ok) {
+      showError("modelLab.error.rerun");
+      setBusy(false);
+      return;
+    }
+    const accepted = await response.json();
+    activeStatusUrl = accepted.status_url;
+    await poll(activeStatusUrl, nextRevision);
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    window.clearTimeout(pollTimer);
+    activeStatusUrl = null;
+    try {
+      await startPipeline();
+    } catch {
+      activeStatusUrl = null;
+      setBusy(false);
+      renderRunStatus("failed");
+      showError("modelLab.error.generic");
     }
   });
 
+  for (const card of document.querySelectorAll(".pipeline-stage")) {
+    card.querySelector('[data-action="rerun"]').addEventListener("click", async () => {
+      try {
+        await rerunFrom(card.dataset.stage);
+      } catch {
+        activeStatusUrl = null;
+        setBusy(false);
+        showError("modelLab.error.rerun");
+      }
+    });
+    const model = card.querySelector('[name="model"]');
+    if (model) model.addEventListener("change", () => syncEfforts(card));
+  }
+
   window.addEventListener("message", (event) => {
-    const frame = [...bays.values()]
-      .map((bay) => bay.querySelector("iframe"))
-      .find((candidate) => event.source === candidate.contentWindow);
-    if (!frame || event.origin !== "null") return;
+    if (event.source !== artifactFrame.contentWindow || event.origin !== "null") return;
     const payload = event.data;
     if (!payload || payload.source !== "laysh-artifact") return;
+    if (payload.type === "ready" && payload.version === 1) {
+      artifactPanel.dataset.ready = "true";
+      return;
+    }
     if (
       payload.type === "layout-height"
       && payload.version === 1
@@ -314,16 +574,7 @@
       && payload.height >= 100
       && payload.height <= 100_000
     ) {
-      frame.style.height = `${Math.ceil(payload.height)}px`;
-      return;
-    }
-    if (payload.type === "runtime-error" && payload.code === "SIM_RUNTIME_ERROR") {
-      const bay = frame.closest(".observation-bay");
-      frame.hidden = true;
-      bay.dataset.state = "failed";
-      const withheld = bay.querySelector(".withheld");
-      withheld.hidden = false;
-      bay.querySelector(".failed-gates").textContent = "runtime";
+      artifactFrame.style.height = `${Math.ceil(payload.height)}px`;
     }
   });
 
@@ -331,34 +582,25 @@
   window.addEventListener("resize", () => {
     cancelAnimationFrame(resizeFrame);
     resizeFrame = requestAnimationFrame(() => {
-      for (const frame of document.querySelectorAll(".bay-stage iframe[src]")) {
-        frame.contentWindow?.postMessage(
-          { source: "laysh-host", type: "measure-layout", version: 1 },
-          "*",
-        );
-      }
+      artifactFrame.contentWindow?.postMessage(
+        { source: "laysh-host", type: "measure-layout", version: 1 },
+        "*",
+      );
     });
   }, { passive: true });
 
   document.addEventListener("laysh:locale-changed", () => {
-    translateSlots();
-    if (lastResult) renderResult(lastResult);
-    else {
-      const configs = selectedCandidates();
-      [...bays.values()].forEach((bay, index) => {
-        bay.querySelector(".physics-effort").textContent = t(
-          `modelLab.effort.${configs[index].physics.effort}`,
-        );
-        bay.querySelector(".visual-effort").textContent = t(
-          `modelLab.effort.${configs[index].visual.effort}`,
-        );
-      });
-      renderRunStatus(runStatus.dataset.state || "idle");
-    }
-    setBusy(Boolean(activeRun));
+    updateLocaleControl();
+    updateEffortLabels();
+    syncAllEfforts();
+    if (currentRun) renderResult(currentRun);
+    else renderRunStatus("idle");
+    setBusy(Boolean(activeStatusUrl));
   });
 
-  translateSlots();
-  resetComparison(selectedCandidates());
+  updateEffortLabels();
+  updateLocaleControl();
+  syncAllEfforts();
   renderRunStatus("idle");
+  setBusy(false);
 })();

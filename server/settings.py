@@ -4,6 +4,15 @@ import os
 from dataclasses import dataclass, field
 
 ALLOWED_RUNTIME_MODELS = frozenset({"gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna"})
+LAB_REASONING_EFFORTS_BY_MODEL = {
+    "gpt-5.6-luna": frozenset({"low", "medium", "high", "xhigh", "max"}),
+    "gpt-5.6-terra": frozenset(
+        {"low", "medium", "high", "xhigh", "max", "ultra"}
+    ),
+    "gpt-5.6-sol": frozenset(
+        {"low", "medium", "high", "xhigh", "max", "ultra"}
+    ),
+}
 
 
 def _default_terra_generation_tiers() -> tuple[str, ...]:
