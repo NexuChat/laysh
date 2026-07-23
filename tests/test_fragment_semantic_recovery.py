@@ -271,6 +271,44 @@ class _SecondBoundedVisualRetryBackend(_FragmentRecoveryBackend):
         )
 
 
+class _SemanticThenGateRecoveryBackend(_FragmentRecoveryBackend):
+    def __init__(self) -> None:
+        super().__init__(_valid_retry_visual())
+        self.repair_attempts: list[int] = []
+        self.failure_codes: list[str] = []
+
+    async def regenerate_fragment(
+        self,
+        role: str,
+        understanding: dict[str, Any],
+        failure_code: str,
+        *,
+        repair_attempt: int = 1,
+        runtime_context: RuntimeContext | None = None,
+    ) -> StageExecution:
+        self.repair_attempts.append(repair_attempt)
+        self.failure_codes.append(failure_code)
+        self.regeneration_calls.append(
+            {
+                "role": role,
+                "understanding": deepcopy(understanding),
+                "failure_code": failure_code,
+                "runtime_context": runtime_context,
+            }
+        )
+        call_number = len(self.regeneration_calls)
+        return StageExecution(
+            data=(
+                _semantic_invalid_visual()
+                if call_number == 2
+                else _valid_retry_visual()
+            ),
+            thread_id=f"private-regenerated-visual-fragment-{call_number}",
+            model="gpt-5.6-terra" if repair_attempt == 1 else "gpt-5.6-sol",
+            elapsed_ms=5,
+        )
+
+
 class _RecordingCache:
     def __init__(self) -> None:
         self.lookups: list[dict[str, Any]] = []
@@ -495,6 +533,42 @@ async def test_visual_quality_retry_receives_bounded_general_guidance() -> None:
 
 
 @pytest.mark.asyncio
+async def test_visual_causality_retry_preserves_the_full_representation_contract() -> None:
+    from server.codex_backend import CodexBackend
+    from server.settings import Settings
+
+    class RecordingExecutor:
+        def __init__(self) -> None:
+            self.prompt = ""
+
+        async def execute_stage(self, **kwargs: Any) -> StageExecution:
+            self.prompt = kwargs["prompt"]
+            return StageExecution(
+                data=_valid_retry_visual(),
+                thread_id="private-runtime-thread",
+                model=kwargs["model"],
+                elapsed_ms=4,
+            )
+
+    executor = RecordingExecutor()
+    backend = CodexBackend(executor=executor, settings=Settings())
+
+    await backend.regenerate_fragment(
+        "visual",
+        deepcopy(VALID_UNDERSTANDING),
+        "visual_causality_mismatch",
+        repair_attempt=2,
+        runtime_context=RuntimeContext(public=True),
+    )
+
+    prompt = executor.prompt.casefold()
+    assert "independently satisfy every base fragment rule" in prompt
+    assert "actor_archetype" in prompt
+    assert "scientific command kinds and counts" in prompt
+    assert "proof channels" in prompt
+
+
+@pytest.mark.asyncio
 async def test_public_job_regenerates_only_the_invalid_visual_then_verifies_and_caches(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -610,6 +684,67 @@ async def test_public_job_uses_second_bounded_visual_retry_before_fallback(
     assert len(backend.regeneration_calls) == 2
     assert backend.heal_calls == 0
     assert len(deterministic_inputs) == 2
+
+
+@pytest.mark.asyncio
+async def test_semantic_generation_recovery_does_not_consume_gate_repair_budget(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from server.browser_verify import BrowserVerificationResult
+    from server.jobs import JobManager
+    from server.verify import VerificationResult
+
+    backend = _SemanticThenGateRecoveryBackend()
+    verification_calls = 0
+
+    def deterministic_verifier(
+        _module_output: dict[str, Any],
+        _understanding: dict[str, Any],
+    ) -> VerificationResult:
+        nonlocal verification_calls
+        verification_calls += 1
+        if verification_calls == 1:
+            return VerificationResult(
+                passed=False,
+                check_count=31,
+                failures=[
+                    {
+                        "gate": "causal_response",
+                        "code": "causal_relation_mismatch",
+                        "expected": {"monotonic_actor_response": True},
+                        "actual": {"monotonic_actor_response": False},
+                    }
+                ],
+                artifact=None,
+                node_report={"passed": False},
+            )
+        return VerificationResult(
+            passed=True,
+            check_count=39,
+            failures=[],
+            artifact=VERIFIED_ARTIFACT,
+            node_report={"passed": True},
+        )
+
+    monkeypatch.setattr("server.pipeline.verify_candidate", deterministic_verifier)
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _artifact: BrowserVerificationResult.passing(),
+    )
+
+    record = manager.start("success", "ar")
+    assert record.task is not None
+    await record.task
+
+    assert record.status == "complete"
+    assert backend.repair_attempts == [1, 1, 2]
+    assert backend.failure_codes == [
+        FAILURE_CODE,
+        "visual_causality_mismatch",
+        FAILURE_CODE,
+    ]
+    assert verification_calls == 2
 
 
 @pytest.mark.asyncio

@@ -1051,6 +1051,46 @@ async def test_pipeline_cancellation_propagates():
         pytest.param(
             [
                 {
+                    "gate": "causal_response",
+                    "code": "causal_relation_mismatch",
+                    "expected": {"monotonic_actor_response": True},
+                    "actual": {"monotonic_actor_response": False},
+                },
+                {
+                    "gate": "temporal_causal_matrix",
+                    "code": "causal_direction_mismatch",
+                    "expected": {"matching_direction": True},
+                    "actual": {"matching_direction": False},
+                },
+            ],
+            [("visual", "visual_causality_mismatch", 1)],
+            "complete",
+            id="causal_and_temporal_visual",
+        ),
+        pytest.param(
+            [
+                {
+                    "gate": "representation_consistency",
+                    "code": "archetype_render_mismatch",
+                    "expected": {
+                        "declared_archetype_rendered": True,
+                        "minimum_visible_scientific_actors": 1,
+                    },
+                    "actual": {
+                        "declared": "single_body",
+                        "scientific_actor_count": 1,
+                        "visible_actor_count": 0,
+                        "matching_primitive_count": 0,
+                    },
+                }
+            ],
+            [("visual", "visual_geometry_mismatch", 1)],
+            "complete",
+            id="representation_consistency_visual",
+        ),
+        pytest.param(
+            [
+                {
                     "gate": "unknown_gate",
                     "code": "unknown_failure",
                     "expected": {"known": True},

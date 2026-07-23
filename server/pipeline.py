@@ -735,7 +735,16 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             "regenerate_fragment",
             None,
         )
+        fragment_semantic_attempts = {"physics": 0, "visual": 0}
         fragment_repair_attempts = {"physics": 0, "visual": 0}
+
+        def claim_fragment_semantic_attempt(role: str) -> int | None:
+            attempted = fragment_semantic_attempts[role]
+            if attempted >= 2:
+                return None
+            repair_attempt = attempted + 1
+            fragment_semantic_attempts[role] = repair_attempt
+            return repair_attempt
 
         def claim_fragment_repair_attempt(role: str) -> int | None:
             attempted = fragment_repair_attempts[role]
@@ -751,6 +760,8 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             "readout_visibility": "physics",
             "scene_geometry": "visual",
             "causal_response": "visual",
+            "temporal_causal_matrix": "visual",
+            "representation_consistency": "visual",
         }
         browser_readiness_retry_role_by_code = {
             "canvas_pixels_unchanged": "visual",
@@ -779,7 +790,10 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 if role is None:
                     return None
                 roles.add(role)
-                has_causal_response_failure |= gate == "causal_response"
+                has_causal_response_failure |= gate in {
+                    "causal_response",
+                    "temporal_causal_matrix",
+                }
             if not roles:
                 return None
 
@@ -810,50 +824,69 @@ async def run_pipeline(manager: Any, record: Any) -> None:
 
             if not callable(fragment_regenerator):
                 return False
-            repair_attempt = claim_fragment_repair_attempt(role)
-            if repair_attempt is None:
-                return False
-            manager.emit(
-                record,
-                "stage",
-                {
-                    "stage": "generate",
-                    "detail": "إعادة بناء الجزء الذي لم يجتز الفحص",
-                    "elapsed_ms": manager.elapsed_ms(record),
-                },
-            )
+            current_failure_code = failure_code
             stage_name = f"generate_{role}"
-            try:
-                regenerated_stage = await fragment_regenerator(
-                    role,
-                    understanding,
-                    failure_code,
-                    repair_attempt=repair_attempt,
-                    runtime_context=runtime_context,
+            while True:
+                repair_attempt = claim_fragment_repair_attempt(role)
+                if repair_attempt is None:
+                    return False
+                manager.emit(
+                    record,
+                    "stage",
+                    {
+                        "stage": "generate",
+                        "detail": "إعادة بناء الجزء الذي لم يجتز الفحص",
+                        "elapsed_ms": manager.elapsed_ms(record),
+                    },
                 )
-                regenerated_document = stage_data(
-                    regenerated_stage,
-                    stage_name,
-                    fragment_role=role,
-                )
-                fragment_validators[role](regenerated_document, understanding)
-            except (CodexRuntimeError, ContractError, ValidationError, ValueError) as error:
-                if isinstance(error, CodexRuntimeError):
+                try:
+                    regenerated_stage = await fragment_regenerator(
+                        role,
+                        understanding,
+                        current_failure_code,
+                        repair_attempt=repair_attempt,
+                        runtime_context=runtime_context,
+                    )
+                    regenerated_document = stage_data(
+                        regenerated_stage,
+                        stage_name,
+                        fragment_role=role,
+                    )
+                    fragment_validators[role](regenerated_document, understanding)
+                except CodexRuntimeError as error:
                     record_stage_failure(stage_name, error)
-                return False
-            fragment_documents[role] = regenerated_document
-            fragment_stages[role] = regenerated_stage
-            module_output = assemble_fragments(
-                fragment_documents["physics"],
-                fragment_documents["visual"],
-                understanding,
-            )
-            trusted_fragment_candidate = True
-            effective_generation_model = (
-                f"physics:{fragment_stages['physics'].model}"
-                f"+visual:{fragment_stages['visual'].model}"
-            )
-            return True
+                    return False
+                except (ContractError, ValidationError, ValueError) as error:
+                    current_failure_code = fragment_failure_code(error)
+                    logger.warning(
+                        "fragment gate repair rejected job=%s role=%s attempt=%s code=%s",
+                        record.job_id,
+                        role,
+                        repair_attempt,
+                        current_failure_code,
+                    )
+                    record.builder_diagnostics.append(
+                        {
+                            "type": "fragment_gate_repair_failure",
+                            "role": role,
+                            "code": current_failure_code,
+                            "attempt": repair_attempt,
+                        }
+                    )
+                    continue
+                fragment_documents[role] = regenerated_document
+                fragment_stages[role] = regenerated_stage
+                module_output = assemble_fragments(
+                    fragment_documents["physics"],
+                    fragment_documents["visual"],
+                    understanding,
+                )
+                trusted_fragment_candidate = True
+                effective_generation_model = (
+                    f"physics:{fragment_stages['physics'].model}"
+                    f"+visual:{fragment_stages['visual'].model}"
+                )
+                return True
 
         def semantic_failures() -> list[tuple[str, str]]:
             failures: list[tuple[str, str]] = []
@@ -880,7 +913,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 )
                 return
             for role, failure_code in initial_fragment_failures:
-                repair_attempt = claim_fragment_repair_attempt(role)
+                repair_attempt = claim_fragment_semantic_attempt(role)
                 if repair_attempt is None:
                     logger.warning(
                         "fragment validation exhausted job=%s role=%s attempts=2 code=%s",

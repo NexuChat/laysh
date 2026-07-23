@@ -451,7 +451,10 @@ class CodexBackend:
             retry_hint = (
                 "Bind the primary scientific actor response channel directly to its "
                 "fixture-covered causal output. Preserve the declared relation across "
-                "boundary states and keep the full displacement visibly salient."
+                "boundary states and keep the full displacement visibly salient. "
+                "Re-select actor_archetype only after the commands are final, then verify "
+                "that its scientific command kinds and counts match and that every proof "
+                "channel remains backed by the emitted actor."
             )
         elif safe_failure_code == "visual_quality_review_failed":
             retry_hint = (
@@ -472,8 +475,9 @@ class CodexBackend:
             f"This is bounded repair attempt {repair_attempt} of 2. "
             "The prior response was rejected by the trusted semantic validator. "
             f"Failure code: {safe_failure_code}. "
-            "Correct that contract rule; do not discuss, quote, or preserve the prior "
-            f"response. ACTIONABLE_RULE: {retry_hint}"
+            "Correct that contract rule and independently satisfy every base fragment "
+            "rule; do not discuss, quote, or preserve the prior response. "
+            f"ACTIONABLE_RULE: {retry_hint}"
         )
         timeout_seconds = (
             self.settings.public_stage_timeout_seconds
