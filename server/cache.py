@@ -13,7 +13,12 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Literal
 
-from server.promotion import STABLE_ROUTE, PromotionRoute, require_stable_cache_eligibility
+from server.promotion import (
+    STABLE_ROUTE,
+    PromotionDecision,
+    PromotionRoute,
+    require_stable_cache_eligibility,
+)
 
 VERIFIED_CACHE_CONTRACT_VERSION = "1.1-causal-actor"
 
@@ -318,6 +323,7 @@ class VerifiedCache:
         evidence: dict[str, Any],
         release_revision: str | None = None,
         expected_previous_sha256: str | None = None,
+        promotion_decision: PromotionDecision | None = None,
     ) -> CacheEntry:
         if not re.fullmatch(r"[a-z0-9_]+", golden_id):
             raise ValueError("golden_id must be a lowercase repository identifier")
@@ -334,6 +340,14 @@ class VerifiedCache:
                 or expected_previous_sha256 != existing.artifact_sha256
             ):
                 raise ValueError("pinned golden cache entries are immutable")
+            if (
+                not isinstance(promotion_decision, PromotionDecision)
+                or not promotion_decision.approved
+                or promotion_decision.incumbent_artifact_sha256 != existing.artifact_sha256
+            ):
+                raise ValueError(
+                    "pinned golden replacement requires an approved promotion decision"
+                )
             replacing_cache_id = existing.cache_id
         exact_key = self.exact_key(question, locale)
         semantic_key = self.semantic_key(locale, domain, canonical_intent)
