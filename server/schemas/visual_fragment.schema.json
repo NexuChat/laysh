@@ -54,7 +54,7 @@
         },
         "motion_model": {
           "type": "string",
-          "enum": ["parameter_driven", "cyclic"]
+          "enum": ["parameter_driven", "time_driven", "cyclic"]
         }
       }
     },
@@ -168,6 +168,157 @@
               "y2": {"type": "string", "minLength": 1, "maxLength": 480},
               "amplitude": {"type": "string", "minLength": 1, "maxLength": 480},
               "wavelength": {"type": "string", "minLength": 1, "maxLength": 480},
+              "stroke_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+              "line_width": {"type": "string", "minLength": 1, "maxLength": 480},
+              "opacity": {"type": "string", "minLength": 1, "maxLength": 480}
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "id", "scientific", "clipping_policy", "cx", "cy", "rotation", "opacity", "parts"],
+            "properties": {
+              "kind": {"type": "string", "enum": ["body_group"]},
+              "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,47}$"},
+              "scientific": {"type": "boolean"},
+              "clipping_policy": {"type": "string", "enum": ["forbid", "allow"]},
+              "cx": {"type": "string", "minLength": 1, "maxLength": 480},
+              "cy": {"type": "string", "minLength": 1, "maxLength": 480},
+              "rotation": {"type": "string", "minLength": 1, "maxLength": 480},
+              "opacity": {"type": "string", "minLength": 1, "maxLength": 480},
+              "parts": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 16,
+                "items": {
+                  "type": "object",
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["kind", "dx", "dy", "radius", "fill_color", "stroke_color", "line_width"],
+                      "properties": {
+                        "kind": {"type": "string", "enum": ["circle"]},
+                        "dx": {"type": "string", "minLength": 1, "maxLength": 480},
+                        "dy": {"type": "string", "minLength": 1, "maxLength": 480},
+                        "radius": {"type": "string", "minLength": 1, "maxLength": 480},
+                        "fill_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+                        "stroke_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+                        "line_width": {"type": "string", "minLength": 1, "maxLength": 480}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["kind", "dx", "dy", "radius_x", "radius_y", "rotation", "fill_color", "stroke_color", "line_width"],
+                      "properties": {
+                        "kind": {"type": "string", "enum": ["ellipse"]},
+                        "dx": {"type": "string", "minLength": 1, "maxLength": 480},
+                        "dy": {"type": "string", "minLength": 1, "maxLength": 480},
+                        "radius_x": {"type": "string", "minLength": 1, "maxLength": 480},
+                        "radius_y": {"type": "string", "minLength": 1, "maxLength": 480},
+                        "rotation": {"type": "string", "minLength": 1, "maxLength": 480},
+                        "fill_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+                        "stroke_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+                        "line_width": {"type": "string", "minLength": 1, "maxLength": 480}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["kind", "dx", "dy", "width", "height", "corner_radius", "fill_color", "stroke_color", "line_width"],
+                      "properties": {
+                        "kind": {"type": "string", "enum": ["rect"]},
+                        "dx": {"type": "string", "minLength": 1, "maxLength": 480},
+                        "dy": {"type": "string", "minLength": 1, "maxLength": 480},
+                        "width": {"type": "string", "minLength": 1, "maxLength": 480},
+                        "height": {"type": "string", "minLength": 1, "maxLength": 480},
+                        "corner_radius": {"type": "string", "minLength": 1, "maxLength": 480},
+                        "fill_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+                        "stroke_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+                        "line_width": {"type": "string", "minLength": 1, "maxLength": 480}
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["kind", "dx1", "dy1", "dx2", "dy2", "stroke_color", "line_width"],
+                      "properties": {
+                        "kind": {"type": "string", "enum": ["line"]},
+                        "dx1": {"type": "string", "minLength": 1, "maxLength": 480},
+                        "dy1": {"type": "string", "minLength": 1, "maxLength": 480},
+                        "dx2": {"type": "string", "minLength": 1, "maxLength": 480},
+                        "dy2": {"type": "string", "minLength": 1, "maxLength": 480},
+                        "stroke_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+                        "line_width": {"type": "string", "minLength": 1, "maxLength": 480}
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "id", "scientific", "clipping_policy", "x1", "y1", "angle", "length", "head_size", "stroke_color", "line_width", "opacity"],
+            "properties": {
+              "kind": {"type": "string", "enum": ["vector_arrow"]},
+              "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,47}$"},
+              "scientific": {"type": "boolean"},
+              "clipping_policy": {"type": "string", "enum": ["forbid", "allow"]},
+              "x1": {"type": "string", "minLength": 1, "maxLength": 480},
+              "y1": {"type": "string", "minLength": 1, "maxLength": 480},
+              "angle": {"type": "string", "minLength": 1, "maxLength": 480},
+              "length": {"type": "string", "minLength": 1, "maxLength": 480},
+              "head_size": {"type": "string", "minLength": 1, "maxLength": 480},
+              "stroke_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+              "line_width": {"type": "string", "minLength": 1, "maxLength": 480},
+              "opacity": {"type": "string", "minLength": 1, "maxLength": 480}
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "id", "scientific", "clipping_policy", "x1", "y1", "segments", "stroke_color", "line_width", "opacity"],
+            "properties": {
+              "kind": {"type": "string", "enum": ["ray"]},
+              "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,47}$"},
+              "scientific": {"type": "boolean"},
+              "clipping_policy": {"type": "string", "enum": ["forbid", "allow"]},
+              "x1": {"type": "string", "minLength": 1, "maxLength": 480},
+              "y1": {"type": "string", "minLength": 1, "maxLength": 480},
+              "segments": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 4,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["angle", "length"],
+                  "properties": {
+                    "angle": {"type": "string", "minLength": 1, "maxLength": 480},
+                    "length": {"type": "string", "minLength": 1, "maxLength": 480}
+                  }
+                }
+              },
+              "stroke_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+              "line_width": {"type": "string", "minLength": 1, "maxLength": 480},
+              "opacity": {"type": "string", "minLength": 1, "maxLength": 480}
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "id", "scientific", "clipping_policy", "output_name", "sweep", "samples", "stroke_color", "line_width", "opacity"],
+            "properties": {
+              "kind": {"type": "string", "enum": ["trajectory"]},
+              "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,47}$"},
+              "scientific": {"type": "boolean", "enum": [true]},
+              "clipping_policy": {"type": "string", "enum": ["forbid", "allow"]},
+              "output_name": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+              "sweep": {"type": "string", "enum": ["primary_parameter", "time"]},
+              "samples": {"type": "integer", "minimum": 8, "maximum": 64},
               "stroke_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
               "line_width": {"type": "string", "minLength": 1, "maxLength": 480},
               "opacity": {"type": "string", "minLength": 1, "maxLength": 480}
