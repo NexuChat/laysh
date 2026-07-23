@@ -59,6 +59,7 @@ def test_locale_inventory_covers_both_languages_and_every_core_failure_surface()
     for reason in (
         "not_simulatable",
         "qa_inconclusive",
+        "qa_rejected",
         "verification_exhausted",
         "generation_failed",
         "simulation_runtime_error",
@@ -88,7 +89,9 @@ def test_application_loads_locale_assets_and_exposes_an_explicit_locale_control(
     assert 'data-i18n="landing.title"' in html
     assert "LayshLocale.current()" in source
     assert "locale: currentLocale" in source
-    assert "`/api/gallery?locale=${currentLocale}`" in source
+    assert "const requestedLocale = currentLocale;" in source
+    assert "`/api/gallery?locale=${requestedLocale}`" in source
+    assert "if (requestedLocale !== currentLocale) return;" in source
     assert 'document.addEventListener("click"' not in locale_source
     assert 'byId("locale-control").addEventListener("click"' in locale_source
     assert 'source !== "locale-control"' in locale_source

@@ -365,6 +365,8 @@ class CodexExecutor:
                 model,
                 "-c",
                 f'model_reasoning_effort="{effort}"',
+                "-c",
+                'service_tier="fast"',
                 "--sandbox",
                 "read-only",
                 "--skip-git-repo-check",

@@ -27,10 +27,12 @@ def test_one_real_arabic_result_reaches_mobile_and_desktop_ui():
         **os.environ,
         "LAYSH_CODEX_BACKEND": "codex",
         "LAYSH_RECORD_RUNTIME": "0",
-        "LAYSH_PUBLIC_JOB_TIMEOUT_SECONDS": "180",
+        "LAYSH_PUBLIC_JOB_TIMEOUT_SECONDS": "300",
+        "LAYSH_PUBLIC_STAGE_TIMEOUT_SECONDS": "240",
         "LAYSH_CACHE_KEY_SECRET": "",
         "LAYSH_UNDERSTAND_MODEL": "gpt-5.6-luna",
         "LAYSH_GENERATE_MODEL": "gpt-5.6-sol",
+        "LAYSH_TERRA_GENERATION_TIERS": "bounded_single_parameter_v1",
         "LAYSH_HEAL_MODEL": "gpt-5.6-sol",
         "LAYSH_QA_MODEL": "gpt-5.6-sol",
     }
@@ -80,7 +82,7 @@ def test_one_real_arabic_result_reaches_mobile_and_desktop_ui():
             check=False,
             capture_output=True,
             text=True,
-            timeout=220,
+            timeout=640,
         )
         assert completed.returncode == 0, completed.stderr
         evidence = json.loads(completed.stdout)

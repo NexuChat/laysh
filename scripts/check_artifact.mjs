@@ -5,7 +5,11 @@ import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+import { evaluateCausalResponse } from "./causal_response.mjs";
+
 const artifactPath = path.resolve(process.argv[2]);
+const artifactSource = fs.readFileSync(artifactPath, "utf8");
+const causalMarkerPresent = /\/\*\s*LAYSH_CAUSAL_RESPONSE_V1\s*\*\//.test(artifactSource);
 const chromePath = process.env.CHROME_BIN || "/usr/bin/google-chrome";
 const profilePath = fs.mkdtempSync(path.join(os.tmpdir(), "laysh-chrome-"));
 
@@ -110,94 +114,157 @@ try {
     expression: `(() => {
       const root = document.documentElement;
       const before = Number(root.dataset.frameCount || 0);
+      const canvas = document.querySelector('#simulation');
+      const canvasHash = (target) => {
+        if (!target) return null;
+        const data = target.getContext('2d').getImageData(0,0,target.width,target.height).data;
+        const stride = Math.max(4,Math.floor(data.length / 4096 / 4) * 4);
+        let hash = 2166136261;
+        for (let index = 0; index < data.length; index += stride) {
+          hash ^= data[index];
+          hash = Math.imul(hash,16777619);
+          hash ^= data[index + 1] || 0;
+          hash = Math.imul(hash,16777619);
+          hash ^= data[index + 2] || 0;
+          hash = Math.imul(hash,16777619);
+          hash ^= data[index + 3] || 0;
+          hash = Math.imul(hash,16777619);
+        }
+        return hash >>> 0;
+      };
+      const canvasHashBefore = canvasHash(canvas);
       const choice = document.querySelector('#prediction-choices button');
       choice.click();
       const control = document.querySelector('#primary-control');
-      const canvas = document.querySelector('#simulation');
-      const context = canvas.getContext('2d', { willReadFrequently: true });
-      const description = document.querySelector('#state-description');
-      const lesson = window.__LAYSH_LESSON__;
-      const simulation = window.LayshSimulation;
-      const readout = window.LayshReadout.forLesson(lesson);
-      const outputName = lesson.module_spec.outputs[0];
       const beforeControlValue = Number(control.value);
-      const outputAt = (value) => Number(simulation.test({
-        [lesson.primary_parameter.id]: Number(value),
-      })?.[outputName]);
-      const initialOutcome = outputAt(beforeControlValue);
-      const initialDescription = description.textContent;
-      const initialOutcomeMatchesModel = initialDescription.includes(readout.format(initialOutcome));
-      const beforePixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
-      const rawCandidates = [
-        Number(control.min),
-        (Number(control.min) + Number(control.max)) / 2,
-        Number(control.max),
-      ];
-      const candidates = [];
-      for (const candidate of rawCandidates) {
-        control.value = String(candidate);
-        const sanitized = Number(control.value);
-        if (!candidates.includes(sanitized)) candidates.push(sanitized);
-      }
-      control.value = String(beforeControlValue);
-      const target = candidates
-        .map((value) => ({ value, outcome: outputAt(value) }))
-        .sort((left, right) => (
-          Math.abs(right.outcome - initialOutcome) - Math.abs(left.outcome - initialOutcome)
-        ))[0];
-      control.value = String(target.value);
+      const target = Math.abs(beforeControlValue - Number(control.min))
+        <= Math.abs(beforeControlValue - Number(control.max))
+        ? control.max
+        : control.min;
+      control.value = target;
       control.dispatchEvent(new Event('input', { bubbles: true }));
-      const afterControlValue = Number(control.value);
-      const finalOutcome = outputAt(afterControlValue);
-      const finalDescription = description.textContent;
-      const afterPixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
-      let changedPixels = 0;
-      for (let index = 0; index < beforePixels.length; index += 4) {
-        const changed = Math.max(
-          Math.abs(beforePixels[index] - afterPixels[index]),
-          Math.abs(beforePixels[index + 1] - afterPixels[index + 1]),
-          Math.abs(beforePixels[index + 2] - afterPixels[index + 2]),
-          Math.abs(beforePixels[index + 3] - afterPixels[index + 3]),
-        ) > 8;
-        if (changed) changedPixels += 1;
-      }
       return {
         controlChanged: !control.disabled && Number(control.value) !== beforeControlValue,
         frameChanged: Number(root.dataset.frameCount || 0) > before,
+        canvasHashBefore,
+        canvasHashAfter: canvasHash(canvas),
         runtimeError: Boolean(root.dataset.runtimeError),
-        initialOutcomeMatchesModel,
-        modelOutcomeChanged: Number.isFinite(initialOutcome) && Number.isFinite(finalOutcome)
-          && Math.abs(finalOutcome - initialOutcome)
-            > Math.max(1e-12, Math.abs(initialOutcome) * 1e-12),
-        displayedOutcomeChanged: finalDescription !== initialDescription
-          && finalDescription.includes(readout.format(finalOutcome)),
-        initialParameterValue: beforeControlValue,
-        finalParameterValue: afterControlValue,
-        initialOutcome,
-        finalOutcome,
-        canvasPixels: canvas.width * canvas.height,
-        changedPixels,
       };
     })()`,
     returnByValue: true,
   });
+  const causalSetup = await command("Runtime.evaluate", {
+    expression: `(() => {
+      const canvas = document.querySelector('#simulation');
+      const control = document.querySelector('#primary-control');
+      return {
+        actorResponseObserved: Boolean(canvas && canvas.__layshActorResponse),
+        canvasWidth: canvas ? Number(canvas.width) : 0,
+        canvasHeight: canvas ? Number(canvas.height) : 0,
+        minimum: control ? Number(control.min) : 0,
+        maximum: control ? Number(control.max) : 0,
+        fixtureValues: control && window.__LAYSH_LESSON__
+          ? window.__LAYSH_LESSON__.checks.flatMap((check) => {
+              const inputs = check.kind === "numeric"
+                ? check.inputs
+                : [...check.left_inputs, ...check.right_inputs];
+              return inputs
+                .filter((input) =>
+                  input.name === window.__LAYSH_LESSON__.primary_parameter.id)
+                .map((input) => Number(input.value));
+            })
+          : [],
+      };
+    })()`,
+    returnByValue: true,
+  });
+  const setup = causalSetup.result.value;
+  const causalRequired = causalMarkerPresent || setup.actorResponseObserved;
+  let causalResponse;
+  if (causalRequired) {
+    const pauseForCausalSampling = await command("Runtime.evaluate", {
+      expression: `(() => {
+        const toggle = document.querySelector('#play-pause');
+        if (toggle && document.documentElement.dataset.playbackState === 'running') toggle.click();
+        return document.documentElement.dataset.playbackState;
+      })()`,
+      returnByValue: true,
+    });
+    if (pauseForCausalSampling.result.value === "running") {
+      throw new Error("causal sampling could not pause playback");
+    }
+    const span = setup.maximum - setup.minimum;
+    const sampleValues = [
+      setup.minimum,
+      setup.minimum + span * 0.25,
+      setup.minimum + span * 0.5,
+      setup.minimum + span * 0.75,
+      setup.maximum,
+      ...setup.fixtureValues,
+    ];
+    if (setup.minimum < 0 && setup.maximum > 0) sampleValues.push(0);
+    const distinctValues = [...new Set(sampleValues.map((value) => Number(value.toPrecision(12))))]
+      .sort((left, right) => left - right);
+    const samples = [];
+    for (const value of distinctValues) {
+      const sampled = await command("Runtime.evaluate", {
+        expression: `(() => {
+          const canvas = document.querySelector('#simulation');
+          const control = document.querySelector('#primary-control');
+          control.value = ${JSON.stringify(value)};
+          control.dispatchEvent(new Event('input', { bubbles: true }));
+          const response = canvas && canvas.__layshActorResponse;
+          return response ? JSON.parse(JSON.stringify(response)) : null;
+        })()`,
+        returnByValue: true,
+      });
+      samples.push(sampled.result.value);
+      await delay(20);
+    }
+
+    const temporalSamples = [];
+    if (samples.some((sample) => sample && sample.temporalMode === "cyclic")) {
+      await command("Runtime.evaluate", {
+        expression: `(() => {
+          const toggle = document.querySelector('#play-pause');
+          if (toggle && document.documentElement.dataset.playbackState !== 'running') toggle.click();
+        })()`,
+        returnByValue: true,
+      });
+      for (let index = 0; index < 4; index += 1) {
+        await delay(90);
+        const sampled = await command("Runtime.evaluate", {
+          expression: `(() => {
+            const canvas = document.querySelector('#simulation');
+            const response = canvas && canvas.__layshActorResponse;
+            return response ? JSON.parse(JSON.stringify(response)) : null;
+          })()`,
+          returnByValue: true,
+        });
+        temporalSamples.push(sampled.result.value);
+      }
+    }
+    causalResponse = {
+      required: true,
+      canvasWidth: setup.canvasWidth,
+      canvasHeight: setup.canvasHeight,
+      samples,
+      temporalSamples,
+    };
+    causalResponse.report = evaluateCausalResponse(causalResponse);
+  }
   socket.close();
-  process.stdout.write(JSON.stringify({
+  const browserEvidence = {
     ready,
     controlChanged: interaction.result.value.controlChanged,
     frameChanged: interaction.result.value.frameChanged,
+    canvasHashBefore: interaction.result.value.canvasHashBefore,
+    canvasHashAfter: interaction.result.value.canvasHashAfter,
     runtimeError: interaction.result.value.runtimeError,
     externalRequests,
-    initialOutcomeMatchesModel: interaction.result.value.initialOutcomeMatchesModel,
-    modelOutcomeChanged: interaction.result.value.modelOutcomeChanged,
-    displayedOutcomeChanged: interaction.result.value.displayedOutcomeChanged,
-    initialParameterValue: interaction.result.value.initialParameterValue,
-    finalParameterValue: interaction.result.value.finalParameterValue,
-    initialOutcome: interaction.result.value.initialOutcome,
-    finalOutcome: interaction.result.value.finalOutcome,
-    canvasPixels: interaction.result.value.canvasPixels,
-    changedPixels: interaction.result.value.changedPixels,
-  }));
+  };
+  if (causalResponse) browserEvidence.causalResponse = causalResponse;
+  process.stdout.write(JSON.stringify(browserEvidence));
 } catch (error) {
   process.stderr.write(`${error.message}\n`);
   process.exitCode = 1;

@@ -36,6 +36,10 @@ def build_g2_evidence(
         browser_evidence.get("ready")
         and browser_evidence.get("controlChanged", True)
         and browser_evidence.get("frameChanged", True)
+        and isinstance(browser_evidence.get("canvasHashBefore"), int)
+        and isinstance(browser_evidence.get("canvasHashAfter"), int)
+        and browser_evidence.get("canvasHashBefore")
+        != browser_evidence.get("canvasHashAfter")
         and not browser_evidence.get("runtimeError", False)
         and browser_evidence.get("externalRequests") == 0
     )

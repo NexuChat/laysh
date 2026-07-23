@@ -25,6 +25,9 @@ does not import a later implementation.
 6. [`REQUIREMENTS-AUDIT.md`](REQUIREMENTS-AUDIT.md) — baseline gaps and audit decisions.
 7. [`CAPABILITY-STAGES.md`](CAPABILITY-STAGES.md) — build, release, and submission tool boundaries.
 8. [`ROOT-RESUME-PROMPT.md`](ROOT-RESUME-PROMPT.md) — exact prompt for the root session.
+9. [`SCIENTIFIC-DISCOVERY-VALUE-PLAN.md`](SCIENTIFIC-DISCOVERY-VALUE-PLAN.md)
+   — owner-authorized value extension, activated only after the current 30 rows
+   and `RELEASE-01` pass.
 
 If these documents conflict, the order above wins. The official competition
 rules and the security, privacy, and honesty contracts already committed at the
@@ -37,6 +40,8 @@ Start the resumed root Codex session through
 available skill, plugin, agent, and MCP surface. The resumed session copies this package into
 `docs/build-spec/g7-continuation/` before implementation. It then executes the
 acceptance rows test-first, in dependency order, and records only real evidence.
+The scientific-discovery value extension remains queued until its activation
+gate is proven; it must not interrupt or weaken the active continuation.
 
 Do not copy historical session ledgers, archived implementation code, later
 commits, or generated patches into the target repository.

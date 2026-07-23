@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import vm from "node:vm";
+import { evaluateCausalResponse } from "./causal_response.mjs";
 
 const [sourcePath, understandingPath] = process.argv.slice(2);
 const source = fs.readFileSync(sourcePath, "utf8");
@@ -12,9 +13,22 @@ const permittedAbi = ["destroy", "init", "resize", "setParameter", "test", "vers
 const failures = [];
 const passingNumericFixtures = [];
 const sceneGeometrySamples = [];
+const diagnosableCanvasApis = [
+  "createImageData",
+  "createPattern",
+  "drawFocusIfNeeded",
+  "drawImage",
+  "getImageData",
+  "getTransform",
+  "isPointInPath",
+  "isPointInStroke",
+  "putImageData",
+  "scrollPathIntoView",
+];
 let checkCount = 0;
 let frames = 0;
 let drawOperations = 0;
+let causalResponseReport = null;
 
 function addFailure(gate, code, expected, actual, extra = {}) {
   failures.push({ gate, code, expected, actual, ...extra });
@@ -29,12 +43,22 @@ function safeValue(value) {
   return value;
 }
 
-function identifierTokens(value) {
-  return String(value).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+function safeRuntimeError(error) {
+  const actual = { error_type: error?.name || "Error" };
+  const message = String(error?.message || "");
+  const unsupported = diagnosableCanvasApis.find(
+    (name) => message.includes(`${name} is not a function`),
+  );
+  if (unsupported) actual.unsupported_canvas_api = unsupported;
+  return actual;
 }
 
 function drawOperation() {
   drawOperations += 1;
+}
+
+function createGradient() {
+  return { addColorStop() {} };
 }
 
 function captureSceneGeometry() {
@@ -57,9 +81,11 @@ const context2d = {
   lineTo: drawOperation,
   quadraticCurveTo: drawOperation,
   bezierCurveTo: drawOperation,
+  arcTo: drawOperation,
   arc: drawOperation,
   ellipse: drawOperation,
   rect: drawOperation,
+  roundRect: drawOperation,
   fill: drawOperation,
   stroke: drawOperation,
   fillText: drawOperation,
@@ -70,9 +96,15 @@ const context2d = {
   translate() {},
   rotate() {},
   scale() {},
+  transform() {},
   setTransform() {},
   resetTransform() {},
+  reset() {},
   setLineDash() {},
+  getLineDash() { return []; },
+  createLinearGradient: createGradient,
+  createRadialGradient: createGradient,
+  createConicGradient: createGradient,
   measureText() { return { width: 10 }; },
   set fillStyle(_value) {},
   set strokeStyle(_value) {},
@@ -85,7 +117,17 @@ const context2d = {
   set lineCap(_value) {},
   set lineJoin(_value) {},
 };
-const canvas = { width: 720, height: 400 };
+const canvas = {
+  width: 720,
+  height: 400,
+  style: {},
+  getContext(kind) { return kind === "2d" ? context2d : null; },
+  getBoundingClientRect() {
+    return { x: 0, y: 0, top: 0, right: this.width, bottom: this.height, left: 0,
+      width: this.width, height: this.height };
+  },
+};
+context2d.canvas = canvas;
 const sandbox = { window: {}, Math, Number, Object, Array, JSON };
 vm.createContext(sandbox, { codeGeneration: { strings: false, wasm: false } });
 new vm.Script(trustedRuntimeSource, { filename: "trusted-runtime.js" })
@@ -154,7 +196,7 @@ if (simulation) {
         { accepts_trusted_options: [
           "canvas", "context", "width", "height", "locale", "reducedMotion", "emitFrame",
         ] },
-        { error_type: error?.name || "Error" },
+        safeRuntimeError(error),
       );
     }
     checkCount += 1;
@@ -275,19 +317,37 @@ if (simulation) {
     const parameter = understanding.primary_parameter;
     const output = understanding.module_spec.outputs[0];
     const formatter = trustedReadout.forLesson(understanding);
-    const [minimumEndpoint, maximumEndpoint] = formatter.endpoints;
-    let minimumResult;
-    let maximumResult;
+    const defaultInputs = {
+      [parameter.id]: parameter.default,
+      ...(understanding.secondary_parameter
+        ? { [understanding.secondary_parameter.id]: understanding.secondary_parameter.default }
+        : {}),
+    };
+    const parameterRange = parameter.max - parameter.min;
+    const sampleValues = [...new Set([
+      parameter.min,
+      parameter.min + parameterRange * 0.25,
+      parameter.default,
+      parameter.min + parameterRange * 0.5,
+      parameter.min + parameterRange * 0.75,
+      parameter.max,
+    ].map(Number))];
+    const sampleEndpoints = sampleValues.map((parameterValue) => ({
+      inputs: { ...defaultInputs, [parameter.id]: parameterValue },
+      parameterValue,
+    }));
+    const minimumEndpoint = sampleEndpoints[0];
+    const maximumEndpoint = sampleEndpoints[sampleEndpoints.length - 1];
     try {
-      sandbox.inputs = minimumEndpoint.inputs;
-      minimumResult = new vm.Script("window.LayshSimulation.test(inputs)")
-        .runInContext(sandbox, { timeout: 250 });
-      sandbox.inputs = maximumEndpoint.inputs;
-      maximumResult = new vm.Script("window.LayshSimulation.test(inputs)")
-        .runInContext(sandbox, { timeout: 250 });
-      const minimumFormatted = formatter.format(minimumResult?.[output]);
-      const maximumFormatted = formatter.format(maximumResult?.[output]);
-      if (minimumFormatted === maximumFormatted) {
+      const formattedSamples = sampleEndpoints.map((endpoint) => {
+        sandbox.inputs = endpoint.inputs;
+        const result = new vm.Script("window.LayshSimulation.test(inputs)")
+          .runInContext(sandbox, { timeout: 250 });
+        return formatter.format(result?.[output]);
+      });
+      const minimumFormatted = formattedSamples[0];
+      const maximumFormatted = formattedSamples[formattedSamples.length - 1];
+      if (new Set(formattedSamples).size === 1) {
         addFailure(
           "readout_visibility",
           "formatted_endpoints_indistinguishable",
@@ -304,60 +364,8 @@ if (simulation) {
           {
             parameter: parameter.id,
             output,
-            message: `Readout for parameter ${parameter.id} formats both endpoints as `
+            message: `Readout for parameter ${parameter.id} formats sampled range endpoints as `
               + `"${minimumFormatted}" and "${maximumFormatted}".`,
-          },
-        );
-      }
-
-      const declaredDefaults = {};
-      for (const declaredParameter of [
-        understanding.primary_parameter,
-        understanding.secondary_parameter,
-      ]) {
-        if (declaredParameter) declaredDefaults[declaredParameter.id] = declaredParameter.default;
-      }
-      const sampleValues = [...new Set([
-        Number(parameter.min),
-        Number(parameter.default),
-        Number(parameter.max),
-      ])];
-      const identitySamples = [];
-      for (const parameterValue of sampleValues) {
-        sandbox.inputs = { ...declaredDefaults, [parameter.id]: parameterValue };
-        const result = new vm.Script("window.LayshSimulation.test(inputs)")
-          .runInContext(sandbox, { timeout: 250 });
-        identitySamples.push({ input: parameterValue, output: result?.[output] });
-      }
-      const primaryIdentity = identitySamples.length >= 2 && identitySamples.every((sample) => (
-        Number.isFinite(sample.output)
-        && Math.abs(sample.output - sample.input)
-          <= Math.max(1e-9, Math.abs(sample.input) * 1e-12)
-      ));
-      const primaryTokens = identifierTokens(parameter.id);
-      const outputTokens = new Set(identifierTokens(output));
-      const outputRenamesPrimary = primaryTokens.length > 0
-        && primaryTokens.every((token) => outputTokens.has(token));
-      const outputFixtureUnits = new Set(
-        understanding.checks
-          .filter((fixture) => fixture.kind === "numeric" && fixture.output === output)
-          .map((fixture) => fixture.unit),
-      );
-      const outputKeepsPrimaryUnit = outputFixtureUnits.size === 1
-        && outputFixtureUnits.has(parameter.unit);
-      if (primaryIdentity && outputRenamesPrimary && outputKeepsPrimaryUnit) {
-        addFailure(
-          "causal_observable",
-          "primary_input_identity",
-          {
-            first_output_is_derived: true,
-            primary_input_is_not_repeated: true,
-          },
-          { samples: identitySamples.map(({ input, output: observed }) => ({ input, output: observed })) },
-          {
-            parameter: parameter.id,
-            output,
-            message: `First output ${output} repeats primary parameter ${parameter.id}.`,
           },
         );
       }
@@ -375,7 +383,71 @@ if (simulation) {
         { parameter: parameter.id, output },
       );
     }
-    checkCount += 2;
+    checkCount += 1;
+
+    if (source.includes("LAYSH_CAUSAL_RESPONSE_V1")) {
+      const causalSamples = [];
+      const temporalSamples = [];
+      const fixtureValues = understanding.checks.flatMap((check) => {
+        const inputs = check.kind === "numeric"
+          ? check.inputs
+          : [...check.left_inputs, ...check.right_inputs];
+        return inputs
+          .filter((input) => input.name === parameter.id)
+          .map((input) => Number(input.value));
+      });
+      const causalValues = [...new Set([
+        parameter.min,
+        parameter.min + parameterRange * 0.25,
+        parameter.min + parameterRange * 0.5,
+        parameter.min + parameterRange * 0.75,
+        parameter.max,
+        ...(parameter.min < 0 && parameter.max > 0 ? [0] : []),
+        ...fixtureValues,
+      ].map((value) => Number(Number(value).toPrecision(12))))].sort((left, right) => left - right);
+      try {
+        for (const parameterValue of causalValues) {
+          sandbox.parameterName = parameter.id;
+          sandbox.parameterValue = parameterValue;
+          new vm.Script("window.LayshSimulation.setParameter(parameterName, parameterValue)")
+            .runInContext(sandbox, { timeout: 250 });
+          captureSceneGeometry();
+          causalSamples.push(JSON.parse(JSON.stringify(canvas.__layshActorResponse ?? null)));
+        }
+        if (causalSamples.some((sample) => sample?.temporalMode === "cyclic")) {
+          new vm.Script("window.LayshSimulation.destroy()")
+            .runInContext(sandbox, { timeout: 250 });
+          sandbox.options = { ...sandbox.options, reducedMotion: false };
+          new vm.Script("window.LayshSimulation.init(options)")
+            .runInContext(sandbox, { timeout: 250 });
+          sandbox.parameterName = parameter.id;
+          sandbox.parameterValue = parameter.default;
+          sandbox.elapsedMs = 100;
+          for (let index = 0; index < 4; index += 1) {
+            new vm.Script(
+              "window.LayshSimulation.setParameter(parameterName, parameterValue, elapsedMs)",
+            ).runInContext(sandbox, { timeout: 250 });
+            temporalSamples.push(
+              JSON.parse(JSON.stringify(canvas.__layshActorResponse ?? null)),
+            );
+          }
+        }
+      } catch {
+        // The shared evaluator below fails closed on missing or malformed evidence.
+      }
+      causalResponseReport = {
+        ...evaluateCausalResponse({
+        canvasWidth: canvas.width,
+        canvasHeight: canvas.height,
+        samples: causalSamples,
+        temporalSamples,
+        }),
+        samples: causalSamples,
+        temporalSamples,
+      };
+      failures.push(...causalResponseReport.failures);
+      checkCount += causalResponseReport.checkCount;
+    }
   }
 }
 
@@ -386,5 +458,6 @@ process.stdout.write(JSON.stringify({
   first_frame: frames > 0,
   passing_numeric_fixtures: passingNumericFixtures,
   scene_geometry_samples: sceneGeometrySamples,
+  causal_response: causalResponseReport,
   failures,
 }));

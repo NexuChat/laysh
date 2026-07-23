@@ -239,6 +239,67 @@ def test_runtime_init_failure_reports_exact_trusted_option_names():
     assert failure["actual"] == {"error_type": "TypeError"}
 
 
+def test_runtime_verifier_supports_canvas_apis_required_by_visual_prompt():
+    from server.verify import verify_candidate
+
+    source = GOOD_MODULE_OUTPUT["module_js"].replace(
+        "      draw();",
+        """      const linear = context.createLinearGradient(0, 0, width, 0);
+      linear.addColorStop(0, \"#001122\");
+      linear.addColorStop(1, \"#88ccff\");
+      const radial = context.createRadialGradient(10, 10, 0, 10, 10, 20);
+      radial.addColorStop(0, \"#ffffff\");
+      radial.addColorStop(1, \"#000000\");
+      if (canvas.getContext(\"2d\") !== context) throw new TypeError(\"context mismatch\");
+      const bounds = canvas.getBoundingClientRect();
+      if (bounds.width !== width || bounds.height !== height) {
+        throw new TypeError(\"bounds mismatch\");
+      }
+      context.beginPath();
+      context.roundRect(4, 4, 120, 36, 12);
+      context.arcTo(0, 0, 20, 20, 5);
+      context.transform(1, 0, 0, 1, 0, 0);
+      context.getLineDash();
+      context.fillStyle = linear;
+      context.fill();
+      context.fillStyle = radial;
+      draw();""",
+        1,
+    )
+
+    result = verify_candidate(
+        {**GOOD_MODULE_OUTPUT, "module_js": source},
+        VALID_UNDERSTANDING,
+    )
+
+    assert result.passed is True
+    assert not any(failure["gate"] == "runtime_init" for failure in result.failures)
+    assert not any(failure["gate"] == "scene_geometry" for failure in result.failures)
+
+
+def test_runtime_init_reports_unsupported_canvas_api_without_source_echo():
+    from server.verify import verify_candidate
+
+    source = GOOD_MODULE_OUTPUT["module_js"].replace(
+        "      draw();",
+        "      context.drawImage();\n      draw();",
+        1,
+    )
+
+    result = verify_candidate(
+        {**GOOD_MODULE_OUTPUT, "module_js": source},
+        VALID_UNDERSTANDING,
+    )
+    failure = next(item for item in result.failures if item["gate"] == "runtime_init")
+
+    assert failure["code"] == "init_failed"
+    assert failure["actual"] == {
+        "error_type": "TypeError",
+        "unsupported_canvas_api": "drawImage",
+    }
+    assert "context.drawImage" not in str(failure)
+
+
 def test_assembly_failure_reports_expected_shell_and_sanitized_error_type(monkeypatch):
     from server import assemble
     from server.verify import verify_candidate

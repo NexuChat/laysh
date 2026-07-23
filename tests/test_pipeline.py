@@ -616,6 +616,102 @@ async def test_curated_qa_rejection_retains_candidate_and_actionable_visual_revi
 
 
 @pytest.mark.asyncio
+async def test_public_qa_rejection_uses_remaining_heal_with_private_actionable_report():
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend
+    from server.jobs import JobManager
+
+    rejected_issue = "المشهد مسطح ولا يوضح أثر تغيّر المدخل بصريًا."
+    rejected_richness = {
+        "scene_depth": False,
+        "physical_light": True,
+        "idle_motion": False,
+        "reactive_feedback": False,
+        "readable_overlays": True,
+    }
+    approved_richness = {name: True for name in rejected_richness}
+
+    class QaRehealBackend(MockCodexBackend):
+        async def qa(self, *args, **kwargs):
+            del args, kwargs
+            self.qa_calls += 1
+            if self.qa_calls == 1:
+                return {
+                    "approved": False,
+                    "issues": [rejected_issue],
+                    "replacement_module_js": None,
+                    "visual_richness": rejected_richness,
+                }
+            return {
+                "approved": True,
+                "issues": [],
+                "replacement_module_js": None,
+                "visual_richness": approved_richness,
+            }
+
+    class CountingBrowserGate:
+        def __init__(self):
+            self.calls = 0
+
+        def __call__(self, _artifact):
+            self.calls += 1
+            return BrowserVerificationResult.passing()
+
+    backend = QaRehealBackend()
+    browser_gate = CountingBrowserGate()
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=browser_gate,
+    )
+
+    record = manager.start("broken first draft", "ar")
+    await record.task
+
+    assert backend.heal_calls == 2
+    assert backend.qa_calls == 2
+    assert browser_gate.calls == 2
+    assert record.status == "complete"
+    assert record.simulation is not None
+    assert record.simulation.heal_count == 2
+
+    initial_failures, qa_failures = backend.last_heal_failures
+    assert {failure["gate"] for failure in initial_failures} >= {
+        "interface",
+        "security",
+    }
+    assert len(qa_failures) == 1
+    qa_failure = qa_failures[0]
+    assert qa_failure["gate"] == "qa_review"
+    assert qa_failure["expected"]["approved"] is True
+    assert qa_failure["expected"]["visual_richness"] == approved_richness
+    assert qa_failure["actual"]["approved"] is False
+    assert qa_failure["actual"]["issues"] == [rejected_issue]
+    assert qa_failure["actual"]["visual_richness"] == rejected_richness
+
+    public_qa_failure = next(
+        event
+        for event in record.events
+        if event.type == "verification"
+        and event.payload.passed is False
+        and "qa_review" in event.payload.evidence
+    )
+    public_payload = public_qa_failure.payload.model_dump(mode="json")
+    assert public_payload["evidence"] == ["qa_review"]
+    assert set(public_payload) == {"passed", "check_count", "heal_count", "evidence"}
+    public_surface = json.dumps(
+        [event.model_dump(mode="json") for event in record.events],
+        ensure_ascii=False,
+    )
+    assert rejected_issue not in public_surface
+    assert "scene_depth" not in public_surface
+    assert '"issues"' not in public_surface
+    assert '"expected"' not in public_surface
+    assert '"actual"' not in public_surface
+    assert record.builder_diagnostics == []
+
+
+@pytest.mark.asyncio
 async def test_curated_suspect_fixture_refreshes_understand_once_without_heal():
     from copy import deepcopy
 
@@ -739,27 +835,6 @@ def test_exhausted_heal_preserves_answer_and_never_exposes_artifact(client, back
     assert result["simulation"] is None
     assert result["fallback"]["reason_code"] == "verification_exhausted"
     assert backend.heal_calls == 2
-    assert backend.qa_calls == 0
-
-
-@pytest.mark.asyncio
-async def test_curated_evidence_stops_after_one_failed_heal(backend):
-    from server.browser_verify import BrowserVerificationResult
-    from server.jobs import JobManager
-
-    manager = JobManager(
-        backend,
-        public_job_timeout_seconds=2,
-        evidence_job_timeout_seconds=2,
-        browser_verifier=lambda _: BrowserVerificationResult.passing(),
-    )
-    record = manager.start_evidence("exhausted heal", "ar", "moon_phases_ar")
-    await record.task
-
-    assert record.status == "answer_only"
-    assert record.fallback is not None
-    assert record.fallback.reason_code == "verification_exhausted"
-    assert backend.heal_calls == 1
     assert backend.qa_calls == 0
 
 

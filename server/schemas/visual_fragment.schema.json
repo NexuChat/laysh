@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://laysh.local/schemas/visual-fragment-1.1.json",
+  "title": "Laysh visual command fragment v1.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["background", "commands", "relations", "causal_response"],
+  "properties": {
+    "background": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["top_color", "bottom_color"],
+      "properties": {
+        "top_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+        "bottom_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"}
+      }
+    },
+    "commands": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 48,
+      "items": {
+        "type": "object",
+        "anyOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "id", "scientific", "clipping_policy", "cx", "cy", "radius", "fill_color", "fill_alt_color", "stroke_color", "line_width", "opacity"],
+            "properties": {
+              "kind": {"type": "string", "enum": ["circle"]},
+              "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,47}$"},
+              "scientific": {"type": "boolean"},
+              "clipping_policy": {"type": "string", "enum": ["forbid", "allow"]},
+              "cx": {"type": "string", "minLength": 1, "maxLength": 480},
+              "cy": {"type": "string", "minLength": 1, "maxLength": 480},
+              "radius": {"type": "string", "minLength": 1, "maxLength": 480},
+              "fill_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+              "fill_alt_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+              "stroke_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+              "line_width": {"type": "string", "minLength": 1, "maxLength": 480},
+              "opacity": {"type": "string", "minLength": 1, "maxLength": 480}
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "id", "scientific", "clipping_policy", "cx", "cy", "radius_x", "radius_y", "rotation", "fill_color", "fill_alt_color", "stroke_color", "line_width", "opacity"],
+            "properties": {
+              "kind": {"type": "string", "enum": ["ellipse"]},
+              "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,47}$"},
+              "scientific": {"type": "boolean"},
+              "clipping_policy": {"type": "string", "enum": ["forbid", "allow"]},
+              "cx": {"type": "string", "minLength": 1, "maxLength": 480},
+              "cy": {"type": "string", "minLength": 1, "maxLength": 480},
+              "radius_x": {"type": "string", "minLength": 1, "maxLength": 480},
+              "radius_y": {"type": "string", "minLength": 1, "maxLength": 480},
+              "rotation": {"type": "string", "minLength": 1, "maxLength": 480},
+              "fill_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+              "fill_alt_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+              "stroke_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+              "line_width": {"type": "string", "minLength": 1, "maxLength": 480},
+              "opacity": {"type": "string", "minLength": 1, "maxLength": 480}
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "id", "scientific", "clipping_policy", "x", "y", "width", "height", "corner_radius", "fill_color", "fill_alt_color", "stroke_color", "line_width", "opacity"],
+            "properties": {
+              "kind": {"type": "string", "enum": ["rect"]},
+              "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,47}$"},
+              "scientific": {"type": "boolean", "enum": [false]},
+              "clipping_policy": {"type": "string", "enum": ["forbid", "allow"]},
+              "x": {"type": "string", "minLength": 1, "maxLength": 480},
+              "y": {"type": "string", "minLength": 1, "maxLength": 480},
+              "width": {"type": "string", "minLength": 1, "maxLength": 480},
+              "height": {"type": "string", "minLength": 1, "maxLength": 480},
+              "corner_radius": {"type": "string", "minLength": 1, "maxLength": 480},
+              "fill_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+              "fill_alt_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+              "stroke_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+              "line_width": {"type": "string", "minLength": 1, "maxLength": 480},
+              "opacity": {"type": "string", "minLength": 1, "maxLength": 480}
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "id", "scientific", "clipping_policy", "x1", "y1", "x2", "y2", "stroke_color", "line_width", "opacity"],
+            "properties": {
+              "kind": {"type": "string", "enum": ["line", "arrow"]},
+              "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,47}$"},
+              "scientific": {"type": "boolean", "enum": [false]},
+              "clipping_policy": {"type": "string", "enum": ["forbid", "allow"]},
+              "x1": {"type": "string", "minLength": 1, "maxLength": 480},
+              "y1": {"type": "string", "minLength": 1, "maxLength": 480},
+              "x2": {"type": "string", "minLength": 1, "maxLength": 480},
+              "y2": {"type": "string", "minLength": 1, "maxLength": 480},
+              "stroke_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+              "line_width": {"type": "string", "minLength": 1, "maxLength": 480},
+              "opacity": {"type": "string", "minLength": 1, "maxLength": 480}
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "id", "scientific", "clipping_policy", "x1", "y1", "x2", "y2", "amplitude", "wavelength", "stroke_color", "line_width", "opacity"],
+            "properties": {
+              "kind": {"type": "string", "enum": ["wave"]},
+              "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,47}$"},
+              "scientific": {"type": "boolean", "enum": [false]},
+              "clipping_policy": {"type": "string", "enum": ["forbid", "allow"]},
+              "x1": {"type": "string", "minLength": 1, "maxLength": 480},
+              "y1": {"type": "string", "minLength": 1, "maxLength": 480},
+              "x2": {"type": "string", "minLength": 1, "maxLength": 480},
+              "y2": {"type": "string", "minLength": 1, "maxLength": 480},
+              "amplitude": {"type": "string", "minLength": 1, "maxLength": 480},
+              "wavelength": {"type": "string", "minLength": 1, "maxLength": 480},
+              "stroke_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+              "line_width": {"type": "string", "minLength": 1, "maxLength": 480},
+              "opacity": {"type": "string", "minLength": 1, "maxLength": 480}
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "id", "scientific", "clipping_policy", "x", "y", "text_ar", "text_en", "color", "font_size", "align", "opacity"],
+            "properties": {
+              "kind": {"type": "string", "enum": ["text"]},
+              "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,47}$"},
+              "scientific": {"type": "boolean", "enum": [false]},
+              "clipping_policy": {"type": "string", "enum": ["forbid", "allow"]},
+              "x": {"type": "string", "minLength": 1, "maxLength": 480},
+              "y": {"type": "string", "minLength": 1, "maxLength": 480},
+              "text_ar": {"type": "string", "maxLength": 120},
+              "text_en": {"type": "string", "maxLength": 120},
+              "color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+              "font_size": {"type": "string", "minLength": 1, "maxLength": 480},
+              "align": {"type": "string", "enum": ["left", "center", "right"]},
+              "opacity": {"type": "string", "minLength": 1, "maxLength": 480}
+            }
+          }
+        ]
+      }
+    },
+    "relations": {
+      "type": "array",
+      "maxItems": 28,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["objects", "overlap_policy", "contact_policy", "minimum_clearance"],
+        "properties": {
+          "objects": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,47}$"}
+          },
+          "overlap_policy": {"type": "string", "enum": ["forbid", "allow", "scientific_occlusion"]},
+          "contact_policy": {"type": "string", "enum": ["forbid", "allow", "required"]},
+          "minimum_clearance": {"type": "string", "minLength": 1, "maxLength": 480}
+        }
+      }
+    },
+    "causal_response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["actor_id", "output_name", "channel", "relation", "temporal_mode"],
+      "properties": {
+        "actor_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,47}$"},
+        "output_name": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+        "channel": {"type": "string", "enum": ["x", "y", "rotation", "size", "opacity"]},
+        "relation": {"type": "string", "enum": ["direct", "inverse"]},
+        "temporal_mode": {"type": "string", "enum": ["parameter_driven", "cyclic"]}
+      }
+    }
+  }
+}

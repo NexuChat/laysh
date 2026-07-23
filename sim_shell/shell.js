@@ -51,6 +51,10 @@
   let simulation;
   let frameCount = 0;
   let idleFrameId = 0;
+  let replayFrameId = 0;
+  let replayStartedAt = 0;
+  let replayFrom = 0;
+  let replayTo = 0;
   let previousIdleAt = 0;
   let motionSampleBudget = 0;
   let playbackState = "paused";
@@ -58,6 +62,7 @@
   let moduleReducedMotion = reducedMotion;
   const periodicSamplesPerCycle = 74;
   const maxIdleStepMs = 100;
+  const replayDurationMs = 900;
 
   document.body.dataset.direction = dir === "rtl" ? "rtl" : "ltr";
   byId("lesson-label").textContent = labels.lesson;
@@ -87,6 +92,8 @@
 
   const parameter = lesson.primary_parameter;
   const readout = window.LayshReadout.forLesson(lesson);
+  const primaryOutputName = lesson.module_spec.outputs[0];
+  const outcomeUnit = lesson.checks.find((check) => check.output === primaryOutputName)?.unit || "";
   byId("primary-label").textContent = parameter.label;
   Object.assign(control, {
     min: String(parameter.min),
@@ -97,11 +104,12 @@
 
   function formatState(value) {
     const tested = simulation.test({ [parameter.id]: Number(value) });
-    const observed = tested[lesson.module_spec.outputs[0]];
+    const observed = tested[primaryOutputName];
     const valueText = readout.format(observed);
+    const unitSuffix = outcomeUnit ? ` ${outcomeUnit}` : "";
     return ar
-      ? `${parameter.label}: ${value} ${parameter.unit} — النتيجة المحسوبة: ${valueText}`
-      : `${parameter.label}: ${value} ${parameter.unit} — calculated outcome: ${valueText}`;
+      ? `${parameter.label}: ${value} ${parameter.unit} — النتيجة المحسوبة: ${valueText}${unitSuffix}`
+      : `${parameter.label}: ${value} ${parameter.unit} — calculated outcome: ${valueText}${unitSuffix}`;
   }
 
   function emitFrame() {
@@ -135,8 +143,14 @@
     idleFrameId = 0;
   }
 
+  function cancelReplaySweep() {
+    if (replayFrameId) cancelAnimationFrame(replayFrameId);
+    replayFrameId = 0;
+    replayStartedAt = 0;
+  }
+
   function requestIdleFrame() {
-    if (destroyed || playbackState !== "running" || idleFrameId) return;
+    if (destroyed || playbackState !== "running" || idleFrameId || replayFrameId) return;
     idleFrameId = requestAnimationFrame(scheduleIdleFrame);
   }
 
@@ -144,6 +158,7 @@
     playbackState = "paused";
     previousIdleAt = 0;
     motionSampleBudget = 0;
+    cancelReplaySweep();
     cancelIdleFrame();
     syncPlaybackUi(reason);
   }
@@ -180,9 +195,11 @@
   }
 
   control.addEventListener("input", () => {
-    pausePlayback("user-control");
+    cancelReplaySweep();
     update(control.value);
     byId("explain").hidden = false;
+    syncPlaybackUi("user-control");
+    requestIdleFrame();
   });
 
   function simulationOptions() {
@@ -213,13 +230,43 @@
 
   byId("reset").addEventListener("click", resetSimulation);
 
-  byId("replay").addEventListener("click", () => {
-    const replayValue = Number(control.value) === parameter.max ? parameter.min : parameter.max;
-    control.value = String(replayValue);
+  function stepReplaySweep(timestamp) {
+    replayFrameId = 0;
+    if (destroyed || playbackState !== "running") return;
+    if (!replayStartedAt) replayStartedAt = timestamp;
+    const progress = Math.min(1, Math.max(0, (timestamp - replayStartedAt) / replayDurationMs));
+    const eased = progress * progress * (3 - 2 * progress);
+    const value = progress >= 1 ? replayTo : replayFrom + (replayTo - replayFrom) * eased;
+    control.value = String(value);
     update(control.value);
     byId("explain").hidden = false;
-    resumePlayback("replay");
-  });
+    if (progress < 1) replayFrameId = requestAnimationFrame(stepReplaySweep);
+    else {
+      replayStartedAt = 0;
+      requestIdleFrame();
+    }
+  }
+
+  function startReplaySweep() {
+    cancelReplaySweep();
+    cancelIdleFrame();
+    replayFrom = Number(control.value);
+    replayTo = replayFrom === parameter.max ? parameter.min : parameter.max;
+    if (moduleReducedMotion) {
+      control.value = String(replayTo);
+      update(control.value);
+      byId("explain").hidden = false;
+      syncPlaybackUi("reduced-motion");
+      return;
+    }
+    playbackState = "running";
+    previousIdleAt = 0;
+    motionSampleBudget = 0;
+    syncPlaybackUi("replay");
+    replayFrameId = requestAnimationFrame(stepReplaySweep);
+  }
+
+  byId("replay").addEventListener("click", startReplaySweep);
 
   function syncProjectorState(active) {
     document.body.classList.toggle("projector-mode", active);
@@ -244,6 +291,15 @@
   function scheduleIdleFrame(timestamp = 0) {
     idleFrameId = 0;
     if (destroyed || playbackState !== "running") return;
+    if (simulation.setParameter.length >= 3) {
+      const elapsedMs = previousIdleAt > 0
+        ? Math.min(maxIdleStepMs, Math.max(0, timestamp - previousIdleAt))
+        : 0;
+      previousIdleAt = timestamp;
+      simulation.setParameter(parameter.id, Number(control.value), elapsedMs);
+      requestIdleFrame();
+      return;
+    }
     if (lesson.module_spec.action === "oscillates") {
       if (previousIdleAt > 0) {
         const elapsedMs = Math.min(maxIdleStepMs, Math.max(0, timestamp - previousIdleAt));
@@ -293,6 +349,7 @@
     window.addEventListener("resize", resize, { passive: true });
     window.addEventListener("pagehide", () => {
       destroyed = true;
+      cancelReplaySweep();
       cancelIdleFrame();
       simulation.destroy();
       playbackState = "destroyed";

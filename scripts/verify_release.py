@@ -187,12 +187,12 @@ ACCEPTANCE_ROW_TEST_NODEIDS: dict[str, tuple[str, ...]] = {
         "tests/test_golden_release_browser.py::test_gold_01_reviews_six_goldens_in_arabic_and_english",
     ),
     "ROUTE-01": (
-        "tests/test_model_routing.py::test_generation_tiers_default_to_direct_sol_until_evidence_enables_terra",
+        "tests/test_model_routing.py::test_committed_route_uses_terra_only_for_bounded_generation_canary",
         "tests/test_model_routing.py::test_public_luna_classification_failure_retries_once_on_terra",
         "tests/test_model_routing.py::test_terra_generation_failure_never_starts_a_fresh_sol_generation",
         "tests/test_model_routing.py::test_heal_uses_generation_model_then_allows_one_final_sol_attempt",
         "tests/test_settings.py::test_runtime_defaults_are_gpt_5_6_family_only",
-        "tests/test_codex_backend_live.py::test_curated_generation_is_terra_then_sol_repairs_stay_low_cost",
+        "tests/test_codex_backend_live.py::test_curated_generate_heal_and_ordinary_qa_stay_sol",
     ),
     "ROUTE-02": (
         "tests/test_routing_evaluation.py::test_bounded_route_report_adopts_terra_only_from_complete_observed_evidence",

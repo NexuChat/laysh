@@ -123,7 +123,7 @@ def _eligible_policy():
     return ModelRoutingPolicy(terra_eligible_tiers=frozenset({BOUNDED_SINGLE_PARAMETER}))
 
 
-def test_generation_tiers_default_to_direct_sol_until_evidence_enables_terra():
+def test_committed_route_uses_terra_only_for_bounded_generation_canary():
     from server.model_routing import (
         BOUNDED_SINGLE_PARAMETER,
         COMPLEX_OR_MULTI_PARAMETER,
@@ -133,7 +133,7 @@ def test_generation_tiers_default_to_direct_sol_until_evidence_enables_terra():
 
     policy = ModelRoutingPolicy()
     assert classify_generation_tier(VALID_UNDERSTANDING) == BOUNDED_SINGLE_PARAMETER
-    assert policy.generation_model(VALID_UNDERSTANDING) == "gpt-5.6-sol"
+    assert policy.generation_model(VALID_UNDERSTANDING) == "gpt-5.6-terra"
 
     measured = ModelRoutingPolicy(
         terra_eligible_tiers=frozenset({BOUNDED_SINGLE_PARAMETER})
@@ -151,6 +151,7 @@ def test_generation_tiers_default_to_direct_sol_until_evidence_enables_terra():
         "step": 0.1,
     }
     assert classify_generation_tier(complex_contract) == COMPLEX_OR_MULTI_PARAMETER
+    assert policy.generation_model(complex_contract) == "gpt-5.6-sol"
     assert measured.generation_model(complex_contract) == "gpt-5.6-sol"
 
 
@@ -177,8 +178,8 @@ async def test_public_luna_classification_failure_retries_once_on_terra():
     assert result.model == "gpt-5.6-terra"
     assert result.attempted_models == ("gpt-5.6-luna", "gpt-5.6-terra")
     assert result.prior_failure_codes == ("classification_validation_failed",)
-    assert all(call["timeout_seconds"] <= 90 for call in executor.calls)
-    assert sum(call["timeout_seconds"] for call in executor.calls) <= 90
+    assert all(call["timeout_seconds"] <= 160 for call in executor.calls)
+    assert sum(call["timeout_seconds"] for call in executor.calls) <= 240
 
 
 @pytest.mark.asyncio

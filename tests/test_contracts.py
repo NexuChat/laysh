@@ -39,6 +39,16 @@ def test_simulatable_understanding_requires_two_independent_checks():
         validate_understanding(candidate)
 
 
+def test_simulatable_understanding_requires_fixture_coverage_for_every_output():
+    from server.schemas import ContractError, validate_understanding
+
+    candidate = deepcopy(VALID_UNDERSTANDING)
+    candidate["module_spec"]["outputs"].append("signed_visual_response")
+
+    with pytest.raises(ContractError, match="fixture coverage"):
+        validate_understanding(candidate)
+
+
 def test_valid_module_output_matches_closed_schema():
     from server.schemas import validate_module_output
 

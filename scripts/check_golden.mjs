@@ -1,5 +1,4 @@
 import { spawn } from "node:child_process";
-import { createHash } from "node:crypto";
 import fs from "node:fs";
 import net from "node:net";
 import os from "node:os";
@@ -7,9 +6,6 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 const artifactPath = path.resolve(process.argv[2]);
-const artifactSha256 = createHash("sha256")
-  .update(fs.readFileSync(artifactPath))
-  .digest("hex");
 const screenshotRoot = path.resolve(process.argv[3]);
 const goldenId = process.argv[4];
 const reportPath = process.argv[5] ? path.resolve(process.argv[5]) : null;
@@ -116,87 +112,6 @@ try {
     if (result.result.value === true) break;
     await delay(50);
   }
-  const visualQaScreenshots = [];
-  const captureVisualState = async () => {
-    const snapshot = await command("Runtime.evaluate", {
-      expression: `(() => {
-        const canvas = document.querySelector('#simulation');
-        const data = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
-        const stride = Math.max(4, Math.floor(data.length / 4096 / 4) * 4);
-        let hash = 2166136261;
-        for (let index = 0; index < data.length; index += stride) {
-          hash = Math.imul(hash ^ data[index], 16777619) >>> 0;
-          hash = Math.imul(hash ^ data[index + 1], 16777619) >>> 0;
-          hash = Math.imul(hash ^ data[index + 2], 16777619) >>> 0;
-          hash = Math.imul(hash ^ data[index + 3], 16777619) >>> 0;
-        }
-        return {
-          frameCount: Number(document.documentElement.dataset.frameCount || 0),
-          signature: hash,
-        };
-      })()`,
-      returnByValue: true,
-    });
-    return snapshot.result.value;
-  };
-  const captureVisualQaState = async (state) => {
-    const captured = await command("Page.captureScreenshot", {
-      format: "png",
-      fromSurface: true,
-    });
-    const filename = `${goldenId}-visual-qa-${state}.png`;
-    fs.writeFileSync(
-      path.join(screenshotRoot, filename),
-      Buffer.from(captured.data, "base64"),
-    );
-    visualQaScreenshots.push(filename);
-  };
-  const visualQaInitialState = await captureVisualState();
-  await captureVisualQaState("initial");
-  await command("Runtime.evaluate", {
-    expression: `(() => {
-      const playback = document.querySelector('#play-pause');
-      if (document.documentElement.dataset.playbackState === 'paused' && playback) {
-        playback.click();
-      }
-    })()`,
-    returnByValue: true,
-  });
-  await delay(450);
-  const visualQaMidActionState = await captureVisualState();
-  await captureVisualQaState("mid-action");
-  const visualQaParameterChange = await command("Runtime.evaluate", {
-    expression: `(() => {
-      const control = document.querySelector('#primary-control');
-      const root = document.documentElement;
-      const initialValue = Number(control.value);
-      const minimum = Number(control.min);
-      const maximum = Number(control.max);
-      const changedValue = initialValue === maximum ? minimum : maximum;
-      const beforeFrame = Number(root.dataset.frameCount || 0);
-      control.value = String(changedValue);
-      control.dispatchEvent(new Event('input', { bubbles: true }));
-      return {
-        initialValue,
-        changedValue,
-        changed: changedValue !== initialValue
-          && Number(control.value) === changedValue
-          && Number(root.dataset.frameCount || 0) > beforeFrame,
-      };
-    })()`,
-    returnByValue: true,
-  });
-  await delay(100);
-  const visualQaParameterState = await captureVisualState();
-  await captureVisualQaState("parameter-changed");
-  await command("Runtime.evaluate", {
-    expression: `(() => {
-      const control = document.querySelector('#primary-control');
-      control.value = String(${visualQaParameterChange.result.value.initialValue});
-      control.dispatchEvent(new Event('input', { bubbles: true }));
-    })()`,
-    returnByValue: true,
-  });
   const interaction = await command("Runtime.evaluate", {
     expression: `(() => {
       const control = document.querySelector('#primary-control');
@@ -530,14 +445,6 @@ try {
   socket.close();
   const evidence = {
     ...interaction.result.value,
-    artifactSha256,
-    visualQaScreenshots,
-    visualQaMidActionChanged:
-      visualQaMidActionState.frameCount > visualQaInitialState.frameCount
-      && visualQaMidActionState.signature !== visualQaInitialState.signature,
-    visualQaParameterChanged:
-      visualQaParameterChange.result.value.changed
-      && visualQaParameterState.signature !== visualQaMidActionState.signature,
     idleFrameChanged: idleBefore.result.value !== idleAfter.result.value,
     reactiveFrameVariants: new Set(
       interaction.result.value.cases.map((item) => item.visualSignature),

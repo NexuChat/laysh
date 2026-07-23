@@ -87,6 +87,7 @@ def test_every_gallery_simulation_is_visible_and_unclipped_at_supported_sizes():
             "panel": item["child"]["panel"],
             "canvas": item["child"]["canvas"],
             "control": item["child"]["control"],
+            "predictionChoices": item["child"]["predictionChoices"],
             "childFocus": item["childFocus"],
             "childKeyboard": item["childKeyboard"],
             "parentFocus": item["parentFocus"],
@@ -134,6 +135,10 @@ def test_every_gallery_simulation_is_visible_and_unclipped_at_supported_sizes():
     assert 'style.height = "150px"' not in controller
     assert all("150px" not in item["initialHeightWrites"] for item in required_measurements)
     assert all(item["checks"]["keyboardFocus"] for item in required_measurements)
+    assert all(
+        item["checks"]["predictionChoicesInsideViewport"]
+        for item in required_measurements
+    )
     assert all(
         [step["selector"] for step in item["childKeyboard"]]
         == ["#play-pause", "#reset", "#replay"]

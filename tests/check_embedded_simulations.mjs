@@ -283,6 +283,17 @@ try {
       };
       const root = document.documentElement;
       const body = document.body;
+      const predictionChoices = [...document.querySelectorAll('#prediction-choices button')]
+        .map((element) => {
+          const rect = element.getBoundingClientRect();
+          return {
+            text: element.textContent.trim(),
+            left: Math.round(rect.left),
+            right: Math.round(rect.right),
+            width: Math.round(rect.width),
+            insideViewport: rect.left >= -1 && rect.right <= innerWidth + 1,
+          };
+        });
       const documentHeight = Math.ceil(Math.max(
         root.scrollHeight, root.offsetHeight, body.scrollHeight, body.offsetHeight,
       ));
@@ -294,6 +305,7 @@ try {
         panel: bounds('#observe'),
         canvas: bounds('#simulation'),
         control: bounds('#primary-control'),
+        predictionChoices,
       };
     })()`, sessionId);
     const childFocus = await evaluate(`(() => {
@@ -339,11 +351,7 @@ try {
       });
     })()`);
     async function tabTo(selectors, sessionId) {
-      await evaluate(`(() => {
-        const start = document.querySelector(${JSON.stringify(selectors[0])});
-        start.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
-        start.focus();
-      })()`, sessionId);
+      await evaluate(`document.querySelector(${JSON.stringify(selectors[0])}).focus()`, sessionId);
       const results = [];
       for (const selector of selectors.slice(1)) {
         const dispatchedAt = Date.now();
@@ -361,9 +369,7 @@ try {
           windowsVirtualKeyCode: 9,
           nativeVirtualKeyCode: 9,
         }, sessionId);
-        // Chrome reports the new active element before its keyboard-driven scroll settles.
-        // Measure visible focus after that scroll, not at the transient pre-scroll position.
-        await delay(100);
+        await delay(25);
         const observedAt = Date.now();
         results.push(await evaluate(`(() => {
           const element = document.querySelector(${JSON.stringify(selector)});
@@ -410,6 +416,8 @@ try {
       canvasInsideViewport: child.canvas.insideViewport,
       controlVisible: child.control.visible,
       controlInsideViewport: child.control.insideViewport,
+      predictionChoicesInsideViewport: child.predictionChoices.length > 0
+        && child.predictionChoices.every((choice) => choice.insideViewport),
       keyboardFocus: [...childFocus, ...parentFocus, ...childKeyboard, ...parentKeyboard].every(
         (item) => item.focused && item.visible && item.unobscured,
       ),
@@ -506,7 +514,6 @@ try {
       })()`);
       const afterClock = await evaluate(`(() => {
         const control = document.querySelector('#primary-control');
-        document.querySelector('#play-pause').click();
         const resumed = window.__layshTestClock.snapshot();
         window.__layshTestClock.advance(96);
         return {

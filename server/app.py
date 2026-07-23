@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 
 from server.assemble import PORTABLE_CSP
 from server.browser_verify import BrowserVerificationResult, verify_artifact_in_browser
-from server.cache import VerifiedCache
+from server.cache import VERIFIED_CACHE_CONTRACT_VERSION, VerifiedCache
 from server.codex_backend import CodexBackend, MockCodexBackend
 from server.codex_runtime import CodexExecutor
 from server.goldens import (
@@ -37,6 +37,7 @@ from server.static_assets import StaticAssetVersionMiddleware
 
 ROOT = Path(__file__).parents[1]
 EMBED_BRIDGE_MARKER = "data-laysh-embed-bridge"
+CURATED_GOLDEN_CACHE_CONTRACT_VERSION = "1.0"
 
 
 def _artifact_for_embed(artifact: str) -> str:
@@ -87,7 +88,11 @@ def create_app(
             root=ROOT / "out" / "cache" / "live",
             golden_root=GOLDEN_ROOT,
             secret=settings.cache_key_secret.encode(),
-            contract_version="1.0",
+            contract_version=VERIFIED_CACHE_CONTRACT_VERSION,
+            curated_legacy_goldens={
+                fixture_id.removesuffix("_ar"): CURATED_GOLDEN_CACHE_CONTRACT_VERSION
+                for fixture_id in GOLDEN_FIXTURE_IDS
+            },
         )
         if settings.cache_key_secret
         else None

@@ -46,6 +46,48 @@ OUTPUT_SCHEMA_PROBES: dict[str, tuple[str, dict[str, Any]]] = {
             "assumptions": [],
         },
     ),
+    "physics_fragment": (
+        "generate_physics",
+        {
+            "physics_expressions": [{"name": "probe", "expression": "1"}],
+            "output_names": ["probe"],
+            "brief_summary": "Declarative physics schema probe.",
+            "assumptions": [],
+        },
+    ),
+    "visual_fragment": (
+        "generate_visual",
+        {
+            "background": {
+                "top_color": "#07111F",
+                "bottom_color": "#10243A",
+            },
+            "commands": [
+                {
+                    "kind": "circle",
+                    "id": "probe",
+                    "scientific": True,
+                    "clipping_policy": "forbid",
+                    "cx": "width / 2 + output_probe",
+                    "cy": "height / 2",
+                    "radius": "20",
+                    "fill_color": "#F7E7A9",
+                    "fill_alt_color": "#D08A32",
+                    "stroke_color": "#FFFFFF",
+                    "line_width": "2",
+                    "opacity": "1",
+                }
+            ],
+            "relations": [],
+            "causal_response": {
+                "actor_id": "probe",
+                "output_name": "probe",
+                "channel": "x",
+                "relation": "direct",
+                "temporal_mode": "parameter_driven",
+            },
+        },
+    ),
     "qa": (
         "qa",
         {

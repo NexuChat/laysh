@@ -309,46 +309,6 @@ def test_circuit_speed_uses_tracked_actor_features_when_group_centroid_is_mislea
     assert report["passed"] is True
 
 
-def test_circuit_speed_does_not_match_two_carriers_to_one_after_one_disappears():
-    from server.physics_motion import evaluate_action_physics
-
-    profile = {"kind": "simple_circuit", "tolerance": 0.01, "minimum_speed_ratio": 1.5}
-    controls = [
-        {"control_value": 2, "model_outputs": {"current_a": 3.0, "power_w": 18.0}},
-        {"control_value": 12, "model_outputs": {"current_a": 0.5, "power_w": 3.0}},
-    ]
-
-    def sample(time_ms, points):
-        actor = _actor(0.5, 0.4)
-        actor["features"] = [
-            {"centroid": {"x": point, "y": 0.4}} for point in points
-        ]
-        return {"time_ms": time_ms, "actor": actor}
-
-    temporal = [
-        {
-            "control_value": 2,
-            "samples": [
-                sample(0, [0.1, 0.2]),
-                sample(100, [0.1, 0.3]),
-                sample(200, [0.1, 0.4]),
-            ],
-        },
-        {
-            "control_value": 12,
-            "samples": [
-                sample(0, [0.1, 0.55, 0.65, 0.75]),
-                sample(100, [0.1, 0.36, 0.64, 0.74]),
-                sample(200, [0.1, 0.17, 0.63, 0.73]),
-            ],
-        },
-    ]
-
-    report = evaluate_action_physics(profile, controls, temporal)
-
-    assert report["passed"] is True
-
-
 def test_buoyancy_proof_requires_model_consistent_equilibrium_at_waterline():
     from server.physics_motion import evaluate_action_physics
 

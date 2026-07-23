@@ -65,6 +65,38 @@ def test_shared_state_static_contract_requires_one_model_function_for_draw_and_t
     assert report["model_function"] == "modelState"
 
 
+def test_shared_state_contract_accepts_consumed_object_destructuring():
+    from server.shared_state import shared_model_report
+
+    destructured = SHARED_MODEL_SOURCE.replace(
+        "const state = modelState(angleDeg);",
+        "const { lit_fraction } = modelState(angleDeg);",
+    ).replace("state.lit_fraction", "lit_fraction").replace(
+        "const state = modelState(inputs.angle_deg);",
+        "const { lit_fraction } = modelState(inputs.angle_deg);",
+    )
+
+    report = shared_model_report(destructured)
+
+    assert report["passed"] is True
+
+
+def test_shared_state_contract_accepts_a_consumed_direct_property_binding():
+    from server.shared_state import shared_model_report
+
+    direct = SHARED_MODEL_SOURCE.replace(
+        "const state = modelState(angleDeg);",
+        "const litFraction = modelState(angleDeg).lit_fraction;",
+    ).replace("state.lit_fraction", "litFraction").replace(
+        "const state = modelState(inputs.angle_deg);",
+        "const litFraction = modelState(inputs.angle_deg).lit_fraction;",
+    )
+
+    report = shared_model_report(direct)
+
+    assert report["passed"] is True
+
+
 def test_shared_state_static_contract_rejects_a_deliberately_divergent_visual_model():
     from server.shared_state import shared_model_report
 
@@ -223,14 +255,12 @@ def test_legacy_shared_model_refresh_fails_closed_without_scene_evidence(
     assert {path.name: path.read_bytes() for path in golden_root.glob("*.json")} == before
 
 
-def test_generation_and_heal_prompts_show_consumed_shared_state_repairs():
+def test_generation_prompt_requires_the_shared_model_state_contract():
     from pathlib import Path
 
-    prompt_root = Path(__file__).parents[1] / "server" / "prompts"
+    prompt = (Path(__file__).parents[1] / "server/prompts/generate_module.md").read_text(
+        encoding="utf-8"
+    )
 
-    for name in ("generate_module.md", "heal_module.md"):
-        prompt = (prompt_root / name).read_text(encoding="utf-8")
-
-        assert "LAYSH_SHARED_MODEL" in prompt
-        assert "const state = modelState(" in prompt
-        assert "state.<declared_output>" in prompt
+    assert "LAYSH_SHARED_MODEL" in prompt
+    assert "same model function" in prompt

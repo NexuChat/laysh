@@ -42,7 +42,15 @@ def test_g2_evidence_contains_stage_receipts_without_raw_question():
     evidence = build_g2_evidence(
         record=record,
         artifact_sha256="abc123",
-        browser_evidence={"ready": True, "externalRequests": 0},
+        browser_evidence={
+            "ready": True,
+            "controlChanged": True,
+            "frameChanged": True,
+            "canvasHashBefore": 1234,
+            "canvasHashAfter": 5678,
+            "runtimeError": False,
+            "externalRequests": 0,
+        },
         total_elapsed_ms=5600,
     )
 
@@ -71,3 +79,4 @@ def test_g2_evidence_contains_stage_receipts_without_raw_question():
     ]
     assert "PRIVATE-QUESTION" not in str(evidence)
     assert "question" not in evidence
+    assert evidence["gate_g2_passed"] is True

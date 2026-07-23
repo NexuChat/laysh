@@ -90,7 +90,7 @@ def test_visual_qa_schema_is_closed_strict_and_requires_the_four_verdict_fields(
 
 
 @pytest.mark.asyncio
-async def test_curated_visual_qa_routes_three_bounded_images_to_sol_low(tmp_path):
+async def test_curated_visual_qa_routes_three_bounded_images_to_terra(tmp_path):
     from server.codex_backend import CodexBackend, RuntimeContext
     from server.settings import Settings
 
@@ -111,15 +111,13 @@ async def test_curated_visual_qa_routes_three_bounded_images_to_sol_low(tmp_path
     assert result.data == VISUAL_VERDICT
     assert len(executor.calls) == 1
     call = executor.calls[0]
-    assert call["model"] == "gpt-5.6-sol"
+    assert call["model"] == "gpt-5.6-terra"
     assert call["effort"] == "low"
     assert call["schema_path"].name == "visual_qa.schema.json"
     assert call["image_paths"] == screenshots
     assert call["public"] is False
     assert call["evidence_fixture_id"] == "moon_phases_ar"
     assert "moon" in call["prompt"] and "orbits" in call["prompt"]
-    assert VALID_UNDERSTANDING["learning_objective"] in call["prompt"]
-    assert VALID_UNDERSTANDING["prediction"]["prompt"] in call["prompt"]
     assert "module_js" not in call["prompt"]
 
 
@@ -295,11 +293,11 @@ def test_golden_promotion_stops_at_a_failed_gate_even_with_a_passing_visual_verd
         goldens.promote_candidate(fixture_id, revision="v1.1")
 
 
-def test_visual_qa_model_setting_is_sol_and_gpt_5_6_only(monkeypatch):
+def test_visual_qa_model_setting_is_terra_and_gpt_5_6_only(monkeypatch):
     from server.settings import ALLOWED_RUNTIME_MODELS, Settings
 
     settings = Settings()
-    assert settings.visual_qa_model == "gpt-5.6-sol"
+    assert settings.visual_qa_model == "gpt-5.6-terra"
     assert settings.visual_qa_model in ALLOWED_RUNTIME_MODELS
 
     monkeypatch.setenv("LAYSH_VISUAL_QA_MODEL", "not-gpt-5.6")

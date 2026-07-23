@@ -66,7 +66,7 @@ def test_build_controller_has_replay_watchdog_cancel_and_history_states(client):
     assert '"Last-Event-ID"' in source
     assert "AbortController" in source
     assert "pushState" in source and "popstate" in source
-    assert "90_000" in source and "180_000" in source
+    assert "90_000" in source and "600_000" in source
     assert "heartbeat" in source
     assert "verification" in source
     for arabic_copy in ("إعادة الاتصال", "ما زلنا نفحص", "في قائمة البناء", "إلغاء البناء"):
@@ -74,10 +74,12 @@ def test_build_controller_has_replay_watchdog_cancel_and_history_states(client):
     assert "Math.round" not in source
 
 
-def test_public_wait_copy_sets_an_honest_three_minute_expectation(client):
+def test_public_wait_copy_sets_an_honest_ten_minute_expectation(client):
     html = client.get("/").text
+    translations = client.get("/static/translations.js").text
 
-    assert "قد يستغرق بناء تجربة جديدة حتى ٣ دقائق" in html
+    assert "قد يستغرق بناء تجربة جديدة حتى ١٠ دقائق" in html
+    assert "Building a new experience can take up to 10 minutes" in translations
 
 
 def test_result_and_every_designed_failure_have_arabic_recovery_copy(client):
@@ -94,6 +96,7 @@ def test_result_and_every_designed_failure_have_arabic_recovery_copy(client):
     for reason in (
         "not_simulatable",
         "qa_inconclusive",
+        "qa_rejected",
         "verification_exhausted",
         "simulation_runtime_error",
         "backend_unavailable",

@@ -102,10 +102,17 @@ try {
     if (await evaluate("document.readyState === 'complete'")) break;
     await delay(50);
   }
-  await evaluate("document.querySelector('#locale-control').click()");
+  await evaluate(`(() => {
+    if (document.documentElement.lang !== "ar") {
+      document.querySelector("#locale-control").click();
+    }
+  })()`);
   for (let attempt = 0; attempt < 100; attempt += 1) {
     if (await evaluate("document.documentElement.lang === 'ar'")) break;
     await delay(50);
+  }
+  if (!(await evaluate("document.documentElement.lang === 'ar'"))) {
+    throw new Error("gallery locale did not settle on Arabic");
   }
   let cards = [];
   for (let attempt = 0; attempt < 100; attempt += 1) {

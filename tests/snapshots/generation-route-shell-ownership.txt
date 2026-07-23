@@ -1,8 +1,8 @@
 {
-  "model": "gpt-5.6-sol",
+  "model": "gpt-5.6-terra",
   "effort": "medium",
   "schema": "module.schema.json",
-  "ownership_clause": "Return closed-schema JSON only; no tools. Assign JavaScript once to `window.LayshSimulation`; no Markdown, full HTML, CSS, or shell UI.",
+  "ownership_clause": "Return closed-schema JSON only; use no tools. Assign JavaScript once to `window.LayshSimulation`; no Markdown, full HTML, CSS, or shell UI.",
   "trusted_shell_source": "sim_shell/shell.html",
-  "rendered_prompt_sha256": "8afd1ac8044e453129188fab5572fa5d8b87527fb4cd2457c60fe0d763cd310c"
+  "rendered_prompt_sha256": "7c9652555c86291777fa58d9221e1b5bbbbda46655710449e668d93c60d65209"
 }

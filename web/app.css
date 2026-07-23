@@ -131,8 +131,8 @@ textarea[aria-invalid="true"] { border-color: var(--danger); }
 .gallery-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(0.85rem, 1.8vw, 1.35rem); overflow: visible; border: 0; border-radius: 0; background: transparent; }
 .gallery-card { position: relative; min-height: 220px; display: flex; flex-direction: column; align-items: flex-start; overflow: hidden; padding: 1.25rem; border: 1px solid var(--line); border-radius: 1.15rem; background: rgb(23 27 33 / 92%); box-shadow: 0 14px 34px rgb(0 0 0 / 16%); backdrop-filter: none; transition: border-color 140ms ease, background 140ms ease, color 140ms ease, transform 140ms ease; }
 .gallery-card::after { display: none; }
-.gallery-card:hover, .gallery-card:focus-within { border-color: rgb(255 194 71 / 72%); background: var(--paper); color: var(--space); transform: translateY(-3px); }
-.gallery-card:hover .card-domain, .gallery-card:focus-within .card-domain { color: rgb(13 15 18 / 64%); }
+.gallery-card:hover, .gallery-card:focus-within { border-color: rgb(255 194 71 / 72%); background: var(--space-soft); color: var(--cream); transform: translateY(-3px); }
+.gallery-card:hover .card-domain, .gallery-card:focus-within .card-domain { color: var(--slate); }
 .gallery-icon { position: relative; z-index: 1; display: grid; place-items: center; width: 2.4rem; aspect-ratio: 1; border: 1px solid var(--line-bright); border-radius: 50%; background: transparent; color: var(--amber); font-family: var(--mono); font-size: 1rem; box-shadow: none; }
 .card-domain { margin: .85rem 0 .25rem; color: var(--slate); font-size: .68rem; }
 .gallery-card h3 { position: relative; z-index: 1; margin-block-end: 1rem; font-size: 1.05rem; line-height: 1.65; }

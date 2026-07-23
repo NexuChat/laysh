@@ -245,9 +245,12 @@ def test_committed_gallery_serves_six_bilingual_tier_a_lessons_instantly(client)
 def test_gallery_controller_enables_only_server_confirmed_pinned_lessons(client):
     source = client.get("/static/app.js").text
 
-    assert "`/api/gallery?locale=${currentLocale}`" in source
+    assert "const requestedLocale = currentLocale" in source
+    assert "`/api/gallery?locale=${requestedLocale}`" in source
+    assert "if (requestedLocale !== currentLocale) return" in source
     assert "/api/gallery/${encodeURIComponent(goldenId)}" in source
     assert 'badge.textContent = t("gallery.instant")' in source
+    assert 'badge.dataset.i18n = "gallery.instant"' in source
     assert "launch.disabled = false" in source
     assert "verified/golden" not in client.get("/").text
 

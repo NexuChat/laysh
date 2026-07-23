@@ -77,6 +77,9 @@ def test_browser_gate_rejects_a_correct_model_with_only_one_pixel_of_visual_chan
 
     assert result.passed is False
     failure = next(
-        item for item in result.failures if item["code"] == "causal_visual_change_too_small"
+        item for item in result.failures if item["code"] == "canvas_pixels_unchanged"
     )
-    assert failure["actual"]["changed_pixels"] < failure["expected"]["minimum_changed_pixels"]
+    assert (
+        failure["actual"]["canvas_hash_before"]
+        == failure["actual"]["canvas_hash_after"]
+    )

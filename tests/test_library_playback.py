@@ -18,10 +18,15 @@ def test_trusted_shell_exposes_bilingual_playback_controls_and_state():
     assert 'dataset.reducedMotion' in source
 
 
-def test_trusted_shell_yields_autoplay_to_direct_control_and_resets_deterministically():
+def test_trusted_shell_keeps_causal_feedback_live_and_replays_with_one_bounded_sweep():
     source = (ROOT / "sim_shell" / "shell.js").read_text(encoding="utf-8")
 
-    assert 'pausePlayback("user-control")' in source
+    assert 'pausePlayback("user-control")' not in source
+    assert 'syncPlaybackUi("user-control")' in source
+    assert "function cancelReplaySweep()" in source
+    assert "function startReplaySweep()" in source
+    assert "requestAnimationFrame(stepReplaySweep)" in source
+    assert "replayFrameId" in source
     assert 'resetSimulation()' in source
     assert 'cancelAnimationFrame(idleFrameId)' in source
     assert 'simulation.destroy()' in source

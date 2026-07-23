@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import pytest
 
@@ -58,6 +59,60 @@ def test_exact_and_semantic_cache_without_raw_question(tmp_path):
     assert question not in stored
     assert "PRIVATE-CANARY-7291" not in stored
     assert not list((tmp_path / "live").glob("*.tmp"))
+
+
+def test_verified_pinned_alias_lookup_returns_the_requested_localized_artifact(tmp_path):
+    from server.cache import VerifiedCache
+
+    root = Path(__file__).parents[1]
+    cache = VerifiedCache(
+        root=tmp_path / "live",
+        golden_root=root / "out" / "cache" / "golden",
+        secret=b"test-cache-secret",
+        contract_version="1.0",
+    )
+
+    english = cache.lookup(
+        question="Why do some objects float?",
+        locale="en",
+        domain="unrelated-domain-does-not-match-semantic-key",
+        canonical_intent="unrelated_intent",
+    )
+    arabic = cache.lookup(
+        question="لماذا تطفو بعض الأجسام؟",
+        locale="ar",
+        domain="unrelated-domain-does-not-match-semantic-key",
+        canonical_intent="unrelated_intent",
+    )
+
+    assert english is not None
+    assert english.pinned is True and english.locale == "en"
+    assert english.direction == "ltr"
+    assert english.title == "Density and buoyancy in water"
+    assert '<html lang="en" dir="ltr">' in english.artifact
+    assert arabic is not None
+    assert arabic.pinned is True and arabic.locale == "ar"
+    assert arabic.direction == "rtl"
+    assert '<html lang="ar" dir="rtl">' in arabic.artifact
+
+
+def test_pinned_alias_lookup_is_exact_and_does_not_guess_learner_intent(tmp_path):
+    from server.cache import VerifiedCache
+
+    root = Path(__file__).parents[1]
+    cache = VerifiedCache(
+        root=tmp_path / "live",
+        golden_root=root / "out" / "cache" / "golden",
+        secret=b"test-cache-secret",
+        contract_version="1.0",
+    )
+
+    assert cache.lookup(
+        question="Why do ships float?",
+        locale="en",
+        domain="unrelated-domain-does-not-match-semantic-key",
+        canonical_intent="unrelated_intent",
+    ) is None
 
 
 @pytest.mark.parametrize(
@@ -161,6 +216,124 @@ def test_contract_version_invalidates_cache_and_golden_is_immutable(tmp_path):
         locale="en",
         domain="astronomy",
         canonical_intent="moon_phase_lit_fraction",
+    ) is None
+
+
+def test_runtime_cache_uses_the_causal_actor_verification_profile(monkeypatch):
+    from server.app import create_app
+    from server.codex_backend import MockCodexBackend
+
+    monkeypatch.setenv("LAYSH_CACHE_KEY_SECRET", "offline-cache-profile-test")
+    app = create_app(backend=MockCodexBackend())
+
+    assert app.state.jobs.cache is not None
+    assert app.state.jobs.cache.contract_version == "1.1-causal-actor"
+    assert app.state.jobs.cache.curated_legacy_goldens == {
+        "buoyancy": "1.0",
+        "day_night": "1.0",
+        "moon_phases": "1.0",
+        "pendulum": "1.0",
+        "simple_circuit": "1.0",
+        "sound_pitch": "1.0",
+    }
+
+
+def test_causal_cache_bypasses_legacy_live_but_keeps_explicit_curated_golden(
+    tmp_path,
+):
+    from server.cache import VERIFIED_CACHE_CONTRACT_VERSION, VerifiedCache
+
+    live_root = tmp_path / "live"
+    golden_root = tmp_path / "golden"
+    legacy = VerifiedCache(
+        root=live_root,
+        golden_root=golden_root,
+        secret=b"test-cache-secret",
+        contract_version="1.0",
+    )
+    legacy.write_verified(
+        question="legacy generated question",
+        locale="en",
+        domain="mechanics",
+        canonical_intent="legacy_generated_intent",
+        artifact="<!doctype html><title>legacy generated</title>",
+        title="Legacy generated",
+        direction="ltr",
+        tier="B",
+        receipt=verified_receipt(),
+        route_label="stable",
+    )
+    repository_golden = (
+        Path(__file__).parents[1] / "out" / "cache" / "golden" / "buoyancy.json"
+    )
+    golden_root.mkdir(exist_ok=True)
+    (golden_root / "buoyancy.json").write_bytes(repository_golden.read_bytes())
+
+    causal = VerifiedCache(
+        root=live_root,
+        golden_root=golden_root,
+        secret=b"test-cache-secret",
+        contract_version=VERIFIED_CACHE_CONTRACT_VERSION,
+        curated_legacy_goldens={"buoyancy": "1.0"},
+    )
+
+    assert causal.lookup(
+        question="legacy generated question",
+        locale="en",
+        domain="mechanics",
+        canonical_intent="legacy_generated_intent",
+    ) is None
+    golden = causal.lookup(
+        question="Why do some objects float?",
+        locale="en",
+        domain="unrelated",
+        canonical_intent="unrelated",
+    )
+    assert golden is not None
+    assert golden.cache_id == "golden_buoyancy"
+    assert golden.contract_version == "1.0"
+    assert golden.pinned is True
+
+
+@pytest.mark.parametrize(
+    ("allowlist", "stored_version"),
+    [
+        ({}, "1.0"),
+        ({"buoyancy": "1.0"}, "0.9"),
+        ({"different_lesson": "1.0"}, "1.0"),
+    ],
+)
+def test_pinned_alias_cannot_bypass_explicit_curated_version_allowlist(
+    tmp_path,
+    allowlist,
+    stored_version,
+):
+    from server.cache import VERIFIED_CACHE_CONTRACT_VERSION, VerifiedCache
+
+    golden_root = tmp_path / "golden"
+    golden_root.mkdir()
+    source = (
+        Path(__file__).parents[1] / "out" / "cache" / "golden" / "buoyancy.json"
+    )
+    document = json.loads(source.read_text(encoding="utf-8"))
+    document["contract_version"] = stored_version
+    (golden_root / "buoyancy.json").write_text(
+        json.dumps(document),
+        encoding="utf-8",
+    )
+    cache = VerifiedCache(
+        root=tmp_path / "live",
+        golden_root=golden_root,
+        secret=b"test-cache-secret",
+        contract_version=VERIFIED_CACHE_CONTRACT_VERSION,
+        curated_legacy_goldens=allowlist,
+    )
+
+    assert cache.lookup(
+        question="Why do some objects float?",
+        locale="en",
+        domain="unrelated",
+        canonical_intent="unrelated",
     ) is None
 
 
