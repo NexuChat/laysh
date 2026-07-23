@@ -59,8 +59,8 @@ _SEMANTIC_FAILURE_CODES = (
         "signed_causal_fixture_coverage_required",
     ),
     (
-        "representation time-driven motion is deferred",
-        "representation_time_driven_deferred",
+        "time-driven motion requires a scientific field consuming time through a declared output",
+        "time_driven_scientific_motion_required",
     ),
     (
         "representation archetype is not emittable",
@@ -86,6 +86,10 @@ _SEMANTIC_FAILURE_CODES = (
         "scientific geometry must consume a declared output",
         "scientific_output_reference_required",
     ),
+    (
+        "trajectory output must reference a declared output",
+        "trajectory_output_undeclared",
+    ),
     ("visual expression references an undeclared output", "undeclared_visual_output"),
     ("relation references an undeclared output", "undeclared_relation_output"),
     ("relations must cover every scientific pair exactly once", "scientific_relations_incomplete"),
@@ -93,6 +97,10 @@ _SEMANTIC_FAILURE_CODES = (
     ("visual command ids must be unique", "duplicate_visual_command_id"),
     ("only circles and ellipses may be scientific", "unsupported_scientific_geometry"),
     ("ellipse safety envelopes cannot prove", "unsupported_ellipse_relation"),
+    (
+        "primitive safety envelopes cannot prove",
+        "unsupported_safety_envelope_relation",
+    ),
     ("scientific ellipse must respond through a salient field", "scientific_salient_output_required"),
     ("non-forbid overlap and required contact require zero clearance", "relation_clearance_invalid"),
     ("physics expressions and output names must match", "physics_output_contract_mismatch"),
@@ -252,6 +260,7 @@ def validate_physics_fragment(
         parameter["id"]: f'finiteNumber(inputs[{_js(parameter["id"])}])'
         for parameter in parameters
     }
+    names["time"] = "finiteNumber(time)"
     for item in expressions:
         _compile_expression(item["expression"], names)
     return document
@@ -264,6 +273,7 @@ def _visual_names(understanding: dict[str, Any] | None) -> dict[str, str]:
         "min_dim": "Math.min(finiteNumber(width),finiteNumber(height))",
         "normalized": "finiteNumber(state.normalized)",
         "phase": "finiteNumber(visualPhase)",
+        "time": "finiteNumber(time)",
     }
     outputs = None if understanding is None else understanding["module_spec"]["outputs"]
     if outputs is not None:
@@ -298,6 +308,193 @@ def _visual_output_names(expression: object) -> set[str]:
     }
 
 
+def _expression_names(expression: object) -> set[str]:
+    parsed = _parse_expression(expression)
+    return {
+        node.id
+        for node in ast.walk(parsed)
+        if isinstance(node, ast.Name)
+    }
+
+
+def _command_numeric_expressions(
+    command: dict[str, Any],
+) -> list[tuple[str, object, bool]]:
+    """Return every numeric DSL field and whether it is visually salient."""
+
+    numeric_fields = {
+        "circle": ("cx", "cy", "radius", "line_width", "opacity"),
+        "ellipse": (
+            "cx",
+            "cy",
+            "radius_x",
+            "radius_y",
+            "rotation",
+            "line_width",
+            "opacity",
+        ),
+        "rect": (
+            "x",
+            "y",
+            "width",
+            "height",
+            "corner_radius",
+            "line_width",
+            "opacity",
+        ),
+        "line": ("x1", "y1", "x2", "y2", "line_width", "opacity"),
+        "arrow": ("x1", "y1", "x2", "y2", "line_width", "opacity"),
+        "wave": (
+            "x1",
+            "y1",
+            "x2",
+            "y2",
+            "amplitude",
+            "wavelength",
+            "line_width",
+            "opacity",
+        ),
+        "text": ("x", "y", "font_size", "opacity"),
+        "vector_arrow": (
+            "x1",
+            "y1",
+            "angle",
+            "length",
+            "head_size",
+            "line_width",
+            "opacity",
+        ),
+        "trajectory": ("line_width", "opacity"),
+        "body_group": ("cx", "cy", "rotation", "opacity"),
+        "ray": ("x1", "y1", "line_width", "opacity"),
+    }
+    values = [
+        (field, command[field], field != "line_width")
+        for field in numeric_fields[command["kind"]]
+    ]
+    if command["kind"] == "body_group":
+        part_fields = {
+            "circle": ("dx", "dy", "radius", "line_width"),
+            "ellipse": (
+                "dx",
+                "dy",
+                "radius_x",
+                "radius_y",
+                "rotation",
+                "line_width",
+            ),
+            "rect": (
+                "dx",
+                "dy",
+                "width",
+                "height",
+                "corner_radius",
+                "line_width",
+            ),
+            "line": ("dx1", "dy1", "dx2", "dy2", "line_width"),
+        }
+        for index, part in enumerate(command["parts"]):
+            values.extend(
+                (
+                    f"parts[{index}].{field}",
+                    part[field],
+                    field != "line_width",
+                )
+                for field in part_fields[part["kind"]]
+            )
+    elif command["kind"] == "ray":
+        for index, segment in enumerate(command["segments"]):
+            values.extend(
+                (
+                    f"segments[{index}].{field}",
+                    segment[field],
+                    True,
+                )
+                for field in ("angle", "length")
+            )
+    return values
+
+
+def _command_channel_expressions(
+    command: dict[str, Any],
+    channel: str,
+) -> tuple[object, ...]:
+    direct_fields: dict[str, dict[str, tuple[str, ...]]] = {
+        "circle": {
+            "x": ("cx",),
+            "y": ("cy",),
+            "size": ("radius",),
+            "opacity": ("opacity",),
+        },
+        "ellipse": {
+            "x": ("cx",),
+            "y": ("cy",),
+            "rotation": ("rotation",),
+            "size": ("radius_x", "radius_y"),
+            "opacity": ("opacity",),
+        },
+        "body_group": {
+            "x": ("cx",),
+            "y": ("cy",),
+            "rotation": ("rotation",),
+            "opacity": ("opacity",),
+        },
+        "vector_arrow": {
+            "x": ("x1",),
+            "y": ("y1",),
+            "rotation": ("angle",),
+            "size": ("length", "head_size"),
+            "opacity": ("opacity",),
+        },
+        "ray": {
+            "x": ("x1",),
+            "y": ("y1",),
+            "opacity": ("opacity",),
+        },
+    }
+    expressions = tuple(
+        command[field]
+        for field in direct_fields.get(command["kind"], {}).get(channel, ())
+    )
+    if command["kind"] == "body_group" and channel == "size":
+        expressions += tuple(
+            expression
+            for field, expression, salient in _command_numeric_expressions(command)
+            if field.startswith("parts[") and salient
+        )
+    if command["kind"] == "ray" and channel in {"rotation", "size"}:
+        segment_field = "angle" if channel == "rotation" else "length"
+        expressions += tuple(
+            segment[segment_field] for segment in command["segments"]
+        )
+    return expressions
+
+
+def _command_channel_consumes_output(
+    command: dict[str, Any],
+    channel: str,
+    output_name: str,
+) -> bool:
+    if command["kind"] == "trajectory":
+        return channel == "y" and command["output_name"] == output_name
+    output_reference = f"output_{output_name}"
+    return any(
+        output_reference in _visual_output_names(expression)
+        for expression in _command_channel_expressions(command, channel)
+    )
+
+
+def _command_has_time_output_motion(command: dict[str, Any]) -> bool:
+    if command["kind"] == "trajectory":
+        return command["sweep"] == "time"
+    return any(
+        "time" in _expression_names(expression)
+        and bool(_visual_output_names(expression))
+        for _, expression, salient in _command_numeric_expressions(command)
+        if salient
+    )
+
+
 _CAUSAL_CHANNEL_FIELDS: dict[str, dict[str, tuple[str, ...]]] = {
     "circle": {
         "x": ("cx",),
@@ -316,7 +513,6 @@ _CAUSAL_CHANNEL_FIELDS: dict[str, dict[str, tuple[str, ...]]] = {
 
 _DEFERRED_REPRESENTATION_ARCHETYPES = {
     "particle_flow",
-    "ray_bundle",
     "wave_medium",
 }
 _PAIRED_REPRESENTATION_ARCHETYPES = {
@@ -349,19 +545,10 @@ def _validate_causal_response(
     else:
         fixtures = []
 
-    channel_fields = _CAUSAL_CHANNEL_FIELDS.get(actor["kind"], {}).get(
+    if not _command_channel_consumes_output(
+        actor,
         response["channel"],
-        (),
-    )
-    if not channel_fields:
-        raise ContractError(
-            "causal channel field must directly consume its declared output"
-        )
-
-    output_reference = f'output_{response["output_name"]}'
-    if not any(
-        output_reference in _visual_output_names(actor[field])
-        for field in channel_fields
+        response["output_name"],
     ):
         raise ContractError(
             "causal channel field must directly consume its declared output"
@@ -404,8 +591,24 @@ def _validate_representation(
     ]
     scientific_kinds = {command["kind"] for command in scientific_commands}
     archetype_matches = (
-        (archetype == "body" and bool(scientific_kinds & {"circle", "ellipse"}))
-        or (archetype == "elongated_body" and "ellipse" in scientific_kinds)
+        (
+            archetype == "body"
+            and bool(
+                scientific_kinds
+                & {
+                    "body_group",
+                    "circle",
+                    "ellipse",
+                    "trajectory",
+                    "vector_arrow",
+                }
+            )
+        )
+        or (
+            archetype == "elongated_body"
+            and bool(scientific_kinds & {"body_group", "ellipse"})
+        )
+        or (archetype == "ray_bundle" and "ray" in scientific_kinds)
         or (
             archetype in _PAIRED_REPRESENTATION_ARCHETYPES
             and len(scientific_commands) >= 2
@@ -440,14 +643,13 @@ def _validate_representation(
             )
         if proof["carrier"] != "actor":
             continue
-        output_reference = f"output_{output_name}"
         if not any(
-            output_reference in _visual_output_names(command[field])
-            for command in scientific_commands
-            for field in _CAUSAL_CHANNEL_FIELDS.get(command["kind"], {}).get(
+            _command_channel_consumes_output(
+                command,
                 proof["channel"],
-                (),
+                output_name,
             )
+            for command in scientific_commands
         ):
             raise ContractError(
                 "representation actor proof is not backed by a scientific command"
@@ -460,12 +662,6 @@ def validate_visual_fragment(
 ) -> dict[str, Any]:
     if understanding is not None:
         understanding = validate_understanding(understanding)
-    representation = document.get("representation")
-    if (
-        isinstance(representation, dict)
-        and representation.get("motion_model") == "time_driven"
-    ):
-        raise ContractError("representation time-driven motion is deferred to phase A2")
     validate_document(document, load_schema("visual_fragment.schema.json"))
     _reject_untrusted_markers(document)
     commands = document["commands"]
@@ -474,54 +670,64 @@ def validate_visual_fragment(
         raise ContractError("visual command ids must be unique")
     scientific_ids: list[str] = []
     scientific_kinds: dict[str, str] = {}
-    numeric_fields = {
-        "circle": ("cx", "cy", "radius", "line_width", "opacity"),
-        "ellipse": (
-            "cx",
-            "cy",
-            "radius_x",
-            "radius_y",
-            "rotation",
-            "line_width",
-            "opacity",
-        ),
-        "rect": ("x", "y", "width", "height", "corner_radius", "line_width", "opacity"),
-        "line": ("x1", "y1", "x2", "y2", "line_width", "opacity"),
-        "arrow": ("x1", "y1", "x2", "y2", "line_width", "opacity"),
-        "wave": ("x1", "y1", "x2", "y2", "amplitude", "wavelength", "line_width", "opacity"),
-        "text": ("x", "y", "font_size", "opacity"),
-    }
     declared_output_names = (
         set() if understanding is None else {f"output_{name}" for name in understanding["module_spec"]["outputs"]}
+    )
+    declared_outputs = (
+        set() if understanding is None else set(understanding["module_spec"]["outputs"])
     )
     for command in commands:
         kind = command["kind"]
         if command["scientific"]:
-            if kind not in {"circle", "ellipse"}:
+            if kind not in {
+                "body_group",
+                "circle",
+                "ellipse",
+                "ray",
+                "trajectory",
+                "vector_arrow",
+            }:
                 raise ContractError(
-                    "only circles and ellipses may be scientific in visual fragment v1"
+                    "unsupported command kind may not be scientific in visual fragment v2"
                 )
             scientific_ids.append(command["id"])
             scientific_kinds[command["id"]] = kind
         consumed_outputs: set[str] = set()
         salient_outputs: set[str] = set()
-        for field in numeric_fields[kind]:
-            referenced_outputs = _visual_output_names(command[field])
+        for _, expression, salient in _command_numeric_expressions(command):
+            referenced_outputs = _visual_output_names(expression)
             if understanding is not None and not referenced_outputs <= declared_output_names:
                 raise ContractError("visual expression references an undeclared output")
             consumed_outputs.update(referenced_outputs)
-            if field not in {"line_width"}:
+            if salient:
                 salient_outputs.update(referenced_outputs)
-            _compile_visual_expression(command[field], understanding)
+            _compile_visual_expression(expression, understanding)
+        if kind == "trajectory":
+            if understanding is not None and command["output_name"] not in declared_outputs:
+                raise ContractError(
+                    "trajectory output must reference a declared output"
+                )
+            consumed_outputs.add(f'output_{command["output_name"]}')
+            salient_outputs.add(f'output_{command["output_name"]}')
         if command["scientific"] and understanding is not None and not consumed_outputs:
             raise ContractError("scientific geometry must consume a declared output")
         if (
             command["scientific"]
-            and kind == "ellipse"
+            and kind in {"body_group", "ellipse", "ray", "vector_arrow"}
             and understanding is not None
             and not salient_outputs
         ):
             raise ContractError("scientific ellipse must respond through a salient field")
+    if (
+        document["representation"]["motion_model"] == "time_driven"
+        and not any(
+            command["scientific"] and _command_has_time_output_motion(command)
+            for command in commands
+        )
+    ):
+        raise ContractError(
+            "time-driven motion requires a scientific field consuming time through a declared output"
+        )
     seen_pairs: set[tuple[str, str]] = set()
     for relation in document["relations"]:
         pair = tuple(sorted(relation["objects"]))
@@ -544,6 +750,18 @@ def validate_visual_fragment(
             raise ContractError(
                 "ellipse safety envelopes cannot prove required contact or scientific occlusion"
             )
+        if {
+            "body_group",
+            "ray",
+            "trajectory",
+            "vector_arrow",
+        } & {scientific_kinds[item] for item in pair} and (
+            relation["contact_policy"] == "required"
+            or relation["overlap_policy"] == "scientific_occlusion"
+        ):
+            raise ContractError(
+                "primitive safety envelopes cannot prove required contact or scientific occlusion"
+            )
     expected_pairs = {tuple(pair) for pair in combinations(sorted(scientific_ids), 2)}
     if seen_pairs != expected_pairs:
         raise ContractError("relations must cover every scientific pair exactly once")
@@ -562,7 +780,8 @@ def _causal_actor_evidence(
 ) -> str:
     if command["id"] != causal_response["actor_id"]:
         return ""
-    if command["kind"] == "circle":
+    kind = command["kind"]
+    if kind == "circle":
         visual_values = {
             "x": "cx",
             "y": "cy",
@@ -570,7 +789,7 @@ def _causal_actor_evidence(
             "opacity": "visualOpacity",
         }
         bounds = "{left:cx - radius,top:cy - radius,right:cx + radius,bottom:cy + radius,width:radius * 2,height:radius * 2}"
-    else:
+    elif kind == "ellipse":
         visual_values = {
             "x": "cx",
             "y": "cy",
@@ -579,9 +798,91 @@ def _causal_actor_evidence(
             "opacity": "visualOpacity",
         }
         bounds = "{left:cx - envelopeRadius,top:cy - envelopeRadius,right:cx + envelopeRadius,bottom:cy + envelopeRadius,width:envelopeRadius * 2,height:envelopeRadius * 2}"
+    elif kind == "body_group":
+        visual_values = {
+            "x": "cx",
+            "y": "cy",
+            "rotation": "rotation",
+            "size": "groupEnvelopeRadius",
+            "opacity": "visualOpacity",
+        }
+        bounds = "{left:cx - groupEnvelopeRadius,top:cy - groupEnvelopeRadius,right:cx + groupEnvelopeRadius,bottom:cy + groupEnvelopeRadius,width:groupEnvelopeRadius * 2,height:groupEnvelopeRadius * 2}"
+    elif kind == "vector_arrow":
+        visual_values = {
+            "x": "x1",
+            "y": "y1",
+            "rotation": "angle",
+            "size": "length",
+            "opacity": "visualOpacity",
+        }
+        bounds = "{left:envelopeCx - envelopeRadius,top:envelopeCy - envelopeRadius,right:envelopeCx + envelopeRadius,bottom:envelopeCy + envelopeRadius,width:envelopeRadius * 2,height:envelopeRadius * 2}"
+    elif kind == "ray":
+        visual_values = {
+            "x": "x1",
+            "y": "y1",
+            "rotation": "segments[0].angle",
+            "size": "segments.reduce((total,segment) => total + segment.length,0)",
+            "opacity": "visualOpacity",
+        }
+        bounds = "{left:envelopeCx - envelopeRadius,top:envelopeCy - envelopeRadius,right:envelopeCx + envelopeRadius,bottom:envelopeCy + envelopeRadius,width:envelopeRadius * 2,height:envelopeRadius * 2}"
+    else:
+        visual_values = {
+            "y": f'state.outputs[{_js(command["output_name"])}]',
+            "opacity": "visualOpacity",
+        }
+        bounds = "{left:envelopeCx - envelopeRadius,top:envelopeCy - envelopeRadius,right:envelopeCx + envelopeRadius,bottom:envelopeCy + envelopeRadius,width:envelopeRadius * 2,height:envelopeRadius * 2}"
     visual_value = visual_values[causal_response["channel"]]
     return f'''
       causalActorResponse = {{schemaVersion:"1.0",actorId:{_js(causal_response["actor_id"])},outputName:{_js(causal_response["output_name"])},channel:{_js(causal_response["channel"])},relation:{_js(causal_response["relation"])},temporalMode:{_js(causal_response["temporal_mode"])},parameterValue:finiteNumber(state.value),outputValue:finiteNumber(state.outputs[{_js(causal_response["output_name"])}]),visualValue:finiteNumber({visual_value}),fittedBounds:{bounds},timeMs:finiteNumber(visualPhase * 80)}};'''
+
+
+def _body_part_source(part: dict[str, Any], understanding: dict[str, Any]) -> str:
+    numeric_fields = {
+        "circle": ("dx", "dy", "radius", "line_width"),
+        "ellipse": (
+            "dx",
+            "dy",
+            "radius_x",
+            "radius_y",
+            "rotation",
+            "line_width",
+        ),
+        "rect": (
+            "dx",
+            "dy",
+            "width",
+            "height",
+            "corner_radius",
+            "line_width",
+        ),
+        "line": ("dx1", "dy1", "dx2", "dy2", "line_width"),
+    }
+    fields = [f"kind:{_js(part['kind'])}"]
+    fields.extend(
+        f"{field}:{_visual_expression(part[field], understanding)}"
+        for field in numeric_fields[part["kind"]]
+        if field != "line_width"
+    )
+    if part["kind"] != "line":
+        fields.append(f"fillColor:{_js(part['fill_color'])}")
+    fields.extend(
+        (
+            f"strokeColor:{_js(part['stroke_color'])}",
+            f"lineWidth:{_visual_expression(part['line_width'], understanding)}",
+        )
+    )
+    return "{" + ",".join(fields) + "}"
+
+
+def _period_output_name(outputs: list[str]) -> str | None:
+    return next(
+        (
+            output
+            for output in outputs
+            if re.search(r"(?:^|_)(?:period|duration)(?:_s|_seconds)?$", output)
+        ),
+        None,
+    )
 
 
 def _draw_command(
@@ -641,6 +942,134 @@ def _draw_command(
       context.save(); context.globalAlpha = visualOpacity; context.beginPath(); context.ellipse(cx,cy,radiusX,radiusY,rotation,0,Math.PI * 2);
       const fill = context.createLinearGradient(cx - radiusX,cy - radiusY,cx + radiusX,cy + radiusY); fill.addColorStop(0,{_js(command["fill_alt_color"])}); fill.addColorStop(1,{_js(command["fill_color"])}); context.fillStyle = fill; context.fill();
       context.lineWidth = Math.max(0,{line_width}); context.strokeStyle = {_js(command["stroke_color"])}; context.stroke(); context.restore();{geometry}{causal_evidence}
+    }}'''
+    if kind == "body_group":
+        cx, cy, rotation = (
+            _visual_expression(command[field], understanding)
+            for field in ("cx", "cy", "rotation")
+        )
+        parts = ",".join(
+            _body_part_source(part, understanding) for part in command["parts"]
+        )
+        geometry = ""
+        if command["scientific"]:
+            geometry = f'''\n      scientificObjects.push({{id:{command_id},scientific:true,clippingPolicy:{_js(command["clipping_policy"])},geometry:{{type:"circle",cx,cy,radius:groupEnvelopeRadius}}}});'''
+        causal_evidence = _causal_actor_evidence(command, causal_response)
+        fit_center = command["scientific"] and command["clipping_policy"] == "forbid"
+        fitted_cx = (
+            "clampFinite(rawCx,groupEnvelopeRadius + 4,width - groupEnvelopeRadius - 4)"
+            if fit_center
+            else "rawCx"
+        )
+        fitted_cy = (
+            "clampFinite(rawCy,groupEnvelopeRadius + 4,height - groupEnvelopeRadius - 4)"
+            if fit_center
+            else "rawCy"
+        )
+        return f'''    {{
+      const rawCx = {cx}; const rawCy = {cy}; const rotation = clampFinite({rotation},-Math.PI * 2,Math.PI * 2); const visualOpacity = {opacity};
+      const parts = [{parts}]; let groupEnvelopeRadius = 1;
+      for (const part of parts) {{
+        if (part.kind === "circle") groupEnvelopeRadius = Math.max(groupEnvelopeRadius,Math.hypot(part.dx,part.dy) + Math.max(0,part.radius));
+        else if (part.kind === "ellipse") groupEnvelopeRadius = Math.max(groupEnvelopeRadius,Math.hypot(part.dx,part.dy) + Math.max(0,part.radius_x,part.radius_y));
+        else if (part.kind === "rect") groupEnvelopeRadius = Math.max(groupEnvelopeRadius,Math.hypot(part.dx,part.dy) + Math.hypot(Math.max(0,part.width),Math.max(0,part.height)) / 2);
+        else if (part.kind === "line") groupEnvelopeRadius = Math.max(groupEnvelopeRadius,Math.hypot(part.dx1,part.dy1),Math.hypot(part.dx2,part.dy2));
+      }}
+      const fitLimit = Math.max(1,Math.min(width,height) / 2 - 8); const fitScale = Math.min(1,fitLimit / groupEnvelopeRadius); groupEnvelopeRadius *= fitScale;
+      const cx = {fitted_cx}; const cy = {fitted_cy};
+      context.save(); context.globalAlpha = visualOpacity; context.translate(cx,cy); context.rotate(rotation); context.scale(fitScale,fitScale);
+      for (const part of parts) {{
+        context.beginPath();
+        if (part.kind === "circle") context.arc(part.dx,part.dy,Math.max(0,part.radius),0,Math.PI * 2);
+        else if (part.kind === "ellipse") context.ellipse(part.dx,part.dy,Math.max(0,part.radius_x),Math.max(0,part.radius_y),clampFinite(part.rotation,-Math.PI * 2,Math.PI * 2),0,Math.PI * 2);
+        else if (part.kind === "rect") context.roundRect(part.dx - Math.max(0,part.width) / 2,part.dy - Math.max(0,part.height) / 2,Math.max(0,part.width),Math.max(0,part.height),Math.max(0,part.corner_radius));
+        else if (part.kind === "line") {{ context.moveTo(part.dx1,part.dy1); context.lineTo(part.dx2,part.dy2); }}
+        if (part.kind !== "line") {{ context.fillStyle = part.fillColor; context.fill(); }}
+        context.strokeStyle = part.strokeColor; context.lineWidth = Math.max(0,part.lineWidth); context.stroke();
+      }}
+      context.restore();{geometry}{causal_evidence}
+    }}'''
+    if kind == "vector_arrow":
+        x1, y1, angle, length, head_size, line_width = (
+            _visual_expression(command[field], understanding)
+            for field in (
+                "x1",
+                "y1",
+                "angle",
+                "length",
+                "head_size",
+                "line_width",
+            )
+        )
+        geometry = ""
+        if command["scientific"]:
+            geometry = f'''\n      scientificObjects.push({{id:{command_id},scientific:true,clippingPolicy:{_js(command["clipping_policy"])},geometry:{{type:"circle",cx:envelopeCx,cy:envelopeCy,radius:envelopeRadius}}}});'''
+        causal_evidence = _causal_actor_evidence(command, causal_response)
+        return f'''    {{
+      const x1 = {x1}; const y1 = {y1}; const angle = clampFinite({angle},-Math.PI * 2,Math.PI * 2); const length = Math.max(0,{length}); const headSize = Math.max(0,{head_size}); const lineWidth = Math.max(0,{line_width}); const visualOpacity = {opacity};
+      const x2 = x1 + length * Math.cos(angle); const y2 = y1 + length * Math.sin(angle); const headAngle = 0.45;
+      const envelopeCx = (x1 + x2) / 2; const envelopeCy = (y1 + y2) / 2; const envelopeRadius = Math.max(1,length / 2 + headSize + lineWidth);
+      context.save(); context.globalAlpha = visualOpacity; context.strokeStyle = {_js(command["stroke_color"])}; context.lineWidth = lineWidth; context.beginPath();
+      context.moveTo(x1,y1); context.lineTo(x2,y2); context.moveTo(x2,y2); context.lineTo(x2 - headSize * Math.cos(angle - headAngle),y2 - headSize * Math.sin(angle - headAngle)); context.moveTo(x2,y2); context.lineTo(x2 - headSize * Math.cos(angle + headAngle),y2 - headSize * Math.sin(angle + headAngle));
+      context.stroke(); context.restore();{geometry}{causal_evidence}
+    }}'''
+    if kind == "ray":
+        x1, y1, line_width = (
+            _visual_expression(command[field], understanding)
+            for field in ("x1", "y1", "line_width")
+        )
+        segments = ",".join(
+            "{"
+            + f"angle:clampFinite({_visual_expression(segment['angle'], understanding)},-Math.PI * 2,Math.PI * 2),"
+            + f"length:Math.max(0,{_visual_expression(segment['length'], understanding)})"
+            + "}"
+            for segment in command["segments"]
+        )
+        geometry = ""
+        if command["scientific"]:
+            geometry = f'''\n      scientificObjects.push({{id:{command_id},scientific:true,clippingPolicy:{_js(command["clipping_policy"])},geometry:{{type:"circle",cx:envelopeCx,cy:envelopeCy,radius:envelopeRadius}}}});'''
+        causal_evidence = _causal_actor_evidence(command, causal_response)
+        return f'''    {{
+      const x1 = {x1}; const y1 = {y1}; const segments = [{segments}]; const lineWidth = Math.max(0,{line_width}); const visualOpacity = {opacity};
+      let rayX = x1, rayY = y1; const rayPoints = [{{x:rayX,y:rayY}}];
+      for (const segment of segments) {{ rayX += segment.length * Math.cos(segment.angle); rayY += segment.length * Math.sin(segment.angle); rayPoints.push({{x:rayX,y:rayY}}); }}
+      const minX = Math.min(...rayPoints.map((point) => point.x)); const maxX = Math.max(...rayPoints.map((point) => point.x)); const minY = Math.min(...rayPoints.map((point) => point.y)); const maxY = Math.max(...rayPoints.map((point) => point.y));
+      const envelopeCx = (minX + maxX) / 2; const envelopeCy = (minY + maxY) / 2; const envelopeRadius = Math.max(1,Math.hypot(maxX - minX,maxY - minY) / 2 + lineWidth);
+      context.save(); context.globalAlpha = visualOpacity; context.strokeStyle = {_js(command["stroke_color"])}; context.lineWidth = lineWidth; context.beginPath(); context.moveTo(x1,y1);
+      for (const point of rayPoints.slice(1)) context.lineTo(point.x,point.y);
+      context.stroke(); context.restore();{geometry}{causal_evidence}
+    }}'''
+    if kind == "trajectory":
+        line_width = _visual_expression(command["line_width"], understanding)
+        primary = understanding["primary_parameter"]
+        output_name = command["output_name"]
+        period_output = _period_output_name(understanding["module_spec"]["outputs"])
+        period_source = (
+            f'state.outputs[{_js(period_output)}]'
+            if period_output is not None
+            else "Math.PI * 2"
+        )
+        if command["sweep"] == "primary_parameter":
+            sweep_source = (
+                f"{primary['min']} + ({primary['max']} - {primary['min']}) * ratio"
+            )
+            time_source = "time"
+        else:
+            sweep_source = "state.value"
+            time_source = "trajectoryPeriod * ratio"
+        causal_evidence = _causal_actor_evidence(command, causal_response)
+        return f'''    {{
+      const sampleCount = {command["samples"]}; const visualOpacity = {opacity}; const lineWidth = Math.max(0,{line_width}); const trajectoryPeriod = Math.max(0.001,Math.abs(finiteNumber({period_source})));
+      const trajectorySamples = Array.from({{length:sampleCount}},(_,index) => {{
+        const ratio = index / (sampleCount - 1); const trajectorySweep = {sweep_source}; const trajectoryTime = {time_source}; const trajectoryInputs = {{...parameterValues,{_js(primary["id"])}:trajectorySweep}};
+        const trajectoryState = modelState(trajectorySweep,trajectoryInputs,trajectoryTime); return {{ratio,output:finiteNumber(trajectoryState.outputs[{_js(output_name)}])}};
+      }});
+      const outputMinimum = Math.min(...trajectorySamples.map((sample) => sample.output)); const outputMaximum = Math.max(...trajectorySamples.map((sample) => sample.output)); const outputSpan = outputMaximum - outputMinimum;
+      const trajectoryPoints = trajectorySamples.map((sample) => ({{x:width * (0.08 + sample.ratio * 0.84),y:outputSpan === 0 ? height * 0.5 : height * (0.88 - ((sample.output - outputMinimum) / outputSpan) * 0.76)}}));
+      const minX = Math.min(...trajectoryPoints.map((point) => point.x)); const maxX = Math.max(...trajectoryPoints.map((point) => point.x)); const minY = Math.min(...trajectoryPoints.map((point) => point.y)); const maxY = Math.max(...trajectoryPoints.map((point) => point.y));
+      const envelopeCx = (minX + maxX) / 2; const envelopeCy = (minY + maxY) / 2; const envelopeRadius = Math.max(1,Math.hypot(maxX - minX,maxY - minY) / 2 + lineWidth);
+      context.save(); context.globalAlpha = visualOpacity; context.strokeStyle = {_js(command["stroke_color"])}; context.lineWidth = lineWidth; context.beginPath(); trajectoryPoints.forEach((point,index) => {{ if (index === 0) context.moveTo(point.x,point.y); else context.lineTo(point.x,point.y); }}); context.stroke(); context.restore();
+      scientificObjects.push({{id:{command_id},scientific:true,clippingPolicy:{_js(command["clipping_policy"])},geometry:{{type:"circle",cx:envelopeCx,cy:envelopeCy,radius:envelopeRadius}}}});{causal_evidence}
     }}'''
     if kind == "rect":
         x, y, item_width, item_height, corner_radius, line_width = (
@@ -715,6 +1144,7 @@ def assemble_fragments(
         parameter["id"]: f'finiteNumber(inputs[{_js(parameter["id"])}])'
         for parameter in parameters
     }
+    input_names["time"] = "finiteNumber(time)"
     output_lines = ",\n".join(
         f'      {_js(item["name"])}: finiteNumber({_compile_expression(item["expression"], input_names)})'
         for item in physics_fragment["physics_expressions"]
@@ -737,20 +1167,20 @@ def assemble_fragments(
   function finiteNumber(value) {{ const numeric = Number(value); return Number.isFinite(numeric) ? numeric : 0; }}
   function clampFinite(value, lower, upper) {{ return Math.max(finiteNumber(lower),Math.min(finiteNumber(upper),finiteNumber(value))); }}
   function clampParameter(name, value) {{ const limits = parameterLimits[name]; if (!limits) return finiteNumber(parameterValues[name]); const numeric = Number(value); const candidate = Number.isFinite(numeric) ? numeric : finiteNumber(parameterValues[name]); return clampFinite(candidate,limits[0],limits[1]); }}
-  function modelOutputs(value, inputs) {{
+  function modelOutputs(value, inputs, time) {{
     void value;
     return {{
 {output_lines}
     }};
   }}
   /* LAYSH_SHARED_MODEL: modelState */
-  function modelState(value, inputs) {{
+  function modelState(value, inputs, time = 0) {{
     const clamped = clampParameter({_js(primary_id)},value);
     const closedInputs = {{...parameterValues,...(inputs || {{}}),{_js(primary_id)}:clamped}};
-    const outputs = Object.freeze(modelOutputs(clamped,closedInputs));
+    const outputs = Object.freeze(modelOutputs(clamped,closedInputs,finiteNumber(time)));
     return {{value:clamped,normalized:(clamped - {primary["min"]}) / ({primary["max"]} - {primary["min"]}),output:outputs[{_js(outputs[0])}],outputs}};
   }}
-  function drawScene(state) {{
+  function drawScene(state, time) {{
     if (!context || !canvas) return;
     const gradient = context.createLinearGradient(0,0,0,height); gradient.addColorStop(0,{_js(visual_fragment["background"]["top_color"])}); gradient.addColorStop(1,{_js(visual_fragment["background"]["bottom_color"])});
     context.clearRect(0,0,width,height); context.fillStyle = gradient; context.fillRect(0,0,width,height);
@@ -760,12 +1190,12 @@ def assemble_fragments(
     /* LAYSH_CAUSAL_RESPONSE_V1 */
     canvas.__layshActorResponse = causalActorResponse;
   }}
-  function render() {{ if (destroyed || !canvas || !context) return; const state = modelState(parameterValues[{_js(primary_id)}],parameterValues); const activeOutput = state.output; void activeOutput; drawScene(state); emitFrame(); }}
+  function render() {{ if (destroyed || !canvas || !context) return; const time = finiteNumber(visualPhase * 0.08); const state = modelState(parameterValues[{_js(primary_id)}],parameterValues,time); const activeOutput = state.output; void activeOutput; drawScene(state,time); emitFrame(); }}
   const simulation = {{
     version:1,
     init(options) {{ canvas = options.canvas; context = options.context; width = options.width; height = options.height; locale = options.locale; reducedMotion = Boolean(options.reducedMotion); emitFrame = options.emitFrame; visualPhase = 0; destroyed = false; render(); }},
     setParameter(name,value,elapsedMs) {{ if (!(name in parameterValues)) return; parameterValues[name] = clampParameter(name,value); if (!reducedMotion && Number.isFinite(Number(elapsedMs)) && Number(elapsedMs) > 0) visualPhase = (visualPhase + clampFinite(Number(elapsedMs),0,80) / 80) % 1000000; render(); }},
-    test(inputs) {{ const supplied = inputs && typeof inputs === "object" ? inputs : {{}}; const state = modelState(supplied[{_js(primary_id)}],supplied); return {{
+    test(inputs) {{ const supplied = inputs && typeof inputs === "object" ? inputs : {{}}; const state = modelState(supplied[{_js(primary_id)}],supplied,supplied.time); return {{
 {returned_outputs}
     }}; }},
     resize(nextWidth,nextHeight) {{ width = nextWidth; height = nextHeight; canvas.width = nextWidth; canvas.height = nextHeight; render(); }},

@@ -181,17 +181,16 @@ def test_representation_enum_violations_are_rejected(
         validate_visual_fragment(visual, deepcopy(UNDERSTANDING))
 
 
-def test_time_driven_is_rejected_with_phase_a2_failure_code() -> None:
-    from server.fragment_generation import fragment_failure_code, validate_visual_fragment
-    from server.schemas import ContractError
+def test_time_driven_is_accepted_with_output_bound_time_motion() -> None:
+    from server.fragment_generation import validate_visual_fragment
 
     visual = _visual_fragment()
     visual["representation"]["motion_model"] = "time_driven"
+    visual["commands"][0]["cx"] = (
+        "width * (0.25 + output_response * cos(time) * 0.5)"
+    )
 
-    with pytest.raises(ContractError) as captured:
-        validate_visual_fragment(visual, deepcopy(UNDERSTANDING))
-
-    assert fragment_failure_code(captured.value) == "representation_time_driven_deferred"
+    assert validate_visual_fragment(visual, deepcopy(UNDERSTANDING)) == visual
 
 
 def test_archetype_must_match_emitted_scientific_command_types() -> None:
@@ -212,9 +211,9 @@ def test_archetype_must_match_emitted_scientific_command_types() -> None:
 
 @pytest.mark.parametrize(
     "actor_archetype",
-    ["ray_bundle", "wave_medium", "particle_flow"],
+    ["wave_medium", "particle_flow"],
 )
-def test_phase_a2_archetypes_are_rejected_until_their_primitives_exist(
+def test_deferred_archetypes_are_rejected_until_their_primitives_exist(
     actor_archetype: str,
 ) -> None:
     from server.fragment_generation import fragment_failure_code, validate_visual_fragment
@@ -285,7 +284,6 @@ def test_every_representation_failure_code_has_actionable_retry_guidance() -> No
     from server.codex_backend import FRAGMENT_RETRY_HINTS
 
     expected_codes = {
-        "representation_time_driven_deferred",
         "representation_archetype_not_emittable",
         "representation_archetype_command_mismatch",
         "representation_actor_proof_unbacked",

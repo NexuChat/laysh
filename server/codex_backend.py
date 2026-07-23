@@ -52,6 +52,18 @@ FRAGMENT_RETRY_HINTS: dict[str, str] = {
         "Preserve distinct negative, zero, and positive actor behavior from the fixed "
         "signed output fixtures."
     ),
+    "time_driven_scientific_motion_required": (
+        "For time_driven motion, bind time and output_<declared_name> together in one "
+        "salient scientific field; phase-only decoration does not qualify."
+    ),
+    "trajectory_output_undeclared": (
+        "Set trajectory.output_name to one exact output declared by the fixed module "
+        "spec; never invent a trajectory-only output alias."
+    ),
+    "unsupported_safety_envelope_relation": (
+        "Use forbid contact and avoid scientific occlusion when a body group, vector, "
+        "ray, or trajectory is represented by a conservative circular envelope."
+    ),
     "representation_time_driven_deferred": (
         "Use parameter_driven or cyclic for representation.motion_model; time_driven "
         "requires phase A2 primitives and is not available yet."
