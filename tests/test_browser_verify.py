@@ -68,6 +68,44 @@ def _passing_evidence() -> dict:
     }
 
 
+def _passing_representation_evidence() -> dict:
+    evidence = _passing_evidence()
+    evidence.pop("causalResponse")
+    evidence["representationConsistency"] = {
+        "required": True,
+        "graph": {
+            "required": True,
+            "samples": [
+                {
+                    "input": value,
+                    "expectedOutput": value * 2 + 1,
+                    "plottedOutput": value * 2 + 1,
+                    "tolerance": 0.05,
+                }
+                for value in (0, 2.5, 5, 7.5, 10)
+            ],
+            "markers": [
+                {
+                    "controlValue": value,
+                    "expectedX": expected_x,
+                    "observedX": expected_x,
+                    "tolerance": 1,
+                }
+                for value, expected_x in ((0, 56), (5, 201), (10, 346))
+            ],
+        },
+        "archetype": {
+            "required": True,
+            "declared": "body",
+            "actorId": "primary-actor",
+            "scientificActorCount": 1,
+            "visibleActorCount": 1,
+            "matchingPrimitiveCount": 1,
+        },
+    }
+    return evidence
+
+
 def _evaluate_with_causal_report(evidence: dict):
     from server.browser_verify import _evaluate
 
@@ -93,6 +131,62 @@ def _evaluate_with_causal_report(evidence: dict):
     )
     causal["report"] = json.loads(completed.stdout)
     return _evaluate(evidence)
+
+
+def test_representation_browser_checks_pass_and_strictly_increase_check_count():
+    from server.browser_verify import _evaluate
+
+    baseline_evidence = _passing_evidence()
+    baseline_evidence.pop("causalResponse")
+    baseline = _evaluate(baseline_evidence)
+    result = _evaluate(_passing_representation_evidence())
+
+    assert result.passed is True, result.failures
+    assert result.check_count == baseline.check_count + 3
+
+
+@pytest.mark.parametrize(
+    ("mutate", "expected_code", "expected_gate"),
+    [
+        (
+            lambda evidence: evidence["representationConsistency"]["graph"]["samples"][
+                2
+            ].update(plottedOutput=-99),
+            "graph_physics_mismatch",
+            "graph_consistency",
+        ),
+        (
+            lambda evidence: evidence["representationConsistency"]["graph"]["markers"][
+                1
+            ].update(observedX=70),
+            "graph_marker_mismatch",
+            "graph_consistency",
+        ),
+        (
+            lambda evidence: evidence["representationConsistency"]["archetype"].update(
+                matchingPrimitiveCount=0
+            ),
+            "archetype_render_mismatch",
+            "representation_consistency",
+        ),
+    ],
+)
+def test_representation_browser_gate_maps_precise_structured_failures(
+    mutate,
+    expected_code,
+    expected_gate,
+):
+    from server.browser_verify import _evaluate
+
+    evidence = _passing_representation_evidence()
+    mutate(evidence)
+
+    result = _evaluate(evidence)
+
+    assert result.passed is False
+    failure = next(item for item in result.failures if item["code"] == expected_code)
+    assert failure["gate"] == expected_gate
+    assert set(failure) == {"gate", "code", "expected", "actual"}
 
 
 def test_browser_gate_returns_actionable_structured_failures(monkeypatch):
