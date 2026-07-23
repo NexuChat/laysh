@@ -71,6 +71,34 @@ def test_visual_prompt_classifies_fixed_context_as_non_scientific() -> None:
     assert "visibly consume `output_<declared_output_name>`" in prompt
 
 
+def test_undeclared_fragment_identifier_diagnostic_names_the_actual_symbol() -> None:
+    from server.fragment_generation import (
+        fragment_failure_diagnostic,
+        validate_physics_fragment,
+    )
+
+    invalid = deepcopy(PHYSICS_FRAGMENT)
+    invalid["physics_expressions"][0]["expression"] = "invented_constant * 2"
+
+    with pytest.raises(ValueError) as captured:
+        validate_physics_fragment(invalid, deepcopy(VALID_UNDERSTANDING))
+
+    diagnostic = fragment_failure_diagnostic(
+        captured.value,
+        role="physics",
+        understanding=deepcopy(VALID_UNDERSTANDING),
+    )
+
+    assert diagnostic["gate"] == "fragment_contract"
+    assert diagnostic["code"] == "undeclared_expression_name"
+    assert diagnostic["actual"]["unexpected_identifier"] == "invented_constant"
+    assert diagnostic["expected"]["allowed_identifiers"] == [
+        "angle_deg",
+        "pi",
+        "time",
+    ]
+
+
 class _FragmentRecoveryBackend(MockCodexBackend):
     def __init__(self, retry_visual: dict[str, Any]) -> None:
         super().__init__()
@@ -126,10 +154,12 @@ class _FragmentRecoveryBackend(MockCodexBackend):
         understanding: dict[str, Any],
         failure_code: str,
         *,
+        exact_gate_failures: list[dict[str, Any]] | None = None,
+        prior_fragment: dict[str, Any] | None = None,
         repair_attempt: int = 1,
         runtime_context: RuntimeContext | None = None,
     ) -> StageExecution:
-        del repair_attempt
+        del exact_gate_failures, prior_fragment, repair_attempt
         self.regeneration_calls.append(
             {
                 "role": role,
@@ -183,10 +213,12 @@ class _PhysicsPreflightRecoveryBackend(_FragmentRecoveryBackend):
         understanding: dict[str, Any],
         failure_code: str,
         *,
+        exact_gate_failures: list[dict[str, Any]] | None = None,
+        prior_fragment: dict[str, Any] | None = None,
         repair_attempt: int = 1,
         runtime_context: RuntimeContext | None = None,
     ) -> StageExecution:
-        del repair_attempt
+        del exact_gate_failures, prior_fragment, repair_attempt
         self.regeneration_calls.append(
             {
                 "role": role,
@@ -236,6 +268,43 @@ class _VisualPreflightRecoveryBackend(_FragmentRecoveryBackend):
         )
 
 
+class _ExactGateFailureRecoveryBackend(_VisualPreflightRecoveryBackend):
+    def __init__(self) -> None:
+        super().__init__()
+        self.exact_gate_failures: list[list[dict[str, Any]] | None] = []
+        self.prior_fragments: list[dict[str, Any] | None] = []
+        self.repair_attempts: list[int] = []
+
+    async def regenerate_fragment(
+        self,
+        role: str,
+        understanding: dict[str, Any],
+        failure_code: str,
+        *,
+        exact_gate_failures: list[dict[str, Any]] | None = None,
+        prior_fragment: dict[str, Any] | None = None,
+        repair_attempt: int = 1,
+        runtime_context: RuntimeContext | None = None,
+    ) -> StageExecution:
+        self.exact_gate_failures.append(deepcopy(exact_gate_failures))
+        self.prior_fragments.append(deepcopy(prior_fragment))
+        self.repair_attempts.append(repair_attempt)
+        self.regeneration_calls.append(
+            {
+                "role": role,
+                "understanding": deepcopy(understanding),
+                "failure_code": failure_code,
+                "runtime_context": runtime_context,
+            }
+        )
+        return StageExecution(
+            data=_valid_retry_visual(),
+            thread_id="private-exact-failure-visual-repair",
+            model="gpt-5.6-terra",
+            elapsed_ms=5,
+        )
+
+
 class _SecondBoundedVisualRetryBackend(_FragmentRecoveryBackend):
     def __init__(self) -> None:
         super().__init__(_valid_retry_visual())
@@ -247,9 +316,12 @@ class _SecondBoundedVisualRetryBackend(_FragmentRecoveryBackend):
         understanding: dict[str, Any],
         failure_code: str,
         *,
+        exact_gate_failures: list[dict[str, Any]] | None = None,
+        prior_fragment: dict[str, Any] | None = None,
         repair_attempt: int = 1,
         runtime_context: RuntimeContext | None = None,
     ) -> StageExecution:
+        del exact_gate_failures, prior_fragment
         self.repair_attempts.append(repair_attempt)
         self.regeneration_calls.append(
             {
@@ -283,9 +355,12 @@ class _SemanticThenGateRecoveryBackend(_FragmentRecoveryBackend):
         understanding: dict[str, Any],
         failure_code: str,
         *,
+        exact_gate_failures: list[dict[str, Any]] | None = None,
+        prior_fragment: dict[str, Any] | None = None,
         repair_attempt: int = 1,
         runtime_context: RuntimeContext | None = None,
     ) -> StageExecution:
+        del exact_gate_failures, prior_fragment
         self.repair_attempts.append(repair_attempt)
         self.failure_codes.append(failure_code)
         self.regeneration_calls.append(
@@ -566,6 +641,63 @@ async def test_visual_causality_retry_preserves_the_full_representation_contract
     assert "actor_archetype" in prompt
     assert "scientific command kinds and counts" in prompt
     assert "proof channels" in prompt
+
+
+@pytest.mark.asyncio
+async def test_fragment_retry_receives_exact_deterministic_gate_failures() -> None:
+    from server.codex_backend import CodexBackend
+    from server.settings import Settings
+
+    class RecordingExecutor:
+        def __init__(self) -> None:
+            self.prompt = ""
+
+        async def execute_stage(self, **kwargs: Any) -> StageExecution:
+            self.prompt = kwargs["prompt"]
+            return StageExecution(
+                data=_valid_retry_visual(),
+                thread_id="private-runtime-thread",
+                model=kwargs["model"],
+                elapsed_ms=4,
+            )
+
+    failures = [
+        {
+            "gate": "temporal_causal_matrix",
+            "code": "causal_direction_mismatch",
+            "expected": {"direction": "increasing"},
+            "actual": {"direction": "flat"},
+        },
+        {
+            "gate": "scene_geometry",
+            "code": "scientific_actor_clipped",
+            "expected": {"within_viewport": True},
+            "actual": {"within_viewport": False, "overflow_px": 14.5},
+        },
+    ]
+    prior_fragment = _valid_retry_visual()
+    executor = RecordingExecutor()
+    backend = CodexBackend(executor=executor, settings=Settings())
+
+    await backend.regenerate_fragment(
+        "visual",
+        deepcopy(VALID_UNDERSTANDING),
+        "visual_causality_mismatch",
+        exact_gate_failures=deepcopy(failures),
+        prior_fragment=deepcopy(prior_fragment),
+        runtime_context=RuntimeContext(public=True),
+    )
+
+    fragment_marker = "CURRENT_FRAGMENT_JSON:\n"
+    failure_marker = "\nEXACT_GATE_FAILURES_JSON:\n"
+    assert fragment_marker in executor.prompt
+    assert failure_marker in executor.prompt
+    embedded_fragment, embedded_failures = executor.prompt.split(
+        fragment_marker,
+        1,
+    )[1].split(failure_marker, 1)
+    assert json.loads(embedded_fragment) == prior_fragment
+    assert json.loads(embedded_failures) == failures
 
 
 @pytest.mark.asyncio
@@ -874,6 +1006,78 @@ async def test_public_causal_preflight_failure_regenerates_visual_before_heal(
     ]
     assert len(deterministic_inputs) == 2
     assert backend.heal_calls == 0
+
+
+@pytest.mark.asyncio
+async def test_public_fragment_repair_receives_exact_failures_and_counts_as_heal(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from server.browser_verify import BrowserVerificationResult
+    from server.jobs import JobManager
+    from server.verify import VerificationResult
+
+    failures = [
+        {
+            "gate": "causal_response",
+            "code": "causal_relation_mismatch",
+            "expected": {"monotonic_actor_response": True},
+            "actual": {"monotonic_actor_response": False},
+        },
+        {
+            "gate": "scene_geometry",
+            "code": "scientific_actor_clipped",
+            "expected": {"within_viewport": True},
+            "actual": {"within_viewport": False, "overflow_px": 14.5},
+        },
+        {
+            "gate": "temporal_causal_matrix",
+            "code": "causal_direction_mismatch",
+            "expected": {"direction": "increasing"},
+            "actual": {"direction": "flat"},
+        },
+    ]
+    backend = _ExactGateFailureRecoveryBackend()
+    verification_calls = 0
+
+    def deterministic_verifier(
+        _module_output: dict[str, Any],
+        _understanding: dict[str, Any],
+    ) -> VerificationResult:
+        nonlocal verification_calls
+        verification_calls += 1
+        if verification_calls == 1:
+            return VerificationResult(
+                passed=False,
+                check_count=72,
+                failures=deepcopy(failures),
+                artifact=None,
+                node_report={"passed": False},
+            )
+        return VerificationResult(
+            passed=True,
+            check_count=88,
+            failures=[],
+            artifact=VERIFIED_ARTIFACT,
+            node_report={"passed": True},
+        )
+
+    monkeypatch.setattr("server.pipeline.verify_candidate", deterministic_verifier)
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _artifact: BrowserVerificationResult.passing(),
+    )
+
+    record = manager.start("success", "ar")
+    assert record.task is not None
+    await record.task
+
+    assert record.status == "complete"
+    assert backend.exact_gate_failures == [failures]
+    assert backend.prior_fragments == [VISUAL_FRAGMENT]
+    assert backend.repair_attempts == [1]
+    assert record.simulation is not None
+    assert record.simulation.heal_count == 1
 
 
 @pytest.mark.asyncio

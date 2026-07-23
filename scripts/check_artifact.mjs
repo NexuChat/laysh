@@ -344,6 +344,16 @@ try {
         return Array.isArray(geometry.points) && geometry.points.length >= 2;
       };
       const visibleObjects = scientificObjects.filter(visible);
+      const renderedActorReport = canvas.__layshRenderedActors;
+      const renderedActors = (
+        renderedActorReport?.schemaVersion === '1.0'
+        && Array.isArray(renderedActorReport.actors)
+      ) ? renderedActorReport.actors.filter((actor) =>
+        actor && typeof actor.id === 'string' && typeof actor.kind === 'string'
+        && Number.isFinite(Number(actor.opacity))) : [];
+      const visibleObjectIds = new Set(visibleObjects.map((object) => object.id));
+      const visibleRenderedActors = renderedActors.filter((actor) =>
+        Number(actor.opacity) > 0.02 && visibleObjectIds.has(actor.id));
       const actorBounds = response?.fittedBounds;
       const actorCenter = actorBounds ? {
         x: (Number(actorBounds.left) + Number(actorBounds.right)) / 2,
@@ -361,7 +371,29 @@ try {
         return visiblePrimitives.some((primitive) => near(primitive, point));
       };
       let matchingPrimitiveCount = 0;
-      if (representation.actor_archetype === 'body') {
+      if (renderedActors.length > 0) {
+        const matchingKinds = {
+          body: new Set(['body_group', 'circle', 'ellipse', 'trajectory', 'vector_arrow']),
+          elongated_body: new Set(['body_group', 'ellipse']),
+          ray_bundle: new Set(['ray']),
+          wave_medium: new Set(['wave']),
+          particle_flow: new Set(['particle_flow']),
+        }[representation.actor_archetype];
+        if (
+          representation.actor_archetype === 'orbital_pair'
+          || representation.actor_archetype === 'linked_bodies'
+        ) {
+          matchingPrimitiveCount = visibleRenderedActors.length;
+        } else if (representation.actor_archetype === 'surface_and_body') {
+          const visibleKinds = new Set(visibleRenderedActors.map((actor) => actor.kind));
+          matchingPrimitiveCount = visibleKinds.has('circle') && visibleKinds.has('ellipse')
+            ? 2 : 0;
+        } else if (matchingKinds) {
+          matchingPrimitiveCount = visibleRenderedActors.filter(
+            (actor) => matchingKinds.has(actor.kind),
+          ).length;
+        }
+      } else if (representation.actor_archetype === 'body') {
         const actorObject = visibleObjects.find((object) => object.id === response?.actorId);
         matchingPrimitiveCount = actorObject
           && visiblePrimitives.some((primitive) => near(primitive, actorCenter)) ? 1 : 0;

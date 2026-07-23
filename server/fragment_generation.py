@@ -138,6 +138,52 @@ def fragment_failure_code(error: Exception) -> str:
     return "fragment_semantic_validation_failed"
 
 
+def fragment_failure_diagnostic(
+    error: Exception,
+    *,
+    role: str,
+    understanding: dict[str, Any],
+) -> dict[str, Any]:
+    """Return a closed, actionable repair report without exposing raw fragments."""
+
+    code = fragment_failure_code(error)
+    expected: dict[str, Any] = {"fragment_contract_valid": True}
+    actual: dict[str, Any] = {
+        "fragment_contract_valid": False,
+        "failure_code": code,
+    }
+    if code == "undeclared_expression_name":
+        identifier = str(error).partition(":")[2]
+        if _IDENTIFIER.fullmatch(identifier):
+            actual["unexpected_identifier"] = identifier
+        if role == "physics":
+            allowed = {
+                understanding["primary_parameter"]["id"],
+                "pi",
+                "time",
+            }
+            secondary = understanding.get("secondary_parameter")
+            if secondary is not None:
+                allowed.add(secondary["id"])
+        elif role == "visual":
+            allowed = set(_visual_names(understanding))
+            allowed.add("pi")
+        else:
+            allowed = {"pi"}
+        expected["allowed_identifiers"] = sorted(allowed)
+    elif isinstance(error, ValidationError):
+        actual["schema_path"] = [
+            str(item) if isinstance(item, str) else int(item)
+            for item in error.absolute_path
+        ]
+    return {
+        "gate": "fragment_contract",
+        "code": code,
+        "expected": expected,
+        "actual": actual,
+    }
+
+
 def _js(value: Any) -> str:
     """Serialize model-supplied values as data, never as executable source."""
 
@@ -1156,6 +1202,14 @@ def assemble_fragments(
         _draw_command(command, understanding, visual_fragment["causal_response"])
         for command in visual_fragment["commands"]
     )
+    rendered_actor_evidence = ",".join(
+        (
+            f'{{id:{_js(command["id"])},kind:{_js(command["kind"])},'
+            f'opacity:clampFinite({_visual_expression(command["opacity"], understanding)},0,1)}}'
+        )
+        for command in visual_fragment["commands"]
+        if command["scientific"]
+    )
     relations = _draw_relations(visual_fragment["relations"], understanding)
     primary_id = primary["id"]
     source = f'''window.LayshSimulation = Object.freeze((() => {{
@@ -1187,6 +1241,7 @@ def assemble_fragments(
     const scientificObjects = []; let causalActorResponse = null;
 {draw_commands}
     canvas.__layshSceneGeometry = [{{schemaVersion:"1.0",phase:"post_fit",viewport:{{width:finiteNumber(width),height:finiteNumber(height),safeInset:0}},state:{{id:"rendered",timeMs:0}},objects:scientificObjects,relations:[{relations}]}}];
+    canvas.__layshRenderedActors = {{schemaVersion:"1.0",actors:[{rendered_actor_evidence}]}};
     /* LAYSH_CAUSAL_RESPONSE_V1 */
     canvas.__layshActorResponse = causalActorResponse;
   }}

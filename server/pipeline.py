@@ -14,6 +14,7 @@ from server.codex_runtime import CodexRuntimeError, StageExecution
 from server.fragment_generation import (
     assemble_fragments,
     fragment_failure_code,
+    fragment_failure_diagnostic,
     validate_physics_fragment,
     validate_visual_fragment,
 )
@@ -680,6 +681,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
     fixture_refresh_count = 0
     browser_evidence: dict[str, Any] | None = None
     qa_outcome: dict[str, Any] | None = None
+    qa_advisory_only = False
     effective_generation_model: str | None = None
     trusted_fragment_candidate = False
 
@@ -770,8 +772,12 @@ async def run_pipeline(manager: Any, record: Any) -> None:
 
         def fragment_repair_plan(
             failures: list[dict[str, Any]],
-        ) -> list[tuple[str, str]] | None:
+        ) -> list[tuple[str, str, list[dict[str, Any]]]] | None:
             roles: set[str] = set()
+            failures_by_role: dict[str, list[dict[str, Any]]] = {
+                "physics": [],
+                "visual": [],
+            }
             browser_readiness_codes: set[str] = set()
             has_causal_response_failure = False
             for failure in failures:
@@ -790,6 +796,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 if role is None:
                     return None
                 roles.add(role)
+                failures_by_role[role].append(failure)
                 has_causal_response_failure |= gate in {
                     "causal_response",
                     "temporal_causal_matrix",
@@ -797,9 +804,15 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             if not roles:
                 return None
 
-            plan: list[tuple[str, str]] = []
+            plan: list[tuple[str, str, list[dict[str, Any]]]] = []
             if "physics" in roles:
-                plan.append(("physics", "physics_fixture_mismatch"))
+                plan.append(
+                    (
+                        "physics",
+                        "physics_fixture_mismatch",
+                        failures_by_role["physics"],
+                    )
+                )
             if "visual" in roles:
                 if has_causal_response_failure:
                     visual_failure_code = "visual_causality_mismatch"
@@ -811,12 +824,19 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                     )
                 else:
                     visual_failure_code = "visual_geometry_mismatch"
-                plan.append(("visual", visual_failure_code))
+                plan.append(
+                    (
+                        "visual",
+                        visual_failure_code,
+                        failures_by_role["visual"],
+                    )
+                )
             return plan
 
         async def regenerate_trusted_fragment_candidate(
             role: str,
             failure_code: str,
+            exact_gate_failures: list[dict[str, Any]],
         ) -> bool:
             nonlocal effective_generation_model
             nonlocal module_output
@@ -825,6 +845,8 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             if not callable(fragment_regenerator):
                 return False
             current_failure_code = failure_code
+            current_gate_failures = list(exact_gate_failures)
+            current_fragment = fragment_documents[role]
             stage_name = f"generate_{role}"
             while True:
                 repair_attempt = claim_fragment_repair_attempt(role)
@@ -839,11 +861,14 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                         "elapsed_ms": manager.elapsed_ms(record),
                     },
                 )
+                regenerated_document: dict[str, Any] | None = None
                 try:
                     regenerated_stage = await fragment_regenerator(
                         role,
                         understanding,
                         current_failure_code,
+                        exact_gate_failures=current_gate_failures,
+                        prior_fragment=current_fragment,
                         repair_attempt=repair_attempt,
                         runtime_context=runtime_context,
                     )
@@ -857,7 +882,17 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                     record_stage_failure(stage_name, error)
                     return False
                 except (ContractError, ValidationError, ValueError) as error:
+                    if regenerated_document is not None:
+                        current_fragment = regenerated_document
                     current_failure_code = fragment_failure_code(error)
+                    current_gate_failures = [
+                        *exact_gate_failures,
+                        fragment_failure_diagnostic(
+                            error,
+                            role=role,
+                            understanding=understanding,
+                        ),
+                    ]
                     logger.warning(
                         "fragment gate repair rejected job=%s role=%s attempt=%s code=%s",
                         record.job_id,
@@ -888,8 +923,8 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 )
                 return True
 
-        def semantic_failures() -> list[tuple[str, str]]:
-            failures: list[tuple[str, str]] = []
+        def semantic_failures() -> list[tuple[str, Exception]]:
+            failures: list[tuple[str, Exception]] = []
             for role in ("physics", "visual"):
                 try:
                     fragment_validators[role](
@@ -897,7 +932,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                         understanding,
                     )
                 except (ContractError, ValidationError, ValueError) as error:
-                    failures.append((role, fragment_failure_code(error)))
+                    failures.append((role, error))
             return failures
 
         while True:
@@ -912,7 +947,13 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                     _gallery_suggestions(record.locale),
                 )
                 return
-            for role, failure_code in initial_fragment_failures:
+            for role, failure_error in initial_fragment_failures:
+                failure_code = fragment_failure_code(failure_error)
+                failure_diagnostic = fragment_failure_diagnostic(
+                    failure_error,
+                    role=role,
+                    understanding=understanding,
+                )
                 repair_attempt = claim_fragment_semantic_attempt(role)
                 if repair_attempt is None:
                     logger.warning(
@@ -966,6 +1007,8 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                         role,
                         understanding,
                         failure_code,
+                        exact_gate_failures=[failure_diagnostic],
+                        prior_fragment=fragment_documents[role],
                         repair_attempt=repair_attempt,
                         runtime_context=runtime_context,
                     )
@@ -1006,7 +1049,12 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             else None
         )
         if preflight_repair_plan is not None:
-            for role, failure_code in preflight_repair_plan:
+            if record.status != "verifying":
+                manager.transition(record, "verifying", "فحص العقد والنتائج الحتمية")
+            record_verification_failure(fragment_preflight, heal_count)
+            heal_count += 1
+            manager.transition(record, "healing", "إصلاح فشل تحقق محدد")
+            for role, failure_code, exact_gate_failures in preflight_repair_plan:
                 logger.warning(
                     "fragment preflight rejected job=%s role=%s code=%s",
                     record.job_id,
@@ -1016,6 +1064,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 repaired = await regenerate_trusted_fragment_candidate(
                     role,
                     failure_code,
+                    exact_gate_failures,
                 )
                 if not repaired:
                     _fallback(
@@ -1272,10 +1321,11 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                         return
                     heal_count += 1
                     manager.transition(record, "healing", "إصلاح فشل تحقق محدد")
-                    for role, failure_code in repair_plan:
+                    for role, failure_code, exact_gate_failures in repair_plan:
                         repaired = await regenerate_trusted_fragment_candidate(
                             role,
                             failure_code,
+                            exact_gate_failures,
                         )
                         if not repaired:
                             _fallback(
@@ -1312,7 +1362,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             qa_status, qa_result = await review_candidate(
                 module_output,
                 verification,
-                fallback_on_rejection=not qa_can_reheal,
+                fallback_on_rejection=not record.public,
             )
             if not record.public and qa_result is not None:
                 record.artifact = verification.artifact
@@ -1337,6 +1387,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                     repaired = await regenerate_trusted_fragment_candidate(
                         "visual",
                         "visual_quality_review_failed",
+                        qa_failure.failures,
                     )
                     if not repaired:
                         _fallback(
@@ -1362,6 +1413,15 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                     trusted_fragment_candidate = False
                 verification = None
                 continue
+            if (
+                qa_status == "rejected"
+                and not qa_can_reheal
+                and record.public
+                and qa_result is not None
+            ):
+                qa_outcome = qa_result
+                qa_advisory_only = True
+                break
             if qa_status != "approved" or qa_result is None:
                 return
             qa_outcome = qa_result
@@ -1437,7 +1497,12 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 incumbent.exact_key == cache.exact_key(question, understanding["lang"])
                 and not contains_learner_question_echo(incumbent.artifact, question)
             )
-    if cache is not None and candidate_privacy_safe and not keep_incumbent:
+    if (
+        cache is not None
+        and candidate_privacy_safe
+        and not keep_incumbent
+        and not qa_advisory_only
+    ):
         try:
             cache.write_verified(
                 question=question,

@@ -454,6 +454,52 @@ def test_new_primitive_renderers_emit_deterministic_assembler_owned_drawing(
         assert marker in first["module_js"]
 
 
+@pytest.mark.browser
+@pytest.mark.parametrize(
+    ("command", "archetype", "channel"),
+    [
+        pytest.param(BODY_GROUP, "body", "x", id="body-group"),
+        pytest.param(VECTOR_ARROW, "body", "size", id="vector-arrow"),
+        pytest.param(RAY, "ray_bundle", "size", id="ray"),
+        pytest.param(TRAJECTORY, "body", "y", id="trajectory"),
+    ],
+)
+def test_new_scientific_primitive_is_recognized_as_its_rendered_archetype(
+    command: dict,
+    archetype: str,
+    channel: str,
+) -> None:
+    from server.assemble import assemble_artifact
+    from server.browser_verify import verify_artifact_in_browser
+    from server.fragment_generation import assemble_fragments
+
+    module_output = assemble_fragments(
+        deepcopy(PHYSICS_FRAGMENT),
+        _visual(command, archetype=archetype, channel=channel),
+        deepcopy(UNDERSTANDING),
+    )
+    artifact = assemble_artifact(deepcopy(UNDERSTANDING), module_output)
+
+    result = verify_artifact_in_browser(artifact)
+
+    assert (
+        result.evidence["representationConsistency"]["archetype"][
+            "matchingPrimitiveCount"
+        ]
+        >= 1
+    )
+    assert not any(
+        failure["gate"] == "representation_consistency"
+        for failure in result.failures
+    )
+    if command["kind"] == "trajectory":
+        assert "canvas_pixels_unchanged" in {
+            failure["code"] for failure in result.failures
+        }
+    else:
+        assert result.passed is True, result.failures
+
+
 def _trajectory_operations(module_source: str) -> list[list[float | str]]:
     node_source = f"""
 const operations = [];

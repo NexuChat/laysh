@@ -586,11 +586,13 @@ async def test_fragment_route_repairs_only_mapped_browser_visual_failures(
         async def regenerate_fragment(
             self,
             role,
-            _understanding,
-            failure_code,
-            *,
-            repair_attempt=1,
-            runtime_context=None,
+                _understanding,
+                failure_code,
+                *,
+                exact_gate_failures=None,
+                prior_fragment=None,
+                repair_attempt=1,
+                runtime_context=None,
         ):
             assert runtime_context == RuntimeContext(public=True)
             self.regeneration_calls.append((role, failure_code, repair_attempt))
@@ -685,11 +687,13 @@ async def test_fragment_route_keeps_unmapped_or_mixed_browser_failures_terminal(
         async def regenerate_fragment(
             self,
             role,
-            _understanding,
-            failure_code,
-            *,
-            repair_attempt=1,
-            runtime_context=None,
+                _understanding,
+                failure_code,
+                *,
+                exact_gate_failures=None,
+                prior_fragment=None,
+                repair_attempt=1,
+                runtime_context=None,
         ):
             assert runtime_context == RuntimeContext(public=True)
             self.regeneration_calls.append((role, failure_code, repair_attempt))

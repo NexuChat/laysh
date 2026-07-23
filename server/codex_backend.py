@@ -420,6 +420,8 @@ class CodexBackend:
         understanding: dict[str, Any],
         failure_code: str,
         *,
+        exact_gate_failures: list[dict[str, Any]] | None = None,
+        prior_fragment: dict[str, Any] | None = None,
         repair_attempt: int = 1,
         runtime_context: RuntimeContext | None = None,
     ) -> StageExecution:
@@ -471,13 +473,28 @@ class CodexBackend:
         model = self.settings.heal_model if repair_attempt == 2 else primary_model
         prompt = self._render_prompt(prompt_name, understanding) + (
             "\n\nDETERMINISTIC_RETRY:\n"
-            "Return a fresh fragment for the same fixed understanding. "
+            "Return a corrected fragment for the same fixed understanding. "
             f"This is bounded repair attempt {repair_attempt} of 2. "
             "The prior response was rejected by the trusted semantic validator. "
             f"Failure code: {safe_failure_code}. "
-            "Correct that contract rule and independently satisfy every base fragment "
-            "rule; do not discuss, quote, or preserve the prior response. "
+            "Return the complete corrected fragment. Preserve every valid field from "
+            "CURRENT_FRAGMENT_JSON unless an exact failure requires changing it, and "
+            "independently satisfy every base fragment rule. Do not discuss the repair. "
             f"ACTIONABLE_RULE: {retry_hint}"
+            "\nCURRENT_FRAGMENT_JSON:\n"
+            + json.dumps(
+                prior_fragment or {},
+                ensure_ascii=False,
+                separators=(",", ":"),
+                sort_keys=True,
+            )
+            + "\nEXACT_GATE_FAILURES_JSON:\n"
+            + json.dumps(
+                exact_gate_failures or [],
+                ensure_ascii=False,
+                separators=(",", ":"),
+                sort_keys=True,
+            )
         )
         timeout_seconds = (
             self.settings.public_stage_timeout_seconds

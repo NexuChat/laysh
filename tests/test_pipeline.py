@@ -756,6 +756,62 @@ async def test_public_qa_rejection_uses_remaining_heal_with_private_actionable_r
 
 
 @pytest.mark.asyncio
+async def test_public_final_qa_polish_rejection_serves_uncached_machine_checked_candidate():
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend
+    from server.jobs import JobManager
+
+    class AlwaysRejectingVisualQaBackend(MockCodexBackend):
+        async def qa(self, *args, **kwargs):
+            del args, kwargs
+            self.qa_calls += 1
+            return {
+                "approved": False,
+                "issues": ["The scene needs more visual depth."],
+                "replacement_module_js": None,
+                "visual_richness": {
+                    "scene_depth": False,
+                    "physical_light": True,
+                    "idle_motion": True,
+                    "reactive_feedback": True,
+                    "readable_overlays": True,
+                },
+            }
+
+    class RecordingCache:
+        def __init__(self):
+            self.writes = []
+
+        def lookup(self, **kwargs):
+            del kwargs
+            return None
+
+        def write_verified(self, **kwargs):
+            self.writes.append(kwargs)
+
+    backend = AlwaysRejectingVisualQaBackend()
+    cache = RecordingCache()
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+        cache=cache,
+    )
+
+    record = manager.start("broken first draft", "ar")
+    await record.task
+
+    assert record.status == "complete"
+    assert record.fallback is None
+    assert record.simulation is not None
+    assert record.simulation.tier == "B"
+    assert record.simulation.heal_count == 2
+    assert record.artifact is not None
+    assert backend.qa_calls == 2
+    assert cache.writes == []
+
+
+@pytest.mark.asyncio
 async def test_curated_suspect_fixture_refreshes_understand_once_without_heal():
     from copy import deepcopy
 
@@ -1170,11 +1226,13 @@ async def test_fragment_preflight_repairs_all_mapped_roles_or_falls_back_for_unk
         async def regenerate_fragment(
             self,
             role,
-            _understanding,
-            failure_code,
-            *,
-            repair_attempt=1,
-            runtime_context=None,
+                _understanding,
+                failure_code,
+                *,
+                exact_gate_failures=None,
+                prior_fragment=None,
+                repair_attempt=1,
+                runtime_context=None,
         ):
             assert runtime_context == RuntimeContext(public=True)
             self.regeneration_calls.append((role, failure_code, repair_attempt))
@@ -1263,11 +1321,13 @@ async def test_fragment_post_verification_repairs_mixed_roles_then_reverifies(
         async def regenerate_fragment(
             self,
             role,
-            _understanding,
-            failure_code,
-            *,
-            repair_attempt=1,
-            runtime_context=None,
+                _understanding,
+                failure_code,
+                *,
+                exact_gate_failures=None,
+                prior_fragment=None,
+                repair_attempt=1,
+                runtime_context=None,
         ):
             assert runtime_context == RuntimeContext(public=True)
             self.regeneration_calls.append((role, failure_code, repair_attempt))
