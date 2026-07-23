@@ -585,6 +585,7 @@ async def test_backend_starts_both_fragment_model_calls_concurrently_and_returns
 
 class _FragmentPipelineBackend:
     backend_name = "mock"
+    public_generation_strategy = "fragments"
 
     def __init__(self) -> None:
         from server.codex_backend import MockCodexBackend
@@ -754,3 +755,40 @@ async def test_pipeline_does_not_publish_or_cache_until_both_fragments_and_verif
     assert record.simulation.effective_model == (
         "physics:gpt-5.6-sol+visual:gpt-5.6-terra"
     )
+
+
+@pytest.mark.asyncio
+async def test_public_module_strategy_does_not_enter_the_fragment_route(monkeypatch):
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend
+    from server.jobs import JobManager
+    from server.verify import VerificationResult
+
+    class ModuleStrategyBackend(MockCodexBackend):
+        public_generation_strategy = "module"
+
+        async def generate_fragments(self, *args, **kwargs):
+            raise AssertionError("module strategy must not enter the fragment route")
+
+    monkeypatch.setattr(
+        "server.pipeline.verify_candidate",
+        lambda *_: VerificationResult(
+            passed=True,
+            check_count=17,
+            failures=[],
+            artifact="<!doctype html><html><body>verified module</body></html>",
+            node_report={"passed": True},
+        ),
+    )
+    backend = ModuleStrategyBackend()
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+    )
+    record = manager.start("success", "ar")
+
+    await asyncio.wait_for(record.task, timeout=1)
+
+    assert record.status == "complete"
+    assert backend.generate_calls == 1

@@ -11,6 +11,7 @@ def test_runtime_defaults_are_gpt_5_6_family_only():
     assert settings.generate_model == "gpt-5.6-sol"
     assert settings.heal_model == "gpt-5.6-sol"
     assert settings.qa_model == "gpt-5.6-sol"
+    assert settings.public_generation_strategy == "module"
     assert settings.terra_generation_tiers == ("bounded_single_parameter_v1",)
     assert {
         settings.understand_model,
@@ -44,6 +45,7 @@ def test_shipped_public_profile_gives_generation_room_inside_hard_job_cap():
 
     for path in (root / ".env.example", root / "deploy" / "laysh.service"):
         document = path.read_text(encoding="utf-8")
+        assert "LAYSH_PUBLIC_GENERATION_STRATEGY=module" in document
         assert "LAYSH_PUBLIC_JOB_TIMEOUT_SECONDS=600" in document
         assert "LAYSH_PUBLIC_STAGE_TIMEOUT_SECONDS=240" in document
         assert "LAYSH_TERRA_GENERATION_TIERS=bounded_single_parameter_v1" in document
@@ -88,6 +90,17 @@ def test_public_generate_canary_override_is_closed(monkeypatch):
 
     monkeypatch.setenv("LAYSH_PUBLIC_GENERATE_EFFORT", "ultra")
     with pytest.raises(ValueError, match="generate effort"):
+        Settings.from_env()
+
+
+def test_public_generation_strategy_is_closed(monkeypatch):
+    from server.settings import Settings
+
+    monkeypatch.setenv("LAYSH_PUBLIC_GENERATION_STRATEGY", "fragments")
+    assert Settings.from_env().public_generation_strategy == "fragments"
+
+    monkeypatch.setenv("LAYSH_PUBLIC_GENERATION_STRATEGY", "untrusted")
+    with pytest.raises(ValueError, match="generation strategy"):
         Settings.from_env()
 
 

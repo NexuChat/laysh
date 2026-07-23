@@ -217,6 +217,7 @@ class CodexBackend:
         self.routing_policy = routing_policy or ModelRoutingPolicy(
             terra_eligible_tiers=frozenset(settings.terra_generation_tiers)
         )
+        self.public_generation_strategy = settings.public_generation_strategy
         self._model_slots = asyncio.Semaphore(settings.max_parallel_model_calls)
 
     async def _execute_stage(self, **kwargs: Any) -> StageExecution:

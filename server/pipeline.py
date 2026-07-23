@@ -701,7 +701,16 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         None,
     )
     fragment_generator = getattr(manager.backend, "generate_fragments", None)
-    use_fragment_route = record.public and callable(fragment_generator)
+    generation_strategy = getattr(
+        manager.backend,
+        "public_generation_strategy",
+        "fragments",
+    )
+    use_fragment_route = (
+        record.public
+        and generation_strategy == "fragments"
+        and callable(fragment_generator)
+    )
     candidate_specs: tuple[GenerationCandidateSpec, ...] = ()
     if record.public and not use_fragment_route and callable(candidate_spec_factory):
         candidate_specs = tuple(

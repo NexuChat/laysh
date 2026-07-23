@@ -25,6 +25,7 @@ class Settings:
     visual_qa_model: str = "gpt-5.6-terra"
     public_generate_model_override: str | None = None
     public_generate_effort: str = "medium"
+    public_generation_strategy: str = "module"
     public_candidate_count: int = 1
     max_parallel_model_calls: int = 2
     max_parallel_browser_gates: int = 1
@@ -64,6 +65,8 @@ class Settings:
             raise ValueError("every Laysh runtime stage must use an approved GPT-5.6 model")
         if self.public_generate_effort not in {"low", "medium", "high"}:
             raise ValueError("public generate effort must be low, medium, or high")
+        if self.public_generation_strategy not in {"module", "fragments"}:
+            raise ValueError("public generation strategy must be module or fragments")
         if self.public_candidate_count not in {1, 2}:
             raise ValueError("public candidate count must be one or two")
         if self.max_parallel_model_calls <= 0 or self.max_parallel_browser_gates <= 0:
@@ -115,6 +118,10 @@ class Settings:
             ),
             public_generate_effort=os.getenv(
                 "LAYSH_PUBLIC_GENERATE_EFFORT", defaults.public_generate_effort
+            ).strip(),
+            public_generation_strategy=os.getenv(
+                "LAYSH_PUBLIC_GENERATION_STRATEGY",
+                defaults.public_generation_strategy,
             ).strip(),
             public_candidate_count=int(
                 os.getenv(
