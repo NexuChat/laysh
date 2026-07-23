@@ -44,7 +44,7 @@ from server.verify import (
 LabModel = Literal["gpt-5.6-luna", "gpt-5.6-terra", "gpt-5.6-sol"]
 LabEffort = Literal["low", "medium", "high", "xhigh", "max", "ultra"]
 LabSourceMode = Literal["off", "public_references"]
-LabVisualMode = Literal["trusted_scene_plan", "direct_canvas"]
+LabVisualMode = Literal["trusted_scene_plan", "direct_canvas", "hybrid_race"]
 LabCandidateStatus = Literal[
     "queued",
     "generating",
@@ -145,7 +145,14 @@ LabPipelineStage = Literal[
     "finalize",
 ]
 LabPipelineRerunStage = LabPipelineStage
-LabPipelineStatus = Literal["queued", "running", "complete", "rejected", "failed"]
+LabPipelineStatus = Literal[
+    "queued",
+    "running",
+    "complete",
+    "rejected",
+    "failed",
+    "cancelled",
+]
 LabPipelineEventStatus = Literal["running", "passed", "failed", "skipped"]
 
 
@@ -475,6 +482,7 @@ class ModelLabManager:
         self.pipeline_runs: dict[str, _PipelineRun] = {}
         self.artifacts: dict[str, str] = {}
         self._tasks: set[asyncio.Task[None]] = set()
+        self._pipeline_tasks: dict[str, asyncio.Task[None]] = {}
         self._run_slots = asyncio.Semaphore(max_concurrent_runs)
         self._browser_slots = asyncio.Semaphore(1)
 
@@ -568,7 +576,27 @@ class ModelLabManager:
             self._execute_pipeline(run, start_stage=start_stage)
         )
         self._tasks.add(task)
-        task.add_done_callback(self._tasks.discard)
+        self._pipeline_tasks[run.run_id] = task
+
+        def discard(completed: asyncio.Task[None]) -> None:
+            self._tasks.discard(completed)
+            if self._pipeline_tasks.get(run.run_id) is completed:
+                self._pipeline_tasks.pop(run.run_id, None)
+
+        task.add_done_callback(discard)
+
+    async def cancel_pipeline(self, run_id: str) -> ModelLabPipelineRunResult:
+        run = self.pipeline_runs.get(run_id)
+        if run is None:
+            raise KeyError(run_id)
+        task = self._pipeline_tasks.get(run_id)
+        if task is None or task.done():
+            return run.public_result()
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        run.status = "cancelled"
+        run.active_stage = None
+        return run.public_result()
 
     @staticmethod
     def _invalidate_pipeline_from(
@@ -707,7 +735,7 @@ class ModelLabManager:
                     context=context,
                 )
             except asyncio.CancelledError:
-                run.status = "failed"
+                run.status = "cancelled"
                 raise
             except (
                 CodexRuntimeError,
@@ -1097,7 +1125,105 @@ class ModelLabManager:
                 config.fast,
             )
             discovery_document = run.discovery_plan.model_dump(mode="json")
-            if run.visual_mode == "trusted_scene_plan":
+            if run.visual_mode == "hybrid_race":
+                async def trusted_candidate() -> tuple[
+                    str,
+                    dict[str, Any] | None,
+                    dict[str, Any],
+                    dict[str, Any] | StageExecution,
+                ]:
+                    trusted_result = await self.backend.generate_visual_plan_for_lab(
+                        run.understanding,
+                        run.physics_document,
+                        discovery_document,
+                        stage_spec=stage_spec,
+                        runtime_context=context,
+                    )
+                    trusted_fragment = validate_visual_fragment(
+                        _stage_data(trusted_result),
+                        run.understanding,
+                    )
+                    return (
+                        "trusted_scene_plan",
+                        trusted_fragment,
+                        assemble_fragments(
+                            run.physics_document,
+                            trusted_fragment,
+                            run.understanding,
+                        ),
+                        trusted_result,
+                    )
+
+                async def direct_candidate() -> tuple[
+                    str,
+                    None,
+                    dict[str, Any],
+                    dict[str, Any] | StageExecution,
+                ]:
+                    direct_result = await self.backend.generate_visual_module_for_lab(
+                        run.understanding,
+                        run.physics_document,
+                        stage_spec=stage_spec,
+                        discovery_plan=discovery_document,
+                        runtime_context=context,
+                    )
+                    return (
+                        "direct_canvas",
+                        None,
+                        validate_module_output(_stage_data(direct_result)),
+                        direct_result,
+                    )
+
+                raw_candidates = await asyncio.gather(
+                    trusted_candidate(),
+                    direct_candidate(),
+                    return_exceptions=True,
+                )
+                candidates = [
+                    candidate
+                    for candidate in raw_candidates
+                    if not isinstance(candidate, BaseException)
+                ]
+                if not candidates:
+                    raise ContractError("both hybrid visual strategies failed")
+                reports = await asyncio.gather(
+                    *(
+                        asyncio.to_thread(
+                            verify_candidate,
+                            candidate[2],
+                            run.understanding,
+                        )
+                        for candidate in candidates
+                    ),
+                    return_exceptions=True,
+                )
+
+                def candidate_rank(index: int) -> tuple[int, int, int]:
+                    candidate = candidates[index]
+                    report = reports[index]
+                    if isinstance(report, BaseException):
+                        return (0, -1_000, 0)
+                    failures = _applicable_lab_failures(report.failures)
+                    passed = report.artifact is not None and not failures
+                    return (
+                        int(passed),
+                        -len(failures),
+                        int(candidate[0] == "direct_canvas"),
+                    )
+
+                selected_index = max(
+                    range(len(candidates)),
+                    key=candidate_rank,
+                )
+                selected_strategy, visual_fragment, module_output, result = (
+                    candidates[selected_index]
+                )
+                run.visual_fragment = visual_fragment
+                strategy_details = [
+                    f"{len(candidates)} parallel visual strategies",
+                    f"selected {selected_strategy}",
+                ]
+            elif run.visual_mode == "trusted_scene_plan":
                 result = await self.backend.generate_visual_plan_for_lab(
                     run.understanding,
                     run.physics_document,
@@ -1115,6 +1241,7 @@ class ModelLabManager:
                     visual_fragment,
                     run.understanding,
                 )
+                strategy_details = ["selected trusted_scene_plan"]
             else:
                 result = await self.backend.generate_visual_module_for_lab(
                     run.understanding,
@@ -1125,6 +1252,7 @@ class ModelLabManager:
                 )
                 run.visual_fragment = None
                 module_output = validate_module_output(_stage_data(result))
+                strategy_details = ["selected direct_canvas"]
         except (
             CodexRuntimeError,
             ContractError,
@@ -1157,6 +1285,7 @@ class ModelLabManager:
                 ),
                 assumptions=list(module_output["assumptions"])[:8],
                 output_names=list(module_output["output_names"])[:8],
+                details=strategy_details,
                 discovery=run.discovery_plan,
             ),
         )
@@ -1407,6 +1536,18 @@ class ModelLabManager:
             self._pipeline_finalize(run)
             return
 
+        if run.visual_mode == "hybrid_race" and used_repairs == 0:
+            self._skip_pipeline_model_stage(
+                run,
+                "qa",
+                summary=(
+                    "First-pass hybrid winner passed deterministic and browser "
+                    "gates; no extra QA model call was needed."
+                ),
+            )
+            self._pipeline_finalize(run)
+            return
+
         approved = await self._pipeline_qa(run, context)
         if not approved and used_repairs < 2 and run.qa_result is not None:
             qa_failure = {
@@ -1559,9 +1700,19 @@ class ModelLabManager:
         qa_approved = (
             run.qa_result is not None and run.qa_result.get("approved") is True
         )
+        qa_not_required = (
+            run.visual_mode == "hybrid_race"
+            and run.verification.passed
+            and not any(
+                event.stage in {"repair_1", "repair_2"}
+                and event.status == "passed"
+                and event.revision == run.revision
+                for event in run.timeline
+            )
+        )
         run.artifact_tier = (
             "verified"
-            if verification.passed and qa_approved
+            if verification.passed and (qa_approved or qa_not_required)
             else "unverified_preview"
         )
         run.status = "complete"

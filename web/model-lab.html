@@ -77,11 +77,19 @@
             <label>
               <span data-i18n="modelLab.visualMode">Visual construction</span>
               <select id="visual-mode" name="visual_mode">
-                <option value="trusted_scene_plan" selected data-i18n="modelLab.visualMode.plan">Trusted scene plan</option>
+                <option value="hybrid_race" selected data-i18n="modelLab.visualMode.hybrid">Hybrid race · recommended</option>
+                <option value="trusted_scene_plan" data-i18n="modelLab.visualMode.plan">Trusted scene plan</option>
                 <option value="direct_canvas" data-i18n="modelLab.visualMode.direct">Direct Canvas module</option>
               </select>
-              <small data-i18n="modelLab.visualModeHelp">Compare a compact trusted renderer with unrestricted visual authorship.</small>
+              <small data-i18n="modelLab.visualModeHelp">Hybrid runs a trusted scene plan and direct Canvas authoring in parallel, then keeps one locally verified winner.</small>
             </label>
+          </div>
+          <div class="preset-bar">
+            <div>
+              <strong data-i18n="modelLab.bestTitle">Best measured path</strong>
+              <span data-i18n="modelLab.bestHelp">Grounded answer, fast specialist routing, two parallel visual strategies, local gates, and QA only after repair.</span>
+            </div>
+            <button id="best-pipeline-preset" type="button" data-i18n="modelLab.bestApply">Apply best pipeline</button>
           </div>
         </section>
 
@@ -201,7 +209,10 @@
             <span aria-hidden="true"></span>
             <div><small data-i18n="modelLab.runStatus">Pipeline status</small><strong data-i18n="modelLab.idle">Not run</strong></div>
           </div>
-          <button class="run-button" id="run-pipeline-button" type="submit"><span data-i18n="modelLab.submit">Run full pipeline</span><b aria-hidden="true">→</b></button>
+          <div class="run-actions">
+            <button class="cancel-pipeline-button" id="cancel-pipeline-button" type="button" disabled data-i18n="modelLab.cancel">Stop pipeline</button>
+            <button class="run-button" id="run-pipeline-button" type="submit"><span data-i18n="modelLab.submit">Run full pipeline</span><b aria-hidden="true">→</b></button>
+          </div>
         </div>
       </form>
 

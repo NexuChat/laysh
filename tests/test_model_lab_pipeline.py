@@ -86,7 +86,12 @@ def _wait_for_pipeline(
         document = response.json()
         if (
             document["revision"] >= revision
-            and document["status"] in {"complete", "rejected", "failed"}
+            and document["status"] in {
+                "complete",
+                "rejected",
+                "failed",
+                "cancelled",
+            }
         ):
             return document
         time.sleep(0.01)
@@ -490,6 +495,88 @@ def test_pipeline_contract_supports_real_efforts_and_rejects_luna_ultra(monkeypa
         invalid_mode = _pipeline_payload()
         invalid_mode["visual_mode"] = "hidden_custom_renderer"
         assert client.post("/api/model-lab/pipeline", json=invalid_mode).status_code == 422
+
+
+def test_hybrid_race_generates_two_visual_strategies_concurrently_and_returns_one(
+    monkeypatch,
+):
+    class _RacingBackend(_PipelineBackend):
+        def __init__(self) -> None:
+            super().__init__()
+            self.active_visuals = 0
+            self.peak_visuals = 0
+
+        async def _visual_delay(self) -> None:
+            self.active_visuals += 1
+            self.peak_visuals = max(self.peak_visuals, self.active_visuals)
+            try:
+                await asyncio.sleep(0.05)
+            finally:
+                self.active_visuals -= 1
+
+        async def generate_visual_plan_for_lab(self, *args, **kwargs):
+            await self._visual_delay()
+            return await super().generate_visual_plan_for_lab(*args, **kwargs)
+
+        async def generate_visual_module_for_lab(self, *args, **kwargs):
+            await self._visual_delay()
+            return await super().generate_visual_module_for_lab(*args, **kwargs)
+
+    backend = _RacingBackend()
+    payload = _pipeline_payload()
+    payload["visual_mode"] = "hybrid_race"
+    with _enabled_client(monkeypatch, backend) as client:
+        accepted = client.post("/api/model-lab/pipeline", json=payload)
+        assert accepted.status_code == 202
+        run = _wait_for_pipeline(client, accepted.json()["status_url"])
+
+    assert run["status"] == "complete"
+    assert run["artifact_tier"] == "verified"
+    assert backend.peak_visuals == 2
+    assert [call[0] for call in backend.calls].count("visual") == 2
+    assert "qa" not in [call[0] for call in backend.calls]
+    visual = next(event for event in run["timeline"] if event["stage"] == "visual")
+    assert visual["output"]["details"] == [
+        "2 parallel visual strategies",
+        "selected direct_canvas",
+    ]
+    qa = next(event for event in run["timeline"] if event["stage"] == "qa")
+    assert qa["status"] == "skipped"
+    assert "first-pass" in qa["output"]["summary"].lower()
+
+
+def test_pipeline_cancel_endpoint_cancels_the_active_backend_task(monkeypatch):
+    class _CancellableBackend(_PipelineBackend):
+        def __init__(self) -> None:
+            super().__init__()
+            self.started = asyncio.Event()
+            self.cancelled = asyncio.Event()
+
+        async def understand_for_lab(self, *args, **kwargs):
+            self.started.set()
+            try:
+                await asyncio.sleep(10)
+            except asyncio.CancelledError:
+                self.cancelled.set()
+                raise
+            return await super().understand_for_lab(*args, **kwargs)
+
+    backend = _CancellableBackend()
+    with _enabled_client(monkeypatch, backend) as client:
+        accepted = client.post("/api/model-lab/pipeline", json=_pipeline_payload())
+        run_id = accepted.json()["run_id"]
+        deadline = time.monotonic() + 2
+        while not backend.started.is_set() and time.monotonic() < deadline:
+            time.sleep(0.01)
+        assert backend.started.is_set()
+
+        cancelled = client.post(f"/api/model-lab/pipeline/{run_id}/cancel")
+        assert cancelled.status_code == 200
+        run = _wait_for_pipeline(client, accepted.json()["status_url"])
+
+    assert run["status"] == "cancelled"
+    assert run["active_stage"] is None
+    assert backend.cancelled.is_set()
 
 
 def test_pipeline_rerun_refuses_overlapping_execution(monkeypatch):

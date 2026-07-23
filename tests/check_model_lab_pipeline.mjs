@@ -161,6 +161,8 @@ try {
       defaultDirection: document.documentElement.dir,
       defaultSourceMode: document.getElementById("source-mode").value,
       defaultVisualMode: document.getElementById("visual-mode").value,
+      bestPresetVisible: Boolean(document.getElementById("best-pipeline-preset")),
+      cancelControlVisible: Boolean(document.getElementById("cancel-pipeline-button")),
       lunaUltraDisabled,
       terraUltraEnabled: !effort.querySelector('[value="ultra"]').disabled,
     };
@@ -282,7 +284,9 @@ try {
     englishDefault: initial.defaultLanguage === "en"
       && initial.defaultDirection === "ltr"
       && initial.defaultSourceMode === "off"
-      && initial.defaultVisualMode === "trusted_scene_plan",
+      && initial.defaultVisualMode === "hybrid_race"
+      && initial.bestPresetVisible
+      && initial.cancelControlVisible,
     fullPipelineExecuted: JSON.stringify(initialRevisionStages) === JSON.stringify([
       "evidence",
       "understand",

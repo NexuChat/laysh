@@ -170,7 +170,10 @@ def test_model_lab_page_is_separate_and_exposes_every_pipeline_stage(monkeypatch
     assert 'id="source-mode"' in response.text
     assert 'value="off" selected' in response.text
     assert 'id="visual-mode"' in response.text
-    assert 'value="trusted_scene_plan" selected' in response.text
+    assert 'value="hybrid_race"' in response.text
+    assert 'id="best-pipeline-preset"' in response.text
+    assert 'id="cancel-pipeline-button"' in response.text
+    assert "/cancel" not in response.text
     assert "Pipeline Workbench" in response.text
     assert "/api/model-lab/pipeline" not in response.text
     assert 'href="/"' in response.text

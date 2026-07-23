@@ -5,6 +5,8 @@
   const question = document.getElementById("lab-question");
   const error = document.getElementById("lab-error");
   const submit = document.getElementById("run-pipeline-button");
+  const cancelPipeline = document.getElementById("cancel-pipeline-button");
+  const bestPreset = document.getElementById("best-pipeline-preset");
   const runStatus = document.getElementById("run-status");
   const results = document.getElementById("pipeline-results");
   const sharedAnswer = document.getElementById("shared-answer");
@@ -52,6 +54,7 @@
     "finalize",
   ];
   let activeStatusUrl = null;
+  let activeRunId = null;
   let currentRun = null;
   let pollTimer = 0;
 
@@ -140,6 +143,8 @@
     for (const button of form.querySelectorAll('[data-action="rerun"]')) {
       button.disabled = busy || !currentRun;
     }
+    bestPreset.disabled = busy;
+    cancelPipeline.disabled = !busy || !activeRunId;
   }
 
   function showError(key) {
@@ -161,6 +166,7 @@
       complete: "modelLab.complete",
       rejected: "modelLab.rejected",
       failed: "modelLab.failed",
+      cancelled: "modelLab.cancelled",
     }[status] || "modelLab.idle";
     runStatus.dataset.state = status;
     runStatus.querySelector("strong").textContent = activeStage
@@ -448,9 +454,10 @@
       renderResult(result);
       if (
         result.revision >= minimumRevision
-        && ["complete", "rejected", "failed"].includes(result.status)
+        && ["complete", "rejected", "failed", "cancelled"].includes(result.status)
       ) {
         activeStatusUrl = null;
+        activeRunId = null;
         setBusy(false);
         return;
       }
@@ -496,7 +503,9 @@
       return;
     }
     const accepted = await response.json();
+    activeRunId = accepted.run_id;
     activeStatusUrl = accepted.status_url;
+    cancelPipeline.disabled = false;
     await poll(activeStatusUrl, 1);
   }
 
@@ -527,7 +536,9 @@
       return;
     }
     const accepted = await response.json();
+    activeRunId = accepted.run_id;
     activeStatusUrl = accepted.status_url;
+    cancelPipeline.disabled = false;
     await poll(activeStatusUrl, nextRevision);
   }
 
@@ -543,6 +554,46 @@
       renderRunStatus("failed");
       showError("modelLab.error.generic");
     }
+  });
+
+  bestPreset.addEventListener("click", () => {
+    sourceMode.value = "public_references";
+    visualMode.value = "hybrid_race";
+    const recommended = {
+      understand: ["gpt-5.6-luna", "low", true],
+      physics: ["gpt-5.6-luna", "medium", true],
+      visual: ["gpt-5.6-terra", "medium", true],
+      repair_1: ["gpt-5.6-sol", "low", true],
+      repair_2: ["gpt-5.6-sol", "medium", true],
+      qa: ["gpt-5.6-luna", "low", true],
+    };
+    for (const [stage, [model, effort, fast]] of Object.entries(recommended)) {
+      const card = cards.get(stage);
+      card.querySelector('[name="model"]').value = model;
+      syncEfforts(card);
+      card.querySelector('[name="effort"]').value = effort;
+      card.querySelector('[name="fast"]').checked = fast;
+    }
+    bestPreset.dataset.applied = "true";
+    bestPreset.textContent = t("modelLab.bestApplied");
+  });
+
+  cancelPipeline.addEventListener("click", async () => {
+    if (!activeRunId) return;
+    cancelPipeline.disabled = true;
+    window.clearTimeout(pollTimer);
+    const response = await fetch(
+      `/api/model-lab/pipeline/${encodeURIComponent(activeRunId)}/cancel`,
+      { method: "POST", headers: { accept: "application/json" } },
+    );
+    activeStatusUrl = null;
+    activeRunId = null;
+    setBusy(false);
+    if (!response.ok) {
+      showError("modelLab.error.cancel");
+      return;
+    }
+    renderResult(await response.json());
   });
 
   for (const card of document.querySelectorAll(".pipeline-stage")) {

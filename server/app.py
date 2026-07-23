@@ -282,6 +282,22 @@ def create_app(
             ) from error
 
     @app.post(
+        "/api/model-lab/pipeline/{run_id}/cancel",
+        response_model=ModelLabPipelineRunResult,
+    )
+    async def cancel_model_lab_pipeline(
+        run_id: str,
+    ) -> ModelLabPipelineRunResult:
+        require_model_lab()
+        try:
+            return await app.state.model_lab.cancel_pipeline(run_id)
+        except KeyError as error:
+            raise HTTPException(
+                status_code=404,
+                detail="model lab pipeline not found",
+            ) from error
+
+    @app.post(
         "/api/model-lab/compare",
         response_model=ModelLabAccepted,
         status_code=status.HTTP_202_ACCEPTED,
