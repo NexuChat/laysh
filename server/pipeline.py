@@ -110,6 +110,14 @@ class _CandidateOutcome:
     error: Exception | None = None
 
 
+@dataclass(frozen=True, slots=True)
+class _QaVerifiedCandidate:
+    module_output: dict[str, Any]
+    verification: VerificationResult
+    browser_evidence: dict[str, Any] | None
+    qa_outcome: dict[str, Any]
+
+
 async def cancellable_sleep(seconds: float) -> None:
     try:
         await asyncio.sleep(seconds)
@@ -682,6 +690,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
     browser_evidence: dict[str, Any] | None = None
     qa_outcome: dict[str, Any] | None = None
     qa_advisory_only = False
+    qa_verified_candidate: _QaVerifiedCandidate | None = None
     effective_generation_model: str | None = None
     trusted_fragment_candidate = False
 
@@ -1302,6 +1311,13 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                         return
                     continue
                 if heal_count >= 2:
+                    if record.public and qa_verified_candidate is not None:
+                        module_output = qa_verified_candidate.module_output
+                        verification = qa_verified_candidate.verification
+                        browser_evidence = qa_verified_candidate.browser_evidence
+                        qa_outcome = qa_verified_candidate.qa_outcome
+                        qa_advisory_only = True
+                        break
                     _fallback(
                         manager,
                         record,
@@ -1379,6 +1395,12 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                     "qa": qa_result,
                 }
             if qa_status == "rejected" and qa_can_reheal and qa_result is not None:
+                qa_verified_candidate = _QaVerifiedCandidate(
+                    module_output=module_output,
+                    verification=verification,
+                    browser_evidence=browser_evidence,
+                    qa_outcome=qa_result,
+                )
                 qa_failure = qa_revision_result(verification, qa_result)
                 record_verification_failure(qa_failure, heal_count)
                 heal_count += 1
@@ -1390,13 +1412,12 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                         qa_failure.failures,
                     )
                     if not repaired:
-                        _fallback(
-                            manager,
-                            record,
-                            "generation_failed",
-                            _gallery_suggestions(record.locale),
-                        )
-                        return
+                        module_output = qa_verified_candidate.module_output
+                        verification = qa_verified_candidate.verification
+                        browser_evidence = qa_verified_candidate.browser_evidence
+                        qa_outcome = qa_verified_candidate.qa_outcome
+                        qa_advisory_only = True
+                        break
                 else:
                     module_output = validate_module_output(
                         await stage_result(

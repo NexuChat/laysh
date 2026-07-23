@@ -1081,6 +1081,107 @@ async def test_public_fragment_repair_receives_exact_failures_and_counts_as_heal
 
 
 @pytest.mark.asyncio
+async def test_public_qa_repair_regression_retains_prior_verified_fragment_candidate(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from server.browser_verify import BrowserVerificationResult
+    from server.jobs import JobManager
+    from server.verify import VerificationResult
+
+    prior_verified_artifact = (
+        "<!doctype html><html><body>prior-verified-fragment-candidate</body></html>"
+    )
+
+    class RejectingQaBackend(_VisualPreflightRecoveryBackend):
+        async def qa(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+            del args, kwargs
+            self.qa_calls += 1
+            return {
+                "approved": False,
+                "issues": ["The scene needs more visual depth."],
+                "replacement_module_js": None,
+                "visual_richness": {
+                    "scene_depth": False,
+                    "physical_light": True,
+                    "idle_motion": True,
+                    "reactive_feedback": True,
+                    "readable_overlays": True,
+                },
+            }
+
+    backend = RejectingQaBackend()
+    cache = _RecordingCache()
+    verification_calls = 0
+
+    def deterministic_verifier(
+        _module_output: dict[str, Any],
+        _understanding: dict[str, Any],
+    ) -> VerificationResult:
+        nonlocal verification_calls
+        verification_calls += 1
+        if verification_calls == 1:
+            return VerificationResult(
+                passed=False,
+                check_count=31,
+                failures=[
+                    {
+                        "gate": "causal_response",
+                        "code": "causal_relation_mismatch",
+                        "expected": {"monotonic_actor_response": True},
+                        "actual": {"monotonic_actor_response": False},
+                    }
+                ],
+                artifact=None,
+                node_report={"passed": False},
+            )
+        if verification_calls == 2:
+            return VerificationResult(
+                passed=True,
+                check_count=198,
+                failures=[],
+                artifact=prior_verified_artifact,
+                node_report={"passed": True},
+            )
+        return VerificationResult(
+            passed=False,
+            check_count=73,
+            failures=[
+                {
+                    "gate": "temporal_causal_matrix",
+                    "code": "causal_direction_mismatch",
+                    "expected": {"matching_direction": True},
+                    "actual": {"matching_direction": False},
+                }
+            ],
+            artifact=None,
+            node_report={"passed": False},
+        )
+
+    monkeypatch.setattr("server.pipeline.verify_candidate", deterministic_verifier)
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _artifact: BrowserVerificationResult.passing(),
+        cache=cache,
+    )
+
+    record = manager.start("success", "ar")
+    assert record.task is not None
+    await record.task
+
+    assert verification_calls == 3
+    assert backend.qa_calls == 1
+    assert record.status == "complete"
+    assert record.fallback is None
+    assert record.artifact == prior_verified_artifact
+    assert record.simulation is not None
+    assert record.simulation.tier == "B"
+    assert record.simulation.heal_count == 2
+    assert cache.writes == []
+    _assert_public_surface_is_sanitized(record)
+
+
+@pytest.mark.asyncio
 async def test_public_fragment_verification_failure_regenerates_visual_and_reassembles(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
