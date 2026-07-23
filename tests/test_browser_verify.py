@@ -132,6 +132,16 @@ def test_browser_gate_returns_actionable_structured_failures(monkeypatch):
     ]
 
 
+def test_golden_browser_report_emits_closed_promotion_comparison_inputs():
+    source = (ROOT / "scripts" / "check_golden.mjs").read_text(encoding="utf-8")
+
+    assert "visualSignature: signature()" in source
+    assert "frameChanged:" in source
+    assert "idleFrameChanged:" in source
+    assert "reactiveFrameVariants:" in source
+    assert "new Set(" in source
+
+
 def test_causal_browser_gate_accepts_salient_absolute_x_response_with_nonzero_neutral():
     result = _evaluate_with_causal_report(_passing_evidence())
 
@@ -439,3 +449,191 @@ async def test_browser_failure_enters_heal_with_exact_report_before_publish():
     assert record.simulation is not None
     assert record.simulation.heal_count == 1
     assert reports == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "code",
+    ("canvas_pixels_unchanged", "visible_frame_unchanged"),
+)
+async def test_fragment_route_repairs_only_mapped_browser_visual_failures(
+    monkeypatch: pytest.MonkeyPatch,
+    code: str,
+) -> None:
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend, RuntimeContext
+    from server.codex_runtime import StageExecution
+    from server.jobs import JobManager
+    from server.verify import VerificationResult
+    from tests.golden_cases import VALID_UNDERSTANDING
+    from tests.test_parallel_fragment_generation import PHYSICS_FRAGMENT, VISUAL_FRAGMENT
+
+    class FragmentBackend(MockCodexBackend):
+        def __init__(self) -> None:
+            super().__init__()
+            self.regeneration_calls: list[tuple[str, str, int]] = []
+
+        async def understand(self, _question, _locale, *, runtime_context=None):
+            assert runtime_context == RuntimeContext(public=True)
+            self.understand_calls += 1
+            return deepcopy(VALID_UNDERSTANDING)
+
+        async def generate_fragments(self, _understanding, *, runtime_context=None):
+            assert runtime_context == RuntimeContext(public=True)
+            return (
+                StageExecution(
+                    deepcopy(PHYSICS_FRAGMENT), "private-physics", "gpt-5.6-sol", 1
+                ),
+                StageExecution(
+                    deepcopy(VISUAL_FRAGMENT), "private-visual", "gpt-5.6-terra", 1
+                ),
+            )
+
+        async def regenerate_fragment(
+            self,
+            role,
+            _understanding,
+            failure_code,
+            *,
+            repair_attempt=1,
+            runtime_context=None,
+        ):
+            assert runtime_context == RuntimeContext(public=True)
+            self.regeneration_calls.append((role, failure_code, repair_attempt))
+            return StageExecution(
+                deepcopy(VISUAL_FRAGMENT), "private-repair", "gpt-5.6-terra", 1
+            )
+
+    failure = {
+        "gate": "browser_readiness",
+        "code": code,
+        "expected": {"ready": True},
+        "actual": {"ready": False},
+    }
+    reports = [
+        BrowserVerificationResult(False, 1, [failure], {}),
+        BrowserVerificationResult.passing(),
+    ]
+
+    monkeypatch.setattr(
+        "server.pipeline.verify_candidate",
+        lambda _module_output, _understanding: VerificationResult(
+            passed=True,
+            check_count=1,
+            failures=[],
+            artifact="<!doctype html><title>verified</title>",
+            node_report={"passed": True},
+        ),
+    )
+    backend = FragmentBackend()
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _artifact: reports.pop(0),
+    )
+    record = manager.start("success", "ar")
+    assert record.task is not None
+    await record.task
+
+    assert record.status == "complete"
+    assert backend.regeneration_calls == [("visual", code, 1)]
+    assert backend.heal_calls == 0
+    assert reports == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "codes",
+    (
+        ("runtime_error_beacon",),
+        ("external_request_observed",),
+        ("first_frame_missing",),
+        ("browser_probe_unavailable",),
+        ("browser_probe_timeout",),
+        ("browser_probe_failed",),
+        ("browser_probe_malformed",),
+        ("canvas_pixels_unchanged", "runtime_error_beacon"),
+    ),
+)
+async def test_fragment_route_keeps_unmapped_or_mixed_browser_failures_terminal(
+    monkeypatch: pytest.MonkeyPatch,
+    codes: tuple[str, ...],
+) -> None:
+    from server.browser_verify import BrowserVerificationResult
+    from server.codex_backend import MockCodexBackend, RuntimeContext
+    from server.codex_runtime import StageExecution
+    from server.jobs import JobManager
+    from server.verify import VerificationResult
+    from tests.golden_cases import VALID_UNDERSTANDING
+    from tests.test_parallel_fragment_generation import PHYSICS_FRAGMENT, VISUAL_FRAGMENT
+
+    class FragmentBackend(MockCodexBackend):
+        def __init__(self) -> None:
+            super().__init__()
+            self.regeneration_calls: list[tuple[str, str, int]] = []
+
+        async def understand(self, _question, _locale, *, runtime_context=None):
+            assert runtime_context == RuntimeContext(public=True)
+            self.understand_calls += 1
+            return deepcopy(VALID_UNDERSTANDING)
+
+        async def generate_fragments(self, _understanding, *, runtime_context=None):
+            assert runtime_context == RuntimeContext(public=True)
+            return (
+                StageExecution(
+                    deepcopy(PHYSICS_FRAGMENT), "private-physics", "gpt-5.6-sol", 1
+                ),
+                StageExecution(
+                    deepcopy(VISUAL_FRAGMENT), "private-visual", "gpt-5.6-terra", 1
+                ),
+            )
+
+        async def regenerate_fragment(
+            self,
+            role,
+            _understanding,
+            failure_code,
+            *,
+            repair_attempt=1,
+            runtime_context=None,
+        ):
+            assert runtime_context == RuntimeContext(public=True)
+            self.regeneration_calls.append((role, failure_code, repair_attempt))
+            return StageExecution(
+                deepcopy(VISUAL_FRAGMENT), "private-repair", "gpt-5.6-terra", 1
+            )
+
+    failures = [
+        {
+            "gate": "browser_readiness",
+            "code": code,
+            "expected": {"ready": True},
+            "actual": {"ready": False},
+        }
+        for code in codes
+    ]
+    monkeypatch.setattr(
+        "server.pipeline.verify_candidate",
+        lambda _module_output, _understanding: VerificationResult(
+            passed=True,
+            check_count=1,
+            failures=[],
+            artifact="<!doctype html><title>verified</title>",
+            node_report={"passed": True},
+        ),
+    )
+    backend = FragmentBackend()
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _artifact: BrowserVerificationResult(False, 1, failures, {}),
+    )
+    record = manager.start("success", "ar")
+    assert record.task is not None
+    await record.task
+
+    assert record.status == "answer_only"
+    assert record.fallback is not None
+    assert record.fallback.reason_code == "verification_exhausted"
+    assert backend.regeneration_calls == []
+    assert backend.heal_calls == 0
