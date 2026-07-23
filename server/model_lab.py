@@ -14,11 +14,8 @@ from server.browser_verify import BrowserVerificationResult
 from server.codex_backend import RuntimeContext, StageModelSpec
 from server.codex_runtime import CodexRuntimeError, StageExecution
 from server.fragment_generation import (
-    assemble_fragments,
-    assemble_fragments_for_preview,
     fragment_failure_diagnostic,
     validate_physics_fragment,
-    validate_visual_fragment,
 )
 from server.schemas import (
     AnswerPayload,
@@ -200,7 +197,6 @@ def _failure_codes(failures: list[dict[str, Any]]) -> list[str]:
 _PREVIEW_BLOCKING_GATES = frozenset(
     {
         "source_size",
-        "interface",
         "security",
         "syntax_runtime",
         "assembly",
@@ -372,8 +368,8 @@ class ModelLabManager:
             effort=candidate.config.visual.effort,
         )
         try:
-            physics_result, visual_result = (
-                await self.backend.generate_fragments_for_lab(
+            physics_result, module_result = (
+                await self.backend.generate_direct_module_for_lab(
                     understanding,
                     physics_spec=physics_spec,
                     visual_spec=visual_spec,
@@ -388,83 +384,38 @@ class ModelLabManager:
             return
         elapsed = int((time.monotonic() - generation_started) * 1000)
         candidate.physics_elapsed_ms = _stage_elapsed(physics_result, elapsed)
-        candidate.visual_elapsed_ms = _stage_elapsed(visual_result, elapsed)
+        candidate.visual_elapsed_ms = _stage_elapsed(module_result, elapsed)
         physics_document = _stage_data(physics_result)
-        visual_document = _stage_data(visual_result)
+        module_document = _stage_data(module_result)
+        physics_semantic_failure: dict[str, Any] | None = None
         try:
-            physics_fragment = validate_physics_fragment(
+            validate_physics_fragment(
                 physics_document,
                 understanding,
             )
         except (ContractError, ValidationError, ValueError) as error:
-            diagnostic = fragment_failure_diagnostic(
+            physics_semantic_failure = fragment_failure_diagnostic(
                 error,
                 role="physics",
                 understanding=understanding,
             )
-            candidate.failed_gates = [diagnostic["gate"]]
-            candidate.failure_codes = [f"physics:{diagnostic['code']}"]
+            candidate.failed_gates = [physics_semantic_failure["gate"]]
+            candidate.failure_codes = [
+                f"physics:{physics_semantic_failure['code']}"
+            ]
             candidate.check_count = 1
-            candidate.status = "rejected"
-            return
         except OSError:
             candidate.status = "failed"
             return
 
-        visual_semantic_failure: dict[str, Any] | None = None
         try:
-            visual_fragment = validate_visual_fragment(
-                visual_document,
-                understanding,
-            )
-        except (ContractError, ValidationError, ValueError) as error:
-            visual_semantic_failure = fragment_failure_diagnostic(
-                error,
-                role="visual",
-                understanding=understanding,
-            )
-            candidate.failed_gates = [visual_semantic_failure["gate"]]
-            candidate.failure_codes = [
-                f"visual:{visual_semantic_failure['code']}"
-            ]
-            candidate.check_count = 1
-            try:
-                module_output = validate_module_output(
-                    assemble_fragments_for_preview(
-                        physics_fragment,
-                        visual_document,
-                        understanding,
-                    )
-                )
-            except (ContractError, ValidationError, OSError, ValueError):
-                candidate.status = "rejected"
-                return
-        except OSError:
-            candidate.status = "failed"
+            module_output = validate_module_output(module_document)
+        except (ContractError, ValidationError, ValueError):
+            candidate.failed_gates = ["generation_contract"]
+            candidate.failure_codes = ["generation_contract:module_output_invalid"]
+            candidate.check_count += 1
+            candidate.status = "rejected"
             return
-        else:
-            try:
-                module_output = validate_module_output(
-                    assemble_fragments(
-                        physics_fragment,
-                        visual_fragment,
-                        understanding,
-                    )
-                )
-            except (ContractError, ValidationError, ValueError) as error:
-                diagnostic = fragment_failure_diagnostic(
-                    error,
-                    role="assembly",
-                    understanding=understanding,
-                )
-                candidate.failed_gates = [diagnostic["gate"]]
-                candidate.failure_codes = [f"assembly:{diagnostic['code']}"]
-                candidate.check_count = 1
-                candidate.status = "rejected"
-                return
-            except OSError:
-                candidate.status = "failed"
-                return
 
         candidate.status = "verifying"
         verification_started = time.monotonic()
@@ -475,8 +426,8 @@ class ModelLabManager:
         )
         candidate.check_count += deterministic.check_count
         combined_failures = list(deterministic.failures)
-        if visual_semantic_failure is not None:
-            combined_failures.insert(0, visual_semantic_failure)
+        if physics_semantic_failure is not None:
+            combined_failures.insert(0, physics_semantic_failure)
         candidate.failed_gates = _gate_names(combined_failures)
         candidate.failure_codes = sorted(
             set([*candidate.failure_codes, *_failure_codes(deterministic.failures)])
@@ -555,7 +506,7 @@ class ModelLabManager:
             (time.monotonic() - verification_started) * 1000
         )
         if (
-            visual_semantic_failure is None
+            physics_semantic_failure is None
             and deterministic.passed
             and browser.passed
         ):

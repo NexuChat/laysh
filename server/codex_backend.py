@@ -19,6 +19,10 @@ from server.settings import ALLOWED_RUNTIME_MODELS, Settings
 ROOT = Path(__file__).parents[1]
 PROMPT_DIR = Path(__file__).parent / "prompts"
 SCHEMA_DIR = Path(__file__).parent / "schemas"
+MODEL_LAB_CANVAS_SKILL = (
+    ROOT / ".codex" / "skills" / "model-lab-scientific-canvas" / "SKILL.md"
+)
+MODEL_LAB_CANVAS_PROMPT = MODEL_LAB_CANVAS_SKILL.with_name("PROMPT.md")
 CODEX_OUTPUT_SCHEMA_BY_STAGE = {
     "understand": SCHEMA_DIR / "understand.schema.json",
     "generate": SCHEMA_DIR / "module.schema.json",
@@ -248,6 +252,33 @@ class CodexBackend:
         return template.replace("@@INPUT_JSON@@", serialized)
 
     @staticmethod
+    def _render_model_lab_direct_prompt(
+        understanding: dict[str, Any],
+        physics_fragment: dict[str, Any],
+    ) -> str:
+        template = MODEL_LAB_CANVAS_PROMPT.read_text(encoding="utf-8")
+        skill = MODEL_LAB_CANVAS_SKILL.read_text(encoding="utf-8")
+        return (
+            template.replace("@@SKILL_TEXT@@", skill)
+            .replace(
+                "@@INPUT_JSON@@",
+                json.dumps(
+                    understanding,
+                    ensure_ascii=False,
+                    separators=(",", ":"),
+                ),
+            )
+            .replace(
+                "@@PHYSICS_JSON@@",
+                json.dumps(
+                    physics_fragment,
+                    ensure_ascii=False,
+                    separators=(",", ":"),
+                ),
+            )
+        )
+
+    @staticmethod
     def _execution_policy(context: RuntimeContext | None) -> dict[str, Any]:
         selected = context or RuntimeContext()
         return {
@@ -449,6 +480,42 @@ class CodexBackend:
             visual_spec=visual_spec,
             runtime_context=selected_context,
         )
+
+    async def generate_direct_module_for_lab(
+        self,
+        understanding: dict[str, Any],
+        *,
+        physics_spec: StageModelSpec,
+        visual_spec: StageModelSpec,
+        runtime_context: RuntimeContext | None = None,
+    ) -> tuple[StageExecution, StageExecution]:
+        """Plan physics, then let the selected visual model author a full Canvas module."""
+
+        selected_context = runtime_context or RuntimeContext()
+        if not selected_context.public:
+            raise CodexPolicyError("model_lab_public_only")
+        timeout_seconds = self.settings.public_stage_timeout_seconds
+        policy = self._execution_policy(selected_context)
+        physics = await self._execute_stage(
+            prompt=self._render_prompt("generate_physics.md", understanding),
+            schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["generate_physics"],
+            model=physics_spec.model,
+            effort=physics_spec.effort,
+            timeout_seconds=timeout_seconds,
+            **policy,
+        )
+        module = await self._execute_stage(
+            prompt=self._render_model_lab_direct_prompt(
+                understanding,
+                physics.data,
+            ),
+            schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["generate"],
+            model=visual_spec.model,
+            effort=visual_spec.effort,
+            timeout_seconds=timeout_seconds,
+            **policy,
+        )
+        return physics, module
 
     async def _generate_fragments_with_specs(
         self,
@@ -1119,6 +1186,26 @@ class MockCodexBackend:
             },
         }
         return physics, visual
+
+    async def generate_direct_module_for_lab(
+        self,
+        understanding: dict[str, Any],
+        *,
+        physics_spec: StageModelSpec,
+        visual_spec: StageModelSpec,
+        runtime_context: RuntimeContext | None = None,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        physics, _ = await self.generate_fragments_for_lab(
+            understanding,
+            physics_spec=physics_spec,
+            visual_spec=visual_spec,
+            runtime_context=runtime_context,
+        )
+        module = await self.generate(
+            understanding,
+            runtime_context=runtime_context,
+        )
+        return physics, module
 
     async def heal(
         self,

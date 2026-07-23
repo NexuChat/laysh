@@ -38,9 +38,10 @@
       <section class="lab-hero" aria-labelledby="lab-title">
         <div class="hero-copy">
           <p class="lab-badge"><span aria-hidden="true">◉</span> <span data-i18n="modelLab.badge">Isolated lab · never added to the library</span></p>
+          <p class="studio-mode" data-i18n="modelLab.mode">Direct Canvas Studio</p>
           <p class="eyebrow" data-i18n="modelLab.eyebrow">Model comparison observatory</p>
           <h1 id="lab-title" data-i18n="modelLab.title">One question. Two different eyes.</h1>
-          <p class="lede" data-i18n="modelLab.lede">Hold the question constant, then compare how each model draws the scientific idea at the reasoning effort you choose.</p>
+          <p class="lede" data-i18n="modelLab.lede">A physics model builds the scientific plan, then your selected drawing model authors a complete Canvas scene without the main product's declarative drawing limits.</p>
         </div>
         <div class="dual-lens" aria-hidden="true">
           <span class="lens lens-a"><i></i></span>
@@ -53,7 +54,7 @@
         <span class="notice-mark" aria-hidden="true">i</span>
         <div>
           <strong data-i18n="modelLab.noticeTitle">An honest, isolated comparison</strong>
-          <p data-i18n="modelLab.notice">We understand the question once, then generate two candidates concurrently. Verified results are labeled as such; safe but rejected candidates may appear only as unverified previews. Nothing is written to the library.</p>
+          <p data-i18n="modelLab.notice">Each candidate runs physics first and then a direct Canvas author. Hard safety and runtime failures are withheld; scientific and visual checks are advisory and remain visible beside the preview. Nothing reaches the learner pipeline or library.</p>
         </div>
       </aside>
 
@@ -90,11 +91,11 @@
             <legend data-i18n="modelLab.candidate" data-i18n-slot="A">Candidate A</legend>
             <div class="role-config" data-role="physics">
               <strong data-i18n="modelLab.physicsStage">Physics model</strong>
-              <label><span data-i18n="modelLab.model">Model</span><select name="model"><option value="gpt-5.6-luna">GPT-5.6 Luna</option><option value="gpt-5.6-terra">GPT-5.6 Terra</option><option value="gpt-5.6-sol" selected>GPT-5.6 Sol</option></select></label>
+              <label><span data-i18n="modelLab.model">Model</span><select name="model"><option value="gpt-5.6-luna">GPT-5.6 Luna</option><option value="gpt-5.6-terra" selected>GPT-5.6 Terra</option><option value="gpt-5.6-sol">GPT-5.6 Sol</option></select></label>
               <label><span data-i18n="modelLab.effort">Reasoning effort</span><select name="effort"><option value="low" data-i18n="modelLab.effort.low">Low</option><option value="medium" selected data-i18n="modelLab.effort.medium">Medium</option><option value="high" data-i18n="modelLab.effort.high">High</option></select></label>
             </div>
             <div class="role-config" data-role="visual">
-              <strong data-i18n="modelLab.visualStage">Drawing and representation</strong>
+              <strong data-i18n="modelLab.visualStage">Direct Canvas author</strong>
               <label><span data-i18n="modelLab.model">Model</span><select name="model"><option value="gpt-5.6-luna">GPT-5.6 Luna</option><option value="gpt-5.6-terra" selected>GPT-5.6 Terra</option><option value="gpt-5.6-sol">GPT-5.6 Sol</option></select></label>
               <label><span data-i18n="modelLab.effort">Reasoning effort</span><select name="effort"><option value="low" data-i18n="modelLab.effort.low">Low</option><option value="medium" selected data-i18n="modelLab.effort.medium">Medium</option><option value="high" data-i18n="modelLab.effort.high">High</option></select></label>
             </div>
@@ -110,9 +111,9 @@
               <label><span data-i18n="modelLab.effort">Reasoning effort</span><select name="effort"><option value="low" data-i18n="modelLab.effort.low">Low</option><option value="medium" selected data-i18n="modelLab.effort.medium">Medium</option><option value="high" data-i18n="modelLab.effort.high">High</option></select></label>
             </div>
             <div class="role-config" data-role="visual">
-              <strong data-i18n="modelLab.visualStage">Drawing and representation</strong>
+              <strong data-i18n="modelLab.visualStage">Direct Canvas author</strong>
               <label><span data-i18n="modelLab.model">Model</span><select name="model"><option value="gpt-5.6-luna">GPT-5.6 Luna</option><option value="gpt-5.6-terra">GPT-5.6 Terra</option><option value="gpt-5.6-sol" selected>GPT-5.6 Sol</option></select></label>
-              <label><span data-i18n="modelLab.effort">Reasoning effort</span><select name="effort"><option value="low" data-i18n="modelLab.effort.low">Low</option><option value="medium" data-i18n="modelLab.effort.medium">Medium</option><option value="high" selected data-i18n="modelLab.effort.high">High</option></select></label>
+              <label><span data-i18n="modelLab.effort">Reasoning effort</span><select name="effort"><option value="low" data-i18n="modelLab.effort.low">Low</option><option value="medium" selected data-i18n="modelLab.effort.medium">Medium</option><option value="high" data-i18n="modelLab.effort.high">High</option></select></label>
             </div>
           </fieldset>
         </div>
@@ -147,8 +148,8 @@
             <span class="candidate-status" data-status="queued" data-i18n="modelLab.idle">Waiting for a question</span>
           </header>
           <div class="candidate-routes">
-            <p><span data-i18n="modelLab.physicsStage">Physics model</span><bdi class="physics-model" dir="ltr">GPT-5.6 Sol</bdi><span class="physics-effort" data-i18n="modelLab.effort.medium">Medium</span></p>
-            <p><span data-i18n="modelLab.visualStage">Drawing and representation</span><bdi class="visual-model" dir="ltr">GPT-5.6 Terra</bdi><span class="visual-effort" data-i18n="modelLab.effort.medium">Medium</span></p>
+            <p><span data-i18n="modelLab.physicsStage">Physics model</span><bdi class="physics-model" dir="ltr">GPT-5.6 Terra</bdi><span class="physics-effort" data-i18n="modelLab.effort.medium">Medium</span></p>
+            <p><span data-i18n="modelLab.visualStage">Direct Canvas author</span><bdi class="visual-model" dir="ltr">GPT-5.6 Terra</bdi><span class="visual-effort" data-i18n="modelLab.effort.medium">Medium</span></p>
           </div>
           <dl class="metrics">
             <div><dt data-i18n="modelLab.physicsTime">Physics</dt><dd data-metric="physics">—</dd></div>
@@ -182,7 +183,7 @@
           </header>
           <div class="candidate-routes">
             <p><span data-i18n="modelLab.physicsStage">Physics model</span><bdi class="physics-model" dir="ltr">GPT-5.6 Sol</bdi><span class="physics-effort" data-i18n="modelLab.effort.medium">Medium</span></p>
-            <p><span data-i18n="modelLab.visualStage">Drawing and representation</span><bdi class="visual-model" dir="ltr">GPT-5.6 Sol</bdi><span class="visual-effort" data-i18n="modelLab.effort.high">High</span></p>
+            <p><span data-i18n="modelLab.visualStage">Direct Canvas author</span><bdi class="visual-model" dir="ltr">GPT-5.6 Sol</bdi><span class="visual-effort" data-i18n="modelLab.effort.medium">Medium</span></p>
           </div>
           <dl class="metrics">
             <div><dt data-i18n="modelLab.physicsTime">Physics</dt><dd data-metric="physics">—</dd></div>

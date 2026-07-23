@@ -166,6 +166,21 @@ main { padding-block: clamp(2rem, 5vw, 5.5rem); }
   font-size: .67rem;
 }
 .lab-badge span:first-child { margin-inline-end: .35rem; }
+.studio-mode {
+  width: fit-content;
+  margin: 0 0 .7rem;
+  color: var(--cream);
+  font-family: var(--mono);
+  font-size: .66rem;
+  font-weight: 760;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+[dir="rtl"] .studio-mode {
+  font-family: "Laysh Kufi", sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+}
 .eyebrow {
   margin: 0 0 .7rem;
   color: var(--cyan);
