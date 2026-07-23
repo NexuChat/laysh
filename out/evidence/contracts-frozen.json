@@ -19,7 +19,7 @@
     "server/schemas/verification_report.schema.json": "5fa54e7d4cbe52fe10bc114532fe8fa5085c4cfb21534fb134e333cc95728a81",
     "server/schemas/visual_fragment.schema.json": "68206a7f883090778b51fda1c7e1e63dfea953a32f99f322a540760de79543d1",
     "server/schemas/visual_qa.schema.json": "433a60f403351ef7b5ae527178d2d91a3916f3479607b4c7c004d673a2e71311",
-    "server/schemas.py": "8e47245f77dbb1aed0fd6977bc36bb54275be600bcd96687dea75bbbc8a4ea95",
+    "server/schemas.py": "f53fd16d5b86ca3db2600fa35bc850189941ec0082e1fe29c020743570292edf",
     "sim_shell/contract.js": "815a04312ef79e55d1b982e8906a3b6acbbb81733da2555d4b52ece07c627621"
   }
 }
