@@ -111,7 +111,7 @@ async def test_public_understand_retries_terra_only_after_luna_schema_failure(ca
 
 
 @pytest.mark.asyncio
-async def test_curated_understand_routes_to_luna_with_builder_reference_contract():
+async def test_curated_understand_routes_to_sol_for_build_time_fixture_quality():
     from server.codex_backend import CodexBackend, RuntimeContext
     from server.settings import Settings
 
@@ -124,7 +124,7 @@ async def test_curated_understand_routes_to_luna_with_builder_reference_contract
         runtime_context=RuntimeContext(public=False, evidence_fixture_id="moon_phases_ar"),
     )
 
-    assert executor.calls[0]["model"] == "gpt-5.6-luna"
+    assert executor.calls[0]["model"] == "gpt-5.6-sol"
     assert executor.calls[0]["effort"] == "low"
     assert executor.calls[0]["public"] is False
     payload = json.loads(executor.calls[0]["prompt"].split("INPUT_JSON:\n", 1)[1])
@@ -150,7 +150,55 @@ async def test_public_understand_never_receives_builder_fixture_contract():
 
 
 @pytest.mark.asyncio
-async def test_curated_generation_is_terra_then_sol_repairs_stay_low_cost(monkeypatch):
+async def test_public_generate_receives_long_stage_budget_inside_hard_job_cap():
+    from server.codex_backend import CodexBackend, RuntimeContext
+    from server.settings import Settings
+
+    settings = Settings()
+    executor = RecordingExecutor()
+    backend = CodexBackend(executor=executor, settings=settings)
+
+    await backend.generate(
+        VALID_UNDERSTANDING,
+        runtime_context=RuntimeContext(public=True),
+    )
+
+    assert settings.public_job_timeout_seconds == 600
+    assert executor.calls[0]["timeout_seconds"] == 240
+    assert executor.calls[0]["model"] == "gpt-5.6-terra"
+
+
+@pytest.mark.asyncio
+async def test_public_generate_canary_override_uses_luna_high_without_changing_heal():
+    from server.codex_backend import CodexBackend, RuntimeContext
+    from server.settings import Settings
+
+    settings = Settings(
+        public_generate_model_override="gpt-5.6-luna",
+        public_generate_effort="high",
+    )
+    executor = RecordingExecutor()
+    backend = CodexBackend(executor=executor, settings=settings)
+    context = RuntimeContext(public=True)
+
+    await backend.generate(VALID_UNDERSTANDING, runtime_context=context)
+    await backend.heal(
+        VALID_MODULE_OUTPUT,
+        VALID_UNDERSTANDING,
+        [{"gate": "scene_geometry", "code": "fixture"}],
+        1,
+        runtime_context=context,
+    )
+
+    assert [call["model"] for call in executor.calls] == [
+        "gpt-5.6-luna",
+        "gpt-5.6-terra",
+    ]
+    assert [call["effort"] for call in executor.calls] == ["high", "medium"]
+
+
+@pytest.mark.asyncio
+async def test_curated_generate_heal_and_ordinary_qa_stay_sol(monkeypatch):
     from server.codex_backend import CodexBackend, RuntimeContext
     from server.settings import Settings
 
@@ -186,12 +234,12 @@ async def test_curated_generation_is_terra_then_sol_repairs_stay_low_cost(monkey
     )
 
     assert [call["model"] for call in executor.calls] == [
-        "gpt-5.6-terra",
+        "gpt-5.6-sol",
         "gpt-5.6-sol",
         "gpt-5.6-sol",
         "gpt-5.6-sol",
     ]
-    assert [call["effort"] for call in executor.calls] == ["medium", "low", "low", "medium"]
+    assert [call["effort"] for call in executor.calls] == ["medium", "medium", "high", "medium"]
     assert [call["schema_path"].name for call in executor.calls] == [
         "module.schema.json",
         "module.schema.json",
@@ -228,24 +276,11 @@ async def test_qa_input_is_slim_bounded_and_review_only():
     call = executor.calls[0]
     serialized = call["prompt"].split("QA_INPUT_JSON:\n", 1)[1].strip()
     payload = json.loads(serialized)
-    assert set(payload) == {
-        "module_source",
-        "module_spec",
-        "fixtures",
-        "gate_outcome",
-        "primary_parameter",
-        "key_formula",
-        "learning_objective",
-        "prediction",
-    }
+    assert set(payload) == {"module_source", "module_spec", "fixtures", "gate_outcome"}
     assert payload["module_source"] == VALID_MODULE_OUTPUT["module_js"]
     assert payload["module_spec"] == VALID_UNDERSTANDING["module_spec"]
     assert payload["fixtures"] == VALID_UNDERSTANDING["checks"]
     assert payload["gate_outcome"] == gate_outcome
-    assert payload["primary_parameter"] == VALID_UNDERSTANDING["primary_parameter"]
-    assert payload["key_formula"] == VALID_UNDERSTANDING["key_formula"]
-    assert payload["learning_objective"] == VALID_UNDERSTANDING["learning_objective"]
-    assert payload["prediction"] == VALID_UNDERSTANDING["prediction"]
     assert VALID_UNDERSTANDING["title"] not in call["prompt"]
     assert "full assembled HTML" not in call["prompt"]
     assert "immediate" in call["prompt"]
@@ -275,7 +310,7 @@ def test_generate_prompt_is_bounded_without_reducing_the_visual_contract():
         "physical light",
         "idle motion",
         "reactive feedback",
-        "stable conceptual labels",
+        "readout chip",
         "same-value redraw",
         "curved terminator",
     ):

@@ -91,7 +91,33 @@ def _consumes_model_state(source: str, function_name: str) -> bool:
     for match in binding.finditer(source):
         state_name = match.group(1)
         remainder = source[match.end() :]
-        if re.search(rf"\b{re.escape(state_name)}\s*\.", remainder):
+        if re.search(rf"\b{re.escape(state_name)}\s*(?:\.|\[)", remainder):
+            return True
+
+    destructured = re.compile(
+        rf"\b(?:var|let|const)\s*\{{([^{{}}]+)\}}\s*=\s*"
+        rf"{re.escape(function_name)}\s*\("
+    )
+    for match in destructured.finditer(source):
+        names: list[str] = []
+        for item in match.group(1).split(","):
+            candidate = item.strip().removeprefix("...").split("=", 1)[0].strip()
+            if ":" in candidate:
+                candidate = candidate.split(":", 1)[1].strip()
+            if re.fullmatch(_IDENTIFIER, candidate):
+                names.append(candidate)
+        remainder = source[match.end() :]
+        if any(re.search(rf"\b{re.escape(name)}\b", remainder) for name in names):
+            return True
+
+    direct_property = re.compile(
+        rf"\b(?:var|let|const)\s+({_IDENTIFIER})\s*=\s*"
+        rf"{re.escape(function_name)}\s*\([^;\n]*?\)\s*"
+        rf"(?:\.\s*{_IDENTIFIER}|\[\s*['\"]{_IDENTIFIER}['\"]\s*\])"
+    )
+    for match in direct_property.finditer(source):
+        binding_name = match.group(1)
+        if re.search(rf"\b{re.escape(binding_name)}\b", source[match.end() :]):
             return True
     return False
 

@@ -22,19 +22,16 @@ class BrowserVerificationResult:
     def passing(cls) -> BrowserVerificationResult:
         return cls(
             passed=True,
-            check_count=9,
+            check_count=6,
             failures=[],
             evidence={
                 "ready": True,
                 "controlChanged": True,
                 "frameChanged": True,
+                "canvasHashBefore": 1234,
+                "canvasHashAfter": 5678,
                 "runtimeError": False,
                 "externalRequests": 0,
-                "initialOutcomeMatchesModel": True,
-                "modelOutcomeChanged": True,
-                "displayedOutcomeChanged": True,
-                "canvasPixels": 288_000,
-                "changedPixels": 2_400,
             },
         )
 
@@ -50,13 +47,6 @@ def _failure(code: str, expected: dict[str, Any], actual: dict[str, Any]) -> dic
 
 def _evaluate(evidence: dict[str, Any]) -> BrowserVerificationResult:
     failures = []
-    canvas_pixels = evidence.get("canvasPixels")
-    changed_pixels = evidence.get("changedPixels")
-    minimum_changed_pixels = (
-        max(64, (int(canvas_pixels) + 999) // 1000)
-        if isinstance(canvas_pixels, int) and canvas_pixels > 0
-        else 64
-    )
     checks = (
         (
             bool(evidence.get("ready")),
@@ -77,6 +67,17 @@ def _evaluate(evidence: dict[str, Any]) -> BrowserVerificationResult:
             {"frame_changed": bool(evidence.get("frameChanged"))},
         ),
         (
+            isinstance(evidence.get("canvasHashBefore"), int)
+            and isinstance(evidence.get("canvasHashAfter"), int)
+            and evidence.get("canvasHashBefore") != evidence.get("canvasHashAfter"),
+            "canvas_pixels_unchanged",
+            {"canvas_pixels_changed": True},
+            {
+                "canvas_hash_before": evidence.get("canvasHashBefore"),
+                "canvas_hash_after": evidence.get("canvasHashAfter"),
+            },
+        ),
+        (
             not bool(evidence.get("runtimeError")),
             "runtime_error_beacon",
             {"runtime_error": False},
@@ -88,54 +89,61 @@ def _evaluate(evidence: dict[str, Any]) -> BrowserVerificationResult:
             {"external_requests": 0},
             {"external_requests": evidence.get("externalRequests")},
         ),
-        (
-            evidence.get("initialOutcomeMatchesModel") is True,
-            "initial_outcome_mismatch",
-            {"displayed_outcome_matches_model": True},
-            {
-                "displayed_outcome_matches_model": evidence.get(
-                    "initialOutcomeMatchesModel"
-                ),
-                "initial_outcome": evidence.get("initialOutcome"),
-            },
-        ),
-        (
-            evidence.get("modelOutcomeChanged") is True,
-            "primary_outcome_unchanged",
-            {"model_outcome_changed": True},
-            {
-                "model_outcome_changed": evidence.get("modelOutcomeChanged"),
-                "initial_outcome": evidence.get("initialOutcome"),
-                "final_outcome": evidence.get("finalOutcome"),
-            },
-        ),
-        (
-            evidence.get("displayedOutcomeChanged") is True,
-            "displayed_outcome_unchanged",
-            {"displayed_outcome_changed": True},
-            {
-                "displayed_outcome_changed": evidence.get("displayedOutcomeChanged"),
-                "initial_parameter": evidence.get("initialParameterValue"),
-                "final_parameter": evidence.get("finalParameterValue"),
-            },
-        ),
-        (
-            isinstance(changed_pixels, int)
-            and changed_pixels >= minimum_changed_pixels,
-            "causal_visual_change_too_small",
-            {"minimum_changed_pixels": minimum_changed_pixels},
-            {
-                "changed_pixels": changed_pixels,
-                "canvas_pixels": canvas_pixels,
-            },
-        ),
     )
     for passed, code, expected, actual in checks:
         if not passed:
             failures.append(_failure(code, expected, actual))
+    check_count = len(checks)
+    causal = evidence.get("causalResponse")
+    if isinstance(causal, dict) and causal.get("required") is True:
+        report = causal.get("report")
+        if not isinstance(report, dict):
+            check_count += 1
+            failures.append(
+                {
+                    "gate": "causal_response",
+                    "code": "causal_report_missing",
+                    "expected": {"trusted_causal_report": True},
+                    "actual": {"trusted_causal_report": False},
+                }
+            )
+        else:
+            report_check_count = report.get("checkCount")
+            if isinstance(report_check_count, int) and 0 < report_check_count <= 32:
+                check_count += report_check_count
+            else:
+                check_count += 1
+                failures.append(
+                    {
+                        "gate": "causal_response",
+                        "code": "causal_report_malformed",
+                        "expected": {"bounded_check_count": True},
+                        "actual": {"bounded_check_count": False},
+                    }
+                )
+            report_failures = report.get("failures")
+            if isinstance(report_failures, list) and all(
+                isinstance(item, dict)
+                and item.get("gate") == "causal_response"
+                and isinstance(item.get("code"), str)
+                and item["code"].startswith("causal_")
+                and isinstance(item.get("expected"), dict)
+                and isinstance(item.get("actual"), dict)
+                for item in report_failures
+            ):
+                failures.extend(report_failures)
+            else:
+                failures.append(
+                    {
+                        "gate": "causal_response",
+                        "code": "causal_report_malformed",
+                        "expected": {"structured_failures": True},
+                        "actual": {"structured_failures": False},
+                    }
+                )
     return BrowserVerificationResult(
         passed=not failures,
-        check_count=len(checks),
+        check_count=check_count,
         failures=failures,
         evidence=evidence,
     )

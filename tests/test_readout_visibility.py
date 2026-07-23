@@ -132,6 +132,8 @@ def test_shell_uses_the_shared_readout_formatter_without_changing_unit_suffixes(
     assert "readout.format(observed)" in shell_js
     assert "Number(observed).toFixed(2)" not in shell_js
     assert "${parameter.unit}" in shell_js
+    assert "const outcomeUnit" in shell_js
+    assert "${valueText}${unitSuffix}" in shell_js
 
 
 def test_generation_prompt_requires_a_visible_factor_for_amplified_geometry():

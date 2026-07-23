@@ -7,11 +7,15 @@ import os
 import re
 import tempfile
 import unicodedata
-from dataclasses import asdict, dataclass
+from collections.abc import Mapping
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any, Literal
 
 from server.promotion import STABLE_ROUTE, PromotionRoute, require_stable_cache_eligibility
+
+VERIFIED_CACHE_CONTRACT_VERSION = "1.1-causal-actor"
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,6 +65,7 @@ class VerifiedCache:
         golden_root: Path,
         secret: bytes,
         contract_version: str,
+        curated_legacy_goldens: Mapping[str, str] | None = None,
     ) -> None:
         if not secret:
             raise ValueError("cache key secret must not be empty")
@@ -68,6 +73,16 @@ class VerifiedCache:
         self.golden_root = golden_root
         self.secret = secret
         self.contract_version = contract_version
+        curated = dict(curated_legacy_goldens or {})
+        if any(
+            not re.fullmatch(r"[a-z0-9_]+", golden_id)
+            or not isinstance(version, str)
+            or not version
+            or version == contract_version
+            for golden_id, version in curated.items()
+        ):
+            raise ValueError("curated legacy goldens require explicit legacy versions")
+        self.curated_legacy_goldens = MappingProxyType(curated)
         self.root.mkdir(parents=True, exist_ok=True)
         self.golden_root.mkdir(parents=True, exist_ok=True)
 
@@ -118,12 +133,30 @@ class VerifiedCache:
             return None
         return entry
 
+    def _entry_is_compatible(self, path: Path, entry: CacheEntry) -> bool:
+        if path.parent == self.root:
+            return not entry.pinned and entry.contract_version == self.contract_version
+        if path.parent != self.golden_root:
+            return False
+        golden_id = path.stem
+        curated_identity = (
+            entry.pinned
+            and entry.tier == "A"
+            and entry.route_label == STABLE_ROUTE
+            and entry.cache_id == f"golden_{golden_id}"
+        )
+        if not curated_identity:
+            return False
+        return entry.contract_version == self.contract_version or (
+            self.curated_legacy_goldens.get(golden_id) == entry.contract_version
+        )
+
     def _entries(self) -> list[CacheEntry]:
         entries = []
         for directory in (self.golden_root, self.root):
             for path in sorted(directory.glob("*.json")):
                 entry = self._load(path)
-                if entry is not None and entry.contract_version == self.contract_version:
+                if entry is not None and self._entry_is_compatible(path, entry):
                     entries.append(entry)
         return entries
 
@@ -138,10 +171,66 @@ class VerifiedCache:
         exact = self.exact_key(question, locale)
         semantic = self.semantic_key(locale, domain, canonical_intent)
         entries = self._entries()
-        return next(
+        keyed = next(
             (entry for entry in entries if entry.exact_key == exact),
             next((entry for entry in entries if entry.semantic_key == semantic), None),
         )
+        if keyed is not None:
+            return keyed
+        return self._lookup_pinned_alias(
+            question=question,
+            locale=locale,
+            exact_key=exact,
+            semantic_key=semantic,
+        )
+
+    def _lookup_pinned_alias(
+        self,
+        *,
+        question: str,
+        locale: str,
+        exact_key: str,
+        semantic_key: str,
+    ) -> CacheEntry | None:
+        """Resolve only exact repository-owned aliases to a localized verified view."""
+
+        if locale not in {"ar", "en"}:
+            return None
+        normalized_question = _normalize(question)
+        for path in sorted(self.golden_root.glob("*.json")):
+            entry = self._load(path)
+            if entry is None or not self._entry_is_compatible(path, entry):
+                continue
+            try:
+                document = json.loads(path.read_text(encoding="utf-8"))
+                aliases = document.get("aliases", [])
+                localized_title = document.get("metadata", {}).get(locale, {}).get("title")
+                candidates = [
+                    value
+                    for value in [*aliases, localized_title]
+                    if isinstance(value, str) and value.strip()
+                ]
+                if normalized_question not in {_normalize(value) for value in candidates}:
+                    continue
+                from server.goldens import localized_pinned_golden
+
+                localized = localized_pinned_golden(document, locale)
+                artifact = localized["artifact"]
+                if not isinstance(artifact, str) or not artifact:
+                    continue
+            except (KeyError, OSError, TypeError, ValueError, json.JSONDecodeError):
+                continue
+            return replace(
+                entry,
+                exact_key=exact_key,
+                semantic_key=semantic_key,
+                artifact=artifact,
+                artifact_sha256=hashlib.sha256(artifact.encode("utf-8")).hexdigest(),
+                title=localized["title"],
+                locale=localized["lang"],
+                direction=localized["direction"],
+            )
+        return None
 
     def write_verified(
         self,
@@ -304,8 +393,9 @@ class VerifiedCache:
 
     def inspect(self, cache_id: str) -> CacheEntry | None:
         for directory in (self.root, self.golden_root):
-            entry = self._load(directory / f"{cache_id}.json")
-            if entry is not None and entry.contract_version == self.contract_version:
+            path = directory / f"{cache_id}.json"
+            entry = self._load(path)
+            if entry is not None and self._entry_is_compatible(path, entry):
                 return entry
         return None
 

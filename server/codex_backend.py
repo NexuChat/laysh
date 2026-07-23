@@ -7,14 +7,14 @@ import time
 from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from jsonschema import ValidationError
 
 from server.codex_runtime import CodexExecutor, CodexPolicyError, CodexRuntimeError, StageExecution
 from server.model_routing import ModelRoutingPolicy
 from server.schemas import ContractError, validate_module_output, validate_understanding
-from server.settings import Settings
+from server.settings import ALLOWED_RUNTIME_MODELS, Settings
 
 ROOT = Path(__file__).parents[1]
 PROMPT_DIR = Path(__file__).parent / "prompts"
@@ -22,6 +22,8 @@ SCHEMA_DIR = Path(__file__).parent / "schemas"
 CODEX_OUTPUT_SCHEMA_BY_STAGE = {
     "understand": SCHEMA_DIR / "understand.schema.json",
     "generate": SCHEMA_DIR / "module.schema.json",
+    "generate_physics": SCHEMA_DIR / "physics_fragment.schema.json",
+    "generate_visual": SCHEMA_DIR / "visual_fragment.schema.json",
     "heal": SCHEMA_DIR / "module.schema.json",
     "qa": SCHEMA_DIR / "qa.schema.json",
     "visual_qa": SCHEMA_DIR / "visual_qa.schema.json",
@@ -29,11 +31,126 @@ CODEX_OUTPUT_SCHEMA_BY_STAGE = {
 CODEX_OUTPUT_SCHEMAS = tuple(sorted(set(CODEX_OUTPUT_SCHEMA_BY_STAGE.values())))
 LOGGER = logging.getLogger(__name__)
 
+FRAGMENT_RETRY_HINTS: dict[str, str] = {
+    "causal_scientific_actor_required": (
+        "Set causal_response.actor_id to the primary scientific actor, not a "
+        "decorative command or an unknown ID."
+    ),
+    "causal_output_undeclared": (
+        "Set causal_response.output_name to one exact output declared by the fixed "
+        "module spec; do not invent or rename outputs."
+    ),
+    "causal_fixture_required": (
+        "Select a fixture-covered declared output for causal_response so its physics "
+        "can be checked deterministically."
+    ),
+    "causal_channel_output_required": (
+        "Make the causal actor field for the selected channel directly use "
+        "output_<output_name>; normalized alone is not causal evidence."
+    ),
+    "signed_causal_fixture_coverage_required": (
+        "Preserve distinct negative, zero, and positive actor behavior from the fixed "
+        "signed output fixtures."
+    ),
+    "scientific_output_reference_required": (
+        "Every scientific circle or ellipse must visibly use output_<declared_name> "
+        "in at least one geometry or opacity field. Fixed contextual shapes must set "
+        "scientific false. Keep the causal actor bound through its declared channel."
+    ),
+    "undeclared_visual_output": (
+        "Use only declared output names with the output_ prefix in visual expressions; "
+        "remove invented output aliases."
+    ),
+    "undeclared_relation_output": (
+        "Use only declared output names in relation expressions and keep relation "
+        "geometry derived from the fixed visual commands."
+    ),
+    "scientific_relations_incomplete": (
+        "Declare exactly one relation for every pair of scientific actors, with no "
+        "missing or repeated pair."
+    ),
+    "scientific_relation_invalid": (
+        "Each relation must name two unique scientific actor IDs that exist in the "
+        "commands list."
+    ),
+    "duplicate_visual_command_id": (
+        "Give every visual command a unique id and update causal_response and relation "
+        "references to those exact IDs."
+    ),
+    "unsupported_scientific_geometry": (
+        "Only a circle or ellipse may be scientific true; mark lines, arrows, waves, "
+        "rectangles, and text as scientific false."
+    ),
+    "unsupported_ellipse_relation": (
+        "Use one scientific ellipse for the primary actor and mark supporting pieces "
+        "scientific false. Do not require contact or scientific occlusion for an ellipse."
+    ),
+    "scientific_salient_output_required": (
+        "Make a declared output drive the scientific actor center, radius, rotation, "
+        "or opacity; line width alone is not a visible response."
+    ),
+    "relation_clearance_invalid": (
+        "Set minimum_clearance to zero whenever overlap is allowed or contact is "
+        "required; otherwise use a nonnegative safe expression."
+    ),
+    "physics_output_contract_mismatch": (
+        "Return the exact ordered output names from the fixed module spec and provide "
+        "one matching physics expression for each."
+    ),
+    "duplicate_physics_output": (
+        "Define each fixed output exactly once and keep expression names unique and in "
+        "the module-spec order."
+    ),
+    "assembled_source_too_large": (
+        "Reduce command count and text while preserving the primary scientific actor, "
+        "causal response, and required relations."
+    ),
+    "undeclared_expression_name": (
+        "Use only the exact declared parameter IDs and pi as names. Replace symbolic "
+        "constants or aliases with finite numeric literals."
+    ),
+    "unsupported_expression_call": (
+        "Use only the math calls listed in the fragment prompt and replace unsupported "
+        "helpers with equivalent allowed arithmetic."
+    ),
+    "invalid_expression_arity": (
+        "Call each allowed math function with its documented number of arguments."
+    ),
+    "fragment_schema_invalid": (
+        "Return every field required by the closed role schema, no extra fields, and "
+        "use the exact declared types and enum values."
+    ),
+    "fragment_semantic_validation_failed": (
+        "Re-read the fixed role contract and return a fresh minimal fragment whose IDs, "
+        "outputs, expressions, and relations are internally consistent."
+    ),
+}
+
 
 @dataclass(frozen=True, slots=True)
 class RuntimeContext:
     public: bool = True
     evidence_fixture_id: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class GenerationCandidateSpec:
+    """Internal, closed routing decision for one independently verified candidate."""
+
+    candidate_id: Literal["single", "fast", "quality"]
+    ordinal: int
+    model: Literal["gpt-5.6-luna", "gpt-5.6-terra", "gpt-5.6-sol"]
+    effort: Literal["low", "medium", "high"]
+
+    def __post_init__(self) -> None:
+        if self.candidate_id not in {"single", "fast", "quality"}:
+            raise ValueError("unknown generation candidate")
+        if self.ordinal not in {1, 2}:
+            raise ValueError("generation candidate ordinal must be one or two")
+        if self.model not in ALLOWED_RUNTIME_MODELS:
+            raise ValueError("generation candidate model must be GPT-5.6")
+        if self.effort not in {"low", "medium", "high"}:
+            raise ValueError("generation candidate effort is not allowed")
 
 
 class CodexBackend:
@@ -53,6 +170,13 @@ class CodexBackend:
         self.routing_policy = routing_policy or ModelRoutingPolicy(
             terra_eligible_tiers=frozenset(settings.terra_generation_tiers)
         )
+        self._model_slots = asyncio.Semaphore(settings.max_parallel_model_calls)
+
+    async def _execute_stage(self, **kwargs: Any) -> StageExecution:
+        """Apply one process-wide model-call bound across every runtime stage."""
+
+        async with self._model_slots:
+            return await self.executor.execute_stage(**kwargs)
 
     @staticmethod
     def _render_prompt(name: str, payload: dict[str, Any]) -> str:
@@ -102,7 +226,7 @@ class CodexBackend:
             fallback_timeout = retry_budget - primary_timeout
         failure_code: str | None = None
         try:
-            result = await self.executor.execute_stage(
+            result = await self._execute_stage(
                 prompt=prompt,
                 schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["understand"],
                 model=model,
@@ -149,7 +273,7 @@ class CodexBackend:
             fallback_timeout = min(fallback_timeout, retry_deadline - time.monotonic())
             if fallback_timeout <= 0:
                 raise CodexRuntimeError("understand_retry_budget_exhausted")
-        result = await self.executor.execute_stage(
+        result = await self._execute_stage(
             prompt=prompt,
             schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["understand"],
             model=fallback,
@@ -182,20 +306,197 @@ class CodexBackend:
         scenario: str = "live",
         *,
         runtime_context: RuntimeContext | None = None,
+        candidate_spec: GenerationCandidateSpec | None = None,
     ) -> StageExecution:
         del scenario
         selected_context = runtime_context or RuntimeContext()
-        model = (
-            self.routing_policy.generation_model(understanding)
-            if selected_context.public
-            else self.settings.generate_model
-        )
-        return await self.executor.execute_stage(
+        selected_candidate = candidate_spec or self.generation_candidate_specs(
+            understanding,
+            runtime_context=selected_context,
+        )[0]
+        return await self._execute_stage(
             prompt=self._render_prompt("generate_module.md", understanding),
             schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["generate"],
+            model=selected_candidate.model,
+            effort=selected_candidate.effort,
+            timeout_seconds=(
+                self.settings.public_stage_timeout_seconds
+                if selected_context.public
+                else self.settings.evidence_stage_timeout_seconds
+            ),
+            **self._execution_policy(selected_context),
+        )
+
+    async def generate_fragments(
+        self,
+        understanding: dict[str, Any],
+        *,
+        runtime_context: RuntimeContext | None = None,
+    ) -> tuple[StageExecution, StageExecution]:
+        """Generate the scientific model and visual plan concurrently.
+
+        Both calls are required.  If either fails or the learner cancels, the
+        sibling is cancelled and awaited so its subprocess group cannot outlive
+        the public job.
+        """
+
+        selected_context = runtime_context or RuntimeContext()
+        policy = self._execution_policy(selected_context)
+        timeout_seconds = (
+            self.settings.public_stage_timeout_seconds
+            if selected_context.public
+            else self.settings.evidence_stage_timeout_seconds
+        )
+        physics_task = asyncio.create_task(
+            self._execute_stage(
+                prompt=self._render_prompt("generate_physics.md", understanding),
+                schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["generate_physics"],
+                model=self.settings.physics_model,
+                effort="medium",
+                timeout_seconds=timeout_seconds,
+                **policy,
+            )
+        )
+        visual_task = asyncio.create_task(
+            self._execute_stage(
+                prompt=self._render_prompt("generate_visual.md", understanding),
+                schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["generate_visual"],
+                model=self.settings.visual_model,
+                effort="medium",
+                timeout_seconds=timeout_seconds,
+                **policy,
+            )
+        )
+        tasks = (physics_task, visual_task)
+        try:
+            physics, visual = await asyncio.gather(*tasks)
+            return physics, visual
+        except BaseException:
+            for task in tasks:
+                if not task.done():
+                    task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+            raise
+
+    async def regenerate_fragment(
+        self,
+        role: Literal["physics", "visual"],
+        understanding: dict[str, Any],
+        failure_code: str,
+        *,
+        repair_attempt: int = 1,
+        runtime_context: RuntimeContext | None = None,
+    ) -> StageExecution:
+        """Regenerate one invalid fragment within the two-attempt public bound."""
+
+        if role not in {"physics", "visual"}:
+            raise ValueError("unknown fragment role")
+        if repair_attempt not in {1, 2}:
+            raise ValueError("fragment repair attempt must be one or two")
+        safe_failure_code = (
+            failure_code
+            if failure_code.replace("_", "").isalnum() and len(failure_code) <= 64
+            else "fragment_semantic_validation_failed"
+        )
+        retry_hint = FRAGMENT_RETRY_HINTS.get(safe_failure_code, "")
+        if safe_failure_code == "physics_fixture_mismatch":
+            retry_hint = (
+                "Re-derive every expression from the fixed numeric and relation checks in "
+                "UNDERSTANDING_JSON. Match expected values within tolerance and keep fixed "
+                "constants as numeric literals."
+            )
+        elif safe_failure_code == "visual_geometry_mismatch":
+            retry_hint = (
+                "Keep every scientific actor and its conservative safety envelope inside "
+                "the viewport at narrow and wide sizes. Avoid forbidden overlap and retain "
+                "a clear mobile margin."
+            )
+        elif safe_failure_code == "visual_causality_mismatch":
+            retry_hint = (
+                "Bind the primary scientific actor response channel directly to its "
+                "fixture-covered causal output. Preserve the declared relation across "
+                "boundary states and keep the full displacement visibly salient."
+            )
+        elif safe_failure_code == "visual_quality_review_failed":
+            retry_hint = (
+                "Improve scene depth, physical lighting, idle motion, reactive feedback, "
+                "and readable overlays while preserving the fixed physics, causal binding, "
+                "and controls. Keep scientific actors clear at mobile viewport sizes."
+            )
+        selected_context = runtime_context or RuntimeContext()
+        prompt_name = f"generate_{role}.md"
+        stage_name = f"generate_{role}"
+        primary_model = (
+            self.settings.physics_model if role == "physics" else self.settings.visual_model
+        )
+        model = self.settings.heal_model if repair_attempt == 2 else primary_model
+        prompt = self._render_prompt(prompt_name, understanding) + (
+            "\n\nDETERMINISTIC_RETRY:\n"
+            "Return a fresh fragment for the same fixed understanding. "
+            f"This is bounded repair attempt {repair_attempt} of 2. "
+            "The prior response was rejected by the trusted semantic validator. "
+            f"Failure code: {safe_failure_code}. "
+            "Correct that contract rule; do not discuss, quote, or preserve the prior "
+            f"response. ACTIONABLE_RULE: {retry_hint}"
+        )
+        timeout_seconds = (
+            self.settings.public_stage_timeout_seconds
+            if selected_context.public
+            else self.settings.evidence_stage_timeout_seconds
+        )
+        return await self._execute_stage(
+            prompt=prompt,
+            schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE[stage_name],
             model=model,
             effort="medium",
+            timeout_seconds=timeout_seconds,
             **self._execution_policy(selected_context),
+        )
+
+    def generation_candidate_specs(
+        self,
+        understanding: dict[str, Any],
+        *,
+        runtime_context: RuntimeContext | None = None,
+    ) -> tuple[GenerationCandidateSpec, ...]:
+        """Return the bounded internal race without exposing routing to learners."""
+
+        selected_context = runtime_context or RuntimeContext()
+        if not selected_context.public:
+            return (
+                GenerationCandidateSpec(
+                    "single", 1, self.settings.generate_model, "medium"
+                ),
+            )
+        if self.settings.public_generate_model_override is not None:
+            return (
+                GenerationCandidateSpec(
+                    "single",
+                    1,
+                    self.settings.public_generate_model_override,
+                    self.settings.public_generate_effort,
+                ),
+            )
+        routing_policy = getattr(
+            self,
+            "routing_policy",
+            ModelRoutingPolicy(
+                terra_eligible_tiers=frozenset(self.settings.terra_generation_tiers)
+            ),
+        )
+        routed_model = routing_policy.generation_model(understanding)
+        if self.settings.public_candidate_count == 2:
+            return (
+                GenerationCandidateSpec("fast", 1, "gpt-5.6-terra", "medium"),
+                GenerationCandidateSpec("quality", 2, "gpt-5.6-sol", "medium"),
+            )
+        return (
+            GenerationCandidateSpec(
+                "quality" if routed_model == "gpt-5.6-sol" else "single",
+                1,
+                routed_model,
+                self.settings.public_generate_effort,
+            ),
         )
 
     async def heal(
@@ -213,7 +514,7 @@ class CodexBackend:
             if selected_context.public
             else self.settings.heal_model
         )
-        return await self.executor.execute_stage(
+        return await self._execute_stage(
             prompt=self._render_prompt(
                 "heal_module.md",
                 {
@@ -225,11 +526,7 @@ class CodexBackend:
             ),
             schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["heal"],
             model=model,
-            effort=(
-                "low"
-                if not selected_context.public
-                else ("high" if attempt == 2 else "medium")
-            ),
+            effort="high" if attempt == 2 else "medium",
             **self._execution_policy(selected_context),
         )
 
@@ -242,7 +539,7 @@ class CodexBackend:
         runtime_context: RuntimeContext | None = None,
     ) -> StageExecution:
         selected_context = runtime_context or RuntimeContext()
-        return await self.executor.execute_stage(
+        return await self._execute_stage(
             prompt=self._render_prompt(
                 "qa.md",
                 {
@@ -250,10 +547,6 @@ class CodexBackend:
                     "module_spec": understanding["module_spec"],
                     "fixtures": understanding["checks"],
                     "gate_outcome": gate_outcome,
-                    "primary_parameter": understanding["primary_parameter"],
-                    "key_formula": understanding["key_formula"],
-                    "learning_objective": understanding["learning_objective"],
-                    "prediction": understanding["prediction"],
                 },
             ),
             schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["qa"],
@@ -284,12 +577,10 @@ class CodexBackend:
             "module_spec": understanding["module_spec"],
             "primary_parameter": understanding["primary_parameter"],
             "key_formula": understanding["key_formula"],
-            "learning_objective": understanding["learning_objective"],
-            "prediction": understanding["prediction"],
             "gate_outcome": gate_outcome,
             "screenshot_order": ["initial", "mid_action", "parameter_changed"],
         }
-        return await self.executor.execute_stage(
+        return await self._execute_stage(
             prompt=self._render_prompt("visual_qa.md", payload),
             schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE["visual_qa"],
             model=self.settings.visual_qa_model,

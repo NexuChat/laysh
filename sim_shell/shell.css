@@ -143,8 +143,8 @@ body.projector-mode canvas { max-height: calc(100vh - 190px); }
   .step-number { width: 2rem; height: 2rem; }
   .answer-detail > summary { min-height: 44px; display: flex; align-items: center; color: var(--moon); cursor: pointer; font-weight: 700; }
   .answer-detail .answer { margin-block-end: .6rem; }
-  #prediction .choices { flex-wrap: nowrap; overflow-x: auto; scroll-snap-type: inline mandatory; padding-block-end: .35rem; }
-  #prediction .choices button { min-width: 74%; flex: 0 0 74%; scroll-snap-align: start; }
+  #prediction .choices { flex-wrap: wrap; overflow-x: visible; padding-block-end: 0; }
+  #prediction .choices button { width: 100%; min-width: 0; flex: 1 1 100%; }
   .control-row { grid-template-columns: 1fr auto; }
   .control-row input { grid-column: 1 / -1; grid-row: 2; }
   .readout-chip { border-radius: .75rem; line-height: 1.6; }

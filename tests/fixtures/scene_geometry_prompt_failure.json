@@ -1,0 +1,23 @@
+[
+  {
+    "schemaVersion": "1.0",
+    "phase": "post_fit",
+    "viewport": {"width": 720, "height": 400, "safeInset": 0},
+    "state": {"id": "rendered", "timeMs": 0},
+    "objects": [
+      {
+        "id": "scientific_actor",
+        "scientific": true,
+        "clippingPolicy": "forbid",
+        "geometry": {"type": "circle", "cx": 360, "cy": 200, "radius": 60}
+      },
+      {
+        "id": "decorative_particle",
+        "scientific": false,
+        "clippingPolicy": "forbid",
+        "geometry": {"type": "circle", "cx": 370, "cy": 200, "radius": 8}
+      }
+    ],
+    "relations": []
+  }
+]

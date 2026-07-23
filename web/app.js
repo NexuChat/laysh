@@ -78,6 +78,7 @@
   const failureReasons = new Set([
     "not_simulatable",
     "qa_inconclusive",
+    "qa_rejected",
     "verification_exhausted",
     "generation_failed",
     "simulation_runtime_error",
@@ -89,6 +90,7 @@
   const failureSymbols = {
     not_simulatable: "؟",
     qa_inconclusive: "…",
+    qa_rejected: "◇",
     verification_exhausted: "×",
     generation_failed: "↺",
     simulation_runtime_error: "!",
@@ -139,7 +141,7 @@
       const elapsed = Date.now() - state.startedAt;
       byId("elapsed").textContent = formatElapsed(elapsed);
       byId("elapsed").dateTime = `PT${Math.floor(elapsed / 1000)}S`;
-      if (elapsed >= 180_000) {
+      if (elapsed >= 600_000) {
         state.terminal = true;
         state.streamController?.abort();
         showFailure("timed_out");
@@ -326,11 +328,13 @@
 
   async function hydrateGallery() {
     try {
-      const response = await fetch(`/api/gallery?locale=${currentLocale}`, {
+      const requestedLocale = currentLocale;
+      const response = await fetch(`/api/gallery?locale=${requestedLocale}`, {
         headers: { accept: "application/json" },
       });
       if (!response.ok) return;
       const gallery = await response.json();
+      if (requestedLocale !== currentLocale) return;
       if (gallery.contract_version !== GALLERY_CONTRACT_VERSION) {
         throw new Error("gallery_contract_incompatible");
       }

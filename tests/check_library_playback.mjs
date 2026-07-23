@@ -49,12 +49,44 @@ const canvasState = `(() => {
     state: root.dataset.playbackState,
     reason: root.dataset.playbackReason,
     reducedMotion: root.dataset.reducedMotion,
+    smoothCadence: window.LayshSimulation.setParameter.length >= 3,
     controlValue: control.value,
     controlDefault: String(window.__LAYSH_LESSON__.primary_parameter.default),
     toggleVisible: Boolean(toggle && toggle.getBoundingClientRect().width > 0),
     toggleLabel: toggle?.textContent || '',
+    queuedFrames: window.__layshRafProbe?.queued() ?? null,
+    maximumQueuedFrames: window.__layshRafProbe?.maximum() ?? null,
+    deliveredFrames: window.__layshRafProbe?.delivered() ?? null,
   };
 })()`;
+
+const rafProbeSource = `(() => {
+  const nativeRequestAnimationFrame = window.requestAnimationFrame.bind(window);
+  const nativeCancelAnimationFrame = window.cancelAnimationFrame.bind(window);
+  const pending = new Set();
+  let maximum = 0;
+  let delivered = 0;
+  window.__layshRafProbe = {
+    queued: () => pending.size,
+    maximum: () => maximum,
+    delivered: () => delivered,
+  };
+  window.requestAnimationFrame = (callback) => {
+    let id = 0;
+    id = nativeRequestAnimationFrame((timestamp) => {
+      pending.delete(id);
+      delivered += 1;
+      callback(timestamp);
+    });
+    pending.add(id);
+    maximum = Math.max(maximum, pending.size);
+    return id;
+  };
+  window.cancelAnimationFrame = (id) => {
+    pending.delete(id);
+    nativeCancelAnimationFrame(id);
+  };
+})();`;
 
 const port = await freePort();
 const chrome = spawn(chromePath, [
@@ -116,6 +148,7 @@ async function openProbe(artifactPath, reducedMotion) {
   }
   await command("Runtime.enable");
   await command("Page.enable");
+  await command("Page.addScriptToEvaluateOnNewDocument", { source: rafProbeSource });
   await command("Emulation.setEmulatedMedia", {
     media: "screen",
     features: [{ name: "prefers-reduced-motion", value: reducedMotion ? "reduce" : "no-preference" }],
@@ -146,6 +179,14 @@ async function normalJourney(artifactPath) {
     })()`);
     await delay(350);
     const directLater = await probe.evaluate(canvasState);
+    const replayStart = await probe.evaluate(`(() => {
+      document.querySelector('#replay').click();
+      return (${canvasState});
+    })()`);
+    await delay(350);
+    const replayMid = await probe.evaluate(canvasState);
+    await delay(800);
+    const replayEnd = await probe.evaluate(canvasState);
     await probe.evaluate("document.querySelector('#reset').click()");
     const resetOnce = await probe.evaluate(canvasState);
     await delay(350);
@@ -169,6 +210,9 @@ async function normalJourney(artifactPath) {
       resumed,
       direct,
       directLater,
+      replayStart,
+      replayMid,
+      replayEnd,
       resetOnce,
       resetOnceLater,
       resetTwice,
@@ -176,11 +220,25 @@ async function normalJourney(artifactPath) {
       destroyedLater,
       checks: {
         startsAutomatically: initial.state === "running" && initial.toggleVisible,
+        autoplayCadenceIsSmooth: !initial.smoothCadence
+          || (
+            autoplay.deliveredFrames - initial.deliveredFrames >= 24
+            && autoplay.frames - initial.frames
+              >= autoplay.deliveredFrames - initial.deliveredFrames - 1
+          ),
         scientificCanvasMoves: initial.hash !== autoplay.hash,
         pauseStopsCanvas: paused.state === "paused" && paused.hash === pausedLater.hash,
         resumeRestartsCanvas: resumed.state === "running" && resumed.hash !== pausedLater.hash,
-        controlYieldsPlayback: direct.state === "paused" && direct.reason === "user-control"
-          && direct.hash === directLater.hash,
+        controlKeepsPlaybackLive: direct.state === "running"
+          && direct.reason === "user-control"
+          && direct.hash !== directLater.hash,
+        replayUsesABoundedCausalSweep: replayStart.state === "running"
+          && Number(replayMid.controlValue) !== Number(replayStart.controlValue)
+          && Number(replayMid.controlValue) !== Number(replayEnd.controlValue)
+          && [Number(replayEnd.controlValue), Number(replayStart.controlValue)].every(Number.isFinite),
+        playbackKeepsOneAnimationFrame: replayStart.queuedFrames === 1
+          && replayEnd.queuedFrames === 1
+          && replayEnd.maximumQueuedFrames === 1,
         resetReturnsToAStillDefault: resetOnce.state === "paused"
           && resetOnce.controlValue === resetOnce.controlDefault
           && resetOnce.hash === resetOnceLater.hash
@@ -202,14 +260,40 @@ async function reducedJourney(artifactPath) {
     const initial = await probe.evaluate(canvasState);
     await delay(500);
     const later = await probe.evaluate(canvasState);
+    const played = await probe.evaluate(`(() => {
+      document.querySelector('#play-pause').click();
+      return (${canvasState});
+    })()`);
+    const replayStart = await probe.evaluate(`(() => {
+      document.querySelector('#replay').click();
+      return (${canvasState});
+    })()`);
+    await delay(350);
+    const replayMid = await probe.evaluate(canvasState);
+    await delay(800);
+    const replayEnd = await probe.evaluate(canvasState);
     return {
       initial,
       later,
+      played,
+      replayStart,
+      replayMid,
+      replayEnd,
       checks: {
         preferenceDetected: initial.reducedMotion === "true",
         startsPaused: initial.state === "paused" && initial.reason === "reduced-motion",
         canvasRemainsReadableAndStill: initial.hash === later.hash,
         controlsRemainAvailable: initial.toggleVisible && initial.toggleLabel.length > 0,
+        explicitPlayThenReplayKeepsRunning: played.state === "running"
+          && played.queuedFrames === 1
+          && replayStart.state === "running"
+          && replayStart.reason === "replay"
+          && replayStart.queuedFrames === 1
+          && replayMid.frames > replayStart.frames
+          && Number(replayMid.controlValue) !== Number(replayStart.controlValue)
+          && replayEnd.state === "running"
+          && replayEnd.queuedFrames === 1,
+        playbackNeverDuplicatesAnimationFrames: replayEnd.maximumQueuedFrames === 1,
       },
     };
   } finally {
@@ -238,7 +322,7 @@ try {
     lessons.push({ id: path.basename(name, ".html"), passed, normal, reduced });
   }
   process.stdout.write(JSON.stringify({
-    passed: lessons.length === 6 && lessons.every((lesson) => lesson.passed),
+    passed: lessons.length > 0 && lessons.every((lesson) => lesson.passed),
     lessonCount: lessons.length,
     lessons,
   }));

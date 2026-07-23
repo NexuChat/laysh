@@ -290,6 +290,7 @@ async def test_public_stage_uses_stdin_argument_array_isolated_cwd_and_ephemeral
     assert ("--sandbox", "read-only") == args[sandbox_index : sandbox_index + 2]
     assert ("--model", "gpt-5.6-sol") == args[model_index : model_index + 2]
     assert 'model_reasoning_effort="medium"' in args
+    assert 'service_tier="fast"' in args
     assert kwargs["stdin"] == asyncio.subprocess.PIPE
     assert kwargs["stdout"] == asyncio.subprocess.PIPE
     assert kwargs["stderr"] == asyncio.subprocess.PIPE

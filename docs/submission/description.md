@@ -48,11 +48,14 @@ more precise contract. A live run then demonstrated generate → verify failure 
 heal with exact diagnostics → reverify pass.
 
 We also learned that quality and latency pull in opposite directions. The two
-unseen public smokes completed and stayed inside the 180-second public ceiling,
+unseen public smokes completed inside the original 180-second public ceiling,
 but first-answer p95 was 25.3 seconds against a 12-second objective and new-module
 p95 was 178.3 seconds against 90 seconds. Laysh reports that honestly, never says
 every simulation is instant, and makes reviewed goldens and verified cache hits
-the dependable fast path.
+the dependable fast path. After a later public Sol generation exceeded its 90-second stage
+budget, the deployed public ceiling was raised to ten minutes and the Sol runtime now
+requests Codex fast service explicitly. A faster Terra route was not promoted because its
+measured cohort did not pass deterministic verification.
 
 ## Impact and what's next
 

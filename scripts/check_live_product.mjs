@@ -151,7 +151,7 @@ try {
   let answerObservedBeforeResult = false;
   let answerLatencyMs = null;
   let buildCaptured = false;
-  const deadline = Date.now() + 195000;
+  const deadline = Date.now() + 615000;
   while (Date.now() < deadline) {
     const observation = await evaluate(`({
       answer: !document.querySelector('#answer-card').hidden,

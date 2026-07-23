@@ -1,4 +1,4 @@
 {
   "schema_version": "1.0",
-  "terra_generation_tiers": []
+  "terra_generation_tiers": ["bounded_single_parameter_v1"]
 }

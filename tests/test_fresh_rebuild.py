@@ -12,7 +12,7 @@ async def test_fresh_rebuild_bypasses_a_verified_cache_hit_without_retaining_que
     tmp_path,
 ):
     from server.browser_verify import BrowserVerificationResult
-    from server.cache import VerifiedCache
+    from server.cache import VERIFIED_CACHE_CONTRACT_VERSION, VerifiedCache
     from server.codex_backend import MockCodexBackend
     from server.jobs import JobManager
 
@@ -20,7 +20,7 @@ async def test_fresh_rebuild_bypasses_a_verified_cache_hit_without_retaining_que
         root=tmp_path / "live",
         golden_root=tmp_path / "golden",
         secret=b"fresh-rebuild-cache-secret",
-        contract_version="1.0",
+        contract_version=VERIFIED_CACHE_CONTRACT_VERSION,
     )
     backend = MockCodexBackend()
     manager = JobManager(

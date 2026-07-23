@@ -31,6 +31,15 @@ def validate_understanding(document: dict[str, Any]) -> dict[str, Any]:
     validate_document(document, load_schema("understand.schema.json"))
     if document["simulatable"] and len(document["checks"]) < 2:
         raise ContractError("a simulatable lesson requires at least two independent checks")
+    if document["simulatable"]:
+        declared_outputs = set(document["module_spec"]["outputs"])
+        covered_outputs = {check["output"] for check in document["checks"]}
+        missing_fixture_coverage = sorted(declared_outputs - covered_outputs)
+        if missing_fixture_coverage:
+            raise ContractError(
+                "every simulatable output requires fixture coverage: "
+                + ", ".join(missing_fixture_coverage)
+            )
     actor = document["module_spec"]["actor"]
     action = document["module_spec"]["action"]
     if document["simulatable"] and (actor is None or action is None):

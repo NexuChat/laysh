@@ -141,15 +141,30 @@ def test_generation_and_heal_prompts_require_post_fit_scene_evidence():
 
     for prompt in (generate, heal):
         assert "canvas.__layshSceneGeometry" in prompt
-        assert "canvas.__layshSceneGeometry = [{" in prompt
-        assert 'schemaVersion: "1.0"' in prompt
         assert 'phase: "post_fit"' in prompt
-        assert 'viewport: { width, height, safeInset: 0 }' in prompt
-        assert 'state: { id: "frame", timeMs: 0 }' in prompt
-        assert 'objects: [{ id: "actor", scientific: true' in prompt
-        assert 'geometry: { type: "circle", cx, cy, radius }' in prompt
-        assert 'clippingPolicy: "forbid"' in prompt
-        assert "relations: []" in prompt
-        assert 'phase: "post_fit", ...' not in prompt
-        assert "circle/rect" not in prompt
         assert "scientific_occlusion" in prompt
+
+
+def test_scene_geometry_prompt_contract_excludes_decorations_and_shows_closed_sample():
+    import json
+
+    from server.scene_geometry import validate_scene_geometry
+
+    broken = json.loads(
+        (ROOT / "tests" / "fixtures" / "scene_geometry_prompt_failure.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    report = validate_scene_geometry(broken)
+    assert report.passed is False
+    assert {failure["code"] for failure in report.failures} == {"undeclared_overlap"}
+
+    for name in ("generate_module.md", "heal_module.md"):
+        prompt = (ROOT / "server" / "prompts" / name).read_text(encoding="utf-8")
+        compact = " ".join(prompt.split())
+        assert "Do not report decorative particles" in compact
+        assert 'schemaVersion: "1.0"' in compact
+        assert 'state: { id: "primary", timeMs: 0 }' in compact
+        assert "Declare one relation for every pair in `objects`" in compact
+        assert "const state = modelState(value)" in compact
+        assert "state.output" in compact

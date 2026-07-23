@@ -7,12 +7,11 @@ def test_runtime_defaults_are_gpt_5_6_family_only():
     settings = Settings()
     assert settings.understand_model == "gpt-5.6-luna"
     assert settings.understand_fallback_model == "gpt-5.6-terra"
-    assert settings.evidence_understand_model == "gpt-5.6-luna"
-    assert settings.generate_model == "gpt-5.6-terra"
+    assert settings.evidence_understand_model == "gpt-5.6-sol"
+    assert settings.generate_model == "gpt-5.6-sol"
     assert settings.heal_model == "gpt-5.6-sol"
     assert settings.qa_model == "gpt-5.6-sol"
-    assert settings.visual_qa_model == "gpt-5.6-sol"
-    assert settings.terra_generation_tiers == ()
+    assert settings.terra_generation_tiers == ("bounded_single_parameter_v1",)
     assert {
         settings.understand_model,
         settings.understand_fallback_model,
@@ -22,14 +21,32 @@ def test_runtime_defaults_are_gpt_5_6_family_only():
         settings.qa_model,
         settings.visual_qa_model,
     } <= ALLOWED_RUNTIME_MODELS
-    assert settings.public_job_timeout_seconds == 180
+    assert settings.public_job_timeout_seconds == 600
     assert settings.evidence_job_timeout_seconds == 600
-    assert settings.public_stage_timeout_seconds == 90
+    assert settings.public_stage_timeout_seconds == 240
     assert settings.evidence_stage_timeout_seconds == 300
     assert settings.public_qa_timeout_seconds == 45
     assert settings.evidence_qa_timeout_seconds == 120
     assert settings.cache_key_secret == ""
     assert settings.record_runtime is False
+
+
+def test_shipped_public_profile_gives_generation_room_inside_hard_job_cap():
+    from pathlib import Path
+
+    from server.settings import Settings
+
+    root = Path(__file__).resolve().parents[1]
+    settings = Settings()
+    assert settings.public_job_timeout_seconds == 600
+    assert settings.public_stage_timeout_seconds == 240
+    assert settings.public_stage_timeout_seconds < settings.public_job_timeout_seconds
+
+    for path in (root / ".env.example", root / "deploy" / "laysh.service"):
+        document = path.read_text(encoding="utf-8")
+        assert "LAYSH_PUBLIC_JOB_TIMEOUT_SECONDS=600" in document
+        assert "LAYSH_PUBLIC_STAGE_TIMEOUT_SECONDS=240" in document
+        assert "LAYSH_TERRA_GENERATION_TIERS=bounded_single_parameter_v1" in document
 
 
 def test_timeout_profiles_are_independently_configurable(monkeypatch):
@@ -57,6 +74,20 @@ def test_non_gpt_5_6_runtime_override_is_rejected(monkeypatch):
 
     monkeypatch.setenv("LAYSH_UNDERSTAND_MODEL", "legacy-non-gpt-5.6-model")
     with pytest.raises(ValueError, match="GPT-5.6"):
+        Settings.from_env()
+
+
+def test_public_generate_canary_override_is_closed(monkeypatch):
+    from server.settings import Settings
+
+    monkeypatch.setenv("LAYSH_PUBLIC_GENERATE_MODEL_OVERRIDE", "gpt-5.6-luna")
+    monkeypatch.setenv("LAYSH_PUBLIC_GENERATE_EFFORT", "high")
+    settings = Settings.from_env()
+    assert settings.public_generate_model_override == "gpt-5.6-luna"
+    assert settings.public_generate_effort == "high"
+
+    monkeypatch.setenv("LAYSH_PUBLIC_GENERATE_EFFORT", "ultra")
+    with pytest.raises(ValueError, match="generate effort"):
         Settings.from_env()
 
 
@@ -90,10 +121,10 @@ def test_terra_generation_tiers_are_explicit_and_closed(tmp_path, monkeypatch):
 
 
 def test_environment_cannot_override_the_measured_routing_decision(monkeypatch):
-    from server.model_routing import BOUNDED_SINGLE_PARAMETER
+    from server.model_routing import COMPLEX_OR_MULTI_PARAMETER
     from server.settings import Settings
 
-    monkeypatch.setenv("LAYSH_TERRA_GENERATION_TIERS", BOUNDED_SINGLE_PARAMETER)
+    monkeypatch.setenv("LAYSH_TERRA_GENERATION_TIERS", COMPLEX_OR_MULTI_PARAMETER)
 
     with pytest.raises(ValueError, match="runtime routing decision mismatch"):
         Settings.from_env()

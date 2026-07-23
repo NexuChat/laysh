@@ -120,6 +120,15 @@ class JobManager:
         self.max_concurrent_jobs = max_concurrent_jobs
         self.max_queued_jobs = max_queued_jobs
         self._slots = asyncio.Semaphore(max_concurrent_jobs)
+        backend_settings = getattr(backend, "settings", None)
+        browser_limit = getattr(backend_settings, "max_parallel_browser_gates", 1)
+        self._browser_slots = asyncio.Semaphore(browser_limit)
+
+    async def verify_in_browser(self, artifact: str) -> BrowserVerificationResult:
+        """Run blocking browser evidence under a small shared worker bound."""
+
+        async with self._browser_slots:
+            return await asyncio.to_thread(self.browser_verifier, artifact)
 
     @property
     def active_count(self) -> int:

@@ -97,5 +97,5 @@ def test_codex_backend_is_selected_only_by_explicit_configuration(monkeypatch):
     configured = create_app()
     assert isinstance(configured.state.jobs.backend, CodexBackend)
     assert configured.state.jobs.backend.settings.understand_model == "gpt-5.6-luna"
-    assert configured.state.jobs.backend.settings.generate_model == "gpt-5.6-terra"
+    assert configured.state.jobs.backend.settings.generate_model == "gpt-5.6-sol"
     assert configured.state.jobs.backend.executor.record_runtime is False

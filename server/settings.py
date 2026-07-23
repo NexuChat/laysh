@@ -16,18 +16,25 @@ def _default_terra_generation_tiers() -> tuple[str, ...]:
 class Settings:
     understand_model: str = "gpt-5.6-luna"
     understand_fallback_model: str = "gpt-5.6-terra"
-    evidence_understand_model: str = "gpt-5.6-luna"
-    generate_model: str = "gpt-5.6-terra"
+    evidence_understand_model: str = "gpt-5.6-sol"
+    generate_model: str = "gpt-5.6-sol"
+    physics_model: str = "gpt-5.6-sol"
+    visual_model: str = "gpt-5.6-terra"
     heal_model: str = "gpt-5.6-sol"
     qa_model: str = "gpt-5.6-sol"
-    visual_qa_model: str = "gpt-5.6-sol"
+    visual_qa_model: str = "gpt-5.6-terra"
+    public_generate_model_override: str | None = None
+    public_generate_effort: str = "medium"
+    public_candidate_count: int = 1
+    max_parallel_model_calls: int = 2
+    max_parallel_browser_gates: int = 1
     terra_generation_tiers: tuple[str, ...] = field(
         default_factory=_default_terra_generation_tiers
     )
     backend: str = "mock"
-    public_job_timeout_seconds: float = 180.0
+    public_job_timeout_seconds: float = 600.0
     evidence_job_timeout_seconds: float = 600.0
-    public_stage_timeout_seconds: float = 90.0
+    public_stage_timeout_seconds: float = 240.0
     evidence_stage_timeout_seconds: float = 300.0
     public_qa_timeout_seconds: float = 45.0
     evidence_qa_timeout_seconds: float = 120.0
@@ -45,12 +52,22 @@ class Settings:
             self.understand_fallback_model,
             self.evidence_understand_model,
             self.generate_model,
+            self.physics_model,
+            self.visual_model,
             self.heal_model,
             self.qa_model,
             self.visual_qa_model,
         }
+        if self.public_generate_model_override is not None:
+            configured.add(self.public_generate_model_override)
         if not configured <= ALLOWED_RUNTIME_MODELS:
             raise ValueError("every Laysh runtime stage must use an approved GPT-5.6 model")
+        if self.public_generate_effort not in {"low", "medium", "high"}:
+            raise ValueError("public generate effort must be low, medium, or high")
+        if self.public_candidate_count not in {1, 2}:
+            raise ValueError("public candidate count must be one or two")
+        if self.max_parallel_model_calls <= 0 or self.max_parallel_browser_gates <= 0:
+            raise ValueError("parallel runtime limits must be positive")
         from server.model_routing import GENERATION_TIERS, load_routing_decision
 
         unknown_tiers = set(self.terra_generation_tiers) - GENERATION_TIERS
@@ -86,10 +103,36 @@ class Settings:
                 "LAYSH_EVIDENCE_UNDERSTAND_MODEL", defaults.evidence_understand_model
             ),
             generate_model=os.getenv("LAYSH_GENERATE_MODEL", defaults.generate_model),
+            physics_model=os.getenv("LAYSH_PHYSICS_MODEL", defaults.physics_model),
+            visual_model=os.getenv("LAYSH_VISUAL_MODEL", defaults.visual_model),
             heal_model=os.getenv("LAYSH_HEAL_MODEL", defaults.heal_model),
             qa_model=os.getenv("LAYSH_QA_MODEL", defaults.qa_model),
             visual_qa_model=os.getenv(
                 "LAYSH_VISUAL_QA_MODEL", defaults.visual_qa_model
+            ),
+            public_generate_model_override=(
+                os.getenv("LAYSH_PUBLIC_GENERATE_MODEL_OVERRIDE", "").strip() or None
+            ),
+            public_generate_effort=os.getenv(
+                "LAYSH_PUBLIC_GENERATE_EFFORT", defaults.public_generate_effort
+            ).strip(),
+            public_candidate_count=int(
+                os.getenv(
+                    "LAYSH_PUBLIC_CANDIDATE_COUNT",
+                    str(defaults.public_candidate_count),
+                )
+            ),
+            max_parallel_model_calls=int(
+                os.getenv(
+                    "LAYSH_MAX_PARALLEL_MODEL_CALLS",
+                    str(defaults.max_parallel_model_calls),
+                )
+            ),
+            max_parallel_browser_gates=int(
+                os.getenv(
+                    "LAYSH_MAX_PARALLEL_BROWSER_GATES",
+                    str(defaults.max_parallel_browser_gates),
+                )
             ),
             terra_generation_tiers=tuple(
                 tier.strip()

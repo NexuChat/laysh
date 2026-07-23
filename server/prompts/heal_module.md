@@ -7,30 +7,31 @@ change the answer, parameters, output names, fixtures, or teaching objective. Re
 JavaScript, never full HTML. Preserve the restricted interface and capabilities. Resolve every listed
 failure, then provide safe summary and assumptions fields. Do not include reasoning or extra fields.
 
-For every shared-model repair, retain `/* LAYSH_SHARED_MODEL: modelState */`. In both draw and
-`test(inputs)`, bind `const state = modelState(...)`, then read `state.<declared_output>` when drawing
-and returning outputs; a bare call or duplicate formula does not repair the gate.
+For `shared_model_state`, keep exactly one marked named state-object function and make both paths
+consume it visibly: `const state = modelState(value);` followed by a real `state.output` read in the
+draw/render calculation and in `test(inputs)`. Remove duplicate pivotal formulas and no-op calls.
 
-Preserve or repair the shared post-fit scene evidence after every fitted draw with this exact closed
-shape, replacing only identifiers and finite values:
-`canvas.__layshSceneGeometry = [{ schemaVersion: "1.0", phase: "post_fit",
-viewport: { width, height, safeInset: 0 }, state: { id: "frame", timeMs: 0 },
-objects: [{ id: "actor", scientific: true,
-geometry: { type: "circle", cx, cy, radius }, clippingPolicy: "forbid" }], relations: [] }]`.
-`state` must never be null; circle is the only supported geometry. Add every scientific body and
-declare each pair's overlap/contact/clearance policy. `scientific_occlusion` is allowed only for
-physically intended overlap. Recompute after every clamp or fit and resolve every
-`scene_geometry` failure exactly.
+Preserve or repair the shared post-fit scene evidence on `canvas.__layshSceneGeometry`: emit a
+nonempty closed v1.0 sample array after each fitted draw with `phase: "post_fit"`. Declare each
+scientific object's geometry/clipping policy and every pair's overlap/contact/clearance policy;
+`scientific_occlusion` is allowed only when the overlap is physically intentional. Recompute the
+reported geometry after every clamp or fit and resolve every `scene_geometry` failure exactly.
+Report only pivotal scientific circular bodies whose geometry carries the model. Do not report
+decorative particles, glows, labels, readout chips, trails, or background texture as scene objects.
+Declare one relation for every pair in `objects`, even when the bodies are clear. Use this closed
+shape after fitting: `[{ schemaVersion: "1.0", phase: "post_fit", viewport: { width, height,`
+`safeInset: 0 }, state: { id: "primary", timeMs: 0 }, objects: [{ id: "actor", scientific: true,`
+`clippingPolicy: "forbid", geometry: { type: "circle", cx, cy, radius } }], relations: [] }]`.
+Replace symbolic values with the final drawn geometry; with two objects add exactly one relation.
 
 The v1.1 visual quality is part of the fixed contract and must survive every repair: preserve or add
 at least three scene-depth layers, physically consistent curved illumination and occlusion, a private
 visual phase advanced by the trusted shell's same-value redraw when reduced motion is off, smooth
-parameter-linked reactive feedback, and stable conceptual labels. The prediction must be visibly
-testable at minimum, midpoint, and maximum through the declared actor's causal action, not only text,
-a marker, a frame counter, or decorative motion. Never draw changing numbers, percentages, or live
-readout values on the canvas. The trusted shell owns the live numeric readout below the scene. The
-module still owns no timers or animation APIs. Fixing a deterministic gate must never flatten or
-visually regress the scene.
+parameter-linked reactive feedback, and clear stable conceptual labels. Never draw changing numbers,
+percentages, or live readout values on the canvas. The trusted shell owns the live numeric readout
+below the scene. Keep it there so it cannot cover the scientific actor, especially on narrow mobile
+viewports. The module still owns no timers or animation APIs. Fixing a deterministic gate must never
+flatten or visually regress the scene.
 
 HEAL_INPUT_JSON_WITH_EXACT_GATE_FAILURES:
 @@INPUT_JSON@@

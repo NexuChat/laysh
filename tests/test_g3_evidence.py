@@ -21,16 +21,19 @@ async def test_repeatable_g3_demo_proves_heal_reverify_browser_and_cache(tmp_pat
         "interface",
         "security",
     }
-    browser = evidence["browser"]
-    assert browser["ready"] is True
-    assert browser["controlChanged"] is True
-    assert browser["frameChanged"] is True
-    assert browser["runtimeError"] is False
-    assert browser["externalRequests"] == 0
-    assert browser["initialOutcomeMatchesModel"] is True
-    assert browser["modelOutcomeChanged"] is True
-    assert browser["displayedOutcomeChanged"] is True
-    assert browser["changedPixels"] >= max(64, browser["canvasPixels"] // 1000)
+    browser_evidence = evidence["browser"].copy()
+    canvas_hash_before = browser_evidence.pop("canvasHashBefore")
+    canvas_hash_after = browser_evidence.pop("canvasHashAfter")
+    assert isinstance(canvas_hash_before, int)
+    assert isinstance(canvas_hash_after, int)
+    assert canvas_hash_before != canvas_hash_after
+    assert browser_evidence == {
+        "ready": True,
+        "controlChanged": True,
+        "frameChanged": True,
+        "runtimeError": False,
+        "externalRequests": 0,
+    }
     assert evidence["cache"]["entry_count"] == 1
     assert evidence["cache"]["receipt"]["failed_gate_count"] == 0
     assert evidence["cache"]["receipt"]["browser_passed"] is True

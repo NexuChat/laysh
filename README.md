@@ -116,7 +116,7 @@ Measured public-mode latency on two unseen smoke cases is above the product obje
 | First useful answer, p95 | **25.3 s** | ≤12 s | Not met |
 | New module, p95 | **178.3 s** | ≤90 s | Not met |
 | Exact verified cache, p95 | see `out/benchmark.json` | ≤1 s | Met in G5 |
-| Hard public terminal | 178.3 s max observed | ≤180 s | Met in G5 |
+| Hard public terminal | 178.3 s max observed | ≤600 s | Met in G5; ceiling raised after live multi-heal timeouts |
 
 The two-sample live p95 is a nearest-rank release measurement, not a population-level
 performance claim. The richer v1.1 golden set raised generate-stage p95 from 98.3 s to
@@ -129,17 +129,20 @@ The matched Arabic force–acceleration smoke generated in 63.7 s versus 58.0 s 
 one matched observation, not a new p95 claim; the full measurements live in
 `out/evidence/g7-latency.json`.
 
-The Arabic UI says that a new experience may take up to three minutes. During that wait it
+The UI says that a new experience may take up to ten minutes. During that wait it
 shows only real answer, stage, heartbeat, verification, and self-heal events. Instant
-goldens remain the dependable fast path, while every public job retains its 180-second hard
-terminal and every evidence build retains its 600-second budget.
+goldens remain the dependable fast path. Public jobs have a 600-second hard terminal and a
+240-second stage ceiling; evidence builds retain their separate 600-second budget. Public
+generation remains on GPT-5.6 Sol and explicitly requests Codex fast service. A measured
+Terra cohort did not pass deterministic verification, so it was not promoted for speed.
 
 ## Quota protection
 
 - Three new live generations per keyed IP hash per hour; no raw IP is retained.
 - Sixty new live generations globally per UTC day.
 - Two Codex jobs run concurrently and at most ten wait in the queue.
-- Public jobs have a 180-second hard terminal budget and use `--ephemeral`.
+- Public jobs have a 600-second hard terminal budget, request Codex fast service explicitly,
+  and use `--ephemeral`.
 - Gallery and cache playback consume no generation quota.
 - Over-limit traffic receives a localized answer-only/gallery path, never a raw 429 page.
 - Evidence mode is disabled by default and accepts only allowlisted repository fixtures.

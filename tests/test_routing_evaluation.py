@@ -176,10 +176,11 @@ def test_route_decision_cannot_pass_until_runtime_config_matches_it():
     assert report["gates"]["runtime_config_matches_decision"] is False
 
 
-def test_repository_route_contract_matches_safe_unmeasured_defaults():
+def test_repository_route_contract_matches_the_committed_bounded_tier_decision():
     from scripts.evaluate_generation_routing import repository_configured_terra_tiers
+    from server.model_routing import BOUNDED_SINGLE_PARAMETER
 
-    assert repository_configured_terra_tiers() == set()
+    assert repository_configured_terra_tiers() == {BOUNDED_SINGLE_PARAMETER}
 
 
 def test_repository_blank_overrides_defer_to_the_data_decision(tmp_path, monkeypatch):
