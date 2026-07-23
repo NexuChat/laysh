@@ -59,6 +59,30 @@ _SEMANTIC_FAILURE_CODES = (
         "signed_causal_fixture_coverage_required",
     ),
     (
+        "representation time-driven motion is deferred",
+        "representation_time_driven_deferred",
+    ),
+    (
+        "representation archetype is not emittable",
+        "representation_archetype_not_emittable",
+    ),
+    (
+        "representation archetype does not match scientific commands",
+        "representation_archetype_command_mismatch",
+    ),
+    (
+        "representation actor proof is not backed",
+        "representation_actor_proof_unbacked",
+    ),
+    (
+        "representation graph proof requires world_plus_graph",
+        "representation_graph_scene_required",
+    ),
+    (
+        "representation proof references an undeclared output",
+        "representation_output_undeclared",
+    ),
+    (
         "scientific geometry must consume a declared output",
         "scientific_output_reference_required",
     ),
@@ -290,6 +314,16 @@ _CAUSAL_CHANNEL_FIELDS: dict[str, dict[str, tuple[str, ...]]] = {
     },
 }
 
+_DEFERRED_REPRESENTATION_ARCHETYPES = {
+    "particle_flow",
+    "ray_bundle",
+    "wave_medium",
+}
+_PAIRED_REPRESENTATION_ARCHETYPES = {
+    "linked_bodies",
+    "orbital_pair",
+}
+
 
 def _validate_causal_response(
     document: dict[str, Any],
@@ -354,12 +388,84 @@ def _validate_causal_response(
             )
 
 
+def _validate_representation(
+    document: dict[str, Any],
+    understanding: dict[str, Any] | None,
+) -> None:
+    representation = document["representation"]
+    archetype = representation["actor_archetype"]
+    if archetype in _DEFERRED_REPRESENTATION_ARCHETYPES:
+        raise ContractError(
+            "representation archetype is not emittable with phase A1 commands"
+        )
+
+    scientific_commands = [
+        command for command in document["commands"] if command["scientific"]
+    ]
+    scientific_kinds = {command["kind"] for command in scientific_commands}
+    archetype_matches = (
+        (archetype == "body" and bool(scientific_kinds & {"circle", "ellipse"}))
+        or (archetype == "elongated_body" and "ellipse" in scientific_kinds)
+        or (
+            archetype in _PAIRED_REPRESENTATION_ARCHETYPES
+            and len(scientific_commands) >= 2
+        )
+        or (
+            archetype == "surface_and_body"
+            and {"circle", "ellipse"} <= scientific_kinds
+        )
+    )
+    if not archetype_matches:
+        raise ContractError(
+            "representation archetype does not match scientific commands"
+        )
+
+    declared_outputs = (
+        None
+        if understanding is None
+        else set(understanding["module_spec"]["outputs"])
+    )
+    for proof in representation["proof_channels"]:
+        output_name = proof["output_name"]
+        if declared_outputs is not None and output_name not in declared_outputs:
+            raise ContractError(
+                "representation proof references an undeclared output"
+            )
+        if (
+            proof["carrier"] == "graph"
+            and representation["scene_pattern"] != "world_plus_graph"
+        ):
+            raise ContractError(
+                "representation graph proof requires world_plus_graph"
+            )
+        if proof["carrier"] != "actor":
+            continue
+        output_reference = f"output_{output_name}"
+        if not any(
+            output_reference in _visual_output_names(command[field])
+            for command in scientific_commands
+            for field in _CAUSAL_CHANNEL_FIELDS.get(command["kind"], {}).get(
+                proof["channel"],
+                (),
+            )
+        ):
+            raise ContractError(
+                "representation actor proof is not backed by a scientific command"
+            )
+
+
 def validate_visual_fragment(
     document: dict[str, Any],
     understanding: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     if understanding is not None:
         understanding = validate_understanding(understanding)
+    representation = document.get("representation")
+    if (
+        isinstance(representation, dict)
+        and representation.get("motion_model") == "time_driven"
+    ):
+        raise ContractError("representation time-driven motion is deferred to phase A2")
     validate_document(document, load_schema("visual_fragment.schema.json"))
     _reject_untrusted_markers(document)
     commands = document["commands"]
@@ -442,6 +548,7 @@ def validate_visual_fragment(
     if seen_pairs != expected_pairs:
         raise ContractError("relations must cover every scientific pair exactly once")
     _validate_causal_response(document, understanding)
+    _validate_representation(document, understanding)
     return document
 
 
@@ -623,6 +730,7 @@ def assemble_fragments(
     primary_id = primary["id"]
     source = f'''window.LayshSimulation = Object.freeze((() => {{
   "use strict";
+  const spec = Object.freeze({_js({"representation": visual_fragment["representation"]})});
   let canvas = null, context = null, width = 0, height = 0, locale = "en", reducedMotion = true, emitFrame = () => {{}}, visualPhase = 0, destroyed = false;
   const parameterLimits = {_js(parameter_limits)};
   const parameterValues = {_js(parameter_defaults)};
@@ -653,7 +761,7 @@ def assemble_fragments(
     canvas.__layshActorResponse = causalActorResponse;
   }}
   function render() {{ if (destroyed || !canvas || !context) return; const state = modelState(parameterValues[{_js(primary_id)}],parameterValues); const activeOutput = state.output; void activeOutput; drawScene(state); emitFrame(); }}
-  return {{
+  const simulation = {{
     version:1,
     init(options) {{ canvas = options.canvas; context = options.context; width = options.width; height = options.height; locale = options.locale; reducedMotion = Boolean(options.reducedMotion); emitFrame = options.emitFrame; visualPhase = 0; destroyed = false; render(); }},
     setParameter(name,value,elapsedMs) {{ if (!(name in parameterValues)) return; parameterValues[name] = clampParameter(name,value); if (!reducedMotion && Number.isFinite(Number(elapsedMs)) && Number(elapsedMs) > 0) visualPhase = (visualPhase + clampFinite(Number(elapsedMs),0,80) / 80) % 1000000; render(); }},
@@ -663,6 +771,8 @@ def assemble_fragments(
     resize(nextWidth,nextHeight) {{ width = nextWidth; height = nextHeight; canvas.width = nextWidth; canvas.height = nextHeight; render(); }},
     destroy() {{ destroyed = true; canvas = null; context = null; emitFrame = () => {{}}; }},
   }};
+  Object.defineProperty(simulation,"spec",{{value:spec,enumerable:false,writable:false,configurable:false}});
+  return simulation;
 }})());'''
     if len(source.encode("utf-8")) > 40 * 1024:
         raise ContractError("assembled source exceeds 40KiB")

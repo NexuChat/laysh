@@ -4,7 +4,7 @@
   "files": {
     "server/prompts/generate_module.md": "66ca95ae728c871687d8a3895514bc615d6ad7bb59e949529ac0722f4d8815df",
     "server/prompts/generate_physics.md": "9cd0f90577d418916f09863b53f03f3d79a0ed40b1390fa0c20971ab7088d79f",
-    "server/prompts/generate_visual.md": "1cbe34aaa5c5e32d7678d5d39305adc6e5fc082fd3184b091ae96b1d2ae3504b",
+    "server/prompts/generate_visual.md": "85bc30a906d10c4938d0ec05ae43e6168f0f80b774b8909cd4381b030f8aa45b",
     "server/prompts/heal_module.md": "9de7b16b681fa53dd4004547af201460c2e0d172fef7444b3e26376f5b4a757d",
     "server/prompts/qa.md": "57a3184de8c11900b2a9d8d7d5cef38ce0e5e0a80ce4c1963e159ccfe7f80eb0",
     "server/prompts/understand.md": "589e40d030c114a4d17a0a6f2b7ffa82b7eae08c0cbf0d77a5902d7652314fb7",
@@ -17,7 +17,7 @@
     "server/schemas/scene_geometry.schema.json": "941a219c368fec6b199c083f635d93d7bba62db8492711f4c86f7b987a0cabc0",
     "server/schemas/understand.schema.json": "aa8776fa20d21ad749c966ceef21c98b59ef5cf630b9061090c1a7c16c98cb58",
     "server/schemas/verification_report.schema.json": "5fa54e7d4cbe52fe10bc114532fe8fa5085c4cfb21534fb134e333cc95728a81",
-    "server/schemas/visual_fragment.schema.json": "6fc846c2da27b2e4cc65d2984b28b479709d4bedce8910589c38e7a7550fb83f",
+    "server/schemas/visual_fragment.schema.json": "a5d7eb4048f71b8cf6570ab3a6a36ef9a0c766b3226a44e97c79f01853d52f1a",
     "server/schemas/visual_qa.schema.json": "433a60f403351ef7b5ae527178d2d91a3916f3479607b4c7c004d673a2e71311",
     "sim_shell/contract.js": "815a04312ef79e55d1b982e8906a3b6acbbb81733da2555d4b52ece07c627621"
   },

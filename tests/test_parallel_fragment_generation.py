@@ -39,6 +39,18 @@ SCIENTIFIC_CIRCLE = {
 }
 
 VISUAL_FRAGMENT = {
+    "representation": {
+        "scene_pattern": "world_only",
+        "actor_archetype": "body",
+        "proof_channels": [
+            {
+                "output_name": "lit_fraction",
+                "carrier": "actor",
+                "channel": "opacity",
+            }
+        ],
+        "motion_model": "parameter_driven",
+    },
     "background": {
         "top_color": "#07111F",
         "bottom_color": "#10243A",
@@ -265,6 +277,15 @@ def test_trusted_visual_grammar_compiles_ellipse_with_a_conservative_safety_enve
 
     document = {
         **deepcopy(VISUAL_FRAGMENT),
+        "representation": {
+            **deepcopy(VISUAL_FRAGMENT["representation"]),
+            "proof_channels": [
+                {
+                    **VISUAL_FRAGMENT["representation"]["proof_channels"][0],
+                    "channel": "size",
+                }
+            ],
+        },
         "commands": [deepcopy(SCIENTIFIC_ELLIPSE)],
         "causal_response": {
             **VISUAL_FRAGMENT["causal_response"],

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from copy import deepcopy
 from typing import Any
 
@@ -56,7 +57,7 @@ def test_every_semantic_fragment_failure_has_topic_agnostic_retry_guidance() -> 
         assert len(FRAGMENT_RETRY_HINTS[code].split()) >= 6
     serialized = " ".join(FRAGMENT_RETRY_HINTS.values()).casefold()
     for topic in ("moon", "ship", "heat", "car", "plane"):
-        assert topic not in serialized
+        assert re.search(rf"\b{topic}\b", serialized) is None
 
 
 def test_visual_prompt_classifies_fixed_context_as_non_scientific() -> None:
