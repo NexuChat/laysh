@@ -48,10 +48,10 @@
   const description = byId("state-description");
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const compactLayout = matchMedia("(max-width: 480px)");
+  let scenePattern = "world_only";
   let simulation;
+  let graphCanvas;
   let frameCount = 0;
-  let idleFrameId = 0;
-  let replayFrameId = 0;
   let replayStartedAt = 0;
   let replayFrom = 0;
   let replayTo = 0;
@@ -63,6 +63,36 @@
   const periodicSamplesPerCycle = 74;
   const maxIdleStepMs = 100;
   const replayDurationMs = 900;
+
+  function createAnimationClock() {
+    let idleFrameId = 0;
+    let replayFrameId = 0;
+    return Object.freeze({
+      cancelIdle() {
+        if (idleFrameId) cancelAnimationFrame(idleFrameId);
+        idleFrameId = 0;
+      },
+      cancelReplay() {
+        if (replayFrameId) cancelAnimationFrame(replayFrameId);
+        replayFrameId = 0;
+      },
+      requestIdle(callback) {
+        if (idleFrameId || replayFrameId) return;
+        idleFrameId = requestAnimationFrame((timestamp) => {
+          idleFrameId = 0;
+          callback(timestamp);
+        });
+      },
+      requestReplay(callback) {
+        replayFrameId = requestAnimationFrame((timestamp) => {
+          replayFrameId = 0;
+          callback(timestamp);
+        });
+      },
+    });
+  }
+
+  const animationClock = createAnimationClock();
 
   document.body.dataset.direction = dir === "rtl" ? "rtl" : "ltr";
   byId("lesson-label").textContent = labels.lesson;
@@ -94,6 +124,8 @@
   const readout = window.LayshReadout.forLesson(lesson);
   const primaryOutputName = lesson.module_spec.outputs[0];
   const outcomeUnit = lesson.checks.find((check) => check.output === primaryOutputName)?.unit || "";
+  const outputLabel = lesson.output_labels?.[primaryOutputName]
+    || primaryOutputName.replaceAll("_", " ");
   byId("primary-label").textContent = parameter.label;
   Object.assign(control, {
     min: String(parameter.min),
@@ -101,6 +133,134 @@
     step: String(parameter.step),
     value: String(parameter.default),
   });
+
+  function numericChecksForPrimaryOutput() {
+    return lesson.checks
+      .filter((check) => check.kind === "numeric" && check.output === primaryOutputName)
+      .map((check) => ({
+        input: check.inputs.find((item) => item.name === parameter.id),
+        value: Number(check.expected),
+      }))
+      .filter((item) => item.input && Number.isFinite(Number(item.input.value))
+        && Number.isFinite(item.value))
+      .sort((left, right) => Number(left.input.value) - Number(right.input.value));
+  }
+
+  function graphDirectionSummary() {
+    const values = numericChecksForPrimaryOutput();
+    const deltas = values.slice(1).map((item, index) => item.value - values[index].value);
+    const increases = deltas.length > 0 && deltas.every((delta) => delta > 0);
+    const decreases = deltas.length > 0 && deltas.every((delta) => delta < 0);
+    if (ar) {
+      if (increases) return `يزداد مع زيادة ${parameter.label}`;
+      if (decreases) return `يقل مع زيادة ${parameter.label}`;
+      return `يتغير مع ${parameter.label}`;
+    }
+    if (increases) return `increases as ${parameter.label} increases`;
+    if (decreases) return `decreases as ${parameter.label} increases`;
+    return `changes with ${parameter.label}`;
+  }
+
+  function createGraphPanel() {
+    if (scenePattern !== "world_plus_graph") return;
+    const sceneLayout = document.createElement("div");
+    sceneLayout.className = "scene-layout";
+    const stage = canvas.parentElement;
+    stage.insertBefore(sceneLayout, canvas);
+    sceneLayout.append(canvas);
+    graphCanvas = document.createElement("canvas");
+    graphCanvas.id = "simulation-graph";
+    graphCanvas.width = 360;
+    graphCanvas.height = 300;
+    graphCanvas.setAttribute("role", "img");
+    graphCanvas.setAttribute("aria-label", `${outputLabel}: ${graphDirectionSummary()}`);
+    sceneLayout.append(graphCanvas);
+    document.body.dataset.scenePattern = scenePattern;
+  }
+
+  function graphNumber(value) {
+    return new Intl.NumberFormat(lesson.lang, { maximumFractionDigits: 3 }).format(value);
+  }
+
+  function graphUnitLabel(label, unit) {
+    return unit ? `${label} (${unit})` : label;
+  }
+
+  function renderGraph(value) {
+    if (!graphCanvas || !simulation) return;
+    const width = Math.max(220, Math.round(graphCanvas.clientWidth || graphCanvas.width));
+    const height = Math.max(190, Math.round(graphCanvas.clientHeight || graphCanvas.height));
+    if (graphCanvas.width !== width || graphCanvas.height !== height) {
+      graphCanvas.width = width;
+      graphCanvas.height = height;
+    }
+    const context = graphCanvas.getContext("2d");
+    const pointCount = 40;
+    const minimum = Number(parameter.min);
+    const maximum = Number(parameter.max);
+    const samples = Array.from({ length: pointCount }, (_, index) => {
+      const input = minimum + ((maximum - minimum) * index) / (pointCount - 1);
+      return { input, output: Number(simulation.test({ [parameter.id]: input })[primaryOutputName]) };
+    }).filter((sample) => Number.isFinite(sample.output));
+    if (samples.length < 2) return;
+    let outputMinimum = Math.min(...samples.map((sample) => sample.output));
+    let outputMaximum = Math.max(...samples.map((sample) => sample.output));
+    if (outputMinimum === outputMaximum) {
+      const padding = Math.max(1, Math.abs(outputMinimum) * 0.1);
+      outputMinimum -= padding;
+      outputMaximum += padding;
+    }
+    const pad = { top: 30, right: 14, bottom: 46, left: 56 };
+    const plotWidth = width - pad.left - pad.right;
+    const plotHeight = height - pad.top - pad.bottom;
+    const x = (input) => pad.left + ((input - minimum) / (maximum - minimum || 1)) * plotWidth;
+    const y = (observed) => pad.top + (1 - (observed - outputMinimum) / (outputMaximum - outputMinimum)) * plotHeight;
+    context.clearRect(0, 0, width, height);
+    context.fillStyle = "#0d0f12";
+    context.fillRect(0, 0, width, height);
+    context.font = "600 11px Laysh Kufi, sans-serif";
+    context.textBaseline = "middle";
+    context.strokeStyle = "rgb(241 236 223 / 16%)";
+    context.fillStyle = "#98a1ad";
+    for (let index = 0; index < 4; index += 1) {
+      const ratio = index / 3;
+      const tickX = pad.left + ratio * plotWidth;
+      const tickY = pad.top + ratio * plotHeight;
+      context.beginPath();
+      context.moveTo(tickX, pad.top);
+      context.lineTo(tickX, pad.top + plotHeight);
+      context.moveTo(pad.left, tickY);
+      context.lineTo(pad.left + plotWidth, tickY);
+      context.stroke();
+      context.textAlign = "center";
+      context.fillText(graphNumber(minimum + ratio * (maximum - minimum)), tickX, height - 27);
+      context.textAlign = "right";
+      context.fillText(graphNumber(outputMaximum - ratio * (outputMaximum - outputMinimum)), pad.left - 7, tickY);
+    }
+    context.fillStyle = "#f1ecdf";
+    context.textAlign = "left";
+    context.fillText(graphUnitLabel(outputLabel, outcomeUnit), pad.left, 14);
+    context.textAlign = "center";
+    context.fillText(graphUnitLabel(parameter.label, parameter.unit), pad.left + plotWidth / 2, height - 10);
+    context.strokeStyle = "#76d6c8";
+    context.lineWidth = 2;
+    context.beginPath();
+    samples.forEach((sample, index) => {
+      if (index === 0) context.moveTo(x(sample.input), y(sample.output));
+      else context.lineTo(x(sample.input), y(sample.output));
+    });
+    context.stroke();
+    const currentInput = Number(value);
+    const currentOutput = Number(simulation.test({ [parameter.id]: currentInput })[primaryOutputName]);
+    const markerX = x(currentInput);
+    const markerY = y(currentOutput);
+    context.fillStyle = "#ffc247";
+    context.beginPath();
+    context.arc(markerX, markerY, 5, 0, Math.PI * 2);
+    context.fill();
+    graphCanvas.dataset.markerX = String(Math.round(markerX * 100) / 100);
+    graphCanvas.dataset.markerY = String(Math.round(markerY * 100) / 100);
+  }
 
   function formatState(value) {
     const tested = simulation.test({ [parameter.id]: Number(value) });
@@ -125,6 +285,7 @@
     simulation.setParameter(parameter.id, Number(value));
     output.value = `${value} ${parameter.unit}`;
     description.textContent = formatState(value);
+    renderGraph(value);
   }
 
   function syncPlaybackUi(reason) {
@@ -138,20 +299,17 @@
   }
 
   function cancelIdleFrame() {
-    if (!idleFrameId) return;
-    cancelAnimationFrame(idleFrameId);
-    idleFrameId = 0;
+    animationClock.cancelIdle();
   }
 
   function cancelReplaySweep() {
-    if (replayFrameId) cancelAnimationFrame(replayFrameId);
-    replayFrameId = 0;
+    animationClock.cancelReplay();
     replayStartedAt = 0;
   }
 
   function requestIdleFrame() {
-    if (destroyed || playbackState !== "running" || idleFrameId || replayFrameId) return;
-    idleFrameId = requestAnimationFrame(scheduleIdleFrame);
+    if (destroyed || playbackState !== "running") return;
+    animationClock.requestIdle(scheduleIdleFrame);
   }
 
   function pausePlayback(reason) {
@@ -231,7 +389,6 @@
   byId("reset").addEventListener("click", resetSimulation);
 
   function stepReplaySweep(timestamp) {
-    replayFrameId = 0;
     if (destroyed || playbackState !== "running") return;
     if (!replayStartedAt) replayStartedAt = timestamp;
     const progress = Math.min(1, Math.max(0, (timestamp - replayStartedAt) / replayDurationMs));
@@ -240,7 +397,7 @@
     control.value = String(value);
     update(control.value);
     byId("explain").hidden = false;
-    if (progress < 1) replayFrameId = requestAnimationFrame(stepReplaySweep);
+    if (progress < 1) animationClock.requestReplay(stepReplaySweep);
     else {
       replayStartedAt = 0;
       requestIdleFrame();
@@ -263,7 +420,7 @@
     previousIdleAt = 0;
     motionSampleBudget = 0;
     syncPlaybackUi("replay");
-    replayFrameId = requestAnimationFrame(stepReplaySweep);
+    animationClock.requestReplay(stepReplaySweep);
   }
 
   byId("replay").addEventListener("click", startReplaySweep);
@@ -289,7 +446,6 @@
   });
 
   function scheduleIdleFrame(timestamp = 0) {
-    idleFrameId = 0;
     if (destroyed || playbackState !== "running") return;
     if (simulation.setParameter.length >= 3) {
       const elapsedMs = previousIdleAt > 0
@@ -337,10 +493,16 @@
     canvas.width = width;
     canvas.height = height;
     simulation.resize(width, height);
+    renderGraph(control.value);
   }
 
   try {
     simulation = window.LayshContract.assertSimulation(window.LayshSimulation);
+    const representation = simulation.spec?.representation || lesson.representation;
+    scenePattern = representation?.scene_pattern === "world_plus_graph"
+      ? "world_plus_graph"
+      : "world_only";
+    createGraphPanel();
     simulation.init(simulationOptions());
     update(parameter.default);
     document.documentElement.dataset.reducedMotion = String(reducedMotion);
