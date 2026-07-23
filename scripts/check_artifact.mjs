@@ -157,6 +157,8 @@ try {
     expression: `(() => {
       const canvas = document.querySelector('#simulation');
       const control = document.querySelector('#primary-control');
+      const representation = window.LayshSimulation?.spec?.representation
+        || window.__LAYSH_LESSON__?.representation;
       return {
         actorResponseObserved: Boolean(canvas && canvas.__layshActorResponse),
         canvasWidth: canvas ? Number(canvas.width) : 0,
@@ -174,6 +176,10 @@ try {
                 .map((input) => Number(input.value));
             })
           : [],
+        representation: representation ? {
+          scenePattern: representation.scene_pattern || null,
+          actorArchetype: representation.actor_archetype || null,
+        } : null,
       };
     })()`,
     returnByValue: true,
@@ -253,6 +259,260 @@ try {
     };
     causalResponse.report = evaluateCausalResponse(causalResponse);
   }
+  const representationProbe = await command("Runtime.evaluate", {
+    expression: `(() => {
+      const simulation = window.LayshSimulation;
+      const lesson = window.__LAYSH_LESSON__;
+      const representation = simulation?.spec?.representation || lesson?.representation;
+      if (!representation || typeof representation !== 'object') return null;
+      const canvas = document.querySelector('#simulation');
+      const control = document.querySelector('#primary-control');
+      if (!canvas || !control || !simulation) return {
+        required: true,
+        graph: { required: representation.scene_pattern === 'world_plus_graph', samples: [], markers: [] },
+        archetype: {
+          required: Boolean(representation.actor_archetype),
+          declared: representation.actor_archetype || null,
+          actorId: null,
+          scientificActorCount: 0,
+          visibleActorCount: 0,
+          matchingPrimitiveCount: 0,
+        },
+      };
+      const toggle = document.querySelector('#play-pause');
+      if (toggle && document.documentElement.dataset.playbackState === 'running') toggle.click();
+      const primaryOutput = lesson.module_spec.outputs[0];
+      const mainContext = canvas.getContext('2d');
+      const primitives = [];
+      const originalArc = mainContext.arc;
+      const originalEllipse = mainContext.ellipse;
+      mainContext.arc = function(cx, cy, radius, start, end, counterclockwise) {
+        primitives.push({
+          type: 'circle', cx: Number(cx), cy: Number(cy), radius: Number(radius),
+          alpha: Number(this.globalAlpha),
+        });
+        return originalArc.call(this, cx, cy, radius, start, end, counterclockwise);
+      };
+      mainContext.ellipse = function(cx, cy, radiusX, radiusY, rotation, start, end, counterclockwise) {
+        primitives.push({
+          type: 'ellipse', cx: Number(cx), cy: Number(cy),
+          radiusX: Number(radiusX), radiusY: Number(radiusY),
+          rotation: Number(rotation), alpha: Number(this.globalAlpha),
+        });
+        return originalEllipse.call(
+          this, cx, cy, radiusX, radiusY, rotation, start, end, counterclockwise,
+        );
+      };
+      const originalValue = Number(control.value);
+      control.value = String(lesson.primary_parameter.default);
+      control.dispatchEvent(new Event('input', { bubbles: true }));
+      mainContext.arc = originalArc;
+      mainContext.ellipse = originalEllipse;
+
+      const response = canvas.__layshActorResponse;
+      const sceneStates = Array.isArray(canvas.__layshSceneGeometry)
+        ? canvas.__layshSceneGeometry : [];
+      const scene = sceneStates[sceneStates.length - 1];
+      const scientificObjects = Array.isArray(scene?.objects)
+        ? scene.objects.filter((object) => object?.scientific === true) : [];
+      const viewportWidth = Number(scene?.viewport?.width || canvas.width);
+      const viewportHeight = Number(scene?.viewport?.height || canvas.height);
+      const visible = (object) => {
+        const geometry = object?.geometry;
+        if (!geometry || typeof geometry !== 'object') return false;
+        if (geometry.type === 'circle') {
+          const { cx, cy, radius } = geometry;
+          return [cx, cy, radius].every(Number.isFinite) && radius > 0
+            && cx + radius >= 0 && cy + radius >= 0
+            && cx - radius <= viewportWidth && cy - radius <= viewportHeight;
+        }
+        if (geometry.type === 'ellipse') {
+          const radiusX = Number(geometry.radiusX ?? geometry.radius_x);
+          const radiusY = Number(geometry.radiusY ?? geometry.radius_y);
+          return [geometry.cx, geometry.cy, radiusX, radiusY].every(Number.isFinite)
+            && radiusX > 0 && radiusY > 0
+            && geometry.cx + radiusX >= 0 && geometry.cy + radiusY >= 0
+            && geometry.cx - radiusX <= viewportWidth
+            && geometry.cy - radiusY <= viewportHeight;
+        }
+        if (geometry.type === 'rect') {
+          return [geometry.x, geometry.y, geometry.width, geometry.height].every(Number.isFinite)
+            && geometry.width > 0 && geometry.height > 0
+            && geometry.x + geometry.width >= 0 && geometry.y + geometry.height >= 0
+            && geometry.x <= viewportWidth && geometry.y <= viewportHeight;
+        }
+        return Array.isArray(geometry.points) && geometry.points.length >= 2;
+      };
+      const visibleObjects = scientificObjects.filter(visible);
+      const actorBounds = response?.fittedBounds;
+      const actorCenter = actorBounds ? {
+        x: (Number(actorBounds.left) + Number(actorBounds.right)) / 2,
+        y: (Number(actorBounds.top) + Number(actorBounds.bottom)) / 2,
+      } : null;
+      const near = (primitive, point, tolerance = 2) => point
+        && Math.abs(primitive.cx - point.x) <= tolerance
+        && Math.abs(primitive.cy - point.y) <= tolerance;
+      const visiblePrimitives = primitives.filter((primitive) =>
+        Number.isFinite(primitive.alpha) && primitive.alpha > 0.02);
+      const primitiveForObject = (object) => {
+        const geometry = object.geometry;
+        const point = Number.isFinite(geometry.cx) && Number.isFinite(geometry.cy)
+          ? { x: geometry.cx, y: geometry.cy } : null;
+        return visiblePrimitives.some((primitive) => near(primitive, point));
+      };
+      let matchingPrimitiveCount = 0;
+      if (representation.actor_archetype === 'body') {
+        const actorObject = visibleObjects.find((object) => object.id === response?.actorId);
+        matchingPrimitiveCount = actorObject
+          && visiblePrimitives.some((primitive) => near(primitive, actorCenter)) ? 1 : 0;
+      } else if (representation.actor_archetype === 'elongated_body') {
+        matchingPrimitiveCount = visiblePrimitives.filter((primitive) =>
+          primitive.type === 'ellipse'
+          && near(primitive, actorCenter)
+          && Math.max(primitive.radiusX, primitive.radiusY)
+            / Math.max(1e-9, Math.min(primitive.radiusX, primitive.radiusY)) >= 1.1).length;
+      } else if (
+        representation.actor_archetype === 'orbital_pair'
+        || representation.actor_archetype === 'linked_bodies'
+      ) {
+        matchingPrimitiveCount = visibleObjects.filter(primitiveForObject).length;
+      } else if (representation.actor_archetype === 'surface_and_body') {
+        const roundCount = visiblePrimitives.filter((primitive) =>
+          primitive.type === 'circle').length;
+        const elongatedCount = visiblePrimitives.filter((primitive) =>
+          primitive.type === 'ellipse'
+          && Math.max(primitive.radiusX, primitive.radiusY)
+            / Math.max(1e-9, Math.min(primitive.radiusX, primitive.radiusY)) >= 1.1).length;
+        matchingPrimitiveCount = roundCount > 0 && elongatedCount > 0 ? 2 : 0;
+      } else {
+        const expectedGeometry = {
+          ray_bundle: 'ray',
+          wave_medium: 'wave',
+          particle_flow: 'particle_flow',
+        }[representation.actor_archetype];
+        matchingPrimitiveCount = visibleObjects.filter(
+          (object) => object.geometry?.type === expectedGeometry,
+        ).length;
+      }
+
+      const graphCanvas = document.querySelector('#simulation-graph');
+      const graphRequired = representation.scene_pattern === 'world_plus_graph';
+      const graphSamples = [];
+      const markerSamples = [];
+      if (graphRequired && graphCanvas) {
+        const graphContext = graphCanvas.getContext('2d');
+        const paths = [];
+        let currentPath = [];
+        const originalBeginPath = graphContext.beginPath;
+        const originalMoveTo = graphContext.moveTo;
+        const originalLineTo = graphContext.lineTo;
+        const originalStroke = graphContext.stroke;
+        graphContext.beginPath = function() {
+          currentPath = [];
+          return originalBeginPath.call(this);
+        };
+        graphContext.moveTo = function(x, y) {
+          currentPath.push({ x: Number(x), y: Number(y) });
+          return originalMoveTo.call(this, x, y);
+        };
+        graphContext.lineTo = function(x, y) {
+          currentPath.push({ x: Number(x), y: Number(y) });
+          return originalLineTo.call(this, x, y);
+        };
+        graphContext.stroke = function(...args) {
+          if (currentPath.length > 0) paths.push(currentPath.map((point) => ({ ...point })));
+          return originalStroke.apply(this, args);
+        };
+        control.value = String(lesson.primary_parameter.default);
+        control.dispatchEvent(new Event('input', { bubbles: true }));
+        graphContext.beginPath = originalBeginPath;
+        graphContext.moveTo = originalMoveTo;
+        graphContext.lineTo = originalLineTo;
+        graphContext.stroke = originalStroke;
+        const curve = paths.sort((left, right) => right.length - left.length)[0] || [];
+        const minimum = Number(lesson.primary_parameter.min);
+        const maximum = Number(lesson.primary_parameter.max);
+        const expectedCurve = Array.from({ length: 40 }, (_, index) => {
+          const input = minimum + ((maximum - minimum) * index) / 39;
+          return {
+            input,
+            output: Number(simulation.test({ [lesson.primary_parameter.id]: input })[primaryOutput]),
+          };
+        });
+        let outputMinimum = Math.min(...expectedCurve.map((sample) => sample.output));
+        let outputMaximum = Math.max(...expectedCurve.map((sample) => sample.output));
+        if (outputMinimum === outputMaximum) {
+          const padding = Math.max(1, Math.abs(outputMinimum) * 0.1);
+          outputMinimum -= padding;
+          outputMaximum += padding;
+        }
+        const pad = { top: 30, right: 14, bottom: 46, left: 56 };
+        const plotWidth = graphCanvas.width - pad.left - pad.right;
+        const plotHeight = graphCanvas.height - pad.top - pad.bottom;
+        for (const index of [0, 10, 20, 29, 39]) {
+          const point = curve[index];
+          const expected = expectedCurve[index];
+          const expectedX = pad.left
+            + ((expected.input - minimum) / (maximum - minimum || 1)) * plotWidth;
+          const plottedOutput = point && Math.abs(point.x - expectedX) <= 1.5
+            ? outputMaximum
+              - ((point.y - pad.top) / plotHeight) * (outputMaximum - outputMinimum)
+            : null;
+          graphSamples.push({
+            input: expected.input,
+            expectedOutput: expected.output,
+            plottedOutput,
+            tolerance: Math.max(
+              1e-6,
+              Math.abs(outputMaximum - outputMinimum) / Math.max(1, plotHeight) * 1.5,
+            ),
+          });
+        }
+        for (const controlValue of [minimum, Number(lesson.primary_parameter.default), maximum]) {
+          control.value = String(controlValue);
+          control.dispatchEvent(new Event('input', { bubbles: true }));
+          markerSamples.push({
+            controlValue,
+            expectedX: pad.left + ((controlValue - minimum) / (maximum - minimum || 1)) * plotWidth,
+            observedX: Number(graphCanvas.dataset.markerX),
+            tolerance: 1,
+          });
+        }
+      }
+      control.value = String(originalValue);
+      control.dispatchEvent(new Event('input', { bubbles: true }));
+      return {
+        required: true,
+        graph: { required: graphRequired, samples: graphSamples, markers: markerSamples },
+        archetype: {
+          required: Boolean(representation.actor_archetype),
+          declared: representation.actor_archetype || null,
+          actorId: response?.actorId || null,
+          scientificActorCount: scientificObjects.length,
+          visibleActorCount: visibleObjects.length,
+          matchingPrimitiveCount,
+        },
+      };
+    })()`,
+    returnByValue: true,
+  });
+  const representationConsistency = representationProbe.result?.value
+    || (setup.representation ? {
+      required: true,
+      graph: {
+        required: setup.representation.scenePattern === "world_plus_graph",
+        samples: [],
+        markers: [],
+      },
+      archetype: {
+        required: Boolean(setup.representation.actorArchetype),
+        declared: setup.representation.actorArchetype,
+        actorId: null,
+        scientificActorCount: 0,
+        visibleActorCount: 0,
+        matchingPrimitiveCount: 0,
+      },
+    } : null);
   socket.close();
   const browserEvidence = {
     ready,
@@ -264,6 +524,9 @@ try {
     externalRequests,
   };
   if (causalResponse) browserEvidence.causalResponse = causalResponse;
+  if (representationConsistency) {
+    browserEvidence.representationConsistency = representationConsistency;
+  }
   process.stdout.write(JSON.stringify(browserEvidence));
 } catch (error) {
   process.stderr.write(`${error.message}\n`);

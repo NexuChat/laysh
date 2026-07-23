@@ -29,6 +29,7 @@ let checkCount = 0;
 let frames = 0;
 let drawOperations = 0;
 let causalResponseReport = null;
+let temporalCausalMatrixReport = null;
 
 function addFailure(gate, code, expected, actual, extra = {}) {
   failures.push({ gate, code, expected, actual, ...extra });
@@ -69,6 +70,313 @@ function captureSceneGeometry() {
   } catch {
     // The Python validator fails closed when usable samples are absent.
   }
+}
+
+function copied(value) {
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch {
+    return null;
+  }
+}
+
+function distinctAboveTolerance(values, tolerance) {
+  const finiteValues = values.filter((value) => Number.isFinite(value));
+  if (finiteValues.length === 0) return 0;
+  const ordered = [...finiteValues].sort((left, right) => left - right);
+  let distinct = 1;
+  let previous = ordered[0];
+  for (const value of ordered.slice(1)) {
+    if (Math.abs(value - previous) > tolerance) {
+      distinct += 1;
+      previous = value;
+    }
+  }
+  return distinct;
+}
+
+function actorTolerance(channel, samples) {
+  if (channel === "x" || channel === "y") {
+    return Math.max(1e-6, Math.min(canvas.width, canvas.height) * 0.001);
+  }
+  if (channel === "rotation") return 0.001;
+  if (channel === "opacity") return 0.005;
+  const values = samples
+    .map((sample) => Math.abs(Number(sample?.response?.visualValue)))
+    .filter((value) => Number.isFinite(value) && value > 1e-9);
+  const baseline = values.length > 0 ? Math.min(...values) : 1;
+  return Math.max(1e-6, baseline * 0.005);
+}
+
+function actorCommandPresent(sample) {
+  const actorId = sample?.response?.actorId;
+  const scene = sample?.scene;
+  if (typeof actorId !== "string" || !Array.isArray(scene)) return false;
+  return scene.some((state) => Array.isArray(state?.objects)
+    && state.objects.some((object) => object?.id === actorId && object?.scientific === true));
+}
+
+function declaredActorState(sample, channel) {
+  const actorId = sample?.response?.actorId;
+  const scene = sample?.scene;
+  if (typeof actorId !== "string" || !Array.isArray(scene)) return null;
+  const objects = scene.flatMap((state) => (
+    Array.isArray(state?.objects) ? state.objects : []
+  ));
+  const actor = objects.find(
+    (object) => object?.id === actorId && object?.scientific === true,
+  );
+  const geometry = actor?.geometry;
+  if (!geometry || typeof geometry !== "object") return null;
+  if (channel === "x") return Number.isFinite(geometry.cx) ? geometry.cx : null;
+  if (channel === "y") return Number.isFinite(geometry.cy) ? geometry.cy : null;
+  if (channel === "rotation") {
+    return Number.isFinite(geometry.rotation) ? geometry.rotation : null;
+  }
+  if (channel === "opacity") {
+    return Number.isFinite(geometry.opacity) ? geometry.opacity : null;
+  }
+  if (channel === "size") {
+    if (Number.isFinite(geometry.radius)) return geometry.radius;
+    const radiusX = Number(geometry.radiusX ?? geometry.radius_x);
+    const radiusY = Number(geometry.radiusY ?? geometry.radius_y);
+    return Number.isFinite(radiusX) && Number.isFinite(radiusY)
+      ? Math.max(radiusX, radiusY) : null;
+  }
+  return null;
+}
+
+function monotonicDirection(samples, field, tolerance) {
+  const ordered = [...samples].sort(
+    (left, right) => left.parameterValue - right.parameterValue,
+  );
+  const deltas = ordered.slice(1).map(
+    (sample, index) => Number(sample[field]) - Number(ordered[index][field]),
+  );
+  if (deltas.every((delta) => delta > tolerance)) return 1;
+  if (deltas.every((delta) => delta < -tolerance)) return -1;
+  return 0;
+}
+
+function temporalMatrixFailure(code, expected, actual, extra = {}) {
+  return {
+    gate: "temporal_causal_matrix",
+    code,
+    expected,
+    actual,
+    ...extra,
+  };
+}
+
+function periodForMatrix(simulationApi, defaultInputs, outputs, parameterSpan) {
+  let tested = {};
+  try {
+    sandbox.inputs = defaultInputs;
+    tested = new vm.Script("window.LayshSimulation.test(inputs)")
+      .runInContext(sandbox, { timeout: 250 });
+  } catch {
+    tested = {};
+  }
+  const periodOutput = outputs.find(
+    (name) => /(?:^|_)(?:period|duration|cycle_time|time_span)(?:_|$)/.test(name),
+  );
+  const declaredPeriod = Number(tested?.[periodOutput]);
+  if (periodOutput && Number.isFinite(declaredPeriod) && Math.abs(declaredPeriod) > 1e-9) {
+    return { period: Math.abs(declaredPeriod), source: periodOutput };
+  }
+  return {
+    period: Math.max(Math.abs(parameterSpan), 1),
+    source: "normalized_span",
+  };
+}
+
+function evaluateTemporalCausalMatrix(simulationApi, representation) {
+  const matrixFailures = [];
+  let matrixCheckCount = 0;
+  const parameter = understanding.primary_parameter;
+  const parameterValues = [parameter.min, parameter.default, parameter.max].map(Number);
+  const defaultInputs = {
+    [parameter.id]: parameter.default,
+    ...(understanding.secondary_parameter
+      ? { [understanding.secondary_parameter.id]: understanding.secondary_parameter.default }
+      : {}),
+  };
+  const period = periodForMatrix(
+    simulationApi,
+    defaultInputs,
+    understanding.module_spec.outputs,
+    parameter.max - parameter.min,
+  );
+  const timeSamples = [0, period.period / 4, period.period / 2, period.period * 3 / 4];
+  const samples = [];
+
+  for (const parameterValue of parameterValues) {
+    for (const timeMs of timeSamples) {
+      new vm.Script("window.LayshSimulation.destroy()")
+        .runInContext(sandbox, { timeout: 250 });
+      sandbox.options = { ...sandbox.options, reducedMotion: false };
+      new vm.Script("window.LayshSimulation.init(options)")
+        .runInContext(sandbox, { timeout: 500 });
+      sandbox.parameterName = parameter.id;
+      sandbox.parameterValue = parameterValue;
+      sandbox.elapsedMs = timeMs;
+      new vm.Script(
+        "window.LayshSimulation.setParameter(parameterName, parameterValue, elapsedMs)",
+      ).runInContext(sandbox, { timeout: 250 });
+      const response = copied(canvas.__layshActorResponse ?? null);
+      samples.push({
+        parameterValue,
+        timeMs,
+        response,
+        scene: copied(canvas.__layshSceneGeometry ?? null),
+      });
+      captureSceneGeometry();
+    }
+  }
+
+  const actorProofs = Array.isArray(representation.proof_channels)
+    ? representation.proof_channels.filter((proof) => proof?.carrier === "actor")
+    : [];
+  for (const proof of actorProofs) {
+    const proofSamples = samples.filter(
+      (sample) => sample.response?.outputName === proof.output_name
+        && sample.response?.channel === proof.channel,
+    );
+    matrixCheckCount += 1;
+    if (proofSamples.length !== samples.length) {
+      matrixFailures.push(temporalMatrixFailure(
+        "representation_actor_proof_missing",
+        {
+          output_name: proof.output_name,
+          channel: proof.channel,
+          matrix_samples: samples.length,
+        },
+        { matching_actor_samples: proofSamples.length },
+      ));
+      continue;
+    }
+
+    matrixCheckCount += 1;
+    const declaredActorSamples = proofSamples.filter(actorCommandPresent).length;
+    if (declaredActorSamples !== proofSamples.length) {
+      matrixFailures.push(temporalMatrixFailure(
+        "declared_actor_command_missing",
+        { scientific_actor_command_samples: proofSamples.length },
+        { scientific_actor_command_samples: declaredActorSamples },
+        { actor_id: proofSamples[0]?.response?.actorId },
+      ));
+    }
+
+    const tolerance = actorTolerance(proof.channel, proofSamples);
+    const parameterSweep = proofSamples.filter((sample) => Math.abs(sample.timeMs) <= 1e-9);
+    const declaredStates = parameterSweep.map(
+      (sample) => declaredActorState(sample, proof.channel),
+    );
+    if (declaredStates.every(Number.isFinite)) {
+      matrixCheckCount += 1;
+      const declaredDistinct = distinctAboveTolerance(declaredStates, tolerance);
+      const mismatchedStates = parameterSweep.filter((sample, index) =>
+        Math.abs(Number(sample.response.visualValue) - declaredStates[index]) > tolerance);
+      if (declaredDistinct < 2 || mismatchedStates.length > 0) {
+        matrixFailures.push(temporalMatrixFailure(
+          "declared_actor_command_static",
+          {
+            changing_scientific_actor_command: true,
+            response_matches_declared_actor: true,
+            tolerance,
+          },
+          {
+            distinct_declared_actor_states: declaredDistinct,
+            response_mismatch_samples: mismatchedStates.length,
+          },
+          { actor_id: proofSamples[0]?.response?.actorId, channel: proof.channel },
+        ));
+      }
+    }
+    const parameterStates = parameterSweep.map((sample) => sample.response.visualValue);
+    matrixCheckCount += 1;
+    const parameterDistinct = distinctAboveTolerance(parameterStates, tolerance);
+    if (parameterDistinct < 2) {
+      matrixFailures.push(temporalMatrixFailure(
+        "actor_parameter_response_missing",
+        {
+          output_name: proof.output_name,
+          channel: proof.channel,
+          minimum_distinct_actor_states: 2,
+          tolerance,
+        },
+        { distinct_actor_states: parameterDistinct },
+      ));
+    }
+
+    matrixCheckCount += 1;
+    const outputSweep = parameterSweep.map((sample) => ({
+      parameterValue: sample.parameterValue,
+      outputValue: Number(sample.response.outputValue),
+      visualValue: Number(sample.response.visualValue),
+    }));
+    const outputDirection = monotonicDirection(outputSweep, "outputValue", 1e-9);
+    const visualDirection = monotonicDirection(outputSweep, "visualValue", tolerance);
+    if (outputDirection !== 0) {
+      const expectedVisualDirection = proofSamples[0].response.relation === "inverse"
+        ? -outputDirection : outputDirection;
+      if (visualDirection !== expectedVisualDirection) {
+        matrixFailures.push(temporalMatrixFailure(
+          "causal_direction_mismatch",
+          {
+            relation: proofSamples[0].response.relation,
+            visual_direction: expectedVisualDirection,
+          },
+          { visual_direction: visualDirection, output_direction: outputDirection },
+          { output_name: proof.output_name, channel: proof.channel },
+        ));
+      }
+    }
+  }
+
+  let timeDistinctActorStates = 0;
+  if (representation.motion_model === "cyclic" || representation.motion_model === "time_driven") {
+    matrixCheckCount += 1;
+    const defaultTimeSamples = samples.filter(
+      (sample) => Math.abs(sample.parameterValue - Number(parameter.default)) <= 1e-9,
+    );
+    const tolerance = actorTolerance(
+      defaultTimeSamples[0]?.response?.channel,
+      defaultTimeSamples,
+    );
+    const declaredTimeStates = defaultTimeSamples.map((sample) =>
+      declaredActorState(sample, sample.response?.channel));
+    const temporalValues = declaredTimeStates.every(Number.isFinite)
+      ? declaredTimeStates
+      : defaultTimeSamples.map((sample) => sample.response?.visualValue);
+    timeDistinctActorStates = distinctAboveTolerance(
+      temporalValues,
+      tolerance,
+    );
+    if (timeDistinctActorStates < 2) {
+      matrixFailures.push(temporalMatrixFailure(
+        "actor_motion_missing",
+        {
+          motion_model: representation.motion_model,
+          minimum_distinct_actor_states: 2,
+          time_samples_ms: timeSamples,
+        },
+        { distinct_actor_states: timeDistinctActorStates },
+      ));
+    }
+  }
+
+  return {
+    passed: matrixFailures.length === 0,
+    checkCount: matrixCheckCount,
+    sample_count: samples.length,
+    parameter_values: parameterValues,
+    time_samples_ms: timeSamples,
+    period_source: period.source,
+    actor_proof_count: actorProofs.length,
+    time_distinct_actor_states: timeDistinctActorStates,
+    failures: matrixFailures,
+  };
 }
 
 const context2d = {
@@ -448,6 +756,33 @@ if (simulation) {
       failures.push(...causalResponseReport.failures);
       checkCount += causalResponseReport.checkCount;
     }
+
+    const representation = simulation.spec?.representation;
+    if (representation && typeof representation === "object") {
+      try {
+        temporalCausalMatrixReport = evaluateTemporalCausalMatrix(
+          simulation,
+          representation,
+        );
+        failures.push(...temporalCausalMatrixReport.failures);
+        checkCount += temporalCausalMatrixReport.checkCount;
+      } catch (error) {
+        temporalCausalMatrixReport = {
+          passed: false,
+          checkCount: 1,
+          sample_count: 0,
+          failures: [
+            temporalMatrixFailure(
+              "temporal_matrix_execution_failed",
+              { bounded_matrix_evaluation: true },
+              safeRuntimeError(error),
+            ),
+          ],
+        };
+        failures.push(...temporalCausalMatrixReport.failures);
+        checkCount += temporalCausalMatrixReport.checkCount;
+      }
+    }
   }
 }
 
@@ -459,5 +794,6 @@ process.stdout.write(JSON.stringify({
   passing_numeric_fixtures: passingNumericFixtures,
   scene_geometry_samples: sceneGeometrySamples,
   causal_response: causalResponseReport,
+  temporal_causal_matrix: temporalCausalMatrixReport,
   failures,
 }));

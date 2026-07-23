@@ -45,6 +45,172 @@ def _failure(code: str, expected: dict[str, Any], actual: dict[str, Any]) -> dic
     }
 
 
+def _gate_failure(
+    gate: str,
+    code: str,
+    expected: dict[str, Any],
+    actual: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "gate": gate,
+        "code": code,
+        "expected": expected,
+        "actual": actual,
+    }
+
+
+def _finite_number(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _evaluate_representation_consistency(
+    evidence: dict[str, Any],
+) -> tuple[list[dict[str, Any]], int]:
+    report = evidence.get("representationConsistency")
+    if not isinstance(report, dict) or report.get("required") is not True:
+        return [], 0
+
+    failures: list[dict[str, Any]] = []
+    check_count = 0
+    graph = report.get("graph")
+    if isinstance(graph, dict) and graph.get("required") is True:
+        check_count += 1
+        samples = graph.get("samples")
+        usable_samples = (
+            samples
+            if isinstance(samples, list)
+            else []
+        )
+        mismatches = [
+            {
+                "input": sample.get("input"),
+                "expected_output": sample.get("expectedOutput"),
+                "plotted_output": sample.get("plottedOutput"),
+                "tolerance": sample.get("tolerance"),
+            }
+            for sample in usable_samples
+            if not (
+                isinstance(sample, dict)
+                and _finite_number(sample.get("expectedOutput"))
+                and _finite_number(sample.get("plottedOutput"))
+                and _finite_number(sample.get("tolerance"))
+                and sample["tolerance"] >= 0
+                and abs(sample["expectedOutput"] - sample["plottedOutput"])
+                <= sample["tolerance"]
+            )
+        ]
+        if len(usable_samples) != 5 or mismatches:
+            failures.append(
+                _gate_failure(
+                    "graph_consistency",
+                    "graph_physics_mismatch",
+                    {
+                        "sample_count": 5,
+                        "plotted_values_match_module_test": True,
+                    },
+                    {
+                        "sample_count": len(usable_samples),
+                        "mismatches": mismatches,
+                    },
+                )
+            )
+
+        check_count += 1
+        markers = graph.get("markers")
+        usable_markers = markers if isinstance(markers, list) else []
+        marker_mismatches = [
+            {
+                "control_value": marker.get("controlValue"),
+                "expected_x": marker.get("expectedX"),
+                "observed_x": marker.get("observedX"),
+                "tolerance": marker.get("tolerance"),
+            }
+            for marker in usable_markers
+            if not (
+                isinstance(marker, dict)
+                and _finite_number(marker.get("controlValue"))
+                and _finite_number(marker.get("expectedX"))
+                and _finite_number(marker.get("observedX"))
+                and _finite_number(marker.get("tolerance"))
+                and marker["tolerance"] >= 0
+                and abs(marker["expectedX"] - marker["observedX"])
+                <= marker["tolerance"]
+            )
+        ]
+        observed_positions = {
+            round(float(marker["observedX"]), 6)
+            for marker in usable_markers
+            if isinstance(marker, dict) and _finite_number(marker.get("observedX"))
+        }
+        if (
+            len(usable_markers) != 3
+            or len(observed_positions) < 3
+            or marker_mismatches
+        ):
+            failures.append(
+                _gate_failure(
+                    "graph_consistency",
+                    "graph_marker_mismatch",
+                    {
+                        "control_samples": 3,
+                        "distinct_marker_positions": 3,
+                        "marker_tracks_control": True,
+                    },
+                    {
+                        "control_samples": len(usable_markers),
+                        "distinct_marker_positions": len(observed_positions),
+                        "mismatches": marker_mismatches,
+                    },
+                )
+            )
+
+    archetype = report.get("archetype")
+    if not isinstance(archetype, dict) or archetype.get("required") is not True:
+        return failures, check_count
+    check_count += 1
+    declared = archetype.get("declared") if isinstance(archetype, dict) else None
+    paired_archetypes = {"orbital_pair", "linked_bodies", "surface_and_body"}
+    minimum_actor_count = 2 if declared in paired_archetypes else 1
+    scientific_count = (
+        archetype.get("scientificActorCount") if isinstance(archetype, dict) else None
+    )
+    visible_count = (
+        archetype.get("visibleActorCount") if isinstance(archetype, dict) else None
+    )
+    matching_count = (
+        archetype.get("matchingPrimitiveCount")
+        if isinstance(archetype, dict)
+        else None
+    )
+    archetype_matches = (
+        isinstance(declared, str)
+        and _finite_number(scientific_count)
+        and _finite_number(visible_count)
+        and _finite_number(matching_count)
+        and scientific_count >= minimum_actor_count
+        and visible_count >= minimum_actor_count
+        and matching_count >= minimum_actor_count
+    )
+    if not archetype_matches:
+        failures.append(
+            _gate_failure(
+                "representation_consistency",
+                "archetype_render_mismatch",
+                {
+                    "declared_archetype_rendered": True,
+                    "minimum_visible_scientific_actors": minimum_actor_count,
+                },
+                {
+                    "declared": declared,
+                    "scientific_actor_count": scientific_count,
+                    "visible_actor_count": visible_count,
+                    "matching_primitive_count": matching_count,
+                },
+            )
+        )
+    return failures, check_count
+
+
 def _evaluate(evidence: dict[str, Any]) -> BrowserVerificationResult:
     failures = []
     checks = (
@@ -141,6 +307,11 @@ def _evaluate(evidence: dict[str, Any]) -> BrowserVerificationResult:
                         "actual": {"structured_failures": False},
                     }
                 )
+    representation_failures, representation_check_count = (
+        _evaluate_representation_consistency(evidence)
+    )
+    failures.extend(representation_failures)
+    check_count += representation_check_count
     return BrowserVerificationResult(
         passed=not failures,
         check_count=check_count,
