@@ -156,6 +156,11 @@ def test_model_lab_page_is_separate_and_has_closed_comparison_controls(monkeypat
     assert "Direct Canvas Studio" in response.text
     assert "/api/model-lab/compare" not in response.text
     assert 'href="/"' in response.text
+    translations = (Path(__file__).parents[1] / "web" / "translations.js").read_text(
+        encoding="utf-8"
+    )
+    assert '"modelLab.verified": "اجتاز فحوص المختبر"' in translations
+    assert '"modelLab.verified": "Passed lab checks"' in translations
 
 
 def test_model_lab_understands_once_and_compares_two_verified_candidates_concurrently(
@@ -302,6 +307,34 @@ class _OutputMetadataMismatchBackend(_ComparingBackend):
                 "return { other_output: state.lit_fraction };",
             )
         return physics, module
+
+
+class _MissingOptionalSceneEvidenceBackend(_ComparingBackend):
+    async def generate_direct_module_for_lab(self, *args, **kwargs):
+        physics, module = await super().generate_direct_module_for_lab(*args, **kwargs)
+        module["module_js"] = module["module_js"].replace(
+            "    emitFrame();",
+            "    canvas.__layshSceneGeometry = [];\n    emitFrame();",
+        )
+        return physics, module
+
+
+def test_model_lab_does_not_fail_a_direct_canvas_for_optional_scene_metadata_only(
+    monkeypatch,
+):
+    with _enabled_client(
+        monkeypatch,
+        _MissingOptionalSceneEvidenceBackend(),
+    ) as client:
+        accepted = client.post("/api/model-lab/compare", json=_comparison_payload())
+        run = _wait_for_lab_run(client, accepted.json()["status_url"])
+
+    assert {
+        (candidate["status"], candidate["artifact_tier"])
+        for candidate in run["candidates"]
+    } == {("verified", "verified")}
+    assert all(candidate["failed_gates"] == [] for candidate in run["candidates"])
+    assert all(candidate["failure_codes"] == [] for candidate in run["candidates"])
 
 
 def test_model_lab_previews_safe_output_metadata_mismatches_instead_of_hiding_art(

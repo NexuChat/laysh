@@ -213,6 +213,11 @@ _PREVIEW_BLOCKING_BROWSER_CODES = frozenset(
         "external_request_observed",
     }
 )
+_LAB_OPTIONAL_FAILURES = frozenset(
+    {
+        ("scene_geometry", "scene_samples_missing"),
+    }
+)
 
 
 def _preview_blocked_by(failures: list[dict[str, Any]]) -> bool:
@@ -229,6 +234,23 @@ def _preview_blocked_by_browser(failures: list[dict[str, Any]]) -> bool:
         and failure.get("code") in _PREVIEW_BLOCKING_BROWSER_CODES
         for failure in failures
     )
+
+
+def _applicable_lab_failures(
+    failures: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    return [
+        failure
+        for failure in failures
+        if not (
+            isinstance(failure, dict)
+            and (
+                failure.get("gate"),
+                failure.get("code"),
+            )
+            in _LAB_OPTIONAL_FAILURES
+        )
+    ]
 
 
 class ModelLabManager:
@@ -425,12 +447,15 @@ class ModelLabManager:
             understanding,
         )
         candidate.check_count += deterministic.check_count
-        combined_failures = list(deterministic.failures)
+        deterministic_failures = _applicable_lab_failures(
+            deterministic.failures
+        )
+        combined_failures = list(deterministic_failures)
         if physics_semantic_failure is not None:
             combined_failures.insert(0, physics_semantic_failure)
         candidate.failed_gates = _gate_names(combined_failures)
         candidate.failure_codes = sorted(
-            set([*candidate.failure_codes, *_failure_codes(deterministic.failures)])
+            set([*candidate.failure_codes, *_failure_codes(deterministic_failures)])
         )[:20]
 
         artifact = deterministic.artifact
@@ -507,7 +532,7 @@ class ModelLabManager:
         )
         if (
             physics_semantic_failure is None
-            and deterministic.passed
+            and not deterministic_failures
             and browser.passed
         ):
             candidate.status = "verified"
