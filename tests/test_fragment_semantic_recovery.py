@@ -303,6 +303,59 @@ class _FlatCausalPreflightRecoveryBackend(_VisualPreflightRecoveryBackend):
         )
 
 
+class _QaExhaustedFragmentRepairBackend(_VisualPreflightRecoveryBackend):
+    def __init__(self) -> None:
+        super().__init__()
+        self.repair_attempts: list[int] = []
+
+    async def regenerate_fragment(
+        self,
+        role: str,
+        understanding: dict[str, Any],
+        failure_code: str,
+        *,
+        exact_gate_failures: list[dict[str, Any]] | None = None,
+        prior_fragment: dict[str, Any] | None = None,
+        repair_attempt: int = 1,
+        runtime_context: RuntimeContext | None = None,
+    ) -> StageExecution:
+        del exact_gate_failures, prior_fragment
+        self.repair_attempts.append(repair_attempt)
+        self.regeneration_calls.append(
+            {
+                "role": role,
+                "understanding": deepcopy(understanding),
+                "failure_code": failure_code,
+                "runtime_context": runtime_context,
+            }
+        )
+        visual = _valid_retry_visual()
+        if repair_attempt == 1:
+            visual["representation"]["actor_archetype"] = "orbital_pair"
+        return StageExecution(
+            data=visual,
+            thread_id=f"private-qa-exhausted-visual-repair-{repair_attempt}",
+            model="gpt-5.6-terra",
+            elapsed_ms=5,
+        )
+
+    async def qa(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        del args, kwargs
+        self.qa_calls += 1
+        return {
+            "approved": False,
+            "issues": ["The scene needs more visual depth."],
+            "replacement_module_js": None,
+            "visual_richness": {
+                "scene_depth": False,
+                "physical_light": True,
+                "idle_motion": True,
+                "reactive_feedback": True,
+                "readable_overlays": True,
+            },
+        }
+
+
 class _ExactGateFailureRecoveryBackend(_VisualPreflightRecoveryBackend):
     def __init__(self) -> None:
         super().__init__()
@@ -1359,6 +1412,67 @@ async def test_public_fragment_canonicalizes_flat_causal_repair_without_second_m
         }
     ]
     _assert_public_surface_is_sanitized(record)
+
+
+@pytest.mark.asyncio
+async def test_fragment_qa_rejection_after_repair_budget_serves_verified_tier_b(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from server.browser_verify import BrowserVerificationResult
+    from server.jobs import JobManager
+    from server.verify import VerificationResult
+
+    backend = _QaExhaustedFragmentRepairBackend()
+    verification_calls = 0
+
+    def deterministic_verifier(
+        _module_output: dict[str, Any],
+        _understanding: dict[str, Any],
+    ) -> VerificationResult:
+        nonlocal verification_calls
+        verification_calls += 1
+        if verification_calls == 1:
+            return VerificationResult(
+                passed=False,
+                check_count=70,
+                failures=[
+                    {
+                        "gate": "causal_response",
+                        "code": "causal_relation_mismatch",
+                        "expected": {"monotonic_actor_response": True},
+                        "actual": {"monotonic_actor_response": False},
+                    }
+                ],
+                artifact=None,
+                node_report={"passed": False},
+            )
+        return VerificationResult(
+            passed=True,
+            check_count=96,
+            failures=[],
+            artifact=VERIFIED_ARTIFACT,
+            node_report={"passed": True},
+        )
+
+    monkeypatch.setattr("server.pipeline.verify_candidate", deterministic_verifier)
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _artifact: BrowserVerificationResult.passing(),
+    )
+
+    record = manager.start("success", "ar")
+    assert record.task is not None
+    await record.task
+
+    assert backend.repair_attempts == [1, 2]
+    assert backend.qa_calls == 1
+    assert verification_calls == 2
+    assert record.status == "complete"
+    assert record.fallback is None
+    assert record.simulation is not None
+    assert record.simulation.tier == "B"
+    assert record.artifact == VERIFIED_ARTIFACT
 
 
 @pytest.mark.asyncio

@@ -1457,6 +1457,11 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                         browser_evidence = qa_verified_candidate.browser_evidence
                         qa_outcome = qa_verified_candidate.qa_outcome
                         qa_advisory_only = True
+                        manager.transition(
+                            record,
+                            "verifying",
+                            "الاحتفاظ بالمرشح الموثق بعد مراجعة استشارية",
+                        )
                         break
                 else:
                     module_output = validate_module_output(
