@@ -248,6 +248,43 @@ def test_causal_channel_must_vary_across_fixture_covered_output_states(
     }
 
 
+def test_flat_causal_channel_can_be_repaired_from_fixed_numeric_fixtures():
+    from server.fragment_generation import (
+        repair_visual_causal_response,
+        validate_visual_fragment,
+    )
+
+    document = _visual_fragment()
+    document["commands"][0]["cx"] = "width / 2 + output_lit_fraction * 0"
+
+    repaired = repair_visual_causal_response(
+        document,
+        deepcopy(VALID_UNDERSTANDING),
+    )
+
+    assert repaired is not None
+    assert document["commands"][0]["cx"] == (
+        "width / 2 + output_lit_fraction * 0"
+    )
+    assert repaired["commands"][0]["cx"] != document["commands"][0]["cx"]
+    assert "output_lit_fraction" in repaired["commands"][0]["cx"]
+    assert (
+        validate_visual_fragment(repaired, deepcopy(VALID_UNDERSTANDING))
+        == repaired
+    )
+
+
+def test_causal_repair_fails_closed_without_three_numeric_fixture_states():
+    from server.fragment_generation import repair_visual_causal_response
+
+    document = _visual_fragment()
+    document["commands"][0]["cx"] = "width / 2 + output_lit_fraction * 0"
+    understanding = deepcopy(VALID_UNDERSTANDING)
+    understanding["checks"] = understanding["checks"][:2]
+
+    assert repair_visual_causal_response(document, understanding) is None
+
+
 def test_actor_proof_channel_must_vary_across_fixture_covered_output_states():
     from server.fragment_generation import validate_visual_fragment
     from server.schemas import ContractError

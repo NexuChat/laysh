@@ -667,6 +667,34 @@ def test_ray_bundle_requires_at_least_one_scientific_ray() -> None:
     )
 
 
+@pytest.mark.parametrize("channel", ["rotation", "size"])
+def test_ray_causal_channels_can_be_repaired_from_numeric_fixtures(
+    channel: str,
+) -> None:
+    from server.fragment_generation import (
+        repair_visual_causal_response,
+        validate_visual_fragment,
+    )
+    from server.schemas import ContractError
+
+    visual = _visual(RAY, archetype="ray_bundle", channel=channel)
+    field = "angle" if channel == "rotation" else "length"
+    visual["commands"][0]["segments"][0][field] = (
+        f"output_response * 0 + {'-0.3' if channel == 'rotation' else '20'}"
+    )
+
+    with pytest.raises(ContractError):
+        validate_visual_fragment(visual, deepcopy(UNDERSTANDING))
+
+    repaired = repair_visual_causal_response(
+        visual,
+        deepcopy(UNDERSTANDING),
+    )
+
+    assert repaired is not None
+    assert validate_visual_fragment(repaired, deepcopy(UNDERSTANDING)) == repaired
+
+
 @pytest.mark.parametrize(
     ("command", "archetype", "channel"),
     [

@@ -15,6 +15,7 @@ from server.fragment_generation import (
     assemble_fragments,
     fragment_failure_code,
     fragment_failure_diagnostic,
+    repair_visual_causal_response,
     validate_physics_fragment,
     validate_visual_fragment,
 )
@@ -894,6 +895,45 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                     if regenerated_document is not None:
                         current_fragment = regenerated_document
                     current_failure_code = fragment_failure_code(error)
+                    deterministic_repair = (
+                        repair_visual_causal_response(
+                            current_fragment,
+                            understanding,
+                        )
+                        if role == "visual"
+                        and current_failure_code
+                        == "causal_channel_fixture_response_required"
+                        else None
+                    )
+                    if deterministic_repair is not None:
+                        logger.info(
+                            "deterministic causal repair accepted job=%s "
+                            "role=%s attempt=%s",
+                            record.job_id,
+                            role,
+                            repair_attempt,
+                        )
+                        fragment_documents[role] = deterministic_repair
+                        fragment_stages[role] = regenerated_stage
+                        module_output = assemble_fragments(
+                            fragment_documents["physics"],
+                            fragment_documents["visual"],
+                            understanding,
+                        )
+                        trusted_fragment_candidate = True
+                        effective_generation_model = (
+                            f"physics:{fragment_stages['physics'].model}"
+                            f"+visual:{fragment_stages['visual'].model}"
+                        )
+                        record.builder_diagnostics.append(
+                            {
+                                "type": "deterministic_causal_repair",
+                                "role": role,
+                                "code": current_failure_code,
+                                "attempt": repair_attempt,
+                            }
+                        )
+                        return True
                     current_gate_failures = [
                         *exact_gate_failures,
                         fragment_failure_diagnostic(

@@ -35,6 +35,12 @@ def _valid_retry_visual() -> dict[str, Any]:
     return visual
 
 
+def _flat_causal_retry_visual() -> dict[str, Any]:
+    visual = _valid_retry_visual()
+    visual["commands"][0]["opacity"] = "0.6 + output_lit_fraction * 0"
+    return visual
+
+
 def _assert_schema_valid_but_semantic_invalid(visual: dict[str, Any]) -> None:
     from server.fragment_generation import validate_visual_fragment
     from server.schemas import ContractError, load_schema, validate_document
@@ -265,6 +271,35 @@ class _VisualPreflightRecoveryBackend(_FragmentRecoveryBackend):
                 model="gpt-5.6-terra",
                 elapsed_ms=3,
             ),
+        )
+
+
+class _FlatCausalPreflightRecoveryBackend(_VisualPreflightRecoveryBackend):
+    async def regenerate_fragment(
+        self,
+        role: str,
+        understanding: dict[str, Any],
+        failure_code: str,
+        *,
+        exact_gate_failures: list[dict[str, Any]] | None = None,
+        prior_fragment: dict[str, Any] | None = None,
+        repair_attempt: int = 1,
+        runtime_context: RuntimeContext | None = None,
+    ) -> StageExecution:
+        del exact_gate_failures, prior_fragment
+        self.regeneration_calls.append(
+            {
+                "role": role,
+                "understanding": deepcopy(understanding),
+                "failure_code": failure_code,
+                "runtime_context": runtime_context,
+            }
+        )
+        return StageExecution(
+            data=_flat_causal_retry_visual(),
+            thread_id=f"private-flat-causal-visual-repair-{repair_attempt}",
+            model="gpt-5.6-terra",
+            elapsed_ms=5,
         )
 
 
@@ -1253,6 +1288,77 @@ async def test_public_fragment_verification_failure_regenerates_visual_and_reass
     assert backend.heal_calls == 0
     assert verification_calls == 3
     assert browser_inputs == [VERIFIED_ARTIFACT]
+
+
+@pytest.mark.asyncio
+async def test_public_fragment_canonicalizes_flat_causal_repair_without_second_model_call(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from server.browser_verify import BrowserVerificationResult
+    from server.jobs import JobManager
+    from server.verify import VerificationResult
+
+    backend = _FlatCausalPreflightRecoveryBackend()
+    verification_calls = 0
+
+    def deterministic_verifier(
+        module_output: dict[str, Any],
+        understanding: dict[str, Any],
+    ) -> VerificationResult:
+        nonlocal verification_calls
+        verification_calls += 1
+        assert understanding == VALID_UNDERSTANDING
+        if verification_calls == 1:
+            return VerificationResult(
+                passed=False,
+                check_count=70,
+                failures=[
+                    {
+                        "gate": "causal_response",
+                        "code": "causal_relation_mismatch",
+                        "expected": {"monotonic_actor_response": True},
+                        "actual": {"monotonic_actor_response": False},
+                    }
+                ],
+                artifact=None,
+                node_report={"passed": False},
+            )
+        assert RECOVERED_VISUAL_COLOR in module_output["module_js"]
+        assert "output_lit_fraction * 0" not in module_output["module_js"]
+        return VerificationResult(
+            passed=True,
+            check_count=70,
+            failures=[],
+            artifact=VERIFIED_ARTIFACT,
+            node_report={"passed": True},
+        )
+
+    monkeypatch.setattr("server.pipeline.verify_candidate", deterministic_verifier)
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _artifact: BrowserVerificationResult.passing(),
+    )
+
+    record = manager.start("success", "ar")
+    assert record.task is not None
+    await record.task
+
+    assert record.status == "complete"
+    assert len(backend.regeneration_calls) == 1
+    assert backend.regeneration_calls[0]["failure_code"] == (
+        "visual_causality_mismatch"
+    )
+    assert verification_calls == 2
+    assert record.builder_diagnostics == [
+        {
+            "type": "deterministic_causal_repair",
+            "role": "visual",
+            "code": "causal_channel_fixture_response_required",
+            "attempt": 1,
+        }
+    ]
+    _assert_public_surface_is_sanitized(record)
 
 
 @pytest.mark.asyncio

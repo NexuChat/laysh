@@ -5,6 +5,7 @@ import ast
 import json
 import math
 import re
+from copy import deepcopy
 from itertools import combinations
 from typing import Any
 
@@ -966,6 +967,122 @@ def _channel_response_measurement(
             and monotonic
         ),
     }
+
+
+def repair_visual_causal_response(
+    document: dict[str, Any],
+    understanding: dict[str, Any],
+) -> dict[str, Any] | None:
+    """Map fixed numeric fixtures to one salient actor channel, or fail closed."""
+
+    understanding = validate_understanding(understanding)
+    repaired = deepcopy(document)
+    response = repaired.get("causal_response")
+    commands = repaired.get("commands")
+    if not isinstance(response, dict) or not isinstance(commands, list):
+        return None
+    actor = next(
+        (
+            command
+            for command in commands
+            if isinstance(command, dict)
+            and command.get("id") == response.get("actor_id")
+            and command.get("scientific") is True
+        ),
+        None,
+    )
+    output_name = response.get("output_name")
+    channel = response.get("channel")
+    relation = response.get("relation")
+    if (
+        actor is None
+        or not isinstance(output_name, str)
+        or channel not in _CHANNEL_MINIMUM_RANGE
+        or relation not in {"direct", "inverse"}
+    ):
+        return None
+
+    fixture_values = sorted(
+        {
+            state["__output_value"]
+            for state in _output_probe_states(understanding, output_name)
+            if state["__fixture_backed"] == 1.0
+        }
+    )
+    if len(fixture_values) < 3:
+        return None
+    lower, upper = fixture_values[0], fixture_values[-1]
+    span = upper - lower
+    if not all(math.isfinite(value) for value in (lower, upper, span)) or span <= 0:
+        return None
+
+    def literal(value: float) -> str:
+        return format(value, ".12g")
+
+    output_reference = f"output_{output_name}"
+    direct_scale = (
+        f"clamp(({output_reference} - {literal(lower)}) / "
+        f"{literal(span)}, 0, 1)"
+    )
+    scale = (
+        direct_scale if relation == "direct" else f"(1 - {direct_scale})"
+    )
+    position_expression = {
+        "x": f"width / 2 + ({scale} - 0.5) * min_dim * 0.45",
+        "y": f"height / 2 + ({scale} - 0.5) * min_dim * 0.45",
+    }
+    kind = actor.get("kind")
+    if channel in position_expression:
+        field = "cx" if channel == "x" else "cy"
+        if kind in {"vector_arrow", "ray"}:
+            field = "x1" if channel == "x" else "y1"
+        if field not in actor:
+            return None
+        actor[field] = position_expression[channel]
+    elif channel == "rotation":
+        expression = f"-0.6 + {scale} * 1.2"
+        if kind in {"ellipse", "body_group"}:
+            actor["rotation"] = expression
+        elif kind == "vector_arrow":
+            actor["angle"] = expression
+        elif kind == "ray" and actor.get("segments"):
+            actor["segments"][0]["angle"] = expression
+        else:
+            return None
+    elif channel == "size":
+        if kind == "circle":
+            actor["radius"] = f"min_dim * (0.1 + {scale} * 0.16)"
+        elif kind == "ellipse":
+            actor["radius_x"] = f"min_dim * (0.1 + {scale} * 0.16)"
+            actor["radius_y"] = f"min_dim * (0.06 + {scale} * 0.1)"
+        elif kind == "vector_arrow":
+            actor["length"] = f"min_dim * (0.15 + {scale} * 0.35)"
+        elif kind == "ray" and actor.get("segments"):
+            actor["segments"][0]["length"] = (
+                f"min_dim * (0.15 + {scale} * 0.35)"
+            )
+        else:
+            return None
+    elif channel == "opacity":
+        if "opacity" not in actor:
+            return None
+        actor["opacity"] = f"0.2 + {scale} * 0.8"
+    else:
+        return None
+
+    for proof in repaired.get("representation", {}).get("proof_channels", []):
+        if (
+            proof.get("carrier") == "actor"
+            and proof.get("output_name") == output_name
+        ):
+            proof["channel"] = channel
+
+    if repaired == document:
+        return None
+    try:
+        return validate_visual_fragment(repaired, understanding)
+    except (ContractError, ValidationError, ValueError):
+        return None
 
 
 _CAUSAL_CHANNEL_FIELDS: dict[str, dict[str, tuple[str, ...]]] = {
