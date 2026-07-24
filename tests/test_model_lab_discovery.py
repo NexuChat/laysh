@@ -305,6 +305,39 @@ async def test_wikimedia_retries_one_bounded_rate_limit_then_returns_sources():
 
 
 @pytest.mark.asyncio
+async def test_wikimedia_honors_real_retry_after_and_stops_shared_requests_when_limited():
+    requested_urls: list[str] = []
+    delays: list[float] = []
+
+    def rate_limited_fetch(url: str) -> dict[str, Any]:
+        requested_urls.append(url)
+        headers = Message()
+        headers["Retry-After"] = "53"
+        raise urllib.error.HTTPError(
+            url,
+            429,
+            "Too Many Requests",
+            headers,
+            None,
+        )
+
+    async def record_sleep(delay: float) -> None:
+        delays.append(delay)
+
+    bundle = await WikimediaEvidenceProvider(
+        fetch_json=rate_limited_fetch,
+        sleep=record_sleep,
+    ).collect("Why does thunder make sound?", "en")
+
+    assert bundle.status == "unavailable"
+    assert delays == [53.0]
+    assert len(requested_urls) == 2
+    assert {
+        urllib.parse.urlsplit(url).hostname for url in requested_urls
+    } == {"en.wikipedia.org"}
+
+
+@pytest.mark.asyncio
 async def test_wikimedia_caches_ready_evidence_without_storing_or_refetching_question():
     requested_urls: list[str] = []
 

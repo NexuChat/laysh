@@ -268,6 +268,11 @@ class DisabledEvidenceProvider:
 
 FetchJson = Callable[[str], dict[str, Any]]
 Sleep = Callable[[float], Awaitable[None]]
+_MAX_REFERENCE_RETRY_AFTER_SECONDS = 60.0
+
+
+class _ReferenceRateLimited(OSError):
+    """Stop the current Wikimedia fan-out after a shared upstream cooldown."""
 
 
 def _fetch_json(url: str) -> dict[str, Any]:
@@ -330,7 +335,15 @@ class WikimediaEvidenceProvider:
             cached = self._ready_cache.get(cache_key)
             if cached is not None:
                 return cached.model_copy(deep=True)
-            evidence = await self._collect_uncached(query, locale)
+            try:
+                evidence = await self._collect_uncached(query, locale)
+            except _ReferenceRateLimited:
+                evidence = ModelLabEvidenceBundle(
+                    mode="public_references",
+                    locale=locale,
+                    status="unavailable",
+                    sources=[],
+                )
             if evidence.status == "ready":
                 if len(self._ready_cache) >= 64:
                     self._ready_cache.pop(next(iter(self._ready_cache)))
@@ -345,14 +358,26 @@ class WikimediaEvidenceProvider:
             try:
                 return await asyncio.to_thread(self._fetch_json, url)
             except urllib.error.HTTPError as error:
-                if error.code != 429 or attempt == 1:
+                if error.code != 429:
                     raise
-                raw_delay = error.headers.get("Retry-After", "1")
+                raw_delay = (
+                    error.headers.get("Retry-After", "1")
+                    if error.headers is not None
+                    else "1"
+                )
                 try:
                     delay = float(raw_delay)
                 except (TypeError, ValueError):
                     delay = 1.0
-                await self._sleep(max(0.0, min(delay, 2.0)))
+                delay = max(
+                    0.0,
+                    min(delay, _MAX_REFERENCE_RETRY_AFTER_SECONDS),
+                )
+                if attempt == 1:
+                    raise _ReferenceRateLimited(
+                        "Wikimedia rate limit remained active after retry"
+                    ) from error
+                await self._sleep(delay)
         raise RuntimeError("unreachable_reference_retry_state")
 
     async def _safe_fetch(
@@ -361,6 +386,8 @@ class WikimediaEvidenceProvider:
     ) -> dict[str, Any] | BaseException:
         try:
             return await self._fetch_with_rate_limit_retry(url)
+        except _ReferenceRateLimited:
+            raise
         except (OSError, RuntimeError, ValueError) as error:
             return error
 
