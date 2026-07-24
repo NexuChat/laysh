@@ -408,6 +408,34 @@ async def test_heal_prompt_contains_the_structured_gate_report_verbatim():
     ) in prompt
 
 
+def test_heal_prompt_repairs_causal_and_representation_evidence_together():
+    from server.codex_backend import CodexBackend
+
+    prompt = CodexBackend._render_prompt(
+        "heal_module.md",
+        {
+            "module_output": VALID_MODULE_OUTPUT,
+            "understanding": VALID_UNDERSTANDING,
+            "exact_gate_failures": [
+                {"gate": "causal_response", "code": "causal_evidence_invalid"},
+                {
+                    "gate": "temporal_causal_matrix",
+                    "code": "representation_actor_proof_missing",
+                },
+            ],
+            "attempt": 1,
+        },
+    )
+    instructions = prompt.split("HEAL_INPUT_JSON_WITH_EXACT_GATE_FAILURES:", 1)[0]
+
+    assert "/* LAYSH_CAUSAL_RESPONSE_V1 */" in instructions
+    assert "canvas.__layshActorResponse" in instructions
+    assert "simulation.spec.representation" in instructions
+    assert "proof_channels" in instructions
+    assert "same declared output" in instructions
+    assert "temporal_causal_matrix" in instructions
+
+
 def test_twenty_dialect_arabizi_and_code_switch_fixtures_share_stable_intent(backend):
     cases = json.loads(
         (Path(__file__).parent / "fixtures" / "normalization_cases.json").read_text(

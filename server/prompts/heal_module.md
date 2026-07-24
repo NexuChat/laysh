@@ -24,6 +24,24 @@ shape after fitting: `[{ schemaVersion: "1.0", phase: "post_fit", viewport: { wi
 `clippingPolicy: "forbid", geometry: { type: "circle", cx, cy, radius } }], relations: [] }]`.
 Replace symbolic values with the final drawn geometry; with two objects add exactly one relation.
 
+Preserve or repair the causal and representation evidence as one contract:
+
+- Write the exact marker `/* LAYSH_CAUSAL_RESPONSE_V1 */`, then assign
+  `canvas.__layshActorResponse` on every draw. The closed object contains `schemaVersion`,
+  stable `actorId`, a declared `outputName`, `channel`, `relation`, `temporalMode`, finite
+  `parameterValue`, `outputValue`, `visualValue`, `timeMs`, and final visible `fittedBounds`.
+  The same scientific actor and channel must show at least three salient states across the
+  primary parameter range; changing text, decoration, or a frame counter is not evidence.
+- Expose a non-enumerable `simulation.spec.representation` without changing the exact six-key
+  public ABI. Declare `scene_pattern`, a truthful `actor_archetype`, `proof_channels`, and
+  `motion_model`. At least one actor proof channel uses the same declared output and channel as
+  `canvas.__layshActorResponse`; its actor ID exists in the post-fit scientific scene and matches
+  the primitive actually drawn.
+- Repair `causal_response` and `temporal_causal_matrix` failures together. Parameter-driven
+  evidence must remain stable over time; cyclic evidence must visibly move the same scientific
+  actor through four timestamps. Never delete the marker, actor evidence, representation, or
+  proof channels merely to skip a gate.
+
 The v1.1 visual quality is part of the fixed contract and must survive every repair: preserve or add
 at least three scene-depth layers, physically consistent curved illumination and occlusion, a private
 visual phase advanced by the trusted shell's same-value redraw when reduced motion is off, smooth

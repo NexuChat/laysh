@@ -303,6 +303,18 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         heal_count: int,
     ) -> None:
         gate_names = sorted({failure["gate"] for failure in result.failures})
+        logger.warning(
+            "verification rejected job=%s heal_count=%s failures=%s",
+            record.job_id,
+            heal_count,
+            [
+                {
+                    "gate": failure.get("gate"),
+                    "code": failure.get("code"),
+                }
+                for failure in result.failures
+            ],
+        )
         manager.emit(
             record,
             "verification",
