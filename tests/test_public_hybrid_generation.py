@@ -736,7 +736,7 @@ async def test_public_hybrid_rejects_direct_canvas_without_causal_contract(
 
 
 @pytest.mark.asyncio
-async def test_public_hybrid_rejects_candidate_without_representation_evidence(
+async def test_public_hybrid_accepts_direct_causal_proof_without_fragment_representation(
     monkeypatch,
 ):
     from server.jobs import JobManager
@@ -770,6 +770,38 @@ async def test_public_hybrid_rejects_candidate_without_representation_evidence(
         "trusted_scene_plan",
         "direct_canvas",
     ]
+    assert backend.heal_calls == 0
+    assert len(cache.writes) == 1
+
+
+@pytest.mark.asyncio
+async def test_public_hybrid_rejects_trusted_scene_without_representation_evidence(
+    monkeypatch,
+):
+    from server.jobs import JobManager
+
+    backend = _HybridBackend()
+    gates = _ProductionGateProbe(
+        browser_failures={"direct_canvas"},
+        missing_representation={"trusted_scene_plan"},
+        deterministic_check_counts={"trusted_scene_plan": 30},
+    )
+    cache = _RecordingCache()
+    monkeypatch.setattr("server.pipeline.verify_candidate", gates.deterministic)
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=gates.browser,
+        cache=cache,
+    )
+
+    record = manager.start("offline trusted representation failure", "ar")
+    await asyncio.wait_for(record.task, timeout=1)
+
+    assert record.status == "answer_only"
+    assert record.artifact is None
+    assert cache.writes == []
+    assert "trusted_scene_plan" not in gates.browser_calls
     assert backend.heal_calls == 1
     assert backend.heal_requests[0]["failures"] == [
         {

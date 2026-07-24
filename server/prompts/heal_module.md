@@ -32,15 +32,16 @@ Preserve or repair the causal and representation evidence as one contract:
   `parameterValue`, `outputValue`, `visualValue`, `timeMs`, and final visible `fittedBounds`.
   The same scientific actor and channel must show at least three salient states across the
   primary parameter range; changing text, decoration, or a frame counter is not evidence.
-- Expose a non-enumerable `simulation.spec.representation` without changing the exact six-key
-  public ABI. Declare `scene_pattern`, a truthful `actor_archetype`, `proof_channels`, and
-  `motion_model`. At least one actor proof channel uses the same declared output and channel as
-  `canvas.__layshActorResponse`; its actor ID exists in the post-fit scientific scene and matches
-  the primitive actually drawn.
-- Repair `causal_response` and `temporal_causal_matrix` failures together. Parameter-driven
-  evidence must remain stable over time; cyclic evidence must visibly move the same scientific
-  actor through four timestamps. Never delete the marker, actor evidence, representation, or
-  proof channels merely to skip a gate.
+- When the existing module declares `simulation.spec.representation` or an exact failure names
+  `temporal_causal_matrix`, preserve its non-enumerable representation without changing the exact
+  six-key public ABI. Repair `scene_pattern`, `actor_archetype`, `proof_channels`, and
+  `motion_model` together. At least one actor proof channel uses the same declared output and
+  channel as `canvas.__layshActorResponse`; its actor ID exists in the post-fit scientific scene
+  and matches the primitive actually drawn. Parameter-driven evidence remains stable over time;
+  cyclic evidence visibly moves the same actor through four timestamps.
+- Direct Canvas candidates that do not already declare representation are not required to invent
+  the trusted scene-plan fragment contract. Never delete existing representation or proof channels
+  merely to skip a gate; never add decorative representation metadata unrelated to the drawn actor.
 
 The v1.1 visual quality is part of the fixed contract and must survive every repair: preserve or add
 at least three scene-depth layers, physically consistent curved illumination and occlusion, a private

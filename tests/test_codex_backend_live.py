@@ -434,6 +434,7 @@ def test_heal_prompt_repairs_causal_and_representation_evidence_together():
     assert "proof_channels" in instructions
     assert "same declared output" in instructions
     assert "temporal_causal_matrix" in instructions
+    assert "do not already declare representation are not required to invent" in instructions
 
 
 def test_twenty_dialect_arabizi_and_code_switch_fixtures_share_stable_intent(backend):

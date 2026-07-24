@@ -408,15 +408,10 @@ class CodexBackend:
             "scientific actor and channel must visibly traverse at least three salient states "
             "across the full parameter range. Missing or decorative-only causal evidence fails "
             "closed."
-            "\n\nExpose a non-enumerable `simulation.spec.representation` while keeping the "
-            "six exported ABI keys exact. Its `representation` object must declare "
-            "`scene_pattern` (`world_only` or `compare_ab`), a truthful `actor_archetype`, "
-            "one to three `proof_channels`, and `motion_model` (`parameter_driven` or "
-            "`cyclic`). At least one proof channel must use the same declared output, "
-            '`carrier: "actor"`, and channel as `canvas.__layshActorResponse`. Keep the '
-            "actor ID present among the final scientific scene objects and make the "
-            "archetype match the actually rendered Canvas primitive. Missing representation "
-            "evidence fails closed."
+            "\n\nDo not add `simulation.spec.representation` in this Direct Canvas branch. "
+            "The concurrent trusted scene-plan candidate owns that declarative contract and "
+            "its temporal matrix. This branch is independently fail-closed through the "
+            "mandatory post-fit scene geometry and causal actor evidence above."
         )
         if optional_geometry not in rendered:
             raise RuntimeError("scientific Canvas geometry clause is missing")

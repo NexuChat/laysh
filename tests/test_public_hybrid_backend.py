@@ -158,8 +158,8 @@ async def test_public_direct_canvas_prompt_keeps_full_production_geometry_contra
     assert "required by the production verifier" in prompt
     assert "/* LAYSH_CAUSAL_RESPONSE_V1 */" in prompt
     assert "canvas.__layshActorResponse" in prompt
-    assert "simulation.spec.representation" in prompt
-    assert "Missing representation evidence fails closed." in prompt
+    assert "Do not add `simulation.spec.representation`" in prompt
+    assert "trusted scene-plan candidate owns that declarative contract" in prompt
 
 
 @pytest.mark.asyncio

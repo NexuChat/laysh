@@ -368,6 +368,8 @@ async def run_pipeline(manager: Any, record: Any) -> None:
     async def verify_generated_module(
         module_output: dict[str, Any],
         understanding: dict[str, Any],
+        *,
+        require_hybrid_representation: bool = False,
     ) -> tuple[VerificationResult, dict[str, Any] | None]:
         causal_marker_present = (
             "/* LAYSH_CAUSAL_RESPONSE_V1 */" in module_output["module_js"]
@@ -431,7 +433,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                     }
                 )
             representation_report = node_report.get("temporal_causal_matrix")
-            if (
+            if require_hybrid_representation and (
                 not isinstance(representation_report, dict)
                 or representation_report.get("passed") is not True
             ):
@@ -769,6 +771,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
     qa_verified_candidate: _QaVerifiedCandidate | None = None
     effective_generation_model: str | None = None
     trusted_fragment_candidate = False
+    hybrid_representation_required = False
     heal_attempt_limit = (
         getattr(manager.backend, "public_heal_attempt_limit", 2)
         if record.public
@@ -1075,6 +1078,9 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 await verify_generated_module(
                     outcome.module_output,
                     understanding,
+                    require_hybrid_representation=(
+                        outcome.spec.candidate_id == "trusted_scene_plan"
+                    ),
                 )
             )
             outcome.verification = candidate_verification
@@ -1130,6 +1136,9 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             module_output = winner.module_output
             verification = winner.verification
             browser_evidence = winner.browser_evidence
+            hybrid_representation_required = (
+                winner.spec.candidate_id == "trusted_scene_plan"
+            )
             effective_generation_model = (
                 f"physics:{physics_stage.model}"
                 f"+visual:{winner.spec.model}/{winner.spec.candidate_id}"
@@ -1160,6 +1169,9 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             module_output = selected.module_output
             verification = selected.verification
             browser_evidence = selected.browser_evidence
+            hybrid_representation_required = (
+                selected.spec.candidate_id == "trusted_scene_plan"
+            )
             effective_generation_model = (
                 f"physics:{physics_stage.model}"
                 f"+visual:{selected.spec.model}/{selected.spec.candidate_id}"
@@ -1749,6 +1761,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             verification, browser_evidence = await verify_generated_module(
                 module_output,
                 understanding,
+                require_hybrid_representation=hybrid_representation_required,
             )
 
         if not verification.passed:
