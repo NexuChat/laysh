@@ -1758,7 +1758,16 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 for failure in verification.failures
                 if failure["gate"] == "fixture_integrity"
             ]
-            if suspect_fixtures and not record.public:
+            suspect_relation_fixtures = [
+                failure
+                for failure in suspect_fixtures
+                if failure.get("code") == "suspect_relation_fixture"
+            ]
+            fixture_refresh_allowed = (
+                not record.public
+                or (use_hybrid_route and bool(suspect_relation_fixtures))
+            )
+            if suspect_fixtures and fixture_refresh_allowed:
                 if fixture_refresh_count >= 1:
                     _fallback(
                         manager,
@@ -1784,7 +1793,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                         "elapsed_ms": manager.elapsed_ms(record),
                     },
                 )
-                understanding = validate_understanding(
+                refreshed_understanding = validate_understanding(
                     await stage_result(
                         "understand_retry",
                         manager.backend.understand(
@@ -1794,14 +1803,50 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                         ),
                     )
                 )
-                if not understanding["safe"] or not understanding["simulatable"]:
+                if (
+                    not refreshed_understanding["safe"]
+                    or not refreshed_understanding["simulatable"]
+                ):
                     _fallback(
                         manager,
                         record,
                         "fixture_refresh_invalid",
-                        understanding["suggestions"],
+                        refreshed_understanding["suggestions"],
                     )
                     return
+                if record.public:
+                    fixed_fixture_contract_fields = (
+                        "safe",
+                        "simulatable",
+                        "lang",
+                        "canonical_intent",
+                        "domain",
+                        "key_formula",
+                        "module_spec",
+                        "primary_parameter",
+                        "secondary_parameter",
+                    )
+                    fixed_contract_changed = any(
+                        refreshed_understanding.get(field)
+                        != understanding.get(field)
+                        for field in fixed_fixture_contract_fields
+                    )
+                    if fixed_contract_changed:
+                        _fallback(
+                            manager,
+                            record,
+                            "fixture_refresh_invalid",
+                            _gallery_suggestions(record.locale),
+                        )
+                        return
+                    understanding = validate_understanding(
+                        {
+                            **understanding,
+                            "checks": refreshed_understanding["checks"],
+                        }
+                    )
+                else:
+                    understanding = refreshed_understanding
                 verification = None
                 continue
             if heal_count >= heal_attempt_limit:

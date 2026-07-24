@@ -58,6 +58,7 @@ class _HybridBackend:
         self.heal_calls = 0
         self.heal_requests: list[dict[str, Any]] = []
         self.qa_calls = 0
+        self.understand_calls = 0
         self._direct_module = assemble_fragments(
             deepcopy(PHYSICS_FRAGMENT),
             deepcopy(VISUAL_FRAGMENT),
@@ -77,6 +78,7 @@ class _HybridBackend:
         from server.codex_runtime import StageExecution
 
         del question, locale, runtime_context
+        self.understand_calls += 1
         return StageExecution(
             data=deepcopy(VALID_UNDERSTANDING),
             thread_id="private-understand-thread",
@@ -394,6 +396,36 @@ class _InvalidDirectHybridBackend(_HybridBackend):
         )
 
 
+class _FixtureRefreshHybridBackend(_HybridBackend):
+    async def understand(self, *args, **kwargs):
+        result = await super().understand(*args, **kwargs)
+        if self.understand_calls == 2:
+            refreshed = deepcopy(result.data)
+            refreshed["checks"][0]["tolerance"] = 0.02
+            return type(result)(
+                data=refreshed,
+                thread_id=result.thread_id,
+                model=result.model,
+                elapsed_ms=result.elapsed_ms,
+            )
+        return result
+
+
+class _IncompatibleFixtureRefreshHybridBackend(_HybridBackend):
+    async def understand(self, *args, **kwargs):
+        result = await super().understand(*args, **kwargs)
+        if self.understand_calls == 2:
+            refreshed = deepcopy(result.data)
+            refreshed["key_formula"] = "g = θ"
+            return type(result)(
+                data=refreshed,
+                thread_id=result.thread_id,
+                model=result.model,
+                elapsed_ms=result.elapsed_ms,
+            )
+        return result
+
+
 @pytest.mark.asyncio
 async def test_public_hybrid_is_answer_first_then_races_two_post_physics_visuals(
     monkeypatch,
@@ -547,6 +579,129 @@ async def test_public_hybrid_keeps_valid_candidate_when_sibling_contract_is_inva
     assert gates.browser_calls == ["trusted_scene_plan"]
     assert backend.heal_calls == 0
     assert len(cache.writes) == 1
+
+
+@pytest.mark.asyncio
+async def test_public_hybrid_refreshes_one_suspect_relation_fixture_before_heal(
+    monkeypatch,
+):
+    from server.browser_verify import BrowserVerificationResult
+    from server.jobs import JobManager
+    from server.verify import VerificationResult
+
+    backend = _FixtureRefreshHybridBackend()
+    cache = _RecordingCache()
+    observed_tolerances: list[float] = []
+
+    def deterministic(module_output, understanding):
+        del module_output
+        observed_tolerances.append(understanding["checks"][0]["tolerance"])
+        call = len(observed_tolerances)
+        if call <= 2:
+            failures = [
+                {
+                    "gate": "fixture_integrity",
+                    "code": "suspect_relation_fixture",
+                    "expected": {"relation": "right_gt_left"},
+                    "actual": {"relation": "right_lt_left"},
+                }
+            ]
+        elif call == 3:
+            failures = [
+                {
+                    "gate": "causal_response",
+                    "code": "causal_relation_mismatch",
+                    "expected": {"monotonic_actor_response": True},
+                    "actual": {"monotonic_actor_response": False},
+                }
+            ]
+        else:
+            return VerificationResult(
+                passed=True,
+                check_count=17,
+                failures=[],
+                artifact="<!doctype html><html><body>verified refresh</body></html>",
+                node_report={
+                    "passed": True,
+                    "causal_response": {"passed": True},
+                    "temporal_causal_matrix": {"passed": True},
+                },
+            )
+        return VerificationResult(
+            passed=False,
+            check_count=9,
+            failures=failures,
+            artifact=None,
+            node_report={"passed": False},
+        )
+
+    monkeypatch.setattr("server.pipeline.verify_candidate", deterministic)
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+        cache=cache,
+    )
+
+    record = manager.start("offline suspect relation refresh", "ar")
+    await asyncio.wait_for(record.task, timeout=1)
+
+    assert record.status == "complete"
+    assert backend.understand_calls == 2
+    assert backend.heal_calls == 1
+    assert observed_tolerances == [0.01, 0.01, 0.02, 0.02]
+    assert len(cache.writes) == 1
+
+
+@pytest.mark.asyncio
+async def test_public_hybrid_rejects_fixture_refresh_that_changes_fixed_contract(
+    monkeypatch,
+):
+    from server.jobs import JobManager
+    from server.verify import VerificationResult
+
+    backend = _IncompatibleFixtureRefreshHybridBackend()
+    cache = _RecordingCache()
+    verification_calls = 0
+
+    def suspect_fixture_verifier(module_output, understanding):
+        nonlocal verification_calls
+        del module_output, understanding
+        verification_calls += 1
+        return VerificationResult(
+            passed=False,
+            check_count=9,
+            failures=[
+                {
+                    "gate": "fixture_integrity",
+                    "code": "suspect_relation_fixture",
+                    "expected": {"relation": "right_gt_left"},
+                    "actual": {"relation": "right_lt_left"},
+                }
+            ],
+            artifact=None,
+            node_report={"passed": False},
+        )
+
+    monkeypatch.setattr(
+        "server.pipeline.verify_candidate",
+        suspect_fixture_verifier,
+    )
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: pytest.fail("browser gate must not run"),
+        cache=cache,
+    )
+
+    record = manager.start("offline incompatible fixture refresh", "ar")
+    await asyncio.wait_for(record.task, timeout=1)
+
+    assert record.status == "answer_only"
+    assert backend.understand_calls == 2
+    assert backend.heal_calls == 0
+    assert verification_calls == 2
+    assert cache.writes == []
 
 
 @pytest.mark.asyncio
