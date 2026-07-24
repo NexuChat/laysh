@@ -396,6 +396,78 @@ class _InvalidDirectHybridBackend(_HybridBackend):
         )
 
 
+class _RepairableTrustedInvalidDirectHybridBackend(_InvalidDirectHybridBackend):
+    async def generate_hybrid_visual_plan(
+        self,
+        understanding,
+        physics_document,
+        discovery_plan,
+        *,
+        runtime_context=None,
+    ):
+        result = await super().generate_hybrid_visual_plan(
+            understanding,
+            physics_document,
+            discovery_plan,
+            runtime_context=runtime_context,
+        )
+        repairable = deepcopy(result.data)
+        repairable["commands"][0]["opacity"] = (
+            "0.5 + output_lit_fraction * 0"
+        )
+        return type(result)(
+            data=repairable,
+            thread_id=result.thread_id,
+            model=result.model,
+            elapsed_ms=result.elapsed_ms,
+        )
+
+
+class _RepairableTrustedRepresentationHybridBackend(
+    _InvalidDirectHybridBackend
+):
+    async def generate_hybrid_visual_plan(
+        self,
+        understanding,
+        physics_document,
+        discovery_plan,
+        *,
+        runtime_context=None,
+    ):
+        result = await super().generate_hybrid_visual_plan(
+            understanding,
+            physics_document,
+            discovery_plan,
+            runtime_context=runtime_context,
+        )
+        repairable = deepcopy(result.data)
+        repairable["representation"]["proof_channels"][0]["channel"] = "size"
+        repairable["commands"][0]["radius"] = (
+            "min_dim * 0.12 + output_lit_fraction * 0"
+        )
+        return type(result)(
+            data=repairable,
+            thread_id=result.thread_id,
+            model=result.model,
+            elapsed_ms=result.elapsed_ms,
+        )
+
+
+class _UnrepairableTrustedInvalidDirectHybridBackend(
+    _RepairableTrustedInvalidDirectHybridBackend
+):
+    async def understand(self, *args, **kwargs):
+        result = await super().understand(*args, **kwargs)
+        insufficient = deepcopy(result.data)
+        insufficient["checks"] = insufficient["checks"][:2]
+        return type(result)(
+            data=insufficient,
+            thread_id=result.thread_id,
+            model=result.model,
+            elapsed_ms=result.elapsed_ms,
+        )
+
+
 class _FixtureRefreshHybridBackend(_HybridBackend):
     async def understand(self, *args, **kwargs):
         result = await super().understand(*args, **kwargs)
@@ -579,6 +651,106 @@ async def test_public_hybrid_keeps_valid_candidate_when_sibling_contract_is_inva
     assert gates.browser_calls == ["trusted_scene_plan"]
     assert backend.heal_calls == 0
     assert len(cache.writes) == 1
+
+
+@pytest.mark.asyncio
+async def test_public_hybrid_repairs_trusted_causal_channel_before_assembly(
+    monkeypatch,
+):
+    from server.jobs import JobManager
+
+    backend = _RepairableTrustedInvalidDirectHybridBackend()
+    gates = _ProductionGateProbe(browser_failures=set())
+    cache = _RecordingCache()
+    monkeypatch.setattr("server.pipeline.verify_candidate", gates.deterministic)
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=gates.browser,
+        cache=cache,
+    )
+
+    record = manager.start("offline repairable trusted candidate", "ar")
+    await asyncio.wait_for(record.task, timeout=1)
+
+    assert record.status == "complete"
+    assert record.artifact is not None
+    assert gates.deterministic_calls == ["trusted_scene_plan"]
+    assert gates.browser_calls == ["trusted_scene_plan"]
+    assert backend.heal_calls == 0
+    assert len(cache.writes) == 1
+    assert record.builder_diagnostics == [
+        {
+            "type": "deterministic_causal_repair",
+            "role": "visual",
+            "strategy": "trusted_scene_plan",
+            "code": "causal_channel_fixture_response_required",
+        }
+    ]
+
+
+@pytest.mark.asyncio
+async def test_public_hybrid_repairs_trusted_representation_channel_before_assembly(
+    monkeypatch,
+):
+    from server.jobs import JobManager
+
+    backend = _RepairableTrustedRepresentationHybridBackend()
+    gates = _ProductionGateProbe(browser_failures=set())
+    cache = _RecordingCache()
+    monkeypatch.setattr("server.pipeline.verify_candidate", gates.deterministic)
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=gates.browser,
+        cache=cache,
+    )
+
+    record = manager.start("offline repairable representation candidate", "ar")
+    await asyncio.wait_for(record.task, timeout=1)
+
+    assert record.status == "complete"
+    assert gates.deterministic_calls == ["trusted_scene_plan"]
+    assert gates.browser_calls == ["trusted_scene_plan"]
+    assert backend.heal_calls == 0
+    assert len(cache.writes) == 1
+    assert record.builder_diagnostics == [
+        {
+            "type": "deterministic_causal_repair",
+            "role": "visual",
+            "strategy": "trusted_scene_plan",
+            "code": "representation_actor_fixture_response_required",
+        }
+    ]
+
+
+@pytest.mark.asyncio
+async def test_public_hybrid_fails_closed_when_trusted_channel_cannot_be_repaired(
+    monkeypatch,
+):
+    from server.jobs import JobManager
+
+    backend = _UnrepairableTrustedInvalidDirectHybridBackend()
+    gates = _ProductionGateProbe(browser_failures=set())
+    cache = _RecordingCache()
+    monkeypatch.setattr("server.pipeline.verify_candidate", gates.deterministic)
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=gates.browser,
+        cache=cache,
+    )
+
+    record = manager.start("offline unrepairable trusted candidate", "ar")
+    await asyncio.wait_for(record.task, timeout=1)
+
+    assert record.status == "answer_only"
+    assert record.artifact is None
+    assert gates.deterministic_calls == []
+    assert gates.browser_calls == []
+    assert backend.heal_calls == 0
+    assert cache.writes == []
+    assert record.builder_diagnostics == []
 
 
 @pytest.mark.asyncio

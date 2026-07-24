@@ -1009,10 +1009,47 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                         spec,
                         fragment_role=strategy,
                     )
-                    visual_document = validate_visual_fragment(
-                        visual_document,
-                        understanding,
-                    )
+                    try:
+                        visual_document = validate_visual_fragment(
+                            visual_document,
+                            understanding,
+                        )
+                    except (
+                        ContractError,
+                        ValidationError,
+                        ValueError,
+                    ) as fragment_error:
+                        failure_code = fragment_failure_code(fragment_error)
+                        repaired_visual = (
+                            repair_visual_causal_response(
+                                visual_document,
+                                understanding,
+                            )
+                            if failure_code
+                            in {
+                                "causal_channel_fixture_response_required",
+                                "representation_actor_fixture_response_required",
+                            }
+                            else None
+                        )
+                        if repaired_visual is None:
+                            raise
+                        visual_document = repaired_visual
+                        record.builder_diagnostics.append(
+                            {
+                                "type": "deterministic_causal_repair",
+                                "role": "visual",
+                                "strategy": strategy,
+                                "code": failure_code,
+                            }
+                        )
+                        logger.info(
+                            "public hybrid deterministic visual repair accepted "
+                            "job=%s strategy=%s code=%s",
+                            record.job_id,
+                            strategy,
+                            failure_code,
+                        )
                     output = assemble_fragments(
                         physics_document,
                         visual_document,
@@ -1042,10 +1079,12 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 return _CandidateOutcome(spec=spec, error=error)
             except (ContractError, ValidationError, ValueError) as error:
                 logger.warning(
-                    "public hybrid visual rejected job=%s strategy=%s error_type=%s",
+                    "public hybrid visual rejected job=%s strategy=%s "
+                    "error_type=%s code=%s",
                     record.job_id,
                     strategy,
                     type(error).__name__,
+                    fragment_failure_code(error),
                 )
                 return _CandidateOutcome(spec=spec, error=error)
 
