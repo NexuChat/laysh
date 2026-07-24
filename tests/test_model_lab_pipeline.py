@@ -479,6 +479,84 @@ def test_failed_verification_runs_configured_repair_then_reverifies(monkeypatch)
     )["status"] == "skipped"
 
 
+def test_invalid_physics_fragment_gets_one_exact_bounded_retry_before_plan(monkeypatch):
+    class _PhysicsRetryBackend(_PipelineBackend):
+        def __init__(self) -> None:
+            super().__init__()
+            self.retry_failures: list[list[dict[str, Any]]] = []
+            self.retry_specs: list[tuple[str, str, bool]] = []
+
+        async def generate_physics_for_lab(self, *args, **kwargs):
+            document = await super().generate_physics_for_lab(*args, **kwargs)
+            document["physics_expressions"][0]["expression"] += (
+                " + invented_fixed_constant"
+            )
+            return document
+
+        async def regenerate_fragment(
+            self,
+            role,
+            understanding,
+            failure_code,
+            *,
+            exact_gate_failures=None,
+            prior_fragment=None,
+            repair_attempt=1,
+            runtime_context=None,
+            stage_spec=None,
+            model_lab=False,
+        ):
+            del (
+                understanding,
+                failure_code,
+                prior_fragment,
+                repair_attempt,
+                runtime_context,
+            )
+            assert role == "physics"
+            assert model_lab is True
+            self.retry_failures.append(deepcopy(exact_gate_failures or []))
+            self.retry_specs.append(
+                (stage_spec.model, stage_spec.effort, stage_spec.fast)
+            )
+            self.calls.append(self._record_spec("physics_retry", stage_spec))
+            return deepcopy(PHYSICS_FRAGMENT)
+
+    backend = _PhysicsRetryBackend()
+    with _enabled_client(monkeypatch, backend) as client:
+        accepted = client.post("/api/model-lab/pipeline", json=_pipeline_payload())
+        run = _wait_for_pipeline(client, accepted.json()["status_url"])
+
+    assert run["status"] == "complete"
+    physics_events = [
+        event for event in run["timeline"] if event["stage"] == "physics"
+    ]
+    assert [event["status"] for event in physics_events] == ["failed", "passed"]
+    assert [event["attempt"] for event in physics_events] == [1, 2]
+    assert backend.retry_specs == [("gpt-5.6-terra", "high", False)]
+    assert backend.retry_failures == [
+        [
+            {
+                "gate": "fragment_contract",
+                "code": "undeclared_expression_name",
+                "expected": {
+                    "fragment_contract_valid": True,
+                    "allowed_identifiers": ["angle_deg", "pi", "time"],
+                },
+                "actual": {
+                    "fragment_contract_valid": False,
+                    "failure_code": "undeclared_expression_name",
+                    "unexpected_identifier": "invented_fixed_constant",
+                },
+            }
+        ]
+    ]
+    assert not any(
+        event["stage"] == "plan" and event["status"] == "failed"
+        for event in run["timeline"]
+    )
+
+
 def test_pipeline_contract_supports_real_efforts_and_rejects_luna_ultra(monkeypatch):
     with _enabled_client(monkeypatch, _PipelineBackend()) as client:
         valid = _pipeline_payload()

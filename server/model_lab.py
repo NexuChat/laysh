@@ -783,7 +783,8 @@ class ModelLabManager:
             raise RuntimeError("pipeline_understanding_missing")
 
         if start_index <= stage_order["physics"]:
-            await self._pipeline_physics(run, context)
+            if not await self._pipeline_physics(run, context):
+                return
         if run.physics_document is None:
             raise RuntimeError("pipeline_physics_missing")
 
@@ -1037,67 +1038,134 @@ class ModelLabManager:
         self,
         run: _PipelineRun,
         context: RuntimeContext,
-    ) -> None:
+    ) -> bool:
         if run.understanding is None:
             raise RuntimeError("pipeline_understanding_missing")
         config = run.stages.physics
-        started = time.monotonic()
-        event = self._start_pipeline_event(
-            run,
-            "physics",
-            kind="model",
-            config=config,
-        )
-        result = await self.backend.generate_physics_for_lab(
-            run.understanding,
-            stage_spec=StageModelSpec(config.model, config.effort, config.fast),
-            runtime_context=context,
-        )
-        document = _stage_data(result)
-        run.physics_document = document
-        run.physics_failure = None
-        status: Literal["passed", "failed"] = "passed"
-        try:
-            validate_physics_fragment(document, run.understanding)
-        except (ContractError, ValidationError, ValueError) as error:
-            run.physics_failure = fragment_failure_diagnostic(
-                error,
-                role="physics",
-                understanding=run.understanding,
+        stage_spec = StageModelSpec(config.model, config.effort, config.fast)
+        failure: dict[str, Any] | None = None
+        prior_document: dict[str, Any] | None = None
+
+        for attempt in (1, 2):
+            regenerator = None
+            if attempt == 2:
+                regenerator = getattr(
+                    self.backend,
+                    "regenerate_fragment",
+                    None,
+                )
+                if not callable(regenerator) or failure is None:
+                    run.status = "failed"
+                    return False
+            started = time.monotonic()
+            event = self._start_pipeline_event(
+                run,
+                "physics",
+                kind="model",
+                config=config,
+                attempt=attempt,
             )
-            status = "failed"
-        expressions = [
-            f"{item['name']} = {item['expression']}"
-            for item in document.get("physics_expressions", [])
-            if isinstance(item, dict)
-            and isinstance(item.get("name"), str)
-            and isinstance(item.get("expression"), str)
-        ]
-        self._finish_pipeline_event(
-            event,
-            status=status,
-            started=started,
-            elapsed_ms=_stage_elapsed(result, 0),
-            output=ModelLabStageOutput(
-                summary=document.get("brief_summary"),
-                assumptions=list(document.get("assumptions", []))[:8],
-                expressions=expressions[:8],
-                output_names=list(document.get("output_names", []))[:8],
-                failed_gates=(
-                    [run.physics_failure["gate"]]
-                    if run.physics_failure is not None
-                    else []
+            try:
+                if attempt == 1:
+                    result = await self.backend.generate_physics_for_lab(
+                        run.understanding,
+                        stage_spec=stage_spec,
+                        runtime_context=context,
+                    )
+                else:
+                    assert callable(regenerator)
+                    assert failure is not None
+                    result = await regenerator(
+                        "physics",
+                        run.understanding,
+                        str(
+                            failure.get(
+                                "code",
+                                "fragment_semantic_validation_failed",
+                            )
+                        ),
+                        exact_gate_failures=[failure],
+                        prior_fragment=prior_document,
+                        repair_attempt=1,
+                        runtime_context=context,
+                        stage_spec=stage_spec,
+                        model_lab=True,
+                    )
+                document = _stage_data(result)
+            except (
+                CodexRuntimeError,
+                ContractError,
+                ValidationError,
+                OSError,
+                RuntimeError,
+                ValueError,
+            ):
+                self._finish_pipeline_event(
+                    event,
+                    status="failed",
+                    started=started,
+                    output=ModelLabStageOutput(
+                        summary="The physics stage did not return a valid fragment.",
+                        failed_gates=["fragment_contract"],
+                        failure_codes=["physics:runtime_or_schema_failure"],
+                    ),
+                )
+                run.status = "failed"
+                return False
+
+            run.physics_document = document
+            run.physics_failure = None
+            try:
+                validate_physics_fragment(document, run.understanding)
+            except (ContractError, ValidationError, ValueError) as error:
+                failure = fragment_failure_diagnostic(
+                    error,
+                    role="physics",
+                    understanding=run.understanding,
+                )
+                run.physics_failure = failure
+            else:
+                failure = None
+
+            expressions = [
+                f"{item['name']} = {item['expression']}"
+                for item in document.get("physics_expressions", [])
+                if isinstance(item, dict)
+                and isinstance(item.get("name"), str)
+                and isinstance(item.get("expression"), str)
+            ]
+            self._finish_pipeline_event(
+                event,
+                status="passed" if failure is None else "failed",
+                started=started,
+                elapsed_ms=_stage_elapsed(result, 0),
+                output=ModelLabStageOutput(
+                    summary=document.get("brief_summary"),
+                    assumptions=list(document.get("assumptions", []))[:8],
+                    expressions=expressions[:8],
+                    output_names=list(document.get("output_names", []))[:8],
+                    failed_gates=(
+                        [failure["gate"]]
+                        if failure is not None
+                        else []
+                    ),
+                    failure_codes=(
+                        [
+                            "physics:"
+                            + str(failure.get("code", "contract_invalid"))
+                        ]
+                        if failure is not None
+                        else []
+                    ),
                 ),
-                failure_codes=(
-                    [
-                        "physics:"
-                        + str(run.physics_failure.get("code", "contract_invalid"))
-                    ]
-                    if run.physics_failure is not None
-                    else []
-                ),
-            ),
-        )
+            )
+            if failure is None:
+                run.physics_failure = None
+                return True
+            prior_document = document
+
+        run.status = "failed"
+        return False
 
     async def _pipeline_visual(
         self,

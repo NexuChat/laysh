@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import re
 import unicodedata
+import urllib.error
 import urllib.parse
 import urllib.request
-from collections.abc import Callable, Sequence
+from collections.abc import Awaitable, Callable, Sequence
 from typing import Any, Literal
 
 from pydantic import Field, field_validator, model_validator
@@ -265,6 +267,7 @@ class DisabledEvidenceProvider:
 
 
 FetchJson = Callable[[str], dict[str, Any]]
+Sleep = Callable[[float], Awaitable[None]]
 
 
 def _fetch_json(url: str) -> dict[str, Any]:
@@ -296,8 +299,16 @@ class WikimediaEvidenceProvider:
     sent only when the Model Lab request explicitly chooses ``public_references``.
     """
 
-    def __init__(self, *, fetch_json: FetchJson = _fetch_json) -> None:
+    def __init__(
+        self,
+        *,
+        fetch_json: FetchJson = _fetch_json,
+        sleep: Sleep = asyncio.sleep,
+    ) -> None:
         self._fetch_json = fetch_json
+        self._sleep = sleep
+        self._ready_cache: dict[str, ModelLabEvidenceBundle] = {}
+        self._collect_lock = asyncio.Lock()
 
     async def collect(
         self,
@@ -312,13 +323,56 @@ class WikimediaEvidenceProvider:
                 status="unavailable",
                 sources=[],
             )
+        cache_key = hashlib.sha256(
+            f"{locale}\0{query}".encode()
+        ).hexdigest()
+        async with self._collect_lock:
+            cached = self._ready_cache.get(cache_key)
+            if cached is not None:
+                return cached.model_copy(deep=True)
+            evidence = await self._collect_uncached(query, locale)
+            if evidence.status == "ready":
+                if len(self._ready_cache) >= 64:
+                    self._ready_cache.pop(next(iter(self._ready_cache)))
+                self._ready_cache[cache_key] = evidence.model_copy(deep=True)
+            return evidence
+
+    async def _fetch_with_rate_limit_retry(
+        self,
+        url: str,
+    ) -> dict[str, Any]:
+        for attempt in range(2):
+            try:
+                return await asyncio.to_thread(self._fetch_json, url)
+            except urllib.error.HTTPError as error:
+                if error.code != 429 or attempt == 1:
+                    raise
+                raw_delay = error.headers.get("Retry-After", "1")
+                try:
+                    delay = float(raw_delay)
+                except (TypeError, ValueError):
+                    delay = 1.0
+                await self._sleep(max(0.0, min(delay, 2.0)))
+        raise RuntimeError("unreachable_reference_retry_state")
+
+    async def _safe_fetch(
+        self,
+        url: str,
+    ) -> dict[str, Any] | BaseException:
+        try:
+            return await self._fetch_with_rate_limit_retry(url)
+        except (OSError, RuntimeError, ValueError) as error:
+            return error
+
+    async def _collect_uncached(
+        self,
+        query: str,
+        locale: Literal["en", "ar"],
+    ) -> ModelLabEvidenceBundle:
         wikidata_url = self._wikidata_url(query, locale)
         local_wikipedia_url = self._wikipedia_url(query, locale)
-        local_wikipedia, wikidata = await asyncio.gather(
-            asyncio.to_thread(self._fetch_json, local_wikipedia_url),
-            asyncio.to_thread(self._fetch_json, wikidata_url),
-            return_exceptions=True,
-        )
+        local_wikipedia = await self._safe_fetch(local_wikipedia_url)
+        wikidata = await self._safe_fetch(wikidata_url)
         english_wikipedia: dict[str, Any] | BaseException
         if locale == "ar":
             english_titles = (
@@ -331,11 +385,7 @@ class WikimediaEvidenceProvider:
                 if english_titles
                 else self._wikipedia_url(query, "en")
             )
-            english_result = await asyncio.gather(
-                asyncio.to_thread(self._fetch_json, english_url),
-                return_exceptions=True,
-            )
-            english_wikipedia = english_result[0]
+            english_wikipedia = await self._safe_fetch(english_url)
         else:
             english_wikipedia = local_wikipedia
         sources: list[ModelLabEvidenceSource] = []

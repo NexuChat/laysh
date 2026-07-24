@@ -838,6 +838,8 @@ class CodexBackend:
         prior_fragment: dict[str, Any] | None = None,
         repair_attempt: int = 1,
         runtime_context: RuntimeContext | None = None,
+        stage_spec: StageModelSpec | None = None,
+        model_lab: bool = False,
     ) -> StageExecution:
         """Regenerate one invalid fragment within the two-attempt public bound."""
 
@@ -845,6 +847,10 @@ class CodexBackend:
             raise ValueError("unknown fragment role")
         if repair_attempt not in {1, 2}:
             raise ValueError("fragment repair attempt must be one or two")
+        if model_lab != (stage_spec is not None):
+            raise ValueError(
+                "model-lab fragment repair requires one explicit stage spec"
+            )
         safe_failure_code = (
             failure_code
             if failure_code.replace("_", "").isalnum() and len(failure_code) <= 64
@@ -915,12 +921,24 @@ class CodexBackend:
             if selected_context.public
             else self.settings.evidence_stage_timeout_seconds
         )
+        if stage_spec is None:
+            model = self.settings.heal_model if repair_attempt == 2 else primary_model
+            effort = "medium"
+            lab_policy: dict[str, Any] = {}
+        else:
+            model = stage_spec.model
+            effort = stage_spec.effort
+            lab_policy = {
+                "model_lab": True,
+                "fast": stage_spec.fast,
+            }
         return await self._execute_stage(
             prompt=prompt,
             schema_path=CODEX_OUTPUT_SCHEMA_BY_STAGE[stage_name],
             model=model,
-            effort="medium",
+            effort=effort,
             timeout_seconds=timeout_seconds,
+            **lab_policy,
             **self._execution_policy(selected_context),
         )
 

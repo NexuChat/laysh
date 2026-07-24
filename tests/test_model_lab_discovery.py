@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import urllib.error
 import urllib.parse
 from copy import deepcopy
+from email.message import Message
 from typing import Any
 
 import pytest
@@ -238,6 +240,98 @@ async def test_wikimedia_failure_is_bounded_and_returns_no_untrusted_source():
 
     assert bundle.status == "unavailable"
     assert bundle.sources == []
+
+
+@pytest.mark.asyncio
+async def test_wikimedia_retries_one_bounded_rate_limit_then_returns_sources():
+    attempts: dict[str, int] = {}
+    delays: list[float] = []
+
+    def rate_limited_fetch(url: str) -> dict[str, Any]:
+        attempts[url] = attempts.get(url, 0) + 1
+        if attempts[url] == 1:
+            headers = Message()
+            headers["Retry-After"] = "1"
+            raise urllib.error.HTTPError(
+                url,
+                429,
+                "Too Many Requests",
+                headers,
+                None,
+            )
+        if "wikipedia.org" in url:
+            return {
+                "query": {
+                    "pages": [
+                        {
+                            "pageid": 42,
+                            "title": "Rainbow",
+                            "extract": (
+                                "A rainbow is caused by refraction, reflection, "
+                                "and dispersion of light in water droplets."
+                            ),
+                            "fullurl": "https://en.wikipedia.org/wiki/Rainbow",
+                        }
+                    ]
+                }
+            }
+        return {
+            "search": [
+                {
+                    "id": "Q25566",
+                    "label": "rainbow",
+                    "description": "meteorological optical phenomenon",
+                    "concepturi": "https://www.wikidata.org/entity/Q25566",
+                }
+            ]
+        }
+
+    async def record_sleep(delay: float) -> None:
+        delays.append(delay)
+
+    provider = WikimediaEvidenceProvider(
+        fetch_json=rate_limited_fetch,
+        sleep=record_sleep,
+    )
+    bundle = await provider.collect("Why does a rainbow form?", "en")
+
+    assert bundle.status == "ready"
+    assert {source.provider for source in bundle.sources} == {
+        "wikipedia",
+        "wikidata",
+    }
+    assert set(attempts.values()) == {2}
+    assert delays == [1.0, 1.0]
+
+
+@pytest.mark.asyncio
+async def test_wikimedia_caches_ready_evidence_without_storing_or_refetching_question():
+    requested_urls: list[str] = []
+
+    def fake_fetch(url: str) -> dict[str, Any]:
+        requested_urls.append(url)
+        if "wikipedia.org" in url:
+            return {
+                "query": {
+                    "pages": [
+                        {
+                            "pageid": 42,
+                            "title": "Rainbow",
+                            "extract": "A rainbow separates visible wavelengths.",
+                            "fullurl": "https://en.wikipedia.org/wiki/Rainbow",
+                        }
+                    ]
+                }
+            }
+        return {"search": []}
+
+    provider = WikimediaEvidenceProvider(fetch_json=fake_fetch)
+    first = await provider.collect("Why does a rainbow form?", "en")
+    second = await provider.collect("Why does a rainbow form?", "en")
+
+    assert first == second
+    assert first.status == "ready"
+    assert len(requested_urls) == 2
 
 
 @pytest.mark.asyncio

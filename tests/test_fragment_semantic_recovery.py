@@ -661,6 +661,44 @@ async def test_undeclared_physics_name_retry_explains_how_to_inline_constants() 
 
 
 @pytest.mark.asyncio
+async def test_model_lab_fragment_retry_preserves_explicit_model_effort_and_fast() -> None:
+    from server.codex_backend import CodexBackend, StageModelSpec
+    from server.settings import Settings
+
+    class RecordingExecutor:
+        def __init__(self) -> None:
+            self.calls: list[dict[str, Any]] = []
+
+        async def execute_stage(self, **kwargs: Any) -> StageExecution:
+            self.calls.append(kwargs)
+            return StageExecution(
+                data=deepcopy(PHYSICS_FRAGMENT),
+                thread_id="private-model-lab-retry",
+                model=kwargs["model"],
+                elapsed_ms=4,
+            )
+
+    executor = RecordingExecutor()
+    backend = CodexBackend(executor=executor, settings=Settings())
+
+    await backend.regenerate_fragment(
+        "physics",
+        deepcopy(VALID_UNDERSTANDING),
+        "undeclared_expression_name",
+        stage_spec=StageModelSpec("gpt-5.6-luna", "medium", True),
+        model_lab=True,
+        runtime_context=RuntimeContext(public=True),
+    )
+
+    assert len(executor.calls) == 1
+    call = executor.calls[0]
+    assert call["model"] == "gpt-5.6-luna"
+    assert call["effort"] == "medium"
+    assert call["fast"] is True
+    assert call["model_lab"] is True
+
+
+@pytest.mark.asyncio
 async def test_visual_quality_retry_receives_bounded_general_guidance() -> None:
     from server.codex_backend import CodexBackend
     from server.settings import Settings
