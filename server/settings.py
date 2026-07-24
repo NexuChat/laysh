@@ -84,8 +84,10 @@ class Settings:
             raise ValueError("public heal effort must be low, medium, or high")
         if self.public_heal_attempt_limit not in {1, 2}:
             raise ValueError("public heal attempt limit must be one or two")
-        if self.public_generation_strategy not in {"module", "fragments"}:
-            raise ValueError("public generation strategy must be module or fragments")
+        if self.public_generation_strategy not in {"module", "fragments", "hybrid"}:
+            raise ValueError(
+                "public generation strategy must be module, fragments, or hybrid"
+            )
         if self.public_candidate_count not in {1, 2}:
             raise ValueError("public candidate count must be one or two")
         if self.max_parallel_model_calls <= 0 or self.max_parallel_browser_gates <= 0:

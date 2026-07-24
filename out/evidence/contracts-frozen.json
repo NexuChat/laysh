@@ -8,7 +8,7 @@
     "server/prompts/generate_visual.md": "e82573bff53b1d7ddaea94e008f414680d4a57eb748b19a499598ee1eb1bde71",
     "server/prompts/heal_module.md": "9de7b16b681fa53dd4004547af201460c2e0d172fef7444b3e26376f5b4a757d",
     "server/prompts/qa.md": "57a3184de8c11900b2a9d8d7d5cef38ce0e5e0a80ce4c1963e159ccfe7f80eb0",
-    "server/prompts/understand.md": "589e40d030c114a4d17a0a6f2b7ffa82b7eae08c0cbf0d77a5902d7652314fb7",
+    "server/prompts/understand.md": "d250d470331bddddf48603a25e3a6aaa56f3df2b09c201db63a1e0ad699328fa",
     "server/prompts/visual_qa.md": "8b738e0d4d55c69466470f808d9efdbc62f7bab7a87f8de27150702e986db654",
     "server/schemas/module.schema.json": "d3b68cc0a4f0ac656f963c95d5fb3726200520156cd873ca199023fe2668b739",
     "server/schemas/module_fixture.schema.json": "1191f30e60aee78ae02f92440421a3175c63af080ce9d14d3453a8f3f27d447e",

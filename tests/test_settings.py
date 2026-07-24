@@ -47,8 +47,10 @@ def test_shipped_public_profile_gives_generation_room_inside_hard_job_cap():
 
     for path in (root / ".env.example", root / "deploy" / "laysh.service"):
         document = path.read_text(encoding="utf-8")
-        assert "LAYSH_PUBLIC_GENERATION_STRATEGY=module" in document
-        assert "LAYSH_PUBLIC_HEAL_ATTEMPT_LIMIT=1" in document
+        assert "LAYSH_PUBLIC_GENERATION_STRATEGY=hybrid" in document
+        assert "LAYSH_PHYSICS_MODEL=gpt-5.6-luna" in document
+        assert "LAYSH_VISUAL_MODEL=gpt-5.6-terra" in document
+        assert "LAYSH_PUBLIC_HEAL_ATTEMPT_LIMIT=2" in document
         assert "LAYSH_PUBLIC_HEAL_EFFORT=low" in document
         assert "LAYSH_PUBLIC_JOB_TIMEOUT_SECONDS=600" in document
         assert "LAYSH_PUBLIC_STAGE_TIMEOUT_SECONDS=240" in document
@@ -100,8 +102,9 @@ def test_public_generate_canary_override_is_closed(monkeypatch):
 def test_public_generation_strategy_is_closed(monkeypatch):
     from server.settings import Settings
 
-    monkeypatch.setenv("LAYSH_PUBLIC_GENERATION_STRATEGY", "fragments")
-    assert Settings.from_env().public_generation_strategy == "fragments"
+    for strategy in ("module", "fragments", "hybrid"):
+        monkeypatch.setenv("LAYSH_PUBLIC_GENERATION_STRATEGY", strategy)
+        assert Settings.from_env().public_generation_strategy == strategy
 
     monkeypatch.setenv("LAYSH_PUBLIC_GENERATION_STRATEGY", "untrusted")
     with pytest.raises(ValueError, match="generation strategy"):

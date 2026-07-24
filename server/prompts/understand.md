@@ -56,6 +56,10 @@ Rules:
   listed output with at least one emitted numeric or relation fixture; an untested output cannot drive
   a trusted visual response. When direction changes across zero, include negative, zero, and positive
   evidence for the signed output instead of replacing it with an unsigned magnitude.
+- The first `module_spec.outputs` entry must be a visible phenomenon or observable mechanism that
+  directly explains the asked phenomenon when the primary control changes. A merely related
+  calculation or parameter restatement is not an explanatory output, even when its arithmetic is
+  correct. Choose the causal outcome the learner must observe, not an easy proxy for it.
 - Do not include reasoning, commentary, Markdown fences, or extra properties.
 
 INPUT_JSON:

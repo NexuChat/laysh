@@ -291,3 +291,44 @@ async def test_public_heal_uses_one_sol_low_attempt_and_rejects_a_second():
         "low",
         "medium",
     ]
+
+
+@pytest.mark.asyncio
+async def test_public_bounded_repairs_use_sol_low_then_sol_medium_with_fast():
+    from server.codex_backend import CodexBackend, RuntimeContext
+    from server.settings import Settings
+
+    executor = RoutingExecutor()
+    backend = CodexBackend(
+        executor=executor,
+        settings=Settings(
+            public_heal_attempt_limit=2,
+            public_heal_effort="low",
+        ),
+        routing_policy=_eligible_policy(),
+    )
+    context = RuntimeContext(public=True)
+    failures = [{"gate": "causal_response", "code": "causal_evidence_invalid"}]
+
+    await backend.heal(
+        VALID_MODULE_OUTPUT,
+        VALID_UNDERSTANDING,
+        failures,
+        1,
+        runtime_context=context,
+    )
+    await backend.heal(
+        VALID_MODULE_OUTPUT,
+        VALID_UNDERSTANDING,
+        failures,
+        2,
+        runtime_context=context,
+    )
+
+    assert [
+        (call["model"], call["effort"], call["fast"])
+        for call in executor.calls
+    ] == [
+        ("gpt-5.6-sol", "low", True),
+        ("gpt-5.6-sol", "medium", True),
+    ]

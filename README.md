@@ -64,8 +64,12 @@ flowchart LR
     U --> A[Answer first over replayable SSE]
     U --> C{Verified cache or pinned golden?}
     C -->|hit| R[Playable lesson]
-    C -->|miss| G[GPT-5.6 Sol: generate restricted module]
-    G --> V[Schema + assembly + security + VM + interface + fixture + browser gates]
+    C -->|miss| P2[GPT-5.6 Luna: validated physics fragment]
+    P2 --> D[Local discovery plan; no external lookup]
+    D --> G1[GPT-5.6 Terra: trusted scene plan]
+    D --> G2[GPT-5.6 Terra: direct Canvas]
+    G1 --> V[Full deterministic + browser gates per candidate]
+    G2 --> V
     V -->|pass| Q2[Optional terse GPT-5.6 Sol QA]
     V -->|actionable failures| H[GPT-5.6 Sol: heal, at most twice]
     H --> V
@@ -132,9 +136,17 @@ one matched observation, not a new p95 claim; the full measurements live in
 The UI says that a new experience may take up to ten minutes. During that wait it
 shows only real answer, stage, heartbeat, verification, and self-heal events. Instant
 goldens remain the dependable fast path. Public jobs have a 600-second hard terminal and a
-240-second stage ceiling; evidence builds retain their separate 600-second budget. Public
-generation remains on GPT-5.6 Sol and explicitly requests Codex fast service. A measured
-Terra cohort did not pass deterministic verification, so it was not promoted for speed.
+240-second stage ceiling; evidence builds retain their separate 600-second budget.
+
+The post-Buildweek public route uses a bounded Hybrid pipeline: GPT-5.6 Luna authors the
+validated physics fragment, then two GPT-5.6 Terra visual strategies run concurrently.
+Every candidate must independently pass the same deterministic and browser gates before
+selection. GPT-5.6 Sol receives exact failures for bounded healing and performs terse QA
+when required. Every public model-bearing stage explicitly requests Codex fast service.
+The discovery plan is derived locally from the closed understanding and physics contracts;
+external reference lookup remains isolated to Model Lab and cannot alter public trust or
+cache decisions. This routing change does not revise the historical v1.1 measurements
+above.
 
 ## Quota protection
 
@@ -142,7 +154,7 @@ Terra cohort did not pass deterministic verification, so it was not promoted for
 - Sixty new live generations globally per UTC day.
 - Two Codex jobs run concurrently and at most ten wait in the queue.
 - Public jobs have a 600-second hard terminal budget, request Codex fast service explicitly,
-  and use `--ephemeral`.
+  use `--ephemeral`, and share a two-call concurrency ceiling.
 - Gallery and cache playback consume no generation quota.
 - Over-limit traffic receives a localized answer-only/gallery path, never a raw 429 page.
 - Evidence mode is disabled by default and accepts only allowlisted repository fixtures.
@@ -182,9 +194,12 @@ granular commits.
 
 GPT-5.6 also has a meaningful runtime role. The public path uses **gpt-5.6-luna** to
 normalize Arabic/English intent and return the answer, fixed module specification, and
-independent fixtures in one closed-schema call. **gpt-5.6-sol** generates the restricted
-module, receives exact gate reports to heal a failed draft, and performs bounded terse QA
-when required. No non-GPT-5.6 model exists anywhere in the runtime path.
+independent fixtures in one closed-schema call, then authors a separately validated physics
+fragment. Two **gpt-5.6-terra** visual strategies run concurrently: a trusted declarative
+scene and a direct Canvas candidate. Each restarts deterministic and browser verification;
+only a passing candidate can be selected or cached. **gpt-5.6-sol** receives exact gate
+reports for bounded healing and performs terse QA when required. No non-GPT-5.6 model
+exists anywhere in the runtime path.
 
 Primary build `/feedback` Session ID:
 

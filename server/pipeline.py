@@ -19,6 +19,7 @@ from server.fragment_generation import (
     validate_physics_fragment,
     validate_visual_fragment,
 )
+from server.model_lab_discovery import build_discovery_plan
 from server.privacy import contains_learner_question_echo
 from server.promotion import STABLE_ROUTE
 from server.schemas import (
@@ -356,10 +357,14 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         module_output: dict[str, Any],
         understanding: dict[str, Any],
     ) -> tuple[VerificationResult, dict[str, Any] | None]:
-        if use_fragment_route and (
-            not trusted_fragment_candidate
-            or "/* LAYSH_CAUSAL_RESPONSE_V1 */" not in module_output["module_js"]
-        ):
+        causal_marker_present = (
+            "/* LAYSH_CAUSAL_RESPONSE_V1 */" in module_output["module_js"]
+        )
+        causal_contract_required = use_fragment_route or use_hybrid_route
+        causal_contract_valid = causal_marker_present and (
+            not use_fragment_route or trusted_fragment_candidate
+        )
+        if causal_contract_required and not causal_contract_valid:
             return (
                 VerificationResult(
                     passed=False,
@@ -369,11 +374,17 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                             "gate": "causal_response",
                             "code": "causal_contract_missing",
                             "expected": {
-                                "trusted_fragment_causal_contract": True,
+                                "causal_contract_marker": True,
+                                "trusted_fragment_candidate": (
+                                    True if use_fragment_route else None
+                                ),
                             },
                             "actual": {
-                                "trusted_fragment_causal_contract": (
+                                "causal_contract_marker": causal_marker_present,
+                                "trusted_fragment_candidate": (
                                     trusted_fragment_candidate
+                                    if use_fragment_route
+                                    else None
                                 ),
                             },
                         }
@@ -388,6 +399,58 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             module_output,
             understanding,
         )
+        if verification.passed and use_hybrid_route:
+            node_report = verification.node_report or {}
+            hybrid_evidence_failures = []
+            causal_report = node_report.get("causal_response")
+            if not isinstance(causal_report, dict) or causal_report.get("passed") is not True:
+                hybrid_evidence_failures.append(
+                    {
+                        "gate": "causal_response",
+                        "code": "causal_report_missing",
+                        "expected": {"causal_report_passed": True},
+                        "actual": {
+                            "causal_report_passed": (
+                                causal_report.get("passed")
+                                if isinstance(causal_report, dict)
+                                else None
+                            )
+                        },
+                    }
+                )
+            representation_report = node_report.get("temporal_causal_matrix")
+            if (
+                not isinstance(representation_report, dict)
+                or representation_report.get("passed") is not True
+            ):
+                hybrid_evidence_failures.append(
+                    {
+                        "gate": "representation_consistency",
+                        "code": "representation_contract_missing",
+                        "expected": {"temporal_causal_matrix_passed": True},
+                        "actual": {
+                            "temporal_causal_matrix_passed": (
+                                representation_report.get("passed")
+                                if isinstance(representation_report, dict)
+                                else None
+                            )
+                        },
+                    }
+                )
+            if hybrid_evidence_failures:
+                return (
+                    VerificationResult(
+                        passed=False,
+                        check_count=(
+                            verification.check_count
+                            + len(hybrid_evidence_failures)
+                        ),
+                        failures=hybrid_evidence_failures,
+                        artifact=None,
+                        node_report=verification.node_report,
+                    ),
+                    None,
+                )
         if not verification.passed:
             return verification, None
         if verification.artifact is None:
@@ -708,18 +771,59 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         None,
     )
     fragment_generator = getattr(manager.backend, "generate_fragments", None)
+    hybrid_physics_generator = getattr(
+        manager.backend,
+        "generate_hybrid_physics",
+        None,
+    )
+    hybrid_visual_plan_generator = getattr(
+        manager.backend,
+        "generate_hybrid_visual_plan",
+        None,
+    )
+    hybrid_visual_module_generator = getattr(
+        manager.backend,
+        "generate_hybrid_visual_module",
+        None,
+    )
     generation_strategy = getattr(
         manager.backend,
         "public_generation_strategy",
         "fragments",
+    )
+    hybrid_methods_ready = all(
+        callable(method)
+        for method in (
+            hybrid_physics_generator,
+            hybrid_visual_plan_generator,
+            hybrid_visual_module_generator,
+        )
+    )
+    use_hybrid_route = (
+        record.public
+        and generation_strategy == "hybrid"
+        and hybrid_methods_ready
     )
     use_fragment_route = (
         record.public
         and generation_strategy == "fragments"
         and callable(fragment_generator)
     )
+    if record.public and generation_strategy == "hybrid" and not use_hybrid_route:
+        _fallback(
+            manager,
+            record,
+            "generation_failed",
+            _gallery_suggestions(record.locale),
+        )
+        return
     candidate_specs: tuple[GenerationCandidateSpec, ...] = ()
-    if record.public and not use_fragment_route and callable(candidate_spec_factory):
+    if (
+        record.public
+        and not use_fragment_route
+        and not use_hybrid_route
+        and callable(candidate_spec_factory)
+    ):
         candidate_specs = tuple(
             candidate_spec_factory(
                 understanding,
@@ -727,7 +831,328 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             )
         )
 
-    if use_fragment_route:
+    if use_hybrid_route:
+        assert callable(hybrid_physics_generator)
+        assert callable(hybrid_visual_plan_generator)
+        assert callable(hybrid_visual_module_generator)
+        try:
+            physics_stage = await hybrid_physics_generator(
+                understanding,
+                runtime_context=runtime_context,
+            )
+        except CodexRuntimeError as error:
+            record_stage_failure("generate_physics", error)
+            _fallback(
+                manager,
+                record,
+                "generation_failed",
+                _gallery_suggestions(record.locale),
+            )
+            return
+        physics_document = stage_data(
+            physics_stage,
+            "generate_physics",
+            fragment_role="physics",
+        )
+        try:
+            physics_document = validate_physics_fragment(
+                physics_document,
+                understanding,
+            )
+        except (ContractError, ValidationError, ValueError) as error:
+            physics_regenerator = getattr(
+                manager.backend,
+                "regenerate_fragment",
+                None,
+            )
+            failure_code = fragment_failure_code(error)
+            if not callable(physics_regenerator):
+                logger.warning(
+                    "public hybrid physics contract rejected job=%s code=%s",
+                    record.job_id,
+                    failure_code,
+                )
+                _fallback(
+                    manager,
+                    record,
+                    "generation_failed",
+                    _gallery_suggestions(record.locale),
+                )
+                return
+            failure_diagnostic = fragment_failure_diagnostic(
+                error,
+                role="physics",
+                understanding=understanding,
+            )
+            manager.emit(
+                record,
+                "stage",
+                {
+                    "stage": "generate",
+                    "detail": "إعادة ضبط النموذج العلمي قبل الرسم",
+                    "elapsed_ms": manager.elapsed_ms(record),
+                },
+            )
+            try:
+                physics_stage = await physics_regenerator(
+                    "physics",
+                    understanding,
+                    failure_code,
+                    exact_gate_failures=[failure_diagnostic],
+                    prior_fragment=physics_document,
+                    repair_attempt=1,
+                    runtime_context=runtime_context,
+                )
+                physics_document = stage_data(
+                    physics_stage,
+                    "generate_physics",
+                    fragment_role="physics",
+                )
+                physics_document = validate_physics_fragment(
+                    physics_document,
+                    understanding,
+                )
+            except CodexRuntimeError as retry_error:
+                record_stage_failure("generate_physics", retry_error)
+                _fallback(
+                    manager,
+                    record,
+                    "generation_failed",
+                    _gallery_suggestions(record.locale),
+                )
+                return
+            except (ContractError, ValidationError, ValueError) as retry_error:
+                logger.warning(
+                    "public hybrid physics repair rejected job=%s code=%s",
+                    record.job_id,
+                    fragment_failure_code(retry_error),
+                )
+                _fallback(
+                    manager,
+                    record,
+                    "generation_failed",
+                    _gallery_suggestions(record.locale),
+                )
+                return
+
+        try:
+            discovery_plan = build_discovery_plan(
+                understanding,
+                physics_document,
+                source_ids=(),
+            ).model_dump(mode="json")
+        except (ContractError, ValidationError, ValueError) as error:
+            logger.warning(
+                "public hybrid physics/plan contract rejected job=%s error_type=%s",
+                record.job_id,
+                type(error).__name__,
+            )
+            _fallback(
+                manager,
+                record,
+                "generation_failed",
+                _gallery_suggestions(record.locale),
+            )
+            return
+
+        backend_settings = getattr(manager.backend, "settings", None)
+        hybrid_visual_model = getattr(
+            backend_settings,
+            "visual_model",
+            "gpt-5.6-terra",
+        )
+        hybrid_specs = {
+            "trusted_scene_plan": GenerationCandidateSpec(
+                "trusted_scene_plan",
+                1,
+                hybrid_visual_model,
+                "medium",
+            ),
+            "direct_canvas": GenerationCandidateSpec(
+                "direct_canvas",
+                2,
+                hybrid_visual_model,
+                "medium",
+            ),
+        }
+
+        async def build_hybrid_visual(
+            strategy: str,
+        ) -> _CandidateOutcome:
+            spec = hybrid_specs[strategy]
+            try:
+                if strategy == "trusted_scene_plan":
+                    stage = await hybrid_visual_plan_generator(
+                        understanding,
+                        physics_document,
+                        discovery_plan,
+                        runtime_context=runtime_context,
+                    )
+                    visual_document = stage_data(
+                        stage,
+                        "generate_visual",
+                        spec,
+                        fragment_role=strategy,
+                    )
+                    visual_document = validate_visual_fragment(
+                        visual_document,
+                        understanding,
+                    )
+                    output = assemble_fragments(
+                        physics_document,
+                        visual_document,
+                        understanding,
+                    )
+                else:
+                    stage = await hybrid_visual_module_generator(
+                        understanding,
+                        physics_document,
+                        discovery_plan,
+                        runtime_context=runtime_context,
+                    )
+                    output = validate_module_output(
+                        stage_data(
+                            stage,
+                            "generate_visual",
+                            spec,
+                            fragment_role=strategy,
+                        )
+                    )
+                return _CandidateOutcome(
+                    spec=spec,
+                    module_output=output,
+                )
+            except CodexRuntimeError as error:
+                record_stage_failure("generate_visual", error, spec)
+                return _CandidateOutcome(spec=spec, error=error)
+            except (ContractError, ValidationError, ValueError) as error:
+                logger.warning(
+                    "public hybrid visual rejected job=%s strategy=%s error_type=%s",
+                    record.job_id,
+                    strategy,
+                    type(error).__name__,
+                )
+                return _CandidateOutcome(spec=spec, error=error)
+
+        visual_tasks = tuple(
+            asyncio.create_task(build_hybrid_visual(strategy))
+            for strategy in ("trusted_scene_plan", "direct_canvas")
+        )
+        try:
+            hybrid_outcomes = list(await asyncio.gather(*visual_tasks))
+        except BaseException:
+            for task in visual_tasks:
+                if not task.done():
+                    task.cancel()
+            await asyncio.gather(*visual_tasks, return_exceptions=True)
+            raise
+
+        if record.status != "verifying":
+            manager.transition(
+                record,
+                "verifying",
+                "فحص مرشحي المحاكاة المستقلين",
+            )
+
+        async def verify_hybrid_visual(
+            outcome: _CandidateOutcome,
+        ) -> _CandidateOutcome:
+            if outcome.error is not None or outcome.module_output is None:
+                return outcome
+            candidate_verification, candidate_browser = (
+                await verify_generated_module(
+                    outcome.module_output,
+                    understanding,
+                )
+            )
+            outcome.verification = candidate_verification
+            outcome.browser_evidence = candidate_browser
+            return outcome
+
+        verification_tasks = tuple(
+            asyncio.create_task(verify_hybrid_visual(outcome))
+            for outcome in hybrid_outcomes
+        )
+        try:
+            hybrid_outcomes = list(await asyncio.gather(*verification_tasks))
+        except BaseException:
+            for task in verification_tasks:
+                if not task.done():
+                    task.cancel()
+            await asyncio.gather(*verification_tasks, return_exceptions=True)
+            raise
+        logger.info(
+            "public hybrid candidates job=%s results=%s",
+            record.job_id,
+            [
+                {
+                    "strategy": outcome.spec.candidate_id,
+                    "error": type(outcome.error).__name__
+                    if outcome.error is not None
+                    else None,
+                    "verified": (
+                        outcome.verification.passed
+                        if outcome.verification is not None
+                        else None
+                    ),
+                }
+                for outcome in hybrid_outcomes
+            ],
+        )
+        passing_hybrid = [
+            outcome
+            for outcome in hybrid_outcomes
+            if outcome.error is None
+            and outcome.module_output is not None
+            and outcome.verification is not None
+            and outcome.verification.passed
+        ]
+        if passing_hybrid:
+            winner = max(
+                passing_hybrid,
+                key=lambda outcome: (
+                    outcome.verification.check_count,
+                    int(outcome.spec.candidate_id == "direct_canvas"),
+                ),
+            )
+            module_output = winner.module_output
+            verification = winner.verification
+            browser_evidence = winner.browser_evidence
+            effective_generation_model = (
+                f"physics:{physics_stage.model}"
+                f"+visual:{winner.spec.model}/{winner.spec.candidate_id}"
+            )
+        else:
+            failed_hybrid = [
+                outcome
+                for outcome in hybrid_outcomes
+                if outcome.module_output is not None
+                and outcome.verification is not None
+            ]
+            if not failed_hybrid:
+                _fallback(
+                    manager,
+                    record,
+                    "generation_failed",
+                    _gallery_suggestions(record.locale),
+                )
+                return
+            selected = min(
+                failed_hybrid,
+                key=lambda outcome: (
+                    len(outcome.verification.failures),
+                    -outcome.verification.check_count,
+                    outcome.spec.ordinal,
+                ),
+            )
+            module_output = selected.module_output
+            verification = selected.verification
+            browser_evidence = selected.browser_evidence
+            effective_generation_model = (
+                f"physics:{physics_stage.model}"
+                f"+visual:{selected.spec.model}/{selected.spec.candidate_id}"
+            )
+    elif use_fragment_route:
         try:
             physics_stage, visual_stage = await fragment_generator(
                 understanding,
@@ -1251,8 +1676,9 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                     ),
                 )
                 module_output = selected.module_output
+                verification = selected.verification
+                browser_evidence = selected.browser_evidence
                 effective_generation_model = selected.spec.model
-                record_verification_failure(selected.verification, heal_count)
             elif saw_qa_rejection:
                 _fallback(
                     manager,
@@ -1305,75 +1731,85 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         verification = None
 
     while True:
-        if verification is not None and verification.passed:
-            pass
-        else:
+        if verification is None:
             if record.status != "verifying":
                 manager.transition(record, "verifying", "فحص العقد والنتائج الحتمية")
             verification, browser_evidence = await verify_generated_module(
                 module_output,
                 understanding,
             )
-            if not verification.passed:
-                record_verification_failure(verification, heal_count)
-                suspect_fixtures = [
-                    failure
-                    for failure in verification.failures
-                    if failure["gate"] == "fixture_integrity"
-                ]
-                if suspect_fixtures and not record.public:
-                    if fixture_refresh_count >= 1:
-                        _fallback(
-                            manager,
-                            record,
-                            "fixture_integrity_unresolved",
-                            _gallery_suggestions(record.locale),
-                        )
-                        return
-                    fixture_refresh_count += 1
-                    record.builder_diagnostics.append(
-                        {
-                            "type": "fixture_refresh",
-                            "attempt": fixture_refresh_count,
-                            "trigger_failures": suspect_fixtures,
-                        }
-                    )
-                    manager.emit(
+
+        if not verification.passed:
+            record_verification_failure(verification, heal_count)
+            suspect_fixtures = [
+                failure
+                for failure in verification.failures
+                if failure["gate"] == "fixture_integrity"
+            ]
+            if suspect_fixtures and not record.public:
+                if fixture_refresh_count >= 1:
+                    _fallback(
+                        manager,
                         record,
-                        "stage",
-                        {
-                            "stage": "fixture_refresh",
-                            "detail": "إعادة تدقيق عقد القياس المرجعي",
-                            "elapsed_ms": manager.elapsed_ms(record),
-                        },
+                        "fixture_integrity_unresolved",
+                        _gallery_suggestions(record.locale),
                     )
-                    understanding = validate_understanding(
-                        await stage_result(
-                            "understand_retry",
-                            manager.backend.understand(
-                                question,
-                                record.locale,
-                                runtime_context=runtime_context,
-                            ),
-                        )
+                    return
+                fixture_refresh_count += 1
+                record.builder_diagnostics.append(
+                    {
+                        "type": "fixture_refresh",
+                        "attempt": fixture_refresh_count,
+                        "trigger_failures": suspect_fixtures,
+                    }
+                )
+                manager.emit(
+                    record,
+                    "stage",
+                    {
+                        "stage": "fixture_refresh",
+                        "detail": "إعادة تدقيق عقد القياس المرجعي",
+                        "elapsed_ms": manager.elapsed_ms(record),
+                    },
+                )
+                understanding = validate_understanding(
+                    await stage_result(
+                        "understand_retry",
+                        manager.backend.understand(
+                            question,
+                            record.locale,
+                            runtime_context=runtime_context,
+                        ),
                     )
-                    if not understanding["safe"] or not understanding["simulatable"]:
-                        _fallback(
-                            manager,
-                            record,
-                            "fixture_refresh_invalid",
-                            understanding["suggestions"],
-                        )
-                        return
-                    continue
-                if heal_count >= heal_attempt_limit:
-                    if record.public and qa_verified_candidate is not None:
-                        module_output = qa_verified_candidate.module_output
-                        verification = qa_verified_candidate.verification
-                        browser_evidence = qa_verified_candidate.browser_evidence
-                        qa_outcome = qa_verified_candidate.qa_outcome
-                        qa_advisory_only = True
-                        break
+                )
+                if not understanding["safe"] or not understanding["simulatable"]:
+                    _fallback(
+                        manager,
+                        record,
+                        "fixture_refresh_invalid",
+                        understanding["suggestions"],
+                    )
+                    return
+                verification = None
+                continue
+            if heal_count >= heal_attempt_limit:
+                if record.public and qa_verified_candidate is not None:
+                    module_output = qa_verified_candidate.module_output
+                    verification = qa_verified_candidate.verification
+                    browser_evidence = qa_verified_candidate.browser_evidence
+                    qa_outcome = qa_verified_candidate.qa_outcome
+                    qa_advisory_only = True
+                    break
+                _fallback(
+                    manager,
+                    record,
+                    "verification_exhausted",
+                    _gallery_suggestions(record.locale),
+                )
+                return
+            if use_fragment_route:
+                repair_plan = fragment_repair_plan(verification.failures)
+                if repair_plan is None:
                     _fallback(
                         manager,
                         record,
@@ -1381,51 +1817,41 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                         _gallery_suggestions(record.locale),
                     )
                     return
-                if use_fragment_route:
-                    repair_plan = fragment_repair_plan(verification.failures)
-                    if repair_plan is None:
+                heal_count += 1
+                manager.transition(record, "healing", "إصلاح فشل تحقق محدد")
+                for role, failure_code, exact_gate_failures in repair_plan:
+                    repaired = await regenerate_trusted_fragment_candidate(
+                        role,
+                        failure_code,
+                        exact_gate_failures,
+                    )
+                    if not repaired:
                         _fallback(
                             manager,
                             record,
-                            "verification_exhausted",
+                            "generation_failed",
                             _gallery_suggestions(record.locale),
                         )
                         return
-                    heal_count += 1
-                    manager.transition(record, "healing", "إصلاح فشل تحقق محدد")
-                    for role, failure_code, exact_gate_failures in repair_plan:
-                        repaired = await regenerate_trusted_fragment_candidate(
-                            role,
-                            failure_code,
-                            exact_gate_failures,
-                        )
-                        if not repaired:
-                            _fallback(
-                                manager,
-                                record,
-                                "generation_failed",
-                                _gallery_suggestions(record.locale),
-                            )
-                            return
-                    verification = None
-                    continue
-                heal_count += 1
-                manager.transition(record, "healing", "إصلاح فشل تحقق محدد")
-                module_output = validate_module_output(
-                    await stage_result(
-                        f"heal_{heal_count}",
-                        manager.backend.heal(
-                            module_output,
-                            understanding,
-                            verification.failures,
-                            heal_count,
-                            runtime_context=runtime_context,
-                        ),
-                    )
-                )
-                trusted_fragment_candidate = False
                 verification = None
                 continue
+            heal_count += 1
+            manager.transition(record, "healing", "إصلاح فشل تحقق محدد")
+            module_output = validate_module_output(
+                await stage_result(
+                    f"heal_{heal_count}",
+                    manager.backend.heal(
+                        module_output,
+                        understanding,
+                        verification.failures,
+                        heal_count,
+                        runtime_context=runtime_context,
+                    ),
+                )
+            )
+            trusted_fragment_candidate = False
+            verification = None
+            continue
 
         if (heal_count or record.promote_golden) and qa_outcome is None:
             if verification is None:

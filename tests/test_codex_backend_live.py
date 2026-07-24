@@ -80,6 +80,7 @@ async def test_understand_is_one_luna_call_with_closed_schema_and_zero_echo_prom
     assert "Never echo unsafe input" in call["prompt"]
     assert "ليش القمر يتغير شكله؟" in call["prompt"]
     assert call["public"] is True
+    assert call["fast"] is True
 
 
 @pytest.mark.asyncio
@@ -287,6 +288,7 @@ async def test_qa_input_is_slim_bounded_and_review_only():
     assert "at most 3" in call["prompt"]
     assert "Do not rewrite" in call["prompt"]
     assert call["timeout_seconds"] == 45
+    assert call["fast"] is True
 
 
 def test_generate_prompt_states_the_exact_runtime_interface_contract():
@@ -342,6 +344,20 @@ def test_understand_prompt_requires_student_facing_display_math():
     assert "snake_case" in prompt
     assert "Unicode minus sign `−`" in prompt
     assert "f = (1 − cos θ) / 2" in prompt
+
+
+def test_understand_prompt_requires_a_directly_explanatory_primary_output():
+    from server.codex_backend import CodexBackend
+
+    prompt = CodexBackend._render_prompt(
+        "understand.md",
+        {"question": "Why does one visible outcome change?", "locale": "en"},
+    )
+    instructions = " ".join(prompt.split("INPUT_JSON:\n", 1)[0].split())
+
+    assert "directly explains the asked phenomenon" in instructions
+    assert "related calculation or parameter restatement" in instructions
+    assert "observable mechanism" in instructions
 
 
 @pytest.mark.asyncio
