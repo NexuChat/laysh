@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import logging
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, NoReturn
 
@@ -118,6 +119,66 @@ class _QaVerifiedCandidate:
     verification: VerificationResult
     browser_evidence: dict[str, Any] | None
     qa_outcome: dict[str, Any]
+
+
+@dataclass(frozen=True, slots=True)
+class _HealSnapshot:
+    module_output: dict[str, Any]
+    verification: VerificationResult
+    browser_evidence: dict[str, Any] | None
+    attempt: int
+
+
+@dataclass(frozen=True, slots=True)
+class _HealConvergenceDecision:
+    continue_healing: bool
+    reason: str | None = None
+
+
+def _failure_pairs(verification: VerificationResult) -> frozenset[tuple[str, str]]:
+    return frozenset(
+        (str(failure.get("gate")), str(failure.get("code")))
+        for failure in verification.failures
+    )
+
+
+def _select_best_heal_snapshot(
+    best: _HealSnapshot | None,
+    candidate: _HealSnapshot,
+) -> _HealSnapshot:
+    if best is None or len(_failure_pairs(candidate.verification)) < len(
+        _failure_pairs(best.verification)
+    ):
+        return candidate
+    return best
+
+
+def _heal_convergence_decision(
+    previous: _HealSnapshot,
+    current: _HealSnapshot,
+) -> _HealConvergenceDecision:
+    before = _failure_pairs(previous.verification)
+    after = _failure_pairs(current.verification)
+    if after < before:
+        return _HealConvergenceDecision(continue_healing=True)
+    return _HealConvergenceDecision(
+        continue_healing=False,
+        reason="regression" if after - before else "no_improvement",
+    )
+
+
+def _snapshot_heal_candidate(
+    module_output: dict[str, Any],
+    verification: VerificationResult,
+    browser_evidence: dict[str, Any] | None,
+    attempt: int,
+) -> _HealSnapshot:
+    return _HealSnapshot(
+        module_output=deepcopy(module_output),
+        verification=deepcopy(verification),
+        browser_evidence=deepcopy(browser_evidence),
+        attempt=attempt,
+    )
 
 
 async def cancellable_sleep(seconds: float) -> None:
@@ -769,6 +830,9 @@ async def run_pipeline(manager: Any, record: Any) -> None:
     qa_outcome: dict[str, Any] | None = None
     qa_advisory_only = False
     qa_verified_candidate: _QaVerifiedCandidate | None = None
+    best_heal_snapshot: _HealSnapshot | None = None
+    previous_heal_snapshot: _HealSnapshot | None = None
+    heal_verification_pending = False
     effective_generation_model: str | None = None
     trusted_fragment_candidate = False
     hybrid_representation_required = False
@@ -1794,6 +1858,15 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         verification = None
 
     while True:
+        heal_convergence: _HealConvergenceDecision | None = None
+        heal_convergence_aborted = False
+        if verification is not None and best_heal_snapshot is None:
+            best_heal_snapshot = _snapshot_heal_candidate(
+                module_output,
+                verification,
+                browser_evidence,
+                heal_count,
+            )
         if verification is None:
             if record.status != "verifying":
                 manager.transition(record, "verifying", "فحص العقد والنتائج الحتمية")
@@ -1802,9 +1875,50 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 understanding,
                 require_hybrid_representation=hybrid_representation_required,
             )
+            current_heal_snapshot = _snapshot_heal_candidate(
+                module_output,
+                verification,
+                browser_evidence,
+                heal_count,
+            )
+            best_heal_snapshot = _select_best_heal_snapshot(
+                best_heal_snapshot,
+                current_heal_snapshot,
+            )
+            if heal_verification_pending:
+                if previous_heal_snapshot is None:
+                    raise RuntimeError("heal verification has no previous snapshot")
+                heal_convergence = _heal_convergence_decision(
+                    previous_heal_snapshot,
+                    current_heal_snapshot,
+                )
+                heal_verification_pending = False
 
         if not verification.passed:
             record_verification_failure(verification, heal_count)
+            if heal_convergence is not None and not heal_convergence.continue_healing:
+                if best_heal_snapshot is None or previous_heal_snapshot is None:
+                    raise RuntimeError("heal convergence has no snapshot")
+                logger.warning(
+                    "heal convergence aborted job=%s heal_count=%s before=%s after=%s reason=%s",
+                    record.job_id,
+                    heal_count,
+                    [
+                        {"gate": gate, "code": code}
+                        for gate, code in sorted(
+                            _failure_pairs(previous_heal_snapshot.verification)
+                        )
+                    ],
+                    [
+                        {"gate": gate, "code": code}
+                        for gate, code in sorted(_failure_pairs(verification))
+                    ],
+                    heal_convergence.reason,
+                )
+                module_output = best_heal_snapshot.module_output
+                verification = best_heal_snapshot.verification
+                browser_evidence = best_heal_snapshot.browser_evidence
+                heal_convergence_aborted = True
             suspect_fixtures = [
                 failure
                 for failure in verification.failures
@@ -1819,7 +1933,11 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 not record.public
                 or (use_hybrid_route and bool(suspect_relation_fixtures))
             )
-            if suspect_fixtures and fixture_refresh_allowed:
+            if (
+                not heal_convergence_aborted
+                and suspect_fixtures
+                and fixture_refresh_allowed
+            ):
                 if fixture_refresh_count >= 1:
                     _fallback(
                         manager,
@@ -1901,7 +2019,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                     understanding = refreshed_understanding
                 verification = None
                 continue
-            if heal_count >= heal_attempt_limit:
+            if heal_convergence_aborted or heal_count >= heal_attempt_limit:
                 if record.public and qa_verified_candidate is not None:
                     module_output = qa_verified_candidate.module_output
                     verification = qa_verified_candidate.verification
@@ -1927,6 +2045,13 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                     )
                     return
                 heal_count += 1
+                previous_heal_snapshot = _snapshot_heal_candidate(
+                    module_output,
+                    verification,
+                    browser_evidence,
+                    heal_count - 1,
+                )
+                heal_verification_pending = True
                 manager.transition(record, "healing", "إصلاح فشل تحقق محدد")
                 for role, failure_code, exact_gate_failures in repair_plan:
                     repaired = await regenerate_trusted_fragment_candidate(
@@ -1945,6 +2070,13 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 verification = None
                 continue
             heal_count += 1
+            previous_heal_snapshot = _snapshot_heal_candidate(
+                module_output,
+                verification,
+                browser_evidence,
+                heal_count - 1,
+            )
+            heal_verification_pending = True
             manager.transition(record, "healing", "إصلاح فشل تحقق محدد")
             module_output = validate_module_output(
                 await stage_result(
