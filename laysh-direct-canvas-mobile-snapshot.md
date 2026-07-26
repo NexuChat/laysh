@@ -1,0 +1,44 @@
+- main [ref=f26e2] [box=0,0,390,1831]:
+  - navigation "أدوات العرض" [ref=f26e3] [box=10,16,371,52]:
+    - generic "ليش" [ref=f26e4] [box=319,30,61,23]: ليش.
+    - button "وضع العرض" [ref=f26e5] [cursor=pointer] [box=10,21,114,43]
+  - generic [ref=f26e6] [box=10,82,371,287]:
+    - paragraph [ref=f26e7] [box=27,99,337,29]: الجواب التفاعلي
+    - heading "كيف تتكوّن ألوان قوس قزح؟" [level=1] [ref=f26e8] [box=27,140,337,83]
+    - group [ref=f26e9] [box=27,235,337,44]:
+      - generic "اقرأ الجواب الكامل" [ref=f26e10] [cursor=pointer] [box=27,235,337,44]
+    - paragraph [ref=f26e11] [box=159,295,204,41]: θ = 38° + (1600°·nm) / λ
+  - region [ref=f26e12] [box=10,382,371,337]:
+    - paragraph [ref=f26e13] [box=331,399,32,32]: "1"
+    - generic [ref=f26e14] [box=27,445,337,257]:
+      - heading "توقّع أولًا" [level=2] [ref=f26e15] [box=27,445,337,30]
+      - paragraph [ref=f26e16] [box=27,491,337,26]: أي ضوء ينحرف بزاوية أكبر في النموذج؟
+      - generic [ref=f26e17] [box=27,534,337,168]:
+        - button "الضوء ذو الطول الموجي الأقصر" [ref=f26e18] [cursor=pointer] [box=27,534,337,49]
+        - button "الضوء ذو الطول الموجي الأطول" [ref=f26e19] [cursor=pointer] [box=27,593,337,49]
+        - button "ينحرفان بالزاوية نفسها" [ref=f26e20] [cursor=pointer] [box=27,653,337,49]
+  - region [ref=f26e21] [box=10,732,371,645]:
+    - paragraph [ref=f26e22] [box=331,749,32,32]: "2"
+    - generic [ref=f26e23] [box=27,795,337,566]:
+      - heading "لاحظ ما يتغيّر" [level=2] [ref=f26e24] [box=39,807,312,30]
+      - paragraph [ref=f26e26] [box=39,1033,312,71]: "الطول الموجي: 550 نانومتر — النتيجة المحسوبة: 40.91 درجة"
+      - generic [ref=f26e27] [box=39,1123,312,101]:
+        - generic [ref=f26e28] [box=150,1130,202,26]: الطول الموجي
+        - slider "الطول الموجي" [ref=f26e29] [cursor=pointer] [box=37,1178,312,44]: "550"
+        - status [ref=f26e30] [box=39,1123,99,41]: 550 نانومتر
+      - generic [ref=f26e31] [box=39,1240,312,109]:
+        - button "إيقاف الحركة" [ref=f26e32] [cursor=pointer] [box=217,1240,135,49]
+        - button "إعادة الضبط" [ref=f26e33] [cursor=pointer] [box=80,1240,126,49]
+        - button "إعادة العرض" [ref=f26e34] [cursor=pointer] [box=222,1299,129,49]
+      - paragraph [ref=f26e35] [box=351,1348,1,1]: الحركة تعمل
+  - region [ref=f26e36] [box=10,1391,371,416]:
+    - paragraph [ref=f26e37] [box=331,1408,32,32]: "3"
+    - generic [ref=f26e38] [box=27,1454,337,337]:
+      - heading "فسّر ما رأيت" [level=2] [ref=f26e39] [box=27,1454,337,30]
+      - paragraph [ref=f26e40] [box=27,1500,337,53]: ما دور الانكسار والانعكاس الداخلي والتشتت في فصل ضوء الشمس إلى ألوان؟
+      - note [ref=f26e41] [box=27,1569,337,137]:
+        - paragraph [ref=f26e42] [box=39,1582,307,26]:
+          - generic [ref=f26e43] [box=332,1582,14,26]: ⚠
+          - generic [ref=f26e44] [box=100,1582,225,26]: فكرة شائعة تحتاج إلى تصحيح
+        - paragraph [ref=f26e45] [box=39,1614,307,79]: "تصحيح: تفصل قطرة الماء الألوان لأن لكل طول موجي معامل انكسار مختلفًا، لا لأن المطر يضيف ألوانًا جديدة إلى ضوء الشمس."
+      - paragraph [ref=f26e46] [box=27,1722,337,53]: كيف يمكن لمنشور زجاجي أن يُظهر فصلًا مشابهًا لألوان الضوء؟

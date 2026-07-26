@@ -1,0 +1,44 @@
+- main [ref=f1e2]:
+  - navigation "أدوات العرض" [ref=f1e3]:
+    - generic "ليش" [ref=f1e4]: ليش.
+    - button "وضع العرض" [ref=f1e5] [cursor=pointer]
+  - generic [ref=f1e6]:
+    - paragraph [ref=f1e7]: الجواب التفاعلي
+    - heading "لماذا يتحرك الراكب عكس تغيّر السيارة؟" [level=1] [ref=f1e8]
+    - group [ref=f1e9]:
+      - paragraph [ref=f1e10]: يحافظ جسم الراكب على حالته الحركية بسبب القصور الذاتي؛ عند تسارع السيارة فجأة تتقدم السيارة تحته فيبدو الراكب مندفعًا للخلف، وعند الفرملة يستمر جسمه في الحركة للأمام. يرمز a إلى تسارع السيارة وm إلى كتلة الراكب.
+    - paragraph [ref=f1e11]: F = m a
+  - region [ref=f1e12]:
+    - paragraph [ref=f1e13]: "1"
+    - generic [ref=f1e14]:
+      - heading "توقّع أولًا" [level=2] [ref=f1e15]
+      - paragraph [ref=f1e16]: عند زيادة تسارع السيارة إلى الأمام، كيف تتغير القوة اللازمة لتغيير حركة راكب ثابت الكتلة؟
+      - generic [ref=f1e17]:
+        - button "تزداد" [ref=f1e18] [cursor=pointer]
+        - button "تقل" [ref=f1e19] [cursor=pointer]
+        - button "تبقى ثابتة" [ref=f1e20] [cursor=pointer]
+  - region [ref=f1e21]:
+    - paragraph [ref=f1e22]: "2"
+    - generic [ref=f1e23]:
+      - heading "لاحظ ما يتغيّر" [level=2] [ref=f1e24]
+      - paragraph [ref=f1e26]: "تسارع السيارة: 2 م/ث² — النتيجة المحسوبة: 140.00"
+      - generic [ref=f1e27]:
+        - generic [ref=f1e28]: تسارع السيارة
+        - slider "تسارع السيارة" [ref=f1e29] [cursor=pointer]: "2"
+        - status [ref=f1e30]: 2 م/ث²
+      - generic [ref=f1e31]:
+        - button "إيقاف الحركة" [ref=f1e32] [cursor=pointer]
+        - button "إعادة الضبط" [ref=f1e33] [cursor=pointer]
+        - button "إعادة العرض" [ref=f1e34] [cursor=pointer]
+      - paragraph [ref=f1e35]: الحركة تعمل
+  - region [ref=f1e36]:
+    - paragraph [ref=f1e37]: "3"
+    - generic [ref=f1e38]:
+      - heading "فسّر ما رأيت" [level=2] [ref=f1e39]
+      - paragraph [ref=f1e40]: اشرح كيف يغيّر المقعد وحزام الأمان حركة الراكب بعد بدء السيارة بالتسارع أو الفرملة.
+      - note [ref=f1e41]:
+        - paragraph [ref=f1e42]:
+          - generic [ref=f1e43]: ⚠
+          - generic [ref=f1e44]: فكرة شائعة تحتاج إلى تصحيح
+        - paragraph [ref=f1e45]: "تصحيح: يستمر جسم الراكب في حالته الحركية بسبب القصور الذاتي، لا تنشأ حركة الراكب للخلف لأن قوة تدفعه فجأة إلى الخلف."
+      - paragraph [ref=f1e46]: تنبأ بما يحدث لجسمك عندما تنطلق حافلة فجأة أو تتوقف فجأة، ثم اربط ذلك بالقصور الذاتي.

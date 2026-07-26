@@ -1,0 +1,83 @@
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - button "التبديل إلى العربية" [ref=e5] [cursor=pointer]: العربية
+      - link "Laysh, home page" [ref=e6] [cursor=pointer]:
+        - /url: "#ask"
+        - generic [ref=e7]: Laysh.
+      - generic [ref=e8]: Interactive science observatory
+    - main [ref=e9]:
+      - region [ref=e87]:
+        - button "Ask another question" [ref=e89] [cursor=pointer]
+        - generic [ref=e90]:
+          - paragraph [ref=e91]: Experience ready
+          - heading "How do the Moon's phases change?" [level=1] [ref=e92]
+          - paragraph [ref=e93]: The lit part of the Moon that we see changes because the Moon's position relative to Earth and the Sun changes as it orbits Earth. θ is the phase angle in degrees, and f is the visible lit fraction. The model assumes a simplified circular orbit and parallel sun rays, neglecting orbital tilt and eclipses.
+        - region [ref=e94]:
+          - generic [ref=e95]:
+            - heading "Try it yourself" [level=2] [ref=e96]
+            - generic [ref=e97]:
+              - generic [ref=e98]: Human review pinned
+              - button "Show the simulation full screen" [ref=e99] [cursor=pointer]: Projector mode
+          - iframe [ref=e100]:
+            - main [ref=f1e2]:
+              - navigation "أدوات العرض" [ref=f1e3]:
+                - generic "ليش" [ref=f1e4]: ليش.
+                - button "Projector mode" [ref=f1e5] [cursor=pointer]
+              - generic [ref=f1e6]:
+                - paragraph [ref=f1e7]: Interactive answer
+                - heading "How do the Moon's phases change?" [level=1] [ref=f1e8]
+                - group [ref=f1e9]:
+                  - paragraph [ref=f1e10]: The lit part of the Moon that we see changes because the Moon's position relative to Earth and the Sun changes as it orbits Earth. θ is the phase angle in degrees, and f is the visible lit fraction. The model assumes a simplified circular orbit and parallel sun rays, neglecting orbital tilt and eclipses.
+                - paragraph [ref=f1e11]: f = (1 − cos θ) / 2
+              - region [ref=f1e12]:
+                - paragraph [ref=f1e13]: "1"
+                - generic [ref=f1e14]:
+                  - heading "Predict first" [level=2] [ref=f1e15]
+                  - paragraph [ref=f1e16]: What happens to the visible lit fraction as the phase angle changes from 0° to 180°?
+                  - generic [ref=f1e17]:
+                    - button "It increases from zero to a fully lit disk" [ref=f1e18] [cursor=pointer]
+                    - button "It decreases from a fully lit disk to zero" [ref=f1e19] [cursor=pointer]
+                    - button "It stays constant throughout" [ref=f1e20] [cursor=pointer]
+              - region [ref=f1e21]:
+                - paragraph [ref=f1e22]: "2"
+                - generic [ref=f1e23]:
+                  - heading "Observe what changes" [level=2] [ref=f1e24]
+                  - paragraph [ref=f1e26]: "Phase angle: 90 ° — calculated outcome: 0.50"
+                  - generic [ref=f1e27]:
+                    - generic [ref=f1e28]: Phase angle
+                    - slider "Phase angle" [ref=f1e29] [cursor=pointer]: "90"
+                    - status [ref=f1e30]: 90 °
+                  - generic [ref=f1e31]:
+                    - button "Pause motion" [ref=f1e32] [cursor=pointer]
+                    - button "Reset" [ref=f1e33] [cursor=pointer]
+                    - button "Replay" [ref=f1e34] [cursor=pointer]
+                  - paragraph [ref=f1e35]: Motion is playing
+              - region [ref=f1e36]:
+                - paragraph [ref=f1e37]: "3"
+                - generic [ref=f1e38]:
+                  - heading "Explain what you saw" [level=2] [ref=f1e39]
+                  - paragraph [ref=f1e40]: Move the phase angle, then explain how the Moon's changing position changes the lit part visible from Earth.
+                  - note [ref=f1e41]:
+                    - paragraph [ref=f1e42]:
+                      - generic [ref=f1e43]: ⚠
+                      - generic [ref=f1e44]: Common misconception
+                    - paragraph [ref=f1e45]: "Correction: Moon phases come from the Sun–Earth–Moon angle, not Earth's shadow."
+                  - paragraph [ref=f1e46]: At a phase angle of 90°, what visible lit fraction does the Moon have, and why?
+          - paragraph [ref=e101]: The lit part of the Moon that we see changes because the Moon's position relative to Earth and the Sun changes as it orbits Earth. θ is the phase angle in degrees, and f is the visible lit fraction. The model assumes a simplified circular orbit and parallel sun rays, neglecting orbital tilt and eclipses.
+        - generic [ref=e102]:
+          - button "Replay experience" [ref=e103] [cursor=pointer]
+          - button "Share experience" [ref=e104] [cursor=pointer]
+          - link "Download an offline copy" [ref=e105] [cursor=pointer]:
+            - /url: /api/sims/golden_cc790a0c72517762/download
+          - button "Ask another question" [ref=e106] [cursor=pointer]
+        - status [ref=e107]
+        - group [ref=e108]:
+          - generic "What did we check?" [ref=e109] [cursor=pointer]
+    - contentinfo [ref=e80]:
+      - paragraph [ref=e81]:
+        - strong [ref=e82]: Laysh
+        - text: helps you explore; it does not replace a teacher or a trusted scientific source.
+      - paragraph [ref=e83]: No accounts, no ads, and no third-party analytics in this version.

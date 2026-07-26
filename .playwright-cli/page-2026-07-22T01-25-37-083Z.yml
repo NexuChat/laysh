@@ -1,0 +1,76 @@
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - button "التبديل إلى العربية" [ref=e5] [cursor=pointer]: العربية
+      - link "Laysh, home page" [ref=e6] [cursor=pointer]:
+        - /url: "#ask"
+        - generic [ref=e7]: Laysh.
+      - generic [ref=e8]: Interactive science observatory
+    - main [ref=e9]:
+      - region [ref=e10]:
+        - generic [ref=e11]:
+          - generic [ref=e12]:
+            - paragraph [ref=e13]: ✦ Ask why, then play the answer.
+            - heading "Every curious question deserves an answer you can touch." [level=1] [ref=e14]
+            - paragraph [ref=e15]: Ask a science question. We answer it briefly, then build a safe simulation when the idea can be represented honestly.
+          - generic [ref=e16]: Why?
+        - generic [ref=e26]:
+          - generic [ref=e27]: What do you want to understand today?
+          - textbox "What do you want to understand today?" [ref=e28]:
+            - /placeholder: Type your question here…
+          - generic [ref=e29]:
+            - generic [ref=e30]: "Safe example:"
+            - button "Why does the Moon change shape during the month?" [ref=e31] [cursor=pointer]
+          - paragraph [ref=e32]: Questions are processed by OpenAI to build the answer. Do not include a name, phone number, or any personal or sensitive data.
+          - button "Build me an experience" [ref=e34] [cursor=pointer]:
+            - generic [ref=e36]: →
+        - region [ref=e37]:
+          - generic [ref=e38]:
+            - generic [ref=e39]:
+              - paragraph [ref=e40]: Laysh library
+              - heading "Six reference experiences" [level=2] [ref=e41]
+            - paragraph [ref=e42]: The ready badge appears only after an experience is pinned and reviewed.
+          - generic [ref=e43]:
+            - article [ref=e44]:
+              - generic [ref=e45]: ☾
+              - paragraph [ref=e46]: Earth and space
+              - heading "Moon phases" [level=3] [ref=e47]
+              - generic [ref=e48]: Instant
+              - button "Launch experience" [ref=e49] [cursor=pointer]
+            - article [ref=e50]:
+              - generic [ref=e51]: ◌
+              - paragraph [ref=e52]: Buoyancy and density
+              - heading "Why do some objects float?" [level=3] [ref=e53]
+              - generic [ref=e54]: Instant
+              - button "Launch experience" [ref=e55] [cursor=pointer]
+            - article [ref=e56]:
+              - generic [ref=e57]: ⌁
+              - paragraph [ref=e58]: Periodic motion
+              - heading "Pendulum length and period" [level=3] [ref=e59]
+              - generic [ref=e60]: Instant
+              - button "Launch experience" [ref=e61] [cursor=pointer]
+            - article [ref=e62]:
+              - generic [ref=e63]: ϟ
+              - paragraph [ref=e64]: Electric circuits
+              - heading "Resistance and bulb brightness" [level=3] [ref=e65]
+              - generic [ref=e66]: Instant
+              - button "Launch experience" [ref=e67] [cursor=pointer]
+            - article [ref=e68]:
+              - generic [ref=e69]: ≈
+              - paragraph [ref=e70]: Sound and waves
+              - heading "Frequency and sound pitch" [level=3] [ref=e71]
+              - generic [ref=e72]: Instant
+              - button "Launch experience" [ref=e73] [cursor=pointer]
+            - article [ref=e74]:
+              - generic [ref=e75]: ◐
+              - paragraph [ref=e76]: Earth and space
+              - heading "Earth's rotation and day/night" [level=3] [ref=e77]
+              - generic [ref=e78]: Instant
+              - button "Launch experience" [ref=e79] [cursor=pointer]
+    - contentinfo [ref=e80]:
+      - paragraph [ref=e81]:
+        - strong [ref=e82]: Laysh
+        - text: helps you explore; it does not replace a teacher or a trusted scientific source.
+      - paragraph [ref=e83]: No accounts, no ads, and no third-party analytics in this version.
