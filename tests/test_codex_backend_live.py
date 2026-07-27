@@ -394,7 +394,11 @@ async def test_heal_prompt_contains_the_structured_gate_report_verbatim():
     )
 
     prompt = executor.calls[0]["prompt"]
-    serialized = json.dumps(report, ensure_ascii=False, separators=(",", ":"))
+    serialized = json.dumps(
+        [{**report[0], "occurrence_count": 1}],
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
     assert serialized in prompt
     assert json.dumps(
         VALID_MODULE_OUTPUT,
@@ -406,6 +410,32 @@ async def test_heal_prompt_contains_the_structured_gate_report_verbatim():
         ensure_ascii=False,
         separators=(",", ":"),
     ) in prompt
+
+
+@pytest.mark.asyncio
+async def test_heal_prompt_deduplicates_gate_failures_and_includes_occurrence_count():
+    from server.codex_backend import CodexBackend, RuntimeContext
+    from server.settings import Settings
+
+    repeated_failure = {"gate": "interface", "code": "exported_keys_mismatch"}
+    executor = RecordingExecutor()
+    backend = CodexBackend(executor=executor, settings=Settings())
+
+    await backend.heal(
+        VALID_MODULE_OUTPUT,
+        VALID_UNDERSTANDING,
+        [repeated_failure, repeated_failure, {"gate": "fixtures", "code": "mismatch"}],
+        1,
+        runtime_context=RuntimeContext(public=True),
+    )
+
+    expected_failures = (
+        '"exact_gate_failures":['
+        '{"gate":"interface","code":"exported_keys_mismatch","occurrence_count":2},'
+        '{"gate":"fixtures","code":"mismatch","occurrence_count":1}'
+        "]"
+    )
+    assert expected_failures in executor.calls[0]["prompt"]
 
 
 def test_heal_prompt_repairs_causal_and_representation_evidence_together():

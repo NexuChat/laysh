@@ -2,6 +2,15 @@
   "use strict";
 
   const GALLERY_CONTRACT_VERSION = "1.0";
+  // Server job budget is 600s; cap client-side polling a little beyond it
+  // (one extra reconnect window) so a dead job can never spin the "building"
+  // view forever, while still tolerating the tail end of a legitimately
+  // slow-but-alive build.
+  const SERVER_JOB_BUDGET_MS = 600_000;
+  const POLL_DEADLINE_MS = SERVER_JOB_BUDGET_MS + 60_000;
+  // A 404 from /events means the job is gone (expired or evicted) — it is not
+  // a transient network error, so give up fast instead of reconnecting.
+  const JOB_EVENTS_NOT_FOUND_LIMIT = 3;
   const t = (key, values) => window.LayshLocale.t(key, values);
   let currentLocale = window.LayshLocale.current();
   let number = new Intl.NumberFormat(currentLocale, { maximumFractionDigits: 0 });
@@ -23,6 +32,7 @@
     timer: null,
     watchdog: null,
     reconnectAttempt: 0,
+    notFoundCount: 0,
     terminal: false,
     answer: null,
     formula: null,
@@ -87,6 +97,7 @@
     "cancelled",
     "timed_out",
     "unsafe_redirect",
+    "job_not_found",
   ]);
   const failureSymbols = {
     not_simulatable: "؟",
@@ -99,6 +110,7 @@
     cancelled: "■",
     timed_out: "⌛",
     unsafe_redirect: "↗",
+    job_not_found: "○",
   };
 
   function localizedFailure(reason) {
@@ -142,7 +154,7 @@
       const elapsed = Date.now() - state.startedAt;
       byId("elapsed").textContent = formatElapsed(elapsed);
       byId("elapsed").dateTime = `PT${Math.floor(elapsed / 1000)}S`;
-      if (elapsed >= 600_000) {
+      if (elapsed >= POLL_DEADLINE_MS) {
         state.terminal = true;
         state.streamController?.abort();
         showFailure("timed_out");
@@ -381,6 +393,7 @@
   async function handleEvent(event) {
     state.lastEventAt = Date.now();
     state.reconnectAttempt = 0;
+    state.notFoundCount = 0;
     if (event.id) state.lastEventId = Math.max(state.lastEventId, event.id);
     const message = JSON.parse(event.data);
     if (event.type === "answer") pinAnswer(message.payload);
@@ -401,6 +414,20 @@
     if (state.lastEventId) headers["Last-Event-ID"] = String(state.lastEventId);
     try {
       const response = await fetch(state.streamUrl, { headers, signal: controller.signal });
+      if (response.status === 404) {
+        // The job no longer exists server-side — this is not a transient
+        // network error, so do not fall into the exponential-backoff
+        // reconnect path used for 5xx/network blips. Give up quickly.
+        state.notFoundCount += 1;
+        if (state.notFoundCount >= JOB_EVENTS_NOT_FOUND_LIMIT) {
+          showFailure("job_not_found");
+          return;
+        }
+        setConnection("connection.reconnecting", "reconnecting");
+        setTimeout(connectStream, 1500);
+        return;
+      }
+      state.notFoundCount = 0;
       if (!response.ok || !response.body) throw new Error("stream_unavailable");
       setConnection("connection.stable", "working");
       const reader = response.body.getReader();
@@ -449,6 +476,8 @@
     state.terminal = false;
     state.jobId = null;
     state.lastEventId = 0;
+    state.reconnectAttempt = 0;
+    state.notFoundCount = 0;
     state.answer = null;
     state.formula = null;
     state.result = null;

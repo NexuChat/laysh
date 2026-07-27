@@ -1,15 +1,15 @@
 {
-  "schema_version": "1.0",
-  "contract_version": "1.0",
   "algorithm": "sha256",
+  "contract_version": "1.0",
   "files": {
-    "server/prompts/generate_module.md": "66ca95ae728c871687d8a3895514bc615d6ad7bb59e949529ac0722f4d8815df",
+    "server/prompts/generate_module.md": "12ec4d6d10892b792aa30f0614a6f212c892e6f6b4a29c5d0238a446f67bbc13",
     "server/prompts/generate_physics.md": "9cd0f90577d418916f09863b53f03f3d79a0ed40b1390fa0c20971ab7088d79f",
-    "server/prompts/generate_visual.md": "e82573bff53b1d7ddaea94e008f414680d4a57eb748b19a499598ee1eb1bde71",
-    "server/prompts/heal_module.md": "2bfacaf0f84cfea55041e821d618a2c4653c470a027390d92dddde53d6ed5e54",
-    "server/prompts/qa.md": "57a3184de8c11900b2a9d8d7d5cef38ce0e5e0a80ce4c1963e159ccfe7f80eb0",
+    "server/prompts/generate_visual.md": "4c7a93b8a375515a9c5b94a3a383624e7a675e97ffc30c7209906de2e8a14182",
+    "server/prompts/heal_module.md": "49b8b05e098c4bd997cecfa75c6152ba6cece7008989de6c9227248d7f0eda65",
+    "server/prompts/qa.md": "187e15a684d325c006ed076eea291d228e0d18ab0ba6f945de805360f7952478",
     "server/prompts/understand.md": "d250d470331bddddf48603a25e3a6aaa56f3df2b09c201db63a1e0ad699328fa",
     "server/prompts/visual_qa.md": "8b738e0d4d55c69466470f808d9efdbc62f7bab7a87f8de27150702e986db654",
+    "server/schemas.py": "f53fd16d5b86ca3db2600fa35bc850189941ec0082e1fe29c020743570292edf",
     "server/schemas/module.schema.json": "d3b68cc0a4f0ac656f963c95d5fb3726200520156cd873ca199023fe2668b739",
     "server/schemas/module_fixture.schema.json": "1191f30e60aee78ae02f92440421a3175c63af080ce9d14d3453a8f3f27d447e",
     "server/schemas/physics_fragment.schema.json": "f02c1dad5ce95040d7abecdcc850fe39cf648cc7bb4920515a07198f4aba1c4f",
@@ -19,7 +19,7 @@
     "server/schemas/verification_report.schema.json": "5fa54e7d4cbe52fe10bc114532fe8fa5085c4cfb21534fb134e333cc95728a81",
     "server/schemas/visual_fragment.schema.json": "68206a7f883090778b51fda1c7e1e63dfea953a32f99f322a540760de79543d1",
     "server/schemas/visual_qa.schema.json": "433a60f403351ef7b5ae527178d2d91a3916f3479607b4c7c004d673a2e71311",
-    "server/schemas.py": "f53fd16d5b86ca3db2600fa35bc850189941ec0082e1fe29c020743570292edf",
     "sim_shell/contract.js": "815a04312ef79e55d1b982e8906a3b6acbbb81733da2555d4b52ece07c627621"
-  }
+  },
+  "schema_version": "1.0"
 }

@@ -926,9 +926,37 @@ async def test_public_code_style_formula_is_not_exposed_and_does_not_enter_heal_
     assert "illuminated_fraction" not in str(record.public_result())
 
 
-def test_exhausted_heal_preserves_answer_and_never_exposes_artifact(client, backend):
-    job_id = ask(client, "exhausted heal")
-    result = wait_for_terminal(client, job_id)
+def test_exhausted_heal_preserves_answer_and_never_exposes_artifact():
+    from copy import deepcopy
+
+    from fastapi.testclient import TestClient
+
+    from server.app import create_app
+    from server.codex_backend import MockCodexBackend
+
+    class StrictlyImprovingExhaustionBackend(MockCodexBackend):
+        def mark_exhausted(self, module_output):
+            candidate = super().mark_exhausted(module_output)
+            candidate["module_js"] += "\n// " + "x" * (96 * 1024)
+            return candidate
+
+        async def heal(self, module_output, understanding, failures, attempt, **kwargs):
+            del attempt, kwargs
+            self.heal_calls += 1
+            self.last_heal_failures.append(deepcopy(failures))
+            source = self._good_source + "\n// fetch\n"
+            if self.heal_calls == 1:
+                source += "x" * (96 * 1024)
+            return {
+                **deepcopy(module_output),
+                "module_js": source,
+                "output_names": list(understanding["module_spec"]["outputs"]),
+            }
+
+    backend = StrictlyImprovingExhaustionBackend()
+    with TestClient(create_app(backend=backend, job_timeout_seconds=2)) as test_client:
+        job_id = ask(test_client, "exhausted heal")
+        result = wait_for_terminal(test_client, job_id)
 
     assert result["status"] == "answer_only"
     assert result["answer"]["tldr"]

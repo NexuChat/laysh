@@ -289,9 +289,24 @@ def test_visual_prompt_requires_cohesive_recognizable_actor_motion_and_correct_a
     )
 
     assert "recognizable silhouette" in prompt
+    assert "recognizable as the declared actor without reading labels" in prompt
+    assert "A generic circle, orb, or rectangle is not an acceptable substitute" in prompt
+    assert "floating_body" in prompt
+    assert "wavefront" in prompt
     assert "same center, output, and phase expressions" in prompt
     assert "Canvas y increases downward" in prompt
     assert "one scientific ellipse" in prompt
+
+
+def test_qa_rejects_semantically_unrecognizable_scientific_actors():
+    prompt = _fragment_prompt_instructions(
+        "qa.md",
+        _secondary_driven_understanding(),
+    )
+
+    assert "recognizable as `module_spec.actor` without relying on text labels" in prompt
+    assert "generic circle, orb, or rectangle" in prompt
+    assert "actor_identity" in prompt
 
 
 @pytest.mark.parametrize(
@@ -312,3 +327,17 @@ def test_all_module_routes_keep_live_numeric_readouts_in_the_trusted_shell(
     )
     assert "The trusted shell owns the live numeric readout below the scene." in prompt
     assert "especially on narrow mobile viewports" in prompt
+
+
+@pytest.mark.parametrize(
+    "prompt_name",
+    ["generate_module.md", "heal_module.md", "qa.md"],
+)
+def test_all_direct_module_routes_require_semantic_actor_identity(prompt_name: str):
+    prompt = _fragment_prompt_instructions(
+        prompt_name,
+        _secondary_driven_understanding(),
+    )
+
+    assert "recognizable as `module_spec.actor` without relying on text labels" in prompt
+    assert "generic circle, orb, or rectangle" in prompt

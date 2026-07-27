@@ -7,6 +7,12 @@ change the answer, parameters, output names, fixtures, or teaching objective. Re
 JavaScript, never full HTML. Preserve the restricted interface and capabilities. Resolve every listed
 failure, then provide safe summary and assumptions fields. Do not include reasoning or extra fields.
 
+The repaired scientific actor must be recognizable as `module_spec.actor` without relying on text
+labels. A generic circle, orb, or rectangle is not an acceptable substitute for the declared
+concept. Preserve or rebuild a coherent concept-specific silhouette: for example, a `floating_body`
+needs a hull-like body visibly crossing a water surface, and a `wavefront` needs a propagating front
+or ray bundle that visibly communicates the optical action.
+
 For `shared_model_state`, keep exactly one marked named state-object function and make both paths
 consume it visibly: `const state = modelState(value);` followed by a real `state.output` read in the
 draw/render calculation and in `test(inputs)`. Remove duplicate pivotal formulas and no-op calls.

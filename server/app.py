@@ -597,6 +597,24 @@ def create_app(
                 "active": app.state.jobs.active_count,
                 "known_jobs": len(app.state.jobs.records),
             },
+            "config": {
+                "generation_strategy": settings.public_generation_strategy,
+                "heal_attempt_limit": settings.public_heal_attempt_limit,
+                "public_job_timeout_seconds": settings.public_job_timeout_seconds,
+                "public_stage_timeout_seconds": settings.public_stage_timeout_seconds,
+                "public_qa_timeout_seconds": settings.public_qa_timeout_seconds,
+                "models": {
+                    "understand": settings.understand_model,
+                    "generate": (
+                        settings.public_generate_model_override
+                        or settings.generate_model
+                    ),
+                    "physics": settings.physics_model,
+                    "visual": settings.visual_model,
+                    "heal": settings.heal_model,
+                    "qa": settings.qa_model,
+                },
+            },
         }
 
     return app

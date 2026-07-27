@@ -57,12 +57,45 @@ def test_health_is_fast_and_never_calls_backend(client, backend):
     response = client.get("/healthz")
     after = (backend.understand_calls, backend.generate_calls, backend.heal_calls)
     assert response.status_code == 200
-    assert response.json() == {
-        "status": "ok",
-        "backend": "mock",
-        "queue": {"active": 0, "known_jobs": 0},
+    payload = response.json()
+    assert payload["status"] == "ok"
+    assert payload["backend"] == "mock"
+    assert payload["queue"] == {"active": 0, "known_jobs": 0}
+    assert payload["config"] == {
+        "generation_strategy": "module",
+        "heal_attempt_limit": 1,
+        "public_job_timeout_seconds": 600.0,
+        "public_stage_timeout_seconds": 240.0,
+        "public_qa_timeout_seconds": 45.0,
+        "models": {
+            "understand": "gpt-5.6-luna",
+            "generate": "gpt-5.6-sol",
+            "physics": "gpt-5.6-sol",
+            "visual": "gpt-5.6-terra",
+            "heal": "gpt-5.6-sol",
+            "qa": "gpt-5.6-sol",
+        },
     }
     assert after == before
+
+
+def test_health_exposes_effective_config_without_secrets(monkeypatch):
+    from fastapi.testclient import TestClient
+
+    from server.app import create_app
+    from server.codex_backend import MockCodexBackend
+
+    monkeypatch.setenv("LAYSH_PUBLIC_GENERATION_STRATEGY", "hybrid")
+    monkeypatch.setenv("LAYSH_PUBLIC_HEAL_ATTEMPT_LIMIT", "2")
+    monkeypatch.setenv("LAYSH_CACHE_KEY_SECRET", "cache-secret-must-not-leak")
+    monkeypatch.setenv("LAYSH_RATE_LIMIT_KEY_SECRET", "rate-secret-must-not-leak")
+    with TestClient(create_app(backend=MockCodexBackend())) as test_client:
+        payload = test_client.get("/healthz").json()
+
+    assert payload["config"]["generation_strategy"] == "hybrid"
+    assert payload["config"]["heal_attempt_limit"] == 2
+    assert "cache-secret-must-not-leak" not in str(payload)
+    assert "rate-secret-must-not-leak" not in str(payload)
 
 
 def test_result_artifact_can_be_rendered_inline_or_downloaded(client):

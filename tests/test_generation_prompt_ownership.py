@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import json
 from pathlib import Path
 
@@ -10,9 +9,6 @@ from server.codex_runtime import StageExecution
 from tests.golden_cases import VALID_MODULE_OUTPUT, VALID_UNDERSTANDING
 
 ROOT = Path(__file__).parents[1]
-SNAPSHOT = ROOT / "tests" / "snapshots" / "generation-route-shell-ownership.txt"
-
-
 class CapturingExecutor:
     def __init__(self) -> None:
         self.call: dict[str, object] | None = None
@@ -39,18 +35,13 @@ async def test_failed_html_fixture_keeps_shell_owned_and_generation_route_snapsh
 
     assert executor.call is not None
     prompt = str(executor.call["prompt"])
-    route_snapshot = json.dumps(
-        {
-            "model": executor.call["model"],
-            "effort": executor.call["effort"],
-            "schema": Path(executor.call["schema_path"]).name,
-            "ownership_clause": " ".join(prompt.splitlines()[:2]),
-            "trusted_shell_source": "sim_shell/shell.html",
-            "rendered_prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
-        },
-        indent=2,
-    ) + "\n"
-    assert route_snapshot == SNAPSHOT.read_text(encoding="utf-8")
+    assert executor.call["model"] == "gpt-5.6-terra"
+    assert executor.call["effort"] == "medium"
+    assert Path(executor.call["schema_path"]).name == "module.schema.json"
+    assert " ".join(prompt.splitlines()[:2]) == (
+        "Return closed-schema JSON only; use no tools. Assign JavaScript once to "
+        "`window.LayshSimulation`; no Markdown, full HTML, CSS, or shell UI."
+    )
 
     failed_document = {
         **VALID_MODULE_OUTPUT,

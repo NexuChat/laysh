@@ -35,6 +35,26 @@ CODEX_OUTPUT_SCHEMA_BY_STAGE = {
 CODEX_OUTPUT_SCHEMAS = tuple(sorted(set(CODEX_OUTPUT_SCHEMA_BY_STAGE.values())))
 LOGGER = logging.getLogger(__name__)
 
+
+def _deduplicate_gate_failures(
+    failures: list[Any],
+) -> list[Any]:
+    deduplicated: list[Any] = []
+    positions: dict[tuple[str, str], int] = {}
+    for failure in failures:
+        if not isinstance(failure, dict):
+            deduplicated.append(failure)
+            continue
+        pair = (str(failure.get("gate")), str(failure.get("code")))
+        position = positions.get(pair)
+        if position is None:
+            positions[pair] = len(deduplicated)
+            deduplicated.append({**failure, "occurrence_count": 1})
+        else:
+            deduplicated[position]["occurrence_count"] += 1
+    return deduplicated
+
+
 FRAGMENT_RETRY_HINTS: dict[str, str] = {
     "causal_scientific_actor_required": (
         "Set causal_response.actor_id to the primary scientific actor, not a "
@@ -975,6 +995,7 @@ class CodexBackend:
         """Repair one lab candidate with the exact deterministic diagnostics."""
 
         selected_context = runtime_context or RuntimeContext()
+        model_failures = _deduplicate_gate_failures(failures)
         if not selected_context.public:
             raise CodexPolicyError("model_lab_public_only")
         return await self._execute_stage(
@@ -983,7 +1004,7 @@ class CodexBackend:
                 {
                     "module_output": module_output,
                     "understanding": understanding,
-                    "exact_gate_failures": failures,
+                    "exact_gate_failures": model_failures,
                     "attempt": attempt,
                 },
             ),
@@ -1299,6 +1320,7 @@ class CodexBackend:
         runtime_context: RuntimeContext | None = None,
     ) -> StageExecution:
         selected_context = runtime_context or RuntimeContext()
+        model_failures = _deduplicate_gate_failures(failures)
         if selected_context.public:
             if attempt > self.settings.public_heal_attempt_limit:
                 raise ValueError("public heal attempt exceeds configured limit")
@@ -1317,7 +1339,7 @@ class CodexBackend:
                 {
                     "module_output": module_output,
                     "understanding": understanding,
-                    "exact_gate_failures": failures,
+                    "exact_gate_failures": model_failures,
                     "attempt": attempt,
                 },
             ),

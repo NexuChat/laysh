@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+import json
 import logging
 from copy import deepcopy
 
@@ -170,3 +171,55 @@ async def test_heal_loop_aborts_on_new_failure_and_restores_best_snapshot(
     assert observed["browser_evidence"] is None
     assert "heal convergence aborted job=" in caplog.text
     assert "reason=regression" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_convergence_abort_gives_up_like_natural_heal_exhaustion(monkeypatch):
+    """The early abort shortens the loop; it must not change the terminal contract.
+
+    Aborting on a non-converging heal is a *give up*, not a shortcut to shipping.
+    It has to land exactly where natural heal exhaustion lands: the textual answer
+    is preserved for the learner, and the candidate that never passed verification
+    stays invisible — no artifact on the record, no simulation on the public
+    payload, nothing registered for download.
+    """
+    from server import pipeline
+
+    backend = SequencedHealBackend()
+    backend._heal_markers = ["heal-1", "must-not-heal"]
+    monkeypatch.setattr(
+        pipeline,
+        "verify_candidate",
+        sequence_verifier(
+            [
+                [("interface", "missing_init"), ("fixtures", "mismatch")],
+                [("interface", "missing_init"), ("fixtures", "mismatch")],
+            ]
+        ),
+    )
+
+    manager = make_manager(backend)
+    record = manager.start("success", "ar")
+    await record.task
+
+    # The guard still pays for itself: the second heal is never dispatched.
+    assert backend.heal_calls == 1
+    assert backend.qa_calls == 0
+
+    # (a) the answer survives the abort
+    assert record.status == "answer_only"
+    assert record.answer is not None and record.answer.tldr
+    assert record.fallback is not None
+    assert record.fallback.reason_code == "verification_exhausted"
+
+    # (b) the unverified artifact never reaches the learner
+    assert record.artifact is None
+    assert record.simulation is None
+    assert manager.artifacts == {}
+
+    public = record.public_result().model_dump(mode="json")
+    assert public["status"] == "answer_only"
+    assert public["answer"]["tldr"]
+    assert public["simulation"] is None
+    assert public["fallback"]["reason_code"] == "verification_exhausted"
+    assert "artifact-" not in json.dumps(public, ensure_ascii=False)

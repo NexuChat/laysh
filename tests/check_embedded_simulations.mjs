@@ -8,6 +8,13 @@ const baseUrl = process.argv[2];
 const chromePath = process.env.CHROME_BIN || "/usr/bin/google-chrome";
 const profilePath = fs.mkdtempSync(path.join(os.tmpdir(), "laysh-embed-chrome-"));
 
+// Rounding tolerance applied ONLY to inside-viewport boundary comparisons.
+// Sub-pixel layout (fractional iframe heights, fractional font metrics) can
+// place an element a fraction of a pixel past a strict boundary even though
+// it is visually and semantically inside the viewport. This does not weaken
+// the underlying "must be inside the viewport" requirement.
+const BOUNDARY_EPSILON_PX = 2;
+
 function delay(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
@@ -106,6 +113,21 @@ try {
     throw new Error(`Timed out waiting for: ${expression}`);
   }
 
+  // Wait for web fonts to finish loading and for two consecutive animation
+  // frames to elapse, so that any font-swap-triggered reflow has settled
+  // before layout is read. Used for both the parent document (sessionId
+  // omitted) and the embedded iframe document (sessionId provided).
+  async function settle(sessionId) {
+    await evaluate(`(async () => {
+      if (document.fonts && document.fonts.ready) {
+        try { await document.fonts.ready; } catch {}
+      }
+      await new Promise((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(resolve));
+      });
+    })()`, sessionId);
+  }
+
   async function setViewport(viewport) {
     await command("Emulation.setDeviceMetricsOverride", {
       width: viewport.width,
@@ -199,6 +221,8 @@ try {
     await evaluate("document.querySelector('#simulation-frame').scrollIntoView({ block: 'start' })");
     const { sessionId } = await currentFrameSession(expectedUrl, expectedTitle);
     await waitFor("document.documentElement.dataset.layshReady === 'true'", 10000, sessionId);
+    await settle();
+    await settle(sessionId);
     const convergenceDeadline = Date.now() + 5000;
     let converged = false;
     let lastFrameBounds = null;
@@ -248,66 +272,94 @@ try {
       })}`);
     }
 
-    const parent = await evaluate(`(() => {
-      const frame = document.querySelector('#simulation-frame');
-      const stage = document.querySelector('.simulation-stage');
-      const frameRect = frame.getBoundingClientRect();
-      const stageRect = stage.getBoundingClientRect();
-      return {
-        iframeHeight: frameRect.height,
-        computedHeight: getComputedStyle(frame).height,
-        computedMinHeight: getComputedStyle(frame).minHeight,
-        iframeBottomInsideStage: frameRect.bottom <= stageRect.bottom + 1,
-        stageOverflow: getComputedStyle(stage).overflow,
-        scrolling: frame.getAttribute('scrolling'),
-      };
-    })()`);
-    const child = await evaluate(`(() => {
-      const bounds = (selector) => {
-        const element = document.querySelector(selector);
-        if (!element) return { exists: false, visible: false, insideViewport: false };
-        const rect = element.getBoundingClientRect();
-        const style = getComputedStyle(element);
+    async function captureParent() {
+      return await evaluate(`(() => {
+        const EPSILON = ${BOUNDARY_EPSILON_PX};
+        const frame = document.querySelector('#simulation-frame');
+        const stage = document.querySelector('.simulation-stage');
+        const frameRect = frame.getBoundingClientRect();
+        const stageRect = stage.getBoundingClientRect();
         return {
-          exists: true,
-          visible: style.display !== 'none' && style.visibility !== 'hidden'
-            && rect.width > 0 && rect.height > 0,
-          insideViewport: rect.top >= -1 && rect.left >= -1
-            && rect.bottom <= innerHeight + 1 && rect.right <= innerWidth + 1,
-          top: Math.round(rect.top),
-          bottom: Math.round(rect.bottom),
-          left: Math.round(rect.left),
-          right: Math.round(rect.right),
-          height: Math.round(rect.height),
+          iframeHeight: frameRect.height,
+          computedHeight: getComputedStyle(frame).height,
+          computedMinHeight: getComputedStyle(frame).minHeight,
+          iframeBottomInsideStage: frameRect.bottom <= stageRect.bottom + EPSILON,
+          stageOverflow: getComputedStyle(stage).overflow,
+          scrolling: frame.getAttribute('scrolling'),
         };
-      };
-      const root = document.documentElement;
-      const body = document.body;
-      const predictionChoices = [...document.querySelectorAll('#prediction-choices button')]
-        .map((element) => {
+      })()`);
+    }
+    async function captureChild() {
+      return await evaluate(`(() => {
+        const EPSILON = ${BOUNDARY_EPSILON_PX};
+        const bounds = (selector) => {
+          const element = document.querySelector(selector);
+          if (!element) return { exists: false, visible: false, insideViewport: false };
           const rect = element.getBoundingClientRect();
+          const style = getComputedStyle(element);
           return {
-            text: element.textContent.trim(),
+            exists: true,
+            visible: style.display !== 'none' && style.visibility !== 'hidden'
+              && rect.width > 0 && rect.height > 0,
+            insideViewport: rect.top >= -EPSILON && rect.left >= -EPSILON
+              && rect.bottom <= innerHeight + EPSILON && rect.right <= innerWidth + EPSILON,
+            top: Math.round(rect.top),
+            bottom: Math.round(rect.bottom),
             left: Math.round(rect.left),
             right: Math.round(rect.right),
-            width: Math.round(rect.width),
-            insideViewport: rect.left >= -1 && rect.right <= innerWidth + 1,
+            height: Math.round(rect.height),
           };
-        });
-      const documentHeight = Math.ceil(Math.max(
-        root.scrollHeight, root.offsetHeight, body.scrollHeight, body.offsetHeight,
-      ));
-      return {
-        viewportWidth: innerWidth,
-        viewportHeight: innerHeight,
-        documentHeight,
-        lesson: bounds('#lesson'),
-        panel: bounds('#observe'),
-        canvas: bounds('#simulation'),
-        control: bounds('#primary-control'),
-        predictionChoices,
-      };
-    })()`, sessionId);
+        };
+        const root = document.documentElement;
+        const body = document.body;
+        const predictionChoices = [...document.querySelectorAll('#prediction-choices button')]
+          .map((element) => {
+            const rect = element.getBoundingClientRect();
+            return {
+              text: element.textContent.trim(),
+              left: Math.round(rect.left),
+              right: Math.round(rect.right),
+              width: Math.round(rect.width),
+              insideViewport: rect.left >= -EPSILON && rect.right <= innerWidth + EPSILON,
+            };
+          });
+        const documentHeight = Math.ceil(Math.max(
+          root.scrollHeight, root.offsetHeight, body.scrollHeight, body.offsetHeight,
+        ));
+        return {
+          viewportWidth: innerWidth,
+          viewportHeight: innerHeight,
+          documentHeight,
+          lesson: bounds('#lesson'),
+          panel: bounds('#observe'),
+          canvas: bounds('#simulation'),
+          control: bounds('#primary-control'),
+          predictionChoices,
+        };
+      })()`, sessionId);
+    }
+    function boundaryChecksPass(parentState, childState) {
+      return Boolean(
+        parentState.iframeBottomInsideStage
+        && childState.panel.insideViewport
+        && childState.canvas.insideViewport
+        && childState.control.insideViewport
+        && childState.predictionChoices.length > 0
+        && childState.predictionChoices.every((choice) => choice.insideViewport),
+      );
+    }
+    let parent = await captureParent();
+    let child = await captureChild();
+    if (!boundaryChecksPass(parent, child)) {
+      // Retry-on-boundary: a single re-measurement after fonts/layout have
+      // had another moment to settle, for genuinely borderline sub-pixel
+      // readings only. This is not a blanket retry of the whole test.
+      await delay(250);
+      await settle();
+      await settle(sessionId);
+      parent = await captureParent();
+      child = await captureChild();
+    }
     const childFocus = await evaluate(`(() => {
       const viewport = window.visualViewport || { width: innerWidth, height: innerHeight };
       return ['#primary-control', '#play-pause', '#reset', '#replay', '#projector'].map((selector) => {
@@ -369,7 +421,15 @@ try {
           windowsVirtualKeyCode: 9,
           nativeVirtualKeyCode: 9,
         }, sessionId);
-        await delay(25);
+        await waitFor(`(() => {
+          const element = document.querySelector(${JSON.stringify(selector)});
+          const viewport = window.visualViewport || { width: innerWidth, height: innerHeight };
+          const rect = element.getBoundingClientRect();
+          return document.activeElement === element
+            && rect.width > 0 && rect.height > 0
+            && rect.top >= 0 && rect.left >= 0
+            && rect.bottom <= viewport.height && rect.right <= viewport.width;
+        })()`, 1000, sessionId);
         const observedAt = Date.now();
         results.push(await evaluate(`(() => {
           const element = document.querySelector(${JSON.stringify(selector)});

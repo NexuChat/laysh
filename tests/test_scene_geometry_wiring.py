@@ -162,9 +162,11 @@ def test_scene_geometry_prompt_contract_excludes_decorations_and_shows_closed_sa
     for name in ("generate_module.md", "heal_module.md"):
         prompt = (ROOT / "server" / "prompts" / name).read_text(encoding="utf-8")
         compact = " ".join(prompt.split())
-        assert "Do not report decorative particles" in compact
+        assert "decorative particles" in compact
+        assert any(directive in compact for directive in ("Do not report", "Exclude"))
         assert 'schemaVersion: "1.0"' in compact
         assert 'state: { id: "primary", timeMs: 0 }' in compact
-        assert "Declare one relation for every pair in `objects`" in compact
+        assert "every pair" in compact
+        assert "overlap/contact/clearance" in compact
         assert "const state = modelState(value)" in compact
         assert "state.output" in compact

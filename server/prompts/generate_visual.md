@@ -35,6 +35,13 @@ from the same center, output, and phase expressions. When an ellipse is the
 primary actor, normally use one scientific ellipse and mark its supporting
 silhouette pieces `scientific: false`. Canvas y increases downward. Supporting
 pieces outside a body group remain non-scientific.
+The composed scientific actor must be recognizable as the declared actor without reading labels.
+A generic circle, orb, or rectangle is not an acceptable substitute for a concept-specific actor.
+For example, `floating_body` needs a visibly buoyant body with a coherent hull-like silhouette
+crossing a water surface; `wavefront` needs a visible propagating front or ray bundle whose
+separation and direction communicate the declared optical behavior. Build identity with a
+cohesive `body_group`, `ray` bundle, or other matching closed primitives while keeping the
+parameter-linked proof channel on the scientific actor.
 Changes to the parameter named by `primary_parameter.id` must visibly alter at least
 one salient non-text scene property through a fixture-covered declared output. Use
 `normalized` only for layout. Use `phase` in at least one visible numeric field for

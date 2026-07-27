@@ -12,6 +12,11 @@ deterministic gates support approval. QA reviews; it does not implement.
   provides layered scene depth, beautiful and physically consistent physical light, reduced-motion-
   aware idle motion driven by same-value redraws, parameter-linked reactive feedback, and readable
   overlay chips. Mark each item independently; a flat scene cannot pass.
+- Treat `actor_identity` as mandatory: the composed scientific actor must be recognizable as
+  `module_spec.actor` without relying on text labels. Reject a generic circle, orb, or rectangle, or
+  unrelated symbol used in place of the declared concept. For example, a `floating_body` needs a
+  coherent hull-like body crossing a water surface, while a `wavefront` needs a visible propagating
+  front or ray bundle that communicates the declared optical behavior.
 - Reject amplified geometry unless an on-canvas label states its numeric factor; silent visual
   distortion cannot be approved.
 - Never draw changing numbers, percentages, or live readout values on the canvas. The trusted shell
