@@ -518,6 +518,17 @@ def _command_numeric_expressions(
             "line_width",
             "opacity",
         ),
+        "particle_flow": (
+            "x1",
+            "y1",
+            "x2",
+            "y2",
+            "particle_count",
+            "particle_radius",
+            "phase",
+            "line_width",
+            "opacity",
+        ),
         "text": ("x", "y", "font_size", "opacity"),
         "vector_arrow": (
             "x1",
@@ -613,6 +624,18 @@ def _command_channel_expressions(
         "ray": {
             "x": ("x1",),
             "y": ("y1",),
+            "opacity": ("opacity",),
+        },
+        "wave": {
+            "x": ("x1",),
+            "y": ("y1",),
+            "size": ("amplitude",),
+            "opacity": ("opacity",),
+        },
+        "particle_flow": {
+            "x": ("x1",),
+            "y": ("y1",),
+            "size": ("particle_radius",),
             "opacity": ("opacity",),
         },
     }
@@ -902,6 +925,34 @@ def _command_channel_value(
             for segment in command["segments"]
         )
 
+    if kind == "wave":
+        field = {
+            "x": "x1",
+            "y": "y1",
+            "size": "amplitude",
+            "opacity": "opacity",
+        }[channel]
+        value = _evaluate_expression(command[field], state)
+        if channel == "size":
+            return max(0.0, value)
+        if channel == "opacity":
+            return _clamp(value, 0.0, 1.0)
+        return value
+
+    if kind == "particle_flow":
+        field = {
+            "x": "x1",
+            "y": "y1",
+            "size": "particle_radius",
+            "opacity": "opacity",
+        }[channel]
+        value = _evaluate_expression(command[field], state)
+        if channel == "size":
+            return max(0.0, value)
+        if channel == "opacity":
+            return _clamp(value, 0.0, 1.0)
+        return value
+
     raise ContractError("unsupported scientific channel response")
 
 
@@ -1099,12 +1150,20 @@ _CAUSAL_CHANNEL_FIELDS: dict[str, dict[str, tuple[str, ...]]] = {
         "size": ("radius_x", "radius_y"),
         "opacity": ("opacity",),
     },
+    "wave": {
+        "x": ("x1",),
+        "y": ("y1",),
+        "size": ("amplitude",),
+        "opacity": ("opacity",),
+    },
+    "particle_flow": {
+        "x": ("x1",),
+        "y": ("y1",),
+        "size": ("particle_radius",),
+        "opacity": ("opacity",),
+    },
 }
 
-_DEFERRED_REPRESENTATION_ARCHETYPES = {
-    "particle_flow",
-    "wave_medium",
-}
 _PAIRED_REPRESENTATION_ARCHETYPES = {
     "linked_bodies",
     "orbital_pair",
@@ -1196,11 +1255,6 @@ def _validate_representation(
 ) -> None:
     representation = document["representation"]
     archetype = representation["actor_archetype"]
-    if archetype in _DEFERRED_REPRESENTATION_ARCHETYPES:
-        raise ContractError(
-            "representation archetype is not emittable with phase A1 commands"
-        )
-
     scientific_commands = [
         command for command in document["commands"] if command["scientific"]
     ]
@@ -1224,6 +1278,8 @@ def _validate_representation(
             and bool(scientific_kinds & {"body_group", "ellipse"})
         )
         or (archetype == "ray_bundle" and "ray" in scientific_kinds)
+        or (archetype == "wave_medium" and "wave" in scientific_kinds)
+        or (archetype == "particle_flow" and "particle_flow" in scientific_kinds)
         or (
             archetype in _PAIRED_REPRESENTATION_ARCHETYPES
             and len(scientific_commands) >= 2
@@ -1335,6 +1391,8 @@ def validate_visual_fragment(
                 "circle",
                 "ellipse",
                 "ray",
+                "wave",
+                "particle_flow",
                 "trajectory",
                 "vector_arrow",
             }:
@@ -1364,7 +1422,14 @@ def validate_visual_fragment(
             raise ContractError("scientific geometry must consume a declared output")
         if (
             command["scientific"]
-            and kind in {"body_group", "ellipse", "ray", "vector_arrow"}
+            and kind in {
+                "body_group",
+                "ellipse",
+                "ray",
+                "vector_arrow",
+                "wave",
+                "particle_flow",
+            }
             and understanding is not None
             and not salient_outputs
         ):
@@ -1404,6 +1469,8 @@ def validate_visual_fragment(
         if {
             "body_group",
             "ray",
+            "wave",
+            "particle_flow",
             "trajectory",
             "vector_arrow",
         } & {scientific_kinds[item] for item in pair} and (
@@ -1515,6 +1582,22 @@ def _causal_actor_evidence(
             "y": "y1",
             "rotation": "segments[0].angle",
             "size": "segments.reduce((total,segment) => total + segment.length,0)",
+            "opacity": "visualOpacity",
+        }
+        bounds = "{left:envelopeCx - envelopeRadius,top:envelopeCy - envelopeRadius,right:envelopeCx + envelopeRadius,bottom:envelopeCy + envelopeRadius,width:envelopeRadius * 2,height:envelopeRadius * 2}"
+    elif kind == "wave":
+        visual_values = {
+            "x": "x1",
+            "y": "y1",
+            "size": "envelopeRadius",
+            "opacity": "visualOpacity",
+        }
+        bounds = "{left:envelopeCx - envelopeRadius,top:envelopeCy - envelopeRadius,right:envelopeCx + envelopeRadius,bottom:envelopeCy + envelopeRadius,width:envelopeRadius * 2,height:envelopeRadius * 2}"
+    elif kind == "particle_flow":
+        visual_values = {
+            "x": "envelopeCx",
+            "y": "envelopeCy",
+            "size": "envelopeRadius",
             "opacity": "visualOpacity",
         }
         bounds = "{left:envelopeCx - envelopeRadius,top:envelopeCy - envelopeRadius,right:envelopeCx + envelopeRadius,bottom:envelopeCy + envelopeRadius,width:envelopeRadius * 2,height:envelopeRadius * 2}"
@@ -1796,11 +1879,41 @@ def _draw_command(
             _visual_expression(command[field], understanding)
             for field in ("x1", "y1", "x2", "y2", "amplitude", "wavelength", "line_width")
         )
+        geometry = ""
+        if command["scientific"]:
+            geometry = f'''\n      scientificObjects.push({{id:{command_id},scientific:true,clippingPolicy:{_js(command["clipping_policy"])},geometry:{{type:"wave",cx:envelopeCx,cy:envelopeCy,radius:envelopeRadius}}}});'''
+        causal_evidence = _causal_actor_evidence(command, causal_response)
         return f'''    {{
       const x1 = {x1}; const y1 = {y1}; const x2 = {x2}; const y2 = {y2}; const amplitude = {amplitude}; const wavelength = Math.max(1,{wavelength});
-      context.save(); context.globalAlpha = {opacity}; context.strokeStyle = {_js(command["stroke_color"])}; context.lineWidth = Math.max(0,{line_width}); context.beginPath();
+      const lineWidth = Math.max(0,{line_width}); const visualOpacity = {opacity}; const envelopeCx = (x1 + x2) / 2; const envelopeCy = (y1 + y2) / 2; const envelopeRadius = Math.max(1,Math.hypot(x2 - x1,y2 - y1) / 2 + Math.abs(amplitude) + lineWidth);
+      context.save(); context.globalAlpha = visualOpacity; context.strokeStyle = {_js(command["stroke_color"])}; context.lineWidth = lineWidth; context.beginPath();
       for (let step = 0; step <= 24; step += 1) {{ const t = step / 24; const x = x1 + (x2 - x1) * t; const y = y1 + (y2 - y1) * t + amplitude * Math.sin((x - x1) * Math.PI * 2 / wavelength); if (step === 0) context.moveTo(x,y); else context.lineTo(x,y); }}
-      context.stroke(); context.restore();
+      context.stroke(); context.restore();{geometry}{causal_evidence}
+    }}'''
+    if kind == "particle_flow":
+        x1, y1, x2, y2, particle_count, particle_radius, phase, line_width = (
+            _visual_expression(command[field], understanding)
+            for field in (
+                "x1",
+                "y1",
+                "x2",
+                "y2",
+                "particle_count",
+                "particle_radius",
+                "phase",
+                "line_width",
+            )
+        )
+        geometry = ""
+        if command["scientific"]:
+            geometry = f'''\n      scientificObjects.push({{id:{command_id},scientific:true,clippingPolicy:{_js(command["clipping_policy"])},geometry:{{type:"particle_flow",cx:envelopeCx,cy:envelopeCy,radius:envelopeRadius}}}});'''
+        causal_evidence = _causal_actor_evidence(command, causal_response)
+        return f'''    {{
+      const x1 = {x1}; const y1 = {y1}; const x2 = {x2}; const y2 = {y2}; const particleCount = Math.max(1,Math.min(24,Math.round({particle_count}))); const particleRadius = Math.max(0,{particle_radius}); const phase = {phase}; const lineWidth = Math.max(0,{line_width}); const visualOpacity = {opacity};
+      const envelopeCx = (x1 + x2) / 2; const envelopeCy = (y1 + y2) / 2; const envelopeRadius = Math.max(1,Math.hypot(x2 - x1,y2 - y1) / 2 + particleRadius + lineWidth);
+      context.save(); context.globalAlpha = visualOpacity; context.fillStyle = {_js(command["fill_color"])}; context.strokeStyle = {_js(command["stroke_color"])}; context.lineWidth = lineWidth;
+      for (let index = 0; index < particleCount; index += 1) {{ const ratio = ((index / particleCount + phase) % 1 + 1) % 1; const x = x1 + (x2 - x1) * ratio; const y = y1 + (y2 - y1) * ratio; context.beginPath(); context.arc(x,y,particleRadius,0,Math.PI * 2); context.fill(); context.stroke(); }}
+      context.restore();{geometry}{causal_evidence}
     }}'''
     x, y, font_size = (
         _visual_expression(command[field], understanding) for field in ("x", "y", "font_size")

@@ -149,8 +149,8 @@ FRAGMENT_RETRY_HINTS: dict[str, str] = {
         "references to those exact IDs."
     ),
     "unsupported_scientific_geometry": (
-        "Only a circle or ellipse may be scientific true; mark lines, arrows, waves, "
-        "rectangles, and text as scientific false."
+        "Use a closed scientific primitive: circle, ellipse, body_group, vector_arrow, "
+        "ray, wave, particle_flow, or trajectory. Mark other command kinds scientific false."
     ),
     "unsupported_ellipse_relation": (
         "Use one scientific ellipse for the primary actor and mark supporting pieces "

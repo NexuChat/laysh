@@ -156,8 +156,18 @@ textarea[aria-invalid="true"] { border-color: var(--danger); }
 .connection-state[data-mode="reconnecting"], .connection-state[data-mode="still-testing"] { border-color: rgb(255 194 71 / 40%); background: rgb(255 194 71 / 7%); color: var(--amber); }
 .pulse { width: .7rem; aspect-ratio: 1; border-radius: 50%; background: var(--moon); box-shadow: 0 0 0 0 rgb(88 183 255 / 45%); animation: pulse 1.8s infinite; }
 .stage-list { list-style: none; padding: 0; margin: 0; counter-reset: stages; }
-.stage-list li { position: relative; min-height: 66px; display: grid; gap: .25rem; padding: .8rem 3.2rem .8rem .8rem; border-block-start: 1px solid var(--line); color: #c6d3dc; animation: stageEnter .28s ease both; }
-.stage-list li::before { counter-increment: stages; content: counter(stages, arabic-indic); position: absolute; inset-inline-start: .35rem; inset-block-start: .75rem; display: grid; place-items: center; width: 2rem; aspect-ratio: 1; border: 1px solid var(--moon); border-radius: 50%; background: rgb(88 183 255 / 9%); color: #bfe4ff; box-shadow: 0 0 16px rgb(88 183 255 / 14%); }
+/* The gutter that holds the step number is LOGICAL, because the number itself is
+   placed with inset-inline-start. It used to be the physical shorthand
+   `padding: .8rem 3.2rem .8rem .8rem` — right gutter, left text — which happens
+   to line up in Arabic and collides in English: measured 2026-08-15, English
+   text began at 12.8px while the circle spanned 5.6px to 37.6px, so the label
+   ran straight through the number. Keep both sides logical or they agree in one
+   direction only. */
+.stage-list li { position: relative; min-height: 66px; display: grid; gap: .25rem; padding: .8rem; padding-inline-start: 3.2rem; border-block-start: 1px solid var(--line); color: #c6d3dc; animation: stageEnter .28s ease both; }
+/* Digits follow the language, not the stylesheet: this was pinned to
+   arabic-indic, so an English build counted its steps ١ ٢ ٣ in a Latin font. */
+.stage-list li::before { counter-increment: stages; content: counter(stages, decimal); position: absolute; inset-inline-start: .35rem; inset-block-start: .75rem; display: grid; place-items: center; width: 2rem; aspect-ratio: 1; border: 1px solid var(--moon); border-radius: 50%; background: rgb(88 183 255 / 9%); color: #bfe4ff; box-shadow: 0 0 16px rgb(88 183 255 / 14%); }
+:lang(ar) .stage-list li::before { content: counter(stages, arabic-indic); }
 .stage-list li::after { content: ""; position: absolute; inset-inline-start: 1.32rem; inset-block-start: 2.8rem; inset-block-end: -.8rem; width: 1px; background: linear-gradient(var(--moon), transparent); opacity: .35; }
 .stage-list li:last-child::after { display: none; }
 .stage-name { color: var(--moon); font-size: .75rem; font-weight: 700; }

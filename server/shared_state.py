@@ -7,6 +7,18 @@ _IDENTIFIER = r"[A-Za-z_$][A-Za-z0-9_$]*"
 _MARKER = re.compile(rf"/\*\s*LAYSH_SHARED_MODEL\s*:\s*({_IDENTIFIER})\s*\*/")
 _FUNCTION = re.compile(rf"\bfunction\s+({_IDENTIFIER})\s*\([^)]*\)\s*\{{")
 _TEST = re.compile(r"\btest\s*(?::\s*function)?\s*\([^)]*\)\s*\{")
+# A renderer is whatever paints the canvas, not whatever happens to be *named*
+# draw/render. Matching on the name alone rejected a correct module whose painter
+# was called `paint`: the name filter picked up only the helper `renderGraph`,
+# concluded the shared model reached no renderer, and failed the gate while the
+# live browser gate had already passed the same artifact. Detect the drawing
+# surface structurally and keep the name heuristic as an additional signal, so
+# this can only ever find more renderers than before, never fewer.
+_CANVAS_OPERATION = re.compile(
+    r"\.(?:beginPath|closePath|moveTo|lineTo|arc|arcTo|ellipse|rect|roundRect"
+    r"|fillRect|strokeRect|clearRect|fillText|strokeText|drawImage|putImageData"
+    r"|createLinearGradient|createRadialGradient|createPattern|clip)\s*\("
+)
 
 
 def _block_after(source: str, opening_brace: int) -> str | None:
@@ -193,7 +205,8 @@ def shared_model_report(source: str) -> dict[str, Any]:
     render_bodies = [
         body
         for name, body in bodies.items()
-        if re.search(r"(?:draw|render)", name, flags=re.IGNORECASE)
+        if re.search(r"(?:draw|render|paint)", name, flags=re.IGNORECASE)
+        or _CANVAS_OPERATION.search(body)
     ]
     calling_render_bodies = [
         body for body in render_bodies if _contains_call(body, model_function)

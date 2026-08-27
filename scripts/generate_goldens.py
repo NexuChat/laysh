@@ -213,6 +213,34 @@ def _semantic_visual_qa_passed(
     )
 
 
+def _golden_aliases(
+    golden_id: str,
+    fixture_id: str,
+    fixture: dict[str, Any],
+) -> list[str]:
+    """Collect every repository-owned phrasing that must resolve to this golden.
+
+    The alias list used to hold only machine identifiers and the English title, so
+    a curated lesson was reachable by typing ``moon_phases`` but not by asking the
+    fixture's own question. Aliases are the only lookup route that survives a
+    contract-version bump (``exact_key`` and ``semantic_key`` are both salted with
+    the version the golden was pinned under), so every phrasing the repository
+    itself ships has to be listed here.
+    """
+
+    candidates = [golden_id, fixture_id, fixture["question"]]
+    for metadata in fixture["metadata"].values():
+        if isinstance(metadata, dict) and isinstance(metadata.get("title"), str):
+            candidates.append(metadata["title"])
+    seen: set[str] = set()
+    aliases = []
+    for candidate in candidates:
+        if isinstance(candidate, str) and candidate.strip() and candidate not in seen:
+            seen.add(candidate)
+            aliases.append(candidate)
+    return aliases
+
+
 def build_manifest() -> dict[str, Any]:
     lessons: list[dict[str, Any]] = []
     for path in sorted(GOLDEN_ROOT.glob("*.json")):
@@ -397,7 +425,7 @@ def promote_candidate(fixture_id: str, revision: str | None = None) -> int:
             failed_gate_count=0,
             check_count=verification["check_count"],
         ),
-        aliases=[golden_id, fixture_id, fixture["metadata"]["en"]["title"]],
+        aliases=_golden_aliases(golden_id, fixture_id, fixture),
         answer={"tldr": understanding["tldr"], "key_formula": understanding["key_formula"]},
         metadata=fixture["metadata"],
         review={

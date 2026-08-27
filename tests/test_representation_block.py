@@ -88,6 +88,40 @@ SCIENTIFIC_CIRCLE = {
     "opacity": "1",
 }
 
+SCIENTIFIC_WAVE = {
+    "kind": "wave",
+    "id": "response_actor",
+    "scientific": True,
+    "clipping_policy": "forbid",
+    "x1": "width * 0.35",
+    "y1": "height / 2",
+    "x2": "width * 0.65",
+    "y2": "height / 2",
+    "amplitude": "min_dim * (0.04 + output_response * 0.1)",
+    "wavelength": "min_dim * 0.2",
+    "stroke_color": "#FFFFFF",
+    "line_width": "2",
+    "opacity": "1",
+}
+
+SCIENTIFIC_PARTICLE_FLOW = {
+    "kind": "particle_flow",
+    "id": "response_actor",
+    "scientific": True,
+    "clipping_policy": "forbid",
+    "x1": "width * (0.3 + output_response * 0.1)",
+    "y1": "height / 2",
+    "x2": "width * 0.7",
+    "y2": "height / 2",
+    "particle_count": "8",
+    "particle_radius": "min_dim * 0.035",
+    "phase": "time / 10",
+    "fill_color": "#1A2B3C",
+    "stroke_color": "#FFFFFF",
+    "line_width": "1",
+    "opacity": "1",
+}
+
 REPRESENTATION = {
     "scene_pattern": "world_only",
     "actor_archetype": "body",
@@ -210,25 +244,31 @@ def test_archetype_must_match_emitted_scientific_command_types() -> None:
 
 
 @pytest.mark.parametrize(
-    "actor_archetype",
-    ["wave_medium", "particle_flow"],
+    ("actor_archetype", "command", "channel"),
+    [
+        ("wave_medium", SCIENTIFIC_WAVE, "size"),
+        ("particle_flow", SCIENTIFIC_PARTICLE_FLOW, "x"),
+    ],
 )
-def test_deferred_archetypes_are_rejected_until_their_primitives_exist(
+def test_wave_and_particle_flow_archetypes_emit_closed_scientific_primitives(
     actor_archetype: str,
+    command: dict,
+    channel: str,
 ) -> None:
-    from server.fragment_generation import fragment_failure_code, validate_visual_fragment
-    from server.schemas import ContractError
+    from server.fragment_generation import assemble_fragments, validate_visual_fragment
+    from server.verify import verify_module_with_node
 
     visual = _visual_fragment()
     visual["representation"]["actor_archetype"] = actor_archetype
+    visual["representation"]["proof_channels"][0]["channel"] = channel
+    visual["commands"] = [deepcopy(command)]
+    visual["causal_response"]["channel"] = channel
 
-    with pytest.raises(ContractError) as captured:
-        validate_visual_fragment(visual, deepcopy(UNDERSTANDING))
-
-    assert (
-        fragment_failure_code(captured.value)
-        == "representation_archetype_not_emittable"
+    assert validate_visual_fragment(visual, deepcopy(UNDERSTANDING)) == visual
+    module_output = assemble_fragments(
+        deepcopy(PHYSICS_FRAGMENT), visual, deepcopy(UNDERSTANDING)
     )
+    assert verify_module_with_node(module_output["module_js"], deepcopy(UNDERSTANDING))["passed"] is True
 
 
 def test_actor_proof_channel_requires_matching_scientific_output_binding() -> None:

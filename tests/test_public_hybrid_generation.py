@@ -1120,3 +1120,324 @@ async def test_public_hybrid_cancellation_awaits_both_visual_children(monkeypatc
     assert record.simulation is None
     assert cache.writes == []
     assert not any(event.type == "result" for event in record.events)
+
+
+class _FragmentRepairHybridBackend(_HybridBackend):
+    """Expose the fragment repair seam alongside the whole-module heal seam."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.repair_calls: list[dict[str, Any]] = []
+
+    async def regenerate_fragment(
+        self,
+        role,
+        understanding,
+        failure_code,
+        **kwargs,
+    ):
+        from server.codex_runtime import StageExecution
+
+        del understanding
+        self.repair_calls.append(
+            {
+                "role": role,
+                "failure_code": failure_code,
+                "repair_attempt": kwargs.get("repair_attempt"),
+                "exact_gate_failures": deepcopy(kwargs.get("exact_gate_failures")),
+                "prior_fragment": deepcopy(kwargs.get("prior_fragment")),
+            }
+        )
+        fragment = (
+            deepcopy(PHYSICS_FRAGMENT) if role == "physics" else deepcopy(VISUAL_FRAGMENT)
+        )
+        return StageExecution(
+            data=fragment,
+            thread_id=f"private-{role}-repair-thread",
+            model="gpt-5.6-sol",
+            elapsed_ms=6,
+        )
+
+
+def _staged_hybrid_verifier(
+    failures_by_call: dict[str, list[list[dict[str, Any]]]],
+):
+    """Return a deterministic verifier that scripts failures per candidate."""
+
+    from server.verify import VerificationResult
+
+    calls: list[str] = []
+    pending = {
+        candidate: list(scripted) for candidate, scripted in failures_by_call.items()
+    }
+
+    def deterministic(module_output, understanding):
+        del understanding
+        candidate = _candidate_name(module_output["module_js"])
+        calls.append(candidate)
+        scripted = pending.get(candidate) or []
+        failures = scripted.pop(0) if scripted else []
+        if failures:
+            return VerificationResult(
+                passed=False,
+                check_count=9 + len(failures),
+                failures=deepcopy(failures),
+                artifact=None,
+                node_report={"passed": False},
+            )
+        return VerificationResult(
+            passed=True,
+            check_count=17,
+            failures=[],
+            artifact=f"<!doctype html><html><body>{candidate}</body></html>",
+            node_report={
+                "passed": True,
+                "candidate": candidate,
+                "causal_response": {"passed": True},
+                "temporal_causal_matrix": {"passed": True},
+            },
+        )
+
+    deterministic.calls = calls
+    return deterministic
+
+
+@pytest.mark.asyncio
+async def test_public_hybrid_repairs_the_owning_fragment_instead_of_rewriting_module(
+    monkeypatch,
+):
+    from server.browser_verify import BrowserVerificationResult
+    from server.jobs import JobManager
+
+    backend = _FragmentRepairHybridBackend()
+    cache = _RecordingCache()
+    deterministic = _staged_hybrid_verifier(
+        {
+            "trusted_scene_plan": [
+                [
+                    {
+                        "gate": "scene_geometry",
+                        "code": "actor_outside_viewport",
+                        "expected": {"inside_viewport": True},
+                        "actual": {"inside_viewport": False},
+                    }
+                ]
+            ],
+            "direct_canvas": [
+                [
+                    {
+                        "gate": "scene_geometry",
+                        "code": "actor_outside_viewport",
+                        "expected": {"inside_viewport": True},
+                        "actual": {"inside_viewport": False},
+                    },
+                    {
+                        "gate": "readout_visibility",
+                        "code": "readout_hidden",
+                        "expected": {"visible": True},
+                        "actual": {"visible": False},
+                    },
+                ]
+            ],
+        }
+    )
+    monkeypatch.setattr("server.pipeline.verify_candidate", deterministic)
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+        cache=cache,
+    )
+
+    record = manager.start("offline hybrid targeted fragment repair", "ar")
+    await asyncio.wait_for(record.task, timeout=1)
+
+    assert record.status == "complete"
+    assert backend.heal_calls == 0
+    assert [call["role"] for call in backend.repair_calls] == ["visual"]
+    assert backend.repair_calls[0]["failure_code"] == "visual_geometry_mismatch"
+    assert backend.repair_calls[0]["repair_attempt"] == 1
+    assert backend.repair_calls[0]["prior_fragment"] == VISUAL_FRAGMENT
+    assert backend.repair_calls[0]["exact_gate_failures"] == [
+        {
+            "gate": "scene_geometry",
+            "code": "actor_outside_viewport",
+            "expected": {"inside_viewport": True},
+            "actual": {"inside_viewport": False},
+        }
+    ]
+    assert record.simulation is not None
+    assert record.simulation.effective_model == (
+        "physics:gpt-5.6-luna+visual:gpt-5.6-sol/trusted_scene_plan"
+    )
+    assert record.simulation.heal_count == 1
+    assert len(cache.writes) == 1
+
+
+@pytest.mark.asyncio
+async def test_public_hybrid_fails_closed_on_assembler_owned_failure(monkeypatch):
+    from server.browser_verify import BrowserVerificationResult
+    from server.jobs import JobManager
+
+    backend = _FragmentRepairHybridBackend()
+    cache = _RecordingCache()
+    assembler_failure = [
+        {
+            "gate": "shared_model_state",
+            "code": "shared_model_not_state_object",
+            "expected": {"shared_model_state_object": True},
+            "actual": {"shared_model_state_object": False},
+        }
+    ]
+    deterministic = _staged_hybrid_verifier(
+        {
+            "trusted_scene_plan": [deepcopy(assembler_failure)],
+            "direct_canvas": [
+                [
+                    *deepcopy(assembler_failure),
+                    {
+                        "gate": "interface",
+                        "code": "missing_abi_member",
+                        "expected": {"abi": True},
+                        "actual": {"abi": False},
+                    },
+                ]
+            ],
+        }
+    )
+    monkeypatch.setattr("server.pipeline.verify_candidate", deterministic)
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+        cache=cache,
+    )
+
+    record = manager.start("offline hybrid assembler owned failure", "ar")
+    await asyncio.wait_for(record.task, timeout=1)
+
+    assert record.status == "answer_only"
+    assert record.answer is not None
+    assert record.artifact is None
+    assert backend.repair_calls == []
+    assert backend.heal_calls == 0
+    assert cache.writes == []
+    assert record.fallback is not None
+    assert record.fallback.reason_code == "verification_exhausted"
+    assert {
+        diagnostic["type"] for diagnostic in record.builder_diagnostics
+    } >= {"fragment_repair_unowned_failure"}
+
+
+@pytest.mark.asyncio
+async def test_public_hybrid_direct_canvas_keeps_whole_module_heal(monkeypatch):
+    from server.browser_verify import BrowserVerificationResult
+    from server.jobs import JobManager
+
+    backend = _FragmentRepairHybridBackend()
+    cache = _RecordingCache()
+    deterministic = _staged_hybrid_verifier(
+        {
+            "direct_canvas": [
+                [
+                    {
+                        "gate": "scene_geometry",
+                        "code": "actor_outside_viewport",
+                        "expected": {"inside_viewport": True},
+                        "actual": {"inside_viewport": False},
+                    }
+                ]
+            ],
+            "trusted_scene_plan": [
+                [
+                    {
+                        "gate": "scene_geometry",
+                        "code": "actor_outside_viewport",
+                        "expected": {"inside_viewport": True},
+                        "actual": {"inside_viewport": False},
+                    },
+                    {
+                        "gate": "readout_visibility",
+                        "code": "readout_hidden",
+                        "expected": {"visible": True},
+                        "actual": {"visible": False},
+                    },
+                ]
+            ],
+        }
+    )
+    monkeypatch.setattr("server.pipeline.verify_candidate", deterministic)
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+        cache=cache,
+    )
+
+    record = manager.start("offline hybrid direct canvas heal", "ar")
+    await asyncio.wait_for(record.task, timeout=1)
+
+    assert record.status == "complete"
+    assert backend.repair_calls == []
+    assert backend.heal_calls == 1
+    assert backend.heal_requests[0]["attempt"] == 1
+    assert len(cache.writes) == 1
+
+
+class _TwoAttemptFragmentRepairHybridBackend(_FragmentRepairHybridBackend):
+    public_heal_attempt_limit = 2
+
+
+@pytest.mark.asyncio
+async def test_public_hybrid_fragment_repair_obeys_heal_convergence_guard(monkeypatch):
+    from server.browser_verify import BrowserVerificationResult
+    from server.jobs import JobManager
+
+    backend = _TwoAttemptFragmentRepairHybridBackend()
+    cache = _RecordingCache()
+    stuck_failure = [
+        {
+            "gate": "scene_geometry",
+            "code": "actor_outside_viewport",
+            "expected": {"inside_viewport": True},
+            "actual": {"inside_viewport": False},
+        }
+    ]
+    deterministic = _staged_hybrid_verifier(
+        {
+            "trusted_scene_plan": [
+                deepcopy(stuck_failure),
+                deepcopy(stuck_failure),
+                deepcopy(stuck_failure),
+            ],
+            "direct_canvas": [
+                [
+                    *deepcopy(stuck_failure),
+                    {
+                        "gate": "readout_visibility",
+                        "code": "readout_hidden",
+                        "expected": {"visible": True},
+                        "actual": {"visible": False},
+                    },
+                ]
+            ],
+        }
+    )
+    monkeypatch.setattr("server.pipeline.verify_candidate", deterministic)
+    manager = JobManager(
+        backend,
+        public_job_timeout_seconds=2,
+        browser_verifier=lambda _: BrowserVerificationResult.passing(),
+        cache=cache,
+    )
+
+    record = manager.start("offline hybrid non converging fragment repair", "ar")
+    await asyncio.wait_for(record.task, timeout=1)
+
+    assert record.status == "answer_only"
+    assert record.artifact is None
+    assert backend.heal_calls == 0
+    assert len(backend.repair_calls) == 1
+    assert record.fallback is not None
+    assert record.fallback.reason_code == "verification_exhausted"
+    assert cache.writes == []

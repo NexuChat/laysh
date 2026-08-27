@@ -29,7 +29,8 @@ Rules:
   concept-relevant `action`. Actors are exactly `moon`, `pendulum_bob`,
   `earth_landmark`, `wavefront`, `charge_carrier`, `floating_body`, or
   `visible_body`. Actions are exactly `rotates`, `oscillates`, `orbits`,
-  `propagates`, `flows`, `floats_sinks`, or `phases`. Non-simulatable output
+  `propagates`, `flows`, `floats_sinks`, `phases`, or `transforms`; use
+  `transforms` when a visible body changes extent, position, or scale. Non-simulatable output
   sets both fields to `null`.
 - Write `key_formula` as short, student-facing display-grade math, never as source code. Use concise
   symbols such as `f`, `θ`, `T`, `L`, `I`, and `R`; use the Unicode minus sign `−`; and never emit

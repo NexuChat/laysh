@@ -9,9 +9,9 @@ Emit `representation` before commands as
 `{scene_pattern,actor_archetype,proof_channels,motion_model}`. Scene pattern is
 `world_only`, `world_plus_graph`, or `compare_ab`. `actor_archetype` is `body`,
 `elongated_body`, `ray_bundle`, `wave_medium`, `particle_flow`, `orbital_pair`,
-`linked_bodies`, or `surface_and_body`; wave and particle choices remain deferred,
-so do not select them. Select `ray_bundle` only when at least one scientific `ray`
-command is present. Use 1–3 proof channels shaped
+`linked_bodies`, or `surface_and_body`. Select `ray_bundle`, `wave_medium`, or
+`particle_flow` only when at least one scientific `ray`, `wave`, or `particle_flow`
+command, respectively, is present. Use 1–3 proof channels shaped
 `{output_name,carrier,channel}`: a declared output, carrier `actor|graph|readout`, and
 channel `x|y|rotation|size|opacity`. Actor proof directly binds that scientific
 command channel to `output_<output_name>`; graph proof requires `world_plus_graph`.
@@ -69,6 +69,7 @@ Closed command branches:
 - `rect`: `x,y,width,height,corner_radius,fill_color,fill_alt_color,stroke_color,line_width,opacity`.
 - `line` or `arrow`: `x1,y1,x2,y2,stroke_color,line_width,opacity`.
 - `wave`: line fields plus `amplitude,wavelength`.
+- `particle_flow`: `x1,y1,x2,y2,particle_count,particle_radius,phase,fill_color,stroke_color,line_width,opacity`.
 - `text`: `x,y,text_ar,text_en,color,font_size,align,opacity`.
 - `body_group`: `cx,cy,rotation,opacity,parts`. Parts are closed relative shapes:
   - circle: `kind,dx,dy,radius,fill_color,stroke_color,line_width`;

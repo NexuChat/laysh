@@ -140,7 +140,7 @@
               "type": "string",
               "enum": [
                 "rotates", "oscillates", "orbits", "propagates", "flows",
-                "floats_sinks", "phases"
+                "floats_sinks", "phases", "transforms"
               ]
             },
             {"type": "null"}

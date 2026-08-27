@@ -632,6 +632,35 @@ class WikimediaEvidenceProvider:
         return sources
 
 
+_FAMILY_ROUTES: tuple[
+    tuple[RepresentationFamily, frozenset[str], tuple[str, ...]],
+    ...,
+] = (
+    (
+        "orbital_light",
+        frozenset({"phases", "orbits"}),
+        ("astronomy", "orbital", "celestial"),
+    ),
+    ("rays", frozenset(), ("optics", "light", "refraction")),
+    ("waves", frozenset({"propagates"}), ("acoustic", "sound", "wave", "seismic")),
+    (
+        "fluid_body",
+        frozenset({"floats_sinks"}),
+        ("fluid", "density", "hydro", "displacement", "submerged"),
+    ),
+    (
+        "particles_flow",
+        frozenset({"flows"}),
+        ("electric", "current", "charge", "particle", "diffusion", "chemical"),
+    ),
+    (
+        "force_body",
+        frozenset({"oscillates"}),
+        ("mechanic", "force", "motion", "kinematic"),
+    ),
+)
+
+
 def representation_family_for(
     *,
     domain: str,
@@ -642,40 +671,18 @@ def representation_family_for(
 
     normalized_domain = domain.lower()
     output_tokens = " ".join(output_names).lower()
-    if action in {"phases", "orbits"} or any(
-        token in normalized_domain
-        for token in ("astronomy", "orbital", "celestial")
-    ):
-        return "orbital_light"
-    if any(token in normalized_domain for token in ("optics", "light", "refraction")):
-        return "rays"
-    if action == "propagates" or any(
-        token in normalized_domain
-        for token in ("acoustic", "sound", "wave", "seismic")
-    ):
-        return "waves"
-    if action == "floats_sinks" or any(
-        token in normalized_domain
-        for token in ("fluid", "density", "hydro", "displacement", "submerged")
-    ):
-        return "fluid_body"
-    if action == "flows" or any(
-        token in normalized_domain
-        for token in (
-            "electric",
-            "current",
-            "charge",
-            "particle",
-            "diffusion",
-            "chemical",
-        )
-    ):
-        return "particles_flow"
-    if action == "oscillates" or any(
-        token in normalized_domain
-        for token in ("mechanic", "force", "motion", "kinematic")
-    ):
-        return "force_body"
+    # Weigh domain and action together, family by family, in declaration order. A
+    # named domain must outrank a generic action: an optics question whose action
+    # is "propagates" is rays, not waves. Routing the action first would classify
+    # it as waves, and related_references_for would then correctly refuse to
+    # attach an acoustics reference to an optics question — losing the reference
+    # entirely. `rays` owns no action, so it has to be consulted before `waves`
+    # claims every "propagates".
+    for family, actions, domain_tokens in _FAMILY_ROUTES:
+        if action in actions or any(
+            token in normalized_domain for token in domain_tokens
+        ):
+            return family
     if any(token in output_tokens for token in ("difference", "ratio", "compare")):
         return "compare_ab"
     return "world_graph"
@@ -724,7 +731,31 @@ def related_references_for(
     """
 
     references: list[ModelLabDiscoveryReference] = []
-    phet = _PHET_BY_FAMILY.get(family)
+    reference_domain_tokens: dict[RepresentationFamily, tuple[str, ...]] = {
+        "rays": ("optics", "light", "refraction"),
+        "waves": ("acoustic", "sound", "wave", "seismic"),
+        "force_body": ("mechanic", "force", "motion", "kinematic"),
+        "orbital_light": ("astronomy", "orbital", "celestial", "space"),
+        "fluid_body": ("fluid", "density", "hydro", "displacement", "submerged"),
+        "particles_flow": (
+            "electric",
+            "current",
+            "charge",
+            "particle",
+            "diffusion",
+            "chemical",
+        ),
+        "world_graph": (),
+        "compare_ab": (),
+    }
+    normalized_domain = domain.lower()
+    # A generic or mismatched family has no topic-specific interactive reference.
+    # Do not attach a plausible-looking link from another domain just to populate it.
+    phet = (
+        _PHET_BY_FAMILY.get(family)
+        if any(token in normalized_domain for token in reference_domain_tokens[family])
+        else None
+    )
     if phet is not None:
         slug, english_title, arabic_title = phet
         phet_locale = "ar_SA" if locale == "ar" else "en"
@@ -740,7 +771,6 @@ def related_references_for(
             )
         )
 
-    normalized_domain = domain.lower()
     if any(
         token in normalized_domain
         for token in ("astronomy", "orbital", "celestial", "space")
@@ -777,7 +807,7 @@ def related_references_for(
                 license_note="Linked U.S. government science reference.",
             )
         )
-    else:
+    elif phet is not None:
         references.append(
             ModelLabDiscoveryReference(
                 reference_id="openstax:physics",

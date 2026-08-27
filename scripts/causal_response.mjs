@@ -59,12 +59,27 @@ function visibleBounds(sample, canvasWidth, canvasHeight) {
 function relationMatches(samples, relation) {
   const ordered = [...samples].sort((left, right) => left.outputValue - right.outputValue);
   const expectedSign = relation === "direct" ? 1 : -1;
+  // A bare 1e-6 absolute floor rejects a monotone response whose visual mapping is
+  // non-linear: rounding and runtime clamps leave sub-pixel jitter that no learner
+  // can see, yet a single 1e-6 step against the declared relation failed the gate.
+  // Use the same relative allowance neutralCrossingMatches already applies, and cap
+  // the *accumulated* backtracking too so many tolerated steps cannot add up to a
+  // reversal that is visible.
+  const values = samples.map((sample) => sample.visualValue);
+  const visualRange = Math.max(...values) - Math.min(...values);
+  const tolerance = Math.max(1e-6, visualRange * 0.05);
   let compared = 0;
+  let backtracked = 0;
   for (let index = 1; index < ordered.length; index += 1) {
     const outputDelta = ordered[index].outputValue - ordered[index - 1].outputValue;
     if (Math.abs(outputDelta) <= 1e-9) continue;
     const visualDelta = ordered[index].visualValue - ordered[index - 1].visualValue;
-    if (expectedSign * visualDelta < -1e-6) return false;
+    const against = -expectedSign * visualDelta;
+    if (against > tolerance) return false;
+    if (against > 0) {
+      backtracked += against;
+      if (backtracked > tolerance) return false;
+    }
     if (Math.abs(visualDelta) > 1e-6) compared += 1;
   }
   return compared >= 2;

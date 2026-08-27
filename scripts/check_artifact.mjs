@@ -10,7 +10,74 @@ import { evaluateCausalResponse } from "./causal_response.mjs";
 const artifactPath = path.resolve(process.argv[2]);
 const artifactSource = fs.readFileSync(artifactPath, "utf8");
 const causalMarkerPresent = /\/\*\s*LAYSH_CAUSAL_RESPONSE_V1\s*\*\//.test(artifactSource);
-const chromePath = process.env.CHROME_BIN || "/usr/bin/google-chrome";
+// WHY THIS IS A SEARCH AND NOT A CONSTANT. This was `process.env.CHROME_BIN ||
+// "/usr/bin/google-chrome"`, and on the host that actually serves laysh.mlki.app
+// there is no google-chrome at all — no chromium, no chromium-browser, nothing
+// at any standard path. So `spawn` raised ENOENT, ChildProcess emitted an
+// 'error' event nobody listened for, node threw, the probe exited non-zero, and
+// the pipeline reported `browser_readiness: browser_probe_failed`. A missing
+// browser was indistinguishable from an artifact that fails verification.
+//
+// The machine does have a Chromium — the one Playwright downloaded — so the
+// gate was failing over a path string, not a capability. Each run still gets a
+// fresh `--user-data-dir` below, so using that same binary cannot collide with
+// a browser the developer is driving for other work at the same time.
+const CHROME_CANDIDATES = [
+  process.env.CHROME_BIN,
+  "/usr/bin/google-chrome",
+  "/usr/bin/google-chrome-stable",
+  "/usr/bin/chromium",
+  "/usr/bin/chromium-browser",
+  "/snap/bin/chromium",
+  "/usr/bin/microsoft-edge",
+];
+
+function resolveChrome() {
+  const searched = [];
+  for (const candidate of CHROME_CANDIDATES) {
+    if (!candidate) continue;
+    searched.push(candidate);
+    try {
+      fs.accessSync(candidate, fs.constants.X_OK);
+      return { path: candidate, searched };
+    } catch {
+      // keep looking
+    }
+  }
+  // Playwright's bundled build, whose directory carries a version number.
+  const cacheRoot = path.join(os.homedir(), ".cache", "ms-playwright");
+  searched.push(`${cacheRoot}/chromium-*/chrome-linux*/chrome`);
+  try {
+    for (const entry of fs.readdirSync(cacheRoot)) {
+      if (!entry.startsWith("chromium")) continue;
+      for (const layout of ["chrome-linux64", "chrome-linux"]) {
+        const candidate = path.join(cacheRoot, entry, layout, "chrome");
+        try {
+          fs.accessSync(candidate, fs.constants.X_OK);
+          return { path: candidate, searched };
+        } catch {
+          // keep looking
+        }
+      }
+    }
+  } catch {
+    // no playwright cache on this host
+  }
+  return { path: null, searched };
+}
+
+const chromeResolution = resolveChrome();
+if (!chromeResolution.path) {
+  // Named, not silent. "No browser is installed" is an operator problem and
+  // must never read like "this artifact failed verification".
+  process.stderr.write(
+    `browser_probe_unavailable: no usable Chrome/Chromium found. Searched: ${chromeResolution.searched.join(
+      ", ",
+    )}. Set CHROME_BIN to an executable browser.\n`,
+  );
+  process.exit(1);
+}
+const chromePath = chromeResolution.path;
 const profilePath = fs.mkdtempSync(path.join(os.tmpdir(), "laysh-chrome-"));
 
 function delay(milliseconds) {
@@ -45,9 +112,39 @@ const chrome = spawn(chromePath, [
   "about:blank",
 ], { stdio: "ignore" });
 
+// A ChildProcess 'error' with no listener is an UNHANDLED event: node throws out
+// of the event loop, past the try/finally below, so the temp profile leaks and
+// the caller sees a stack trace instead of a diagnosis. Capture it instead.
+let chromeSpawnError = null;
+let chromeExited = null;
+chrome.on("error", (error) => {
+  chromeSpawnError = error;
+});
+chrome.on("exit", (code, signal) => {
+  chromeExited = { code, signal };
+});
+
 try {
   let version;
-  for (let attempt = 0; attempt < 100; attempt += 1) {
+  // The old budget was 100 x 50ms = 5 seconds flat. That is enough for an idle
+  // machine and not enough for a loaded one — and this host also runs the
+  // developer's own browser automation, so a cold Chromium start competing for
+  // CPU regularly overran it and the gate blamed the artifact. 20s of polling
+  // still fits inside the caller's 30s subprocess timeout, and the loop now
+  // stops the moment Chrome dies rather than spinning out the whole budget
+  // against a process that is already gone.
+  const startupDeadline = Date.now() + 20_000;
+  while (Date.now() < startupDeadline) {
+    if (chromeSpawnError) {
+      throw new Error(
+        `browser_probe_unavailable: could not start ${chromePath} (${chromeSpawnError.code || chromeSpawnError.message})`,
+      );
+    }
+    if (chromeExited) {
+      throw new Error(
+        `browser_probe_unavailable: ${chromePath} exited before the debugging endpoint opened (code=${chromeExited.code}, signal=${chromeExited.signal})`,
+      );
+    }
     try {
       version = await fetchJson(`http://127.0.0.1:${port}/json/version`);
       break;
@@ -55,7 +152,7 @@ try {
       await delay(50);
     }
   }
-  if (!version) throw new Error("Chrome debugging endpoint did not start");
+  if (!version) throw new Error("Chrome debugging endpoint did not start within 20s");
 
   const fileUrl = pathToFileURL(artifactPath).href;
   const target = await fetchJson(
@@ -320,7 +417,7 @@ try {
       const visible = (object) => {
         const geometry = object?.geometry;
         if (!geometry || typeof geometry !== 'object') return false;
-        if (geometry.type === 'circle') {
+        if (['circle', 'wave', 'particle_flow'].includes(geometry.type)) {
           const { cx, cy, radius } = geometry;
           return [cx, cy, radius].every(Number.isFinite) && radius > 0
             && cx + radius >= 0 && cy + radius >= 0

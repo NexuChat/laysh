@@ -70,6 +70,27 @@ def _live_browser_checks_pass(evidence: dict[str, Any] | None) -> bool:
     )
 
 
+# Static gates the live probe can settle on its own. Deliberately a single entry:
+# every other gate either has no live counterpart (fixture_integrity, invariant,
+# readout_visibility measure numbers the probe never reads) or must never be
+# overruled by a passing render at all — a working simulation is not evidence that
+# `security`, `assembly`, `syntax_runtime` or `source_size` are satisfied.
+_BROWSER_ADJUDICABLE_GATES = frozenset({"shared_model_state"})
+
+
+def _browser_may_overrule(verification: Any) -> bool:
+    """Report whether the live probe alone can settle this failed verification."""
+
+    if verification.artifact is None:
+        return False
+    failures = verification.failures or []
+    if not failures:
+        return False
+    return all(
+        failure.get("gate") in _BROWSER_ADJUDICABLE_GATES for failure in failures
+    )
+
+
 def _compare_fresh_candidate(
     incumbent: Any,
     candidate_receipt: VerificationReceipt,
@@ -111,6 +132,9 @@ class _CandidateOutcome:
     verification: VerificationResult | None = None
     browser_evidence: dict[str, Any] | None = None
     error: Exception | None = None
+    visual_document: dict[str, Any] | None = None
+    visual_stage: StageExecution | None = None
+    fragment_backed: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -179,6 +203,94 @@ def _snapshot_heal_candidate(
         browser_evidence=deepcopy(browser_evidence),
         attempt=attempt,
     )
+
+
+FRAGMENT_RETRY_ROLE_BY_GATE = {
+    "fixture_integrity": "physics",
+    "invariant": "physics",
+    "readout_visibility": "physics",
+    "scene_geometry": "visual",
+    "causal_response": "visual",
+    "temporal_causal_matrix": "visual",
+    "representation_consistency": "visual",
+}
+FRAGMENT_RETRY_ROLE_BY_BROWSER_READINESS_CODE = {
+    "canvas_pixels_unchanged": "visual",
+    "visible_frame_unchanged": "visual",
+}
+
+
+def fragment_repair_plan(
+    failures: list[dict[str, Any]],
+) -> list[tuple[str, str, list[dict[str, Any]]]] | None:
+    """Map deterministic failures onto the fragments that own them, or fail closed.
+
+    Returning ``None`` means *no fragment owns this failure*. The gates without an
+    owner (``shared_model_state``, ``interface``, ``runtime_init``, ``assembly``,
+    ``security``, ...) are produced by the trusted assembler itself, so handing them
+    to a model rewrite can only destroy deterministically-correct work. Callers must
+    give up on ``None`` rather than widening the repair.
+    """
+
+    roles: set[str] = set()
+    failures_by_role: dict[str, list[dict[str, Any]]] = {
+        "physics": [],
+        "visual": [],
+    }
+    browser_readiness_codes: set[str] = set()
+    has_causal_response_failure = False
+    for failure in failures:
+        gate = failure.get("gate")
+        if not isinstance(gate, str):
+            return None
+        if gate == "browser_readiness":
+            code = failure.get("code")
+            if not isinstance(code, str):
+                return None
+            role = FRAGMENT_RETRY_ROLE_BY_BROWSER_READINESS_CODE.get(code)
+            if role is not None:
+                browser_readiness_codes.add(code)
+        else:
+            role = FRAGMENT_RETRY_ROLE_BY_GATE.get(gate)
+        if role is None:
+            return None
+        roles.add(role)
+        failures_by_role[role].append(failure)
+        has_causal_response_failure |= gate in {
+            "causal_response",
+            "temporal_causal_matrix",
+        }
+    if not roles:
+        return None
+
+    plan: list[tuple[str, str, list[dict[str, Any]]]] = []
+    if "physics" in roles:
+        plan.append(
+            (
+                "physics",
+                "physics_fixture_mismatch",
+                failures_by_role["physics"],
+            )
+        )
+    if "visual" in roles:
+        if has_causal_response_failure:
+            visual_failure_code = "visual_causality_mismatch"
+        elif browser_readiness_codes:
+            visual_failure_code = next(
+                code
+                for code in FRAGMENT_RETRY_ROLE_BY_BROWSER_READINESS_CODE
+                if code in browser_readiness_codes
+            )
+        else:
+            visual_failure_code = "visual_geometry_mismatch"
+        plan.append(
+            (
+                "visual",
+                visual_failure_code,
+                failures_by_role["visual"],
+            )
+        )
+    return plan
 
 
 async def cancellable_sleep(seconds: float) -> None:
@@ -376,6 +488,27 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 for failure in result.failures
             ],
         )
+        # The line above answers "which gate", never "what exactly was wrong", so a
+        # repeated failure could only be guessed at from its code. Log one compact
+        # sample per (gate, code) with the expected/actual the gate already built:
+        # that is the difference between "scene_contract_invalid_state fired again"
+        # and knowing which field of which sample the emitter got wrong.
+        sampled: set[tuple[str, str]] = set()
+        for failure in result.failures:
+            signature = (str(failure.get("gate")), str(failure.get("code")))
+            if signature in sampled:
+                continue
+            sampled.add(signature)
+            if failure.get("expected") is None and failure.get("actual") is None:
+                continue
+            logger.warning(
+                "verification detail job=%s gate=%s code=%s expected=%.320s actual=%.320s",
+                record.job_id,
+                signature[0],
+                signature[1],
+                failure.get("expected"),
+                failure.get("actual"),
+            )
         manager.emit(
             record,
             "verification",
@@ -527,6 +660,47 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                     None,
                 )
         if not verification.passed:
+            if _browser_may_overrule(verification):
+                # `shared_model_state` describes itself as "a bounded source contract,
+                # not a JavaScript semantic proof" and names the browser gates as "the
+                # independent evidence". It finds the renderer by matching draw|render
+                # against function names, so a module whose painter is called anything
+                # else fails in 0.1s. Three separate runs today failed exactly here
+                # while the live probe passed the very same artifact, and the repair
+                # that failure triggered then broke a simulation that had been working.
+                # Ask the probe instead of guessing: it costs ~3s against the ~90s
+                # repair it prevents, and it can only ever rescue an artifact that
+                # genuinely runs, moves under its control, and stays offline.
+                overrule = await manager.verify_in_browser(verification.artifact)
+                if overrule.passed and _live_browser_checks_pass(overrule.evidence):
+                    logger.info(
+                        "static gate overruled by live probe job=%s gates=%s",
+                        record.job_id,
+                        sorted({str(f.get("gate")) for f in verification.failures}),
+                    )
+                    record.builder_diagnostics.append(
+                        {
+                            "type": "static_gate_overruled_by_live_probe",
+                            "gates": sorted(
+                                {str(f.get("gate")) for f in verification.failures}
+                            ),
+                            "codes": sorted(
+                                {str(f.get("code")) for f in verification.failures}
+                            ),
+                        }
+                    )
+                    return (
+                        VerificationResult(
+                            passed=True,
+                            check_count=(
+                                verification.check_count + overrule.check_count
+                            ),
+                            failures=[],
+                            artifact=verification.artifact,
+                            node_report=verification.node_report,
+                        ),
+                        overrule.evidence,
+                    )
             return verification, None
         if verification.artifact is None:
             raise RuntimeError("deterministic verification omitted its artifact")
@@ -836,6 +1010,18 @@ async def run_pipeline(manager: Any, record: Any) -> None:
     effective_generation_model: str | None = None
     trusted_fragment_candidate = False
     hybrid_representation_required = False
+    discovery_plan: dict[str, Any] | None = None
+    fragment_documents: dict[str, dict[str, Any] | None] = {
+        "physics": None,
+        "visual": None,
+    }
+    fragment_stages: dict[str, StageExecution | None] = {
+        "physics": None,
+        "visual": None,
+    }
+    fragment_repair_attempts = {"physics": 0, "visual": 0}
+    fragment_model_label_suffix = ""
+    fragment_repair_enabled = False
     heal_attempt_limit = (
         getattr(manager.backend, "public_heal_attempt_limit", 2)
         if record.public
@@ -850,6 +1036,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
         None,
     )
     fragment_generator = getattr(manager.backend, "generate_fragments", None)
+    fragment_regenerator = getattr(manager.backend, "regenerate_fragment", None)
     hybrid_physics_generator = getattr(
         manager.backend,
         "generate_hybrid_physics",
@@ -910,6 +1097,202 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             )
         )
 
+    fragment_validators = {
+        "physics": validate_physics_fragment,
+        "visual": validate_visual_fragment,
+    }
+
+    def fragment_document(role: str) -> dict[str, Any]:
+        document = fragment_documents[role]
+        if document is None:
+            raise RuntimeError("fragment repair requires both fragment documents")
+        return document
+
+    def fragment_stage(role: str) -> StageExecution:
+        stage = fragment_stages[role]
+        if stage is None:
+            raise RuntimeError("fragment repair requires both fragment stages")
+        return stage
+
+    def claim_fragment_repair_attempt(role: str) -> int | None:
+        attempted = fragment_repair_attempts[role]
+        if attempted >= 2:
+            return None
+        repair_attempt = attempted + 1
+        fragment_repair_attempts[role] = repair_attempt
+        return repair_attempt
+
+    def fragment_effective_model() -> str:
+        return (
+            f"physics:{fragment_stage('physics').model}"
+            f"+visual:{fragment_stage('visual').model}"
+            f"{fragment_model_label_suffix}"
+        )
+
+    def rebuild_fragment_module_output() -> bool:
+        """Re-derive every document that depends on the repaired fragments."""
+
+        nonlocal discovery_plan
+        nonlocal effective_generation_model
+        nonlocal module_output
+        nonlocal trusted_fragment_candidate
+
+        physics_document = fragment_document("physics")
+        try:
+            if use_hybrid_route:
+                discovery_plan = build_discovery_plan(
+                    understanding,
+                    physics_document,
+                    source_ids=(),
+                ).model_dump(mode="json")
+            rebuilt = assemble_fragments(
+                physics_document,
+                fragment_document("visual"),
+                understanding,
+            )
+        except (ContractError, ValidationError, ValueError) as error:
+            logger.warning(
+                "fragment repair assembly rejected job=%s error_type=%s code=%s",
+                record.job_id,
+                type(error).__name__,
+                fragment_failure_code(error),
+            )
+            record.builder_diagnostics.append(
+                {
+                    "type": "fragment_repair_assembly_failure",
+                    "code": fragment_failure_code(error),
+                }
+            )
+            return False
+        module_output = rebuilt
+        trusted_fragment_candidate = True
+        effective_generation_model = fragment_effective_model()
+        return True
+
+    async def regenerate_trusted_fragment_candidate(
+        role: str,
+        failure_code: str,
+        exact_gate_failures: list[dict[str, Any]],
+    ) -> bool:
+        if not callable(fragment_regenerator):
+            return False
+        if fragment_documents["physics"] is None or fragment_documents["visual"] is None:
+            logger.warning(
+                "fragment repair skipped without fragment documents job=%s role=%s",
+                record.job_id,
+                role,
+            )
+            return False
+        current_failure_code = failure_code
+        current_gate_failures = list(exact_gate_failures)
+        current_fragment = fragment_document(role)
+        stage_name = f"generate_{role}"
+        while True:
+            repair_attempt = claim_fragment_repair_attempt(role)
+            if repair_attempt is None:
+                return False
+            manager.emit(
+                record,
+                "stage",
+                {
+                    "stage": "generate",
+                    "detail": "إعادة بناء الجزء الذي لم يجتز الفحص",
+                    "elapsed_ms": manager.elapsed_ms(record),
+                },
+            )
+            regenerated_document: dict[str, Any] | None = None
+            try:
+                regenerated_stage = await fragment_regenerator(
+                    role,
+                    understanding,
+                    current_failure_code,
+                    exact_gate_failures=current_gate_failures,
+                    prior_fragment=current_fragment,
+                    repair_attempt=repair_attempt,
+                    runtime_context=runtime_context,
+                )
+                regenerated_document = stage_data(
+                    regenerated_stage,
+                    stage_name,
+                    fragment_role=role,
+                )
+                fragment_validators[role](regenerated_document, understanding)
+            except CodexRuntimeError as error:
+                record_stage_failure(stage_name, error)
+                return False
+            except (ContractError, ValidationError, ValueError) as error:
+                if regenerated_document is not None:
+                    current_fragment = regenerated_document
+                current_failure_code = fragment_failure_code(error)
+                deterministic_repair = (
+                    repair_visual_causal_response(
+                        current_fragment,
+                        understanding,
+                    )
+                    if role == "visual"
+                    and current_failure_code
+                    == "causal_channel_fixture_response_required"
+                    else None
+                )
+                if deterministic_repair is not None:
+                    logger.info(
+                        "deterministic causal repair accepted job=%s "
+                        "role=%s attempt=%s",
+                        record.job_id,
+                        role,
+                        repair_attempt,
+                    )
+                    previous_document = fragment_documents[role]
+                    previous_stage = fragment_stages[role]
+                    fragment_documents[role] = deterministic_repair
+                    fragment_stages[role] = regenerated_stage
+                    if not rebuild_fragment_module_output():
+                        fragment_documents[role] = previous_document
+                        fragment_stages[role] = previous_stage
+                        return False
+                    record.builder_diagnostics.append(
+                        {
+                            "type": "deterministic_causal_repair",
+                            "role": role,
+                            "code": current_failure_code,
+                            "attempt": repair_attempt,
+                        }
+                    )
+                    return True
+                current_gate_failures = [
+                    *exact_gate_failures,
+                    fragment_failure_diagnostic(
+                        error,
+                        role=role,
+                        understanding=understanding,
+                    ),
+                ]
+                logger.warning(
+                    "fragment gate repair rejected job=%s role=%s attempt=%s code=%s",
+                    record.job_id,
+                    role,
+                    repair_attempt,
+                    current_failure_code,
+                )
+                record.builder_diagnostics.append(
+                    {
+                        "type": "fragment_gate_repair_failure",
+                        "role": role,
+                        "code": current_failure_code,
+                        "attempt": repair_attempt,
+                    }
+                )
+                continue
+            previous_document = fragment_documents[role]
+            previous_stage = fragment_stages[role]
+            fragment_documents[role] = regenerated_document
+            fragment_stages[role] = regenerated_stage
+            if not rebuild_fragment_module_output():
+                fragment_documents[role] = previous_document
+                fragment_stages[role] = previous_stage
+                return False
+            return True
+
     if use_hybrid_route:
         assert callable(hybrid_physics_generator)
         assert callable(hybrid_visual_plan_generator)
@@ -939,13 +1322,14 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 understanding,
             )
         except (ContractError, ValidationError, ValueError) as error:
-            physics_regenerator = getattr(
-                manager.backend,
-                "regenerate_fragment",
-                None,
-            )
+            physics_regenerator = fragment_regenerator
             failure_code = fragment_failure_code(error)
-            if not callable(physics_regenerator):
+            preflight_repair_attempt = (
+                claim_fragment_repair_attempt("physics")
+                if callable(physics_regenerator)
+                else None
+            )
+            if not callable(physics_regenerator) or preflight_repair_attempt is None:
                 logger.warning(
                     "public hybrid physics contract rejected job=%s code=%s",
                     record.job_id,
@@ -979,7 +1363,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                     failure_code,
                     exact_gate_failures=[failure_diagnostic],
                     prior_fragment=physics_document,
-                    repair_attempt=1,
+                    repair_attempt=preflight_repair_attempt,
                     runtime_context=runtime_context,
                 )
                 physics_document = stage_data(
@@ -1059,6 +1443,8 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             strategy: str,
         ) -> _CandidateOutcome:
             spec = hybrid_specs[strategy]
+            visual_document: dict[str, Any] | None = None
+            visual_stage: StageExecution | None = None
             try:
                 if strategy == "trusted_scene_plan":
                     stage = await hybrid_visual_plan_generator(
@@ -1067,6 +1453,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                         discovery_plan,
                         runtime_context=runtime_context,
                     )
+                    visual_stage = stage
                     visual_document = stage_data(
                         stage,
                         "generate_visual",
@@ -1118,6 +1505,13 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                         physics_document,
                         visual_document,
                         understanding,
+                    )
+                    return _CandidateOutcome(
+                        spec=spec,
+                        module_output=output,
+                        visual_document=visual_document,
+                        visual_stage=visual_stage,
+                        fragment_backed=True,
                     )
                 else:
                     stage = await hybrid_visual_module_generator(
@@ -1228,6 +1622,31 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             and outcome.verification is not None
             and outcome.verification.passed
         ]
+        def adopt_hybrid_candidate(outcome: _CandidateOutcome) -> None:
+            """Keep the winning candidate's own fragments reachable for repair.
+
+            Only ``trusted_scene_plan`` is assembled from fragments. ``direct_canvas``
+            is a model-authored whole module with no fragment to repair, so it keeps
+            the whole-module heal path and must never be routed into fragment repair.
+            """
+
+            nonlocal fragment_model_label_suffix
+            nonlocal fragment_repair_enabled
+
+            if (
+                not outcome.fragment_backed
+                or outcome.visual_document is None
+                or outcome.visual_stage is None
+                or not callable(fragment_regenerator)
+            ):
+                return
+            fragment_documents["physics"] = physics_document
+            fragment_documents["visual"] = outcome.visual_document
+            fragment_stages["physics"] = physics_stage
+            fragment_stages["visual"] = outcome.visual_stage
+            fragment_model_label_suffix = f"/{outcome.spec.candidate_id}"
+            fragment_repair_enabled = True
+
         if passing_hybrid:
             winner = max(
                 passing_hybrid,
@@ -1242,6 +1661,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             hybrid_representation_required = (
                 winner.spec.candidate_id == "trusted_scene_plan"
             )
+            adopt_hybrid_candidate(winner)
             effective_generation_model = (
                 f"physics:{physics_stage.model}"
                 f"+visual:{winner.spec.model}/{winner.spec.candidate_id}"
@@ -1275,6 +1695,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             hybrid_representation_required = (
                 selected.spec.candidate_id == "trusted_scene_plan"
             )
+            adopt_hybrid_candidate(selected)
             effective_generation_model = (
                 f"physics:{physics_stage.model}"
                 f"+visual:{selected.spec.model}/{selected.spec.candidate_id}"
@@ -1298,25 +1719,12 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             "generate_visual",
             fragment_role="visual",
         )
-        fragment_documents = {
-            "physics": physics_fragment,
-            "visual": visual_fragment,
-        }
-        fragment_stages = {
-            "physics": physics_stage,
-            "visual": visual_stage,
-        }
-        fragment_validators = {
-            "physics": validate_physics_fragment,
-            "visual": validate_visual_fragment,
-        }
-        fragment_regenerator = getattr(
-            manager.backend,
-            "regenerate_fragment",
-            None,
-        )
+        fragment_documents["physics"] = physics_fragment
+        fragment_documents["visual"] = visual_fragment
+        fragment_stages["physics"] = physics_stage
+        fragment_stages["visual"] = visual_stage
+        fragment_repair_enabled = callable(fragment_regenerator)
         fragment_semantic_attempts = {"physics": 0, "visual": 0}
-        fragment_repair_attempts = {"physics": 0, "visual": 0}
 
         def claim_fragment_semantic_attempt(role: str) -> int | None:
             attempted = fragment_semantic_attempts[role]
@@ -1326,226 +1734,12 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             fragment_semantic_attempts[role] = repair_attempt
             return repair_attempt
 
-        def claim_fragment_repair_attempt(role: str) -> int | None:
-            attempted = fragment_repair_attempts[role]
-            if attempted >= 2:
-                return None
-            repair_attempt = attempted + 1
-            fragment_repair_attempts[role] = repair_attempt
-            return repair_attempt
-
-        retry_role_by_gate = {
-            "fixture_integrity": "physics",
-            "invariant": "physics",
-            "readout_visibility": "physics",
-            "scene_geometry": "visual",
-            "causal_response": "visual",
-            "temporal_causal_matrix": "visual",
-            "representation_consistency": "visual",
-        }
-        browser_readiness_retry_role_by_code = {
-            "canvas_pixels_unchanged": "visual",
-            "visible_frame_unchanged": "visual",
-        }
-
-        def fragment_repair_plan(
-            failures: list[dict[str, Any]],
-        ) -> list[tuple[str, str, list[dict[str, Any]]]] | None:
-            roles: set[str] = set()
-            failures_by_role: dict[str, list[dict[str, Any]]] = {
-                "physics": [],
-                "visual": [],
-            }
-            browser_readiness_codes: set[str] = set()
-            has_causal_response_failure = False
-            for failure in failures:
-                gate = failure.get("gate")
-                if not isinstance(gate, str):
-                    return None
-                if gate == "browser_readiness":
-                    code = failure.get("code")
-                    if not isinstance(code, str):
-                        return None
-                    role = browser_readiness_retry_role_by_code.get(code)
-                    if role is not None:
-                        browser_readiness_codes.add(code)
-                else:
-                    role = retry_role_by_gate.get(gate)
-                if role is None:
-                    return None
-                roles.add(role)
-                failures_by_role[role].append(failure)
-                has_causal_response_failure |= gate in {
-                    "causal_response",
-                    "temporal_causal_matrix",
-                }
-            if not roles:
-                return None
-
-            plan: list[tuple[str, str, list[dict[str, Any]]]] = []
-            if "physics" in roles:
-                plan.append(
-                    (
-                        "physics",
-                        "physics_fixture_mismatch",
-                        failures_by_role["physics"],
-                    )
-                )
-            if "visual" in roles:
-                if has_causal_response_failure:
-                    visual_failure_code = "visual_causality_mismatch"
-                elif browser_readiness_codes:
-                    visual_failure_code = next(
-                        code
-                        for code in browser_readiness_retry_role_by_code
-                        if code in browser_readiness_codes
-                    )
-                else:
-                    visual_failure_code = "visual_geometry_mismatch"
-                plan.append(
-                    (
-                        "visual",
-                        visual_failure_code,
-                        failures_by_role["visual"],
-                    )
-                )
-            return plan
-
-        async def regenerate_trusted_fragment_candidate(
-            role: str,
-            failure_code: str,
-            exact_gate_failures: list[dict[str, Any]],
-        ) -> bool:
-            nonlocal effective_generation_model
-            nonlocal module_output
-            nonlocal trusted_fragment_candidate
-
-            if not callable(fragment_regenerator):
-                return False
-            current_failure_code = failure_code
-            current_gate_failures = list(exact_gate_failures)
-            current_fragment = fragment_documents[role]
-            stage_name = f"generate_{role}"
-            while True:
-                repair_attempt = claim_fragment_repair_attempt(role)
-                if repair_attempt is None:
-                    return False
-                manager.emit(
-                    record,
-                    "stage",
-                    {
-                        "stage": "generate",
-                        "detail": "إعادة بناء الجزء الذي لم يجتز الفحص",
-                        "elapsed_ms": manager.elapsed_ms(record),
-                    },
-                )
-                regenerated_document: dict[str, Any] | None = None
-                try:
-                    regenerated_stage = await fragment_regenerator(
-                        role,
-                        understanding,
-                        current_failure_code,
-                        exact_gate_failures=current_gate_failures,
-                        prior_fragment=current_fragment,
-                        repair_attempt=repair_attempt,
-                        runtime_context=runtime_context,
-                    )
-                    regenerated_document = stage_data(
-                        regenerated_stage,
-                        stage_name,
-                        fragment_role=role,
-                    )
-                    fragment_validators[role](regenerated_document, understanding)
-                except CodexRuntimeError as error:
-                    record_stage_failure(stage_name, error)
-                    return False
-                except (ContractError, ValidationError, ValueError) as error:
-                    if regenerated_document is not None:
-                        current_fragment = regenerated_document
-                    current_failure_code = fragment_failure_code(error)
-                    deterministic_repair = (
-                        repair_visual_causal_response(
-                            current_fragment,
-                            understanding,
-                        )
-                        if role == "visual"
-                        and current_failure_code
-                        == "causal_channel_fixture_response_required"
-                        else None
-                    )
-                    if deterministic_repair is not None:
-                        logger.info(
-                            "deterministic causal repair accepted job=%s "
-                            "role=%s attempt=%s",
-                            record.job_id,
-                            role,
-                            repair_attempt,
-                        )
-                        fragment_documents[role] = deterministic_repair
-                        fragment_stages[role] = regenerated_stage
-                        module_output = assemble_fragments(
-                            fragment_documents["physics"],
-                            fragment_documents["visual"],
-                            understanding,
-                        )
-                        trusted_fragment_candidate = True
-                        effective_generation_model = (
-                            f"physics:{fragment_stages['physics'].model}"
-                            f"+visual:{fragment_stages['visual'].model}"
-                        )
-                        record.builder_diagnostics.append(
-                            {
-                                "type": "deterministic_causal_repair",
-                                "role": role,
-                                "code": current_failure_code,
-                                "attempt": repair_attempt,
-                            }
-                        )
-                        return True
-                    current_gate_failures = [
-                        *exact_gate_failures,
-                        fragment_failure_diagnostic(
-                            error,
-                            role=role,
-                            understanding=understanding,
-                        ),
-                    ]
-                    logger.warning(
-                        "fragment gate repair rejected job=%s role=%s attempt=%s code=%s",
-                        record.job_id,
-                        role,
-                        repair_attempt,
-                        current_failure_code,
-                    )
-                    record.builder_diagnostics.append(
-                        {
-                            "type": "fragment_gate_repair_failure",
-                            "role": role,
-                            "code": current_failure_code,
-                            "attempt": repair_attempt,
-                        }
-                    )
-                    continue
-                fragment_documents[role] = regenerated_document
-                fragment_stages[role] = regenerated_stage
-                module_output = assemble_fragments(
-                    fragment_documents["physics"],
-                    fragment_documents["visual"],
-                    understanding,
-                )
-                trusted_fragment_candidate = True
-                effective_generation_model = (
-                    f"physics:{fragment_stages['physics'].model}"
-                    f"+visual:{fragment_stages['visual'].model}"
-                )
-                return True
-
         def semantic_failures() -> list[tuple[str, Exception]]:
             failures: list[tuple[str, Exception]] = []
             for role in ("physics", "visual"):
                 try:
                     fragment_validators[role](
-                        fragment_documents[role],
+                        fragment_document(role),
                         understanding,
                     )
                 except (ContractError, ValidationError, ValueError) as error:
@@ -1625,7 +1819,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                         understanding,
                         failure_code,
                         exact_gate_failures=[failure_diagnostic],
-                        prior_fragment=fragment_documents[role],
+                        prior_fragment=fragment_document(role),
                         repair_attempt=repair_attempt,
                         runtime_context=runtime_context,
                     )
@@ -1645,10 +1839,10 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 )
                 fragment_stages[role] = regenerated_stage
 
-        physics_fragment = fragment_documents["physics"]
-        visual_fragment = fragment_documents["visual"]
-        physics_stage = fragment_stages["physics"]
-        visual_stage = fragment_stages["visual"]
+        physics_fragment = fragment_document("physics")
+        visual_fragment = fragment_document("visual")
+        physics_stage = fragment_stage("physics")
+        visual_stage = fragment_stage("visual")
         module_output = assemble_fragments(
             physics_fragment,
             visual_fragment,
@@ -1691,19 +1885,17 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                         _gallery_suggestions(record.locale),
                     )
                     return
-            physics_fragment = fragment_documents["physics"]
-            visual_fragment = fragment_documents["visual"]
-            physics_stage = fragment_stages["physics"]
-            visual_stage = fragment_stages["visual"]
+            physics_fragment = fragment_document("physics")
+            visual_fragment = fragment_document("visual")
+            physics_stage = fragment_stage("physics")
+            visual_stage = fragment_stage("visual")
             module_output = assemble_fragments(
                 physics_fragment,
                 visual_fragment,
                 understanding,
             )
             trusted_fragment_candidate = True
-        effective_generation_model = (
-            f"physics:{physics_stage.model}+visual:{visual_stage.model}"
-        )
+        effective_generation_model = fragment_effective_model()
     elif len(candidate_specs) > 1:
 
         async def build_candidate(spec: GenerationCandidateSpec) -> _CandidateOutcome:
@@ -2034,9 +2226,29 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                     _gallery_suggestions(record.locale),
                 )
                 return
-            if use_fragment_route:
+            if fragment_repair_enabled:
                 repair_plan = fragment_repair_plan(verification.failures)
                 if repair_plan is None:
+                    # Fail closed: no fragment owns this failure, so it belongs to
+                    # the trusted assembler. A whole-module rewrite would discard
+                    # verified fragments and can only invent new defects.
+                    logger.warning(
+                        "fragment repair fails closed job=%s failures=%s",
+                        record.job_id,
+                        [
+                            {"gate": gate, "code": code}
+                            for gate, code in sorted(_failure_pairs(verification))
+                        ],
+                    )
+                    record.builder_diagnostics.append(
+                        {
+                            "type": "fragment_repair_unowned_failure",
+                            "failures": [
+                                {"gate": gate, "code": code}
+                                for gate, code in sorted(_failure_pairs(verification))
+                            ],
+                        }
+                    )
                     _fallback(
                         manager,
                         record,
@@ -2068,6 +2280,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                         )
                         return
                 verification = None
+                browser_evidence = None
                 continue
             heal_count += 1
             previous_heal_snapshot = _snapshot_heal_candidate(
@@ -2092,6 +2305,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
             )
             trusted_fragment_candidate = False
             verification = None
+            browser_evidence = None
             continue
 
         if (heal_count or record.promote_golden) and qa_outcome is None:
@@ -2128,7 +2342,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                 record_verification_failure(qa_failure, heal_count)
                 heal_count += 1
                 manager.transition(record, "healing", "إصلاح ملاحظات المراجعة")
-                if use_fragment_route:
+                if fragment_repair_enabled:
                     repaired = await regenerate_trusted_fragment_candidate(
                         "visual",
                         "visual_quality_review_failed",
@@ -2161,6 +2375,7 @@ async def run_pipeline(manager: Any, record: Any) -> None:
                     )
                     trusted_fragment_candidate = False
                 verification = None
+                browser_evidence = None
                 continue
             if (
                 qa_status == "rejected"

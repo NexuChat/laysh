@@ -632,3 +632,40 @@ def test_codex_model_lab_runs_physics_then_direct_canvas_with_explicit_routing()
     assert '"physics_expressions"' in scene_plan_prompt
     assert "MODEL_LAB_SCIENTIFIC_CANVAS_SKILL_V1" not in learner_prompt
     assert "PHYSICS_FRAGMENT_JSON:" not in learner_prompt
+
+
+def test_general_transform_action_stays_generic_and_has_no_unrelated_reference() -> None:
+    from server.model_lab_discovery import (
+        related_references_for,
+        representation_family_for,
+    )
+    from server.schemas import validate_understanding
+
+    understanding = deepcopy(VALID_UNDERSTANDING)
+    understanding["domain"] = "thermal_expansion"
+    understanding["module_spec"] = {
+        **understanding["module_spec"],
+        "actor": "visible_body",
+        "action": "transforms",
+    }
+
+    assert validate_understanding(understanding)["module_spec"]["action"] == "transforms"
+    assert representation_family_for(
+        domain=understanding["domain"],
+        action=understanding["module_spec"]["action"],
+        output_names=understanding["module_spec"]["outputs"],
+    ) == "world_graph"
+    assert related_references_for(
+        family="world_graph",
+        domain=understanding["domain"],
+        locale="en",
+    ) == []
+    assert related_references_for(
+        family=representation_family_for(
+            domain=understanding["domain"],
+            action="flows",
+            output_names=understanding["module_spec"]["outputs"],
+        ),
+        domain=understanding["domain"],
+        locale="en",
+    ) == []

@@ -160,7 +160,7 @@
             "properties": {
               "kind": {"type": "string", "enum": ["wave"]},
               "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,47}$"},
-              "scientific": {"type": "boolean", "enum": [false]},
+              "scientific": {"type": "boolean"},
               "clipping_policy": {"type": "string", "enum": ["forbid", "allow"]},
               "x1": {"type": "string", "minLength": 1, "maxLength": 480},
               "y1": {"type": "string", "minLength": 1, "maxLength": 480},
@@ -168,6 +168,28 @@
               "y2": {"type": "string", "minLength": 1, "maxLength": 480},
               "amplitude": {"type": "string", "minLength": 1, "maxLength": 480},
               "wavelength": {"type": "string", "minLength": 1, "maxLength": 480},
+              "stroke_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
+              "line_width": {"type": "string", "minLength": 1, "maxLength": 480},
+              "opacity": {"type": "string", "minLength": 1, "maxLength": 480}
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "id", "scientific", "clipping_policy", "x1", "y1", "x2", "y2", "particle_count", "particle_radius", "phase", "fill_color", "stroke_color", "line_width", "opacity"],
+            "properties": {
+              "kind": {"type": "string", "enum": ["particle_flow"]},
+              "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,47}$"},
+              "scientific": {"type": "boolean"},
+              "clipping_policy": {"type": "string", "enum": ["forbid", "allow"]},
+              "x1": {"type": "string", "minLength": 1, "maxLength": 480},
+              "y1": {"type": "string", "minLength": 1, "maxLength": 480},
+              "x2": {"type": "string", "minLength": 1, "maxLength": 480},
+              "y2": {"type": "string", "minLength": 1, "maxLength": 480},
+              "particle_count": {"type": "string", "minLength": 1, "maxLength": 480},
+              "particle_radius": {"type": "string", "minLength": 1, "maxLength": 480},
+              "phase": {"type": "string", "minLength": 1, "maxLength": 480},
+              "fill_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
               "stroke_color": {"type": "string", "pattern": "^#[0-9A-Fa-f]{6}$"},
               "line_width": {"type": "string", "minLength": 1, "maxLength": 480},
               "opacity": {"type": "string", "minLength": 1, "maxLength": 480}

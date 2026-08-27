@@ -6,7 +6,7 @@ from itertools import combinations
 from typing import Any
 
 SCENE_GEOMETRY_CONTRACT_VERSION = "1.0"
-SUPPORTED_GEOMETRY_TYPES = frozenset({"circle"})
+SUPPORTED_GEOMETRY_TYPES = frozenset({"circle", "particle_flow", "wave"})
 OVERLAP_POLICIES = frozenset({"forbid", "allow", "scientific_occlusion"})
 CONTACT_POLICIES = frozenset({"forbid", "allow", "required"})
 CLIPPING_POLICIES = frozenset({"forbid", "allow"})
@@ -265,7 +265,7 @@ def _validated_sample(
             **item,
             "scientific": scientific,
             "clippingPolicy": clipping_policy,
-            "geometry": {"type": "circle", **values},
+            "geometry": {"type": geometry_type, **values},
         }
 
     relations = sample.get("relations")
@@ -347,6 +347,73 @@ def _validated_sample(
     )
 
 
+def _normalize_samples(samples: object) -> object:
+    """Rewrite unambiguous emitter spellings into the closed contract shape.
+
+    Emitters reach for the obvious name, not the contract's name, and always the
+    same way: `state` gets filled with the physical state it is named after, an
+    object carries a descriptive `type`/`bounds` beside its geometry, a relation
+    says `from`/`to` instead of listing `objects`. Every one of those is a pure
+    renaming — the geometry it describes is identical — yet each rejected whole
+    runs and then sent a model off to "repair" work that was already correct.
+
+    Only mappings with a single possible reading are applied, and the strict
+    validation below still runs on the result: this normalizes spelling, it never
+    invents a value or forgives a real contract breach.
+    """
+
+    if not isinstance(samples, list):
+        return samples
+    normalized: list[Any] = []
+    for sample in samples:
+        if not isinstance(sample, dict):
+            normalized.append(sample)
+            continue
+        sample = dict(sample)
+
+        state = sample.get("state")
+        if isinstance(state, dict) and _unknown_fields(state, _STATE_FIELDS):
+            kept = {key: state[key] for key in _STATE_FIELDS if key in state}
+            if isinstance(kept.get("id"), str) and kept["id"] and _finite_number(
+                kept.get("timeMs")
+            ) is not None:
+                sample["state"] = kept
+
+        objects = sample.get("objects")
+        if isinstance(objects, list):
+            rebuilt_objects: list[Any] = []
+            for item in objects:
+                if isinstance(item, dict) and _unknown_fields(item, _OBJECT_FIELDS):
+                    kept_object = {
+                        key: item[key] for key in _OBJECT_FIELDS if key in item
+                    }
+                    if {"id", "geometry"} <= kept_object.keys():
+                        kept_object.setdefault("scientific", item.get("scientific", True))
+                        kept_object.setdefault("clippingPolicy", "forbid")
+                        item = kept_object
+                rebuilt_objects.append(item)
+            sample["objects"] = rebuilt_objects
+
+        relations = sample.get("relations")
+        if isinstance(relations, list):
+            rebuilt_relations: list[Any] = []
+            for relation in relations:
+                if isinstance(relation, dict) and "objects" not in relation:
+                    left, right = relation.get("from"), relation.get("to")
+                    if isinstance(left, str) and isinstance(right, str):
+                        relation = {
+                            "objects": [left, right],
+                            "overlapPolicy": relation.get("overlapPolicy", "forbid"),
+                            "contactPolicy": relation.get("contactPolicy", "forbid"),
+                            "minimumClearance": relation.get("minimumClearance", 0),
+                        }
+                rebuilt_relations.append(relation)
+            sample["relations"] = rebuilt_relations
+
+        normalized.append(sample)
+    return normalized
+
+
 def validate_scene_geometry(samples: object) -> GeometryValidationResult:
     """Validate closed scene samples without lesson-specific knowledge.
 
@@ -354,6 +421,7 @@ def validate_scene_geometry(samples: object) -> GeometryValidationResult:
     Unsupported scientific geometry never passes silently.
     """
 
+    samples = _normalize_samples(samples)
     failures: list[dict[str, Any]] = []
     check_count = 0
     minimum_clearance = math.inf

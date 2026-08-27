@@ -182,11 +182,20 @@ class VerifiedCache:
         )
         if keyed is not None:
             return keyed
-        return self._lookup_pinned_alias(
+        aliased = self._lookup_pinned_alias(
             question=question,
             locale=locale,
             exact_key=exact,
             semantic_key=semantic,
+        )
+        if aliased is not None:
+            return aliased
+        return self._lookup_pinned_terms(
+            locale=locale,
+            exact_key=exact,
+            semantic_key=semantic,
+            domain=domain,
+            canonical_intent=canonical_intent,
         )
 
     def _lookup_pinned_alias(
@@ -216,6 +225,68 @@ class VerifiedCache:
                     if isinstance(value, str) and value.strip()
                 ]
                 if normalized_question not in {_normalize(value) for value in candidates}:
+                    continue
+                from server.goldens import localized_pinned_golden
+
+                localized = localized_pinned_golden(document, locale)
+                artifact = localized["artifact"]
+                if not isinstance(artifact, str) or not artifact:
+                    continue
+            except (KeyError, OSError, TypeError, ValueError, json.JSONDecodeError):
+                continue
+            return replace(
+                entry,
+                exact_key=exact_key,
+                semantic_key=semantic_key,
+                artifact=artifact,
+                artifact_sha256=hashlib.sha256(artifact.encode("utf-8")).hexdigest(),
+                title=localized["title"],
+                locale=localized["lang"],
+                direction=localized["direction"],
+            )
+        return None
+
+    def _lookup_pinned_terms(
+        self,
+        *,
+        locale: str,
+        exact_key: str,
+        semantic_key: str,
+        domain: str,
+        canonical_intent: str,
+    ) -> CacheEntry | None:
+        """Match a curated golden on the terms behind its semantic key.
+
+        ``semantic_key`` mixes in the contract version, so a golden pinned under an
+        older version is unreachable through the hash even when the understanding it
+        describes is identical -- which is how every curated lesson became reachable
+        only by alias. Comparing the stored terms instead keeps the match exact and
+        deterministic while surviving version bumps.
+
+        The pinned locale is deliberately ignored: the terms are language-neutral
+        slugs, so an Arabic-pinned golden answers an English question through the
+        same localized view the alias route serves.
+        """
+
+        if locale not in {"ar", "en"}:
+            return None
+        wanted = (_normalize(domain), _normalize(canonical_intent))
+        if not all(wanted):
+            return None
+        for path in sorted(self.golden_root.glob("*.json")):
+            entry = self._load(path)
+            if entry is None or not self._entry_is_compatible(path, entry):
+                continue
+            try:
+                document = json.loads(path.read_text(encoding="utf-8"))
+                terms = document.get("lookup_terms")
+                if not isinstance(terms, dict):
+                    continue
+                stored = (
+                    _normalize(str(terms.get("domain", ""))),
+                    _normalize(str(terms.get("canonical_intent", ""))),
+                )
+                if stored != wanted:
                     continue
                 from server.goldens import localized_pinned_golden
 
@@ -378,6 +449,13 @@ class VerifiedCache:
             **asdict(entry),
             "schema_version": "1.0",
             "golden_id": golden_id,
+            # Persist the terms the semantic key was derived from. Both keys are
+            # salted with the contract version (and exact_key with the deployment
+            # secret), so a version bump or a secret rotation used to orphan a
+            # golden permanently: only the hashes were stored, and the inputs that
+            # produced them were lost. Keeping the terms lets `lookup` re-derive a
+            # match under whatever contract version is current.
+            "lookup_terms": {"domain": domain, "canonical_intent": canonical_intent},
             "aliases": aliases,
             "answer": answer,
             "metadata": metadata,

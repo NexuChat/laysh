@@ -7,6 +7,13 @@ change the answer, parameters, output names, fixtures, or teaching objective. Re
 JavaScript, never full HTML. Preserve the restricted interface and capabilities. Resolve every listed
 failure, then provide safe summary and assumptions fields. Do not include reasoning or extra fields.
 
+Change only what the listed failures require and keep every untouched part as it is. Do not
+recompute, re-emit, restructure, rename, or improve anything the failures do not name: the rest of
+this module already passed its gates, so rewriting it can only lose work that was already correct.
+When a failure names one field of a scene sample, repair that field and leave the sibling objects,
+relations, and policies exactly as they were. Rebuilding a whole array to fix one entry is the most
+common way these repairs turn a passing simulation into a failing one.
+
 The repaired scientific actor must be recognizable as `module_spec.actor` without relying on text
 labels. A generic circle, orb, or rectangle is not an acceptable substitute for the declared
 concept. Preserve or rebuild a coherent concept-specific silhouette: for example, a `floating_body`

@@ -15,14 +15,32 @@ After `/* LAYSH_SHARED_MODEL: modelState */`, define one pure named state-object
 and `test(inputs)` call the same model function: `const state = modelState(value);`; use real
 `state.output` for pivotal visuals; no duplicate formula or no-op call.
 
-After each fit/clamp, set `canvas.__layshSceneGeometry` to nonempty closed v1.0 samples with
-`phase: "post_fit"`, viewport, state, scientific geometry, and relations. Exclude decorative
-particles, glows, text, chips, trails, and texture; objects set `clippingPolicy`; every pair in
-`objects` has overlap/contact/clearance policies; `scientific_occlusion` only expresses physical
-intent. Shape: `[{ schemaVersion: "1.0", phase: "post_fit", viewport: { width, height, safeInset: 0 },
-`state: { id: "primary", timeMs: 0 }, objects: [{ id: "actor", scientific: true,
-`clippingPolicy: "forbid", geometry: { type: "circle", cx, cy, radius } }], relations: [] }]`.
-Use final geometry; missing, unsupported, or undeclared evidence fails closed.
+After each fit/clamp set `canvas.__layshSceneGeometry` from the final drawn geometry. This is the
+single most-failed contract, so follow it literally.
+
+Every object is closed: an unknown key anywhere fails the whole sample array. Allowed keys, and no
+others — sample: `schemaVersion`, `phase`, `viewport`, `state`, `objects`, `relations`; state: `id`,
+`timeMs`; object: `id`, `scientific`, `geometry`, `clippingPolicy`; circle: `type`, `cx`, `cy`,
+`radius`; relation: `objects`, `overlapPolicy`, `contactPolicy`, `minimumClearance`.
+
+`state` is a trap: it is NOT the physical state and NOT what `modelState()` returns. It only names
+the sample — `id` (nonempty string) and `timeMs` (finite, >= 0). An angle, fraction, output or any
+measurement inside it fails every sample; physics lives in geometry and `canvas.__layshActorResponse`.
+
+One body:
+`[{ schemaVersion: "1.0", phase: "post_fit", viewport: { width, height, safeInset: 0 },`
+`state: { id: "primary", timeMs: 0 }, objects: [{ id: "actor", scientific: true,`
+`clippingPolicy: "forbid", geometry: { type: "circle", cx, cy, radius } }], relations: [] }]`
+
+Many bodies extend that shape; never invent `from`/`to`/`type`/`bounds`. Declare every pair once —
+three objects means three relations:
+`objects: [{ id: "moon", … }, { id: "sun", … }], relations: [{ objects: ["moon","sun"],`
+`overlapPolicy: "scientific_occlusion", contactPolicy: "forbid", minimumClearance: 0 }]`
+
+`scientific_occlusion` with zero clearance is the correct way to say one body hides another, as in
+an eclipse or transit; it expresses physical intent only. Every pair carries its own
+overlap/contact/clearance policy. Report only pivotal scientific bodies. Do not report decorative
+particles, glows, text, chips, trails, or texture.
 
 Use only canvas/context, Math, Number, arrays, and plain objects; no document, network, storage,
 navigation, dynamic code, workers, timers, sensors, audio, clipboard, console, URLs, or
